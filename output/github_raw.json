@@ -1,0 +1,814 @@
+{
+  "digitalsheep/LEAD": {
+    "repo": {
+      "owner": "digitalsheep",
+      "name": "LEAD"
+    },
+    "commits": [
+      {
+        "sha": "1c1fd2e3834bb561f6124ce1c391251134fee1c7",
+        "message": "モジュール作成（5.2.19_0015）",
+        "author": "ikemit",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/1c1fd2e3834bb561f6124ce1c391251134fee1c7",
+        "date": "2025-08-22T12:32:29Z",
+        "userInfo": {
+          "login": "ikemit",
+          "avatar_url": "https://avatars.githubusercontent.com/u/16205308?v=4"
+        }
+      },
+      {
+        "sha": "b648502c48183533537ef43e2b6e420370311770",
+        "message": "#20984　header_search_fieldList相当のフォーマットの出力対応",
+        "author": "ChoNamchul",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/b648502c48183533537ef43e2b6e420370311770",
+        "date": "2025-08-22T08:44:43Z",
+        "userInfo": {
+          "login": "ChoNamchul",
+          "name": "Cho Namchul",
+          "email": "cho@digitalsheep.co.jp",
+          "avatar_url": "https://avatars.githubusercontent.com/u/209863585?v=4"
+        }
+      },
+      {
+        "sha": "e866750b27f4ae1d70ca7961110e4f22a0b5bd2b",
+        "message": "#21501 LEAD V5.2.19 修正依頼表 No.129,131,132 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/e866750b27f4ae1d70ca7961110e4f22a0b5bd2b",
+        "date": "2025-08-22T08:32:15Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "ebb088d45bffe0018d42db158b74840aa6f347ef",
+        "message": "#20038 LEAD管理者機能対応5-4 No.90 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/ebb088d45bffe0018d42db158b74840aa6f347ef",
+        "date": "2025-08-22T08:14:09Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "1fa3ab5977457c5148c1c4934974268d6e9776b5",
+        "message": "#20984　header_search_fieldList相当のフォーマットの出力対応",
+        "author": "ChoNamchul",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/1fa3ab5977457c5148c1c4934974268d6e9776b5",
+        "date": "2025-08-22T08:05:07Z",
+        "userInfo": {
+          "login": "ChoNamchul",
+          "name": "Cho Namchul",
+          "email": "cho@digitalsheep.co.jp",
+          "avatar_url": "https://avatars.githubusercontent.com/u/209863585?v=4"
+        }
+      },
+      {
+        "sha": "7b6ab4fcdd8092a2ea26e0a9416fef965e898834",
+        "message": "#21504 【LEAD】メールの\"Message-ID\"をログに出力",
+        "author": "YasuhiroOba",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/7b6ab4fcdd8092a2ea26e0a9416fef965e898834",
+        "date": "2025-08-22T05:47:41Z",
+        "userInfo": {
+          "login": "YasuhiroOba",
+          "name": "YasuhiroOba",
+          "avatar_url": "https://avatars.githubusercontent.com/u/49141315?v=4"
+        }
+      },
+      {
+        "sha": "6f638d4e84a06c34dab4517d8e5665a3243a1d34",
+        "message": "#20878 修正依頼表その6 No.356",
+        "author": "TeradaMomoko",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/6f638d4e84a06c34dab4517d8e5665a3243a1d34",
+        "date": "2025-08-22T05:43:38Z",
+        "userInfo": {
+          "login": "TeradaMomoko",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129813720?v=4"
+        }
+      },
+      {
+        "sha": "c0ba585b774575cf52dab6893e0f0a0cd73c9229",
+        "message": "#21479 操作者ロールのアイテム参照範囲の影響でフェーズに設定したeラーニングの進捗エクスポートデータの中身が空になる",
+        "author": "YasuhiroOba",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/c0ba585b774575cf52dab6893e0f0a0cd73c9229",
+        "date": "2025-08-22T05:32:11Z",
+        "userInfo": {
+          "login": "YasuhiroOba",
+          "name": "YasuhiroOba",
+          "avatar_url": "https://avatars.githubusercontent.com/u/49141315?v=4"
+        }
+      },
+      {
+        "sha": "641ac780dbf7ca0662cb954667106941f3ff9c25",
+        "message": "#20878 LEAD管理者機能対応6 No.365 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/641ac780dbf7ca0662cb954667106941f3ff9c25",
+        "date": "2025-08-22T05:27:31Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "1414d9cf0e30e8a16695446d27b21951471107a7",
+        "message": "#21501 V5.2.19 修正依頼表対応 No.124",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/1414d9cf0e30e8a16695446d27b21951471107a7",
+        "date": "2025-08-22T04:48:21Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      },
+      {
+        "sha": "33e9befaffe401996c0e9dcd5b307be84d9262a7",
+        "message": "#21571 「未登録のユーザを検索」で検索した内容がエクスポートに引き継がれない",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/33e9befaffe401996c0e9dcd5b307be84d9262a7",
+        "date": "2025-08-22T02:34:41Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      },
+      {
+        "sha": "2c2699cd29fbad0c084817f402eb3771241ce08b",
+        "message": "#20878 修正依頼表その6 No.239",
+        "author": "TeradaMomoko",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/2c2699cd29fbad0c084817f402eb3771241ce08b",
+        "date": "2025-08-22T02:07:49Z",
+        "userInfo": {
+          "login": "TeradaMomoko",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129813720?v=4"
+        }
+      },
+      {
+        "sha": "63fd88c0f62f3a4cccd55622cc70a620eb2672f6",
+        "message": "#21501 V5.2.19 修正依頼表対応 No.151",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/63fd88c0f62f3a4cccd55622cc70a620eb2672f6",
+        "date": "2025-08-22T00:34:34Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      },
+      {
+        "sha": "ec2765f09ad682e7dae330752d49210f0e9b85d5",
+        "message": "#21501 V5.2.19 修正依頼表対応No157",
+        "author": "ChoNamchul",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/ec2765f09ad682e7dae330752d49210f0e9b85d5",
+        "date": "2025-08-21T11:56:54Z",
+        "userInfo": {
+          "login": "ChoNamchul",
+          "name": "Cho Namchul",
+          "email": "cho@digitalsheep.co.jp",
+          "avatar_url": "https://avatars.githubusercontent.com/u/209863585?v=4"
+        }
+      },
+      {
+        "sha": "a14899b58cf495fe5171cad09d5bc07cfea7ea96",
+        "message": "モジュール作成（5.2.19_0014）",
+        "author": "ikemit",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/a14899b58cf495fe5171cad09d5bc07cfea7ea96",
+        "date": "2025-08-21T10:35:02Z",
+        "userInfo": {
+          "login": "ikemit",
+          "avatar_url": "https://avatars.githubusercontent.com/u/16205308?v=4"
+        }
+      },
+      {
+        "sha": "06b13655f10980b5485e8d85480c35d290f64b66",
+        "message": "#21501 V5.2.19 修正依頼表対応 No.118",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/06b13655f10980b5485e8d85480c35d290f64b66",
+        "date": "2025-08-21T08:56:54Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      },
+      {
+        "sha": "d2877c807f9b510009f73aa3f1992226aa26eddf",
+        "message": "#20878 LEAD管理者機能対応6 No.347 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/d2877c807f9b510009f73aa3f1992226aa26eddf",
+        "date": "2025-08-21T08:41:06Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "f9372405efc74a5cb6d283b758462881bce67867",
+        "message": "#20878 LEAD管理者機能対応6 No.345 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/f9372405efc74a5cb6d283b758462881bce67867",
+        "date": "2025-08-21T08:17:21Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "fc305f22883ccde514e8bfba310a697b6888f16a",
+        "message": "#20878 LEAD管理者機能対応6 No.343 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/fc305f22883ccde514e8bfba310a697b6888f16a",
+        "date": "2025-08-21T08:04:50Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "d06fd4f46edc9d17ca2c9271bcd3021d7c69eefd",
+        "message": "#21501 V5.2.19 修正依頼表対応No161",
+        "author": "Yuuki-Imai",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/d06fd4f46edc9d17ca2c9271bcd3021d7c69eefd",
+        "date": "2025-08-21T08:01:40Z",
+        "userInfo": {
+          "login": "Yuuki-Imai",
+          "avatar_url": "https://avatars.githubusercontent.com/u/124119907?v=4"
+        }
+      },
+      {
+        "sha": "0cba0fc1bbaade168b1d768122a383325e5b9220",
+        "message": "#21501 V5.2.19 修正依頼表対応 No.85",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/0cba0fc1bbaade168b1d768122a383325e5b9220",
+        "date": "2025-08-21T08:01:15Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      },
+      {
+        "sha": "df94ed438bc2653f7fb43cec78bba4173a7f10d6",
+        "message": "#21501 V5.2.19 修正依頼表対応 No.26",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/df94ed438bc2653f7fb43cec78bba4173a7f10d6",
+        "date": "2025-08-21T07:39:48Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      },
+      {
+        "sha": "e90fc9c8e1261819a7796d97f1ca96d7f7ef1209",
+        "message": "#20878 修正依頼表その6 No.336",
+        "author": "TeradaMomoko",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/e90fc9c8e1261819a7796d97f1ca96d7f7ef1209",
+        "date": "2025-08-21T06:54:38Z",
+        "userInfo": {
+          "login": "TeradaMomoko",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129813720?v=4"
+        }
+      },
+      {
+        "sha": "6ffe4b96290821dcdba02a4cf1768b6e3e0ad18a",
+        "message": "#20878 LEAD管理者機能対応6 No.339 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/6ffe4b96290821dcdba02a4cf1768b6e3e0ad18a",
+        "date": "2025-08-21T06:44:51Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "1b72321ff05ebc00722b2d4f989aad5725147283",
+        "message": "#20878 LEAD管理者機能対応6 No.334 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/1b72321ff05ebc00722b2d4f989aad5725147283",
+        "date": "2025-08-21T04:53:40Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "2663b4feb345fa6c10592540ed24ab8b3a8f0045",
+        "message": "#21501 V5.2.19 修正依頼表対応No154",
+        "author": "ChoNamchul",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/2663b4feb345fa6c10592540ed24ab8b3a8f0045",
+        "date": "2025-08-21T04:46:40Z",
+        "userInfo": {
+          "login": "ChoNamchul",
+          "name": "Cho Namchul",
+          "email": "cho@digitalsheep.co.jp",
+          "avatar_url": "https://avatars.githubusercontent.com/u/209863585?v=4"
+        }
+      },
+      {
+        "sha": "19113ed6148f2f5b01bf336fb5ea2e5a7cc76ed3",
+        "message": "#20953 CAREERSHIPの動画種別の制限",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/19113ed6148f2f5b01bf336fb5ea2e5a7cc76ed3",
+        "date": "2025-08-21T04:45:53Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      },
+      {
+        "sha": "6c07df03d4270df529133afb969b6ad0f7e8e94a",
+        "message": "#21501 V5.2.19 修正依頼表対応No153",
+        "author": "ChoNamchul",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/6c07df03d4270df529133afb969b6ad0f7e8e94a",
+        "date": "2025-08-21T04:09:51Z",
+        "userInfo": {
+          "login": "ChoNamchul",
+          "name": "Cho Namchul",
+          "email": "cho@digitalsheep.co.jp",
+          "avatar_url": "https://avatars.githubusercontent.com/u/209863585?v=4"
+        }
+      },
+      {
+        "sha": "005a12cc046d688cd9a1bbe46fe68f5438f79e35",
+        "message": "#20878 修正依頼表その6 No.200",
+        "author": "TeradaMomoko",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/005a12cc046d688cd9a1bbe46fe68f5438f79e35",
+        "date": "2025-08-21T02:02:57Z",
+        "userInfo": {
+          "login": "TeradaMomoko",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129813720?v=4"
+        }
+      },
+      {
+        "sha": "a2f356754eab42ce839e5a186ff146518515b159",
+        "message": "#21589 【LEAD】インポート時の新しい$BLANK仕様（9月対応）",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/a2f356754eab42ce839e5a186ff146518515b159",
+        "date": "2025-08-21T01:36:18Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      },
+      {
+        "sha": "901565446ad301e7036bdacd02625f18ac45e47c",
+        "message": "#20878 LEAD管理者機能対応6 No.326 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/901565446ad301e7036bdacd02625f18ac45e47c",
+        "date": "2025-08-21T01:27:22Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "15a9d73849454855eced5fa8aa71716edad4e401",
+        "message": "#21264 【受講データ連携】受講データ連携出力設定内容機能で出力条件の検索にOR条件を追加する",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/15a9d73849454855eced5fa8aa71716edad4e401",
+        "date": "2025-08-21T00:38:15Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      },
+      {
+        "sha": "208e3cf379136bc4209675897f42d3e10645a2c7",
+        "message": "モジュール作成（5.2.19_0013）",
+        "author": "ikemit",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/208e3cf379136bc4209675897f42d3e10645a2c7",
+        "date": "2025-08-20T10:16:36Z",
+        "userInfo": {
+          "login": "ikemit",
+          "avatar_url": "https://avatars.githubusercontent.com/u/16205308?v=4"
+        }
+      },
+      {
+        "sha": "250c632cf5817518b77da2fe96944070b586d214",
+        "message": "#20878 修正依頼表その6 No.205",
+        "author": "TeradaMomoko",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/250c632cf5817518b77da2fe96944070b586d214",
+        "date": "2025-08-20T09:57:49Z",
+        "userInfo": {
+          "login": "TeradaMomoko",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129813720?v=4"
+        }
+      },
+      {
+        "sha": "075f21bb1965655875440cbecc8e68c0724e8f87",
+        "message": "#21501 V5.2.19 修正依頼表対応No77",
+        "author": "Yuuki-Imai",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/075f21bb1965655875440cbecc8e68c0724e8f87",
+        "date": "2025-08-20T09:25:26Z",
+        "userInfo": {
+          "login": "Yuuki-Imai",
+          "avatar_url": "https://avatars.githubusercontent.com/u/124119907?v=4"
+        }
+      },
+      {
+        "sha": "e1f70fd6eb8071ea82ce46f13a0ab9f37efe93d2",
+        "message": "#20038 LEAD管理者機能対応その5_4 No56：考慮漏れ対応追加",
+        "author": "jinuSon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/e1f70fd6eb8071ea82ce46f13a0ab9f37efe93d2",
+        "date": "2025-08-20T08:38:55Z",
+        "userInfo": {
+          "login": "jinuSon",
+          "name": "Jinwoo Song",
+          "avatar_url": "https://avatars.githubusercontent.com/u/34912284?v=4"
+        }
+      },
+      {
+        "sha": "2aae5d5926f3aea67a62d268a34a5b115cc6317b",
+        "message": "#20038 LEAD管理者機能対応その5_4 No56：コレクションフェーズ内アイテム進捗更新 （再確認）",
+        "author": "jinuSon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/2aae5d5926f3aea67a62d268a34a5b115cc6317b",
+        "date": "2025-08-20T08:35:54Z",
+        "userInfo": {
+          "login": "jinuSon",
+          "name": "Jinwoo Song",
+          "avatar_url": "https://avatars.githubusercontent.com/u/34912284?v=4"
+        }
+      },
+      {
+        "sha": "ac8cf55ee60bc9a9d523ec90b3c9ce38865d7416",
+        "message": "#20878 LEAD管理者機能対応6 No.32 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/ac8cf55ee60bc9a9d523ec90b3c9ce38865d7416",
+        "date": "2025-08-20T08:25:17Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "3e7b945a71916fbbeb11d90ad3bb27f570204e12",
+        "message": "#20038 LEAD管理者機能対応その5_4 No56：コレクション関連共通処理実装",
+        "author": "jinuSon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/3e7b945a71916fbbeb11d90ad3bb27f570204e12",
+        "date": "2025-08-20T08:07:50Z",
+        "userInfo": {
+          "login": "jinuSon",
+          "name": "Jinwoo Song",
+          "avatar_url": "https://avatars.githubusercontent.com/u/34912284?v=4"
+        }
+      },
+      {
+        "sha": "448111aa3570a409368cc0fbb9034ad2ff70e4ae",
+        "message": "#20985 履歴/申請管理(管理者用)から申請時の質問を更新する際に、設問が縦1行で表されるため見づらい",
+        "author": "YasuhiroOba",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/448111aa3570a409368cc0fbb9034ad2ff70e4ae",
+        "date": "2025-08-20T06:28:14Z",
+        "userInfo": {
+          "login": "YasuhiroOba",
+          "name": "YasuhiroOba",
+          "avatar_url": "https://avatars.githubusercontent.com/u/49141315?v=4"
+        }
+      },
+      {
+        "sha": "3da013b59962c1860777ffb3ea0ce15e95218c8b",
+        "message": "#20888 【レイアウト調整】スタイルのインライン記載箇所修正\t\t\t\t\t",
+        "author": "SakiMimura",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/3da013b59962c1860777ffb3ea0ce15e95218c8b",
+        "date": "2025-08-20T05:57:52Z",
+        "userInfo": {
+          "login": "SakiMimura",
+          "avatar_url": "https://avatars.githubusercontent.com/u/150644410?v=4"
+        }
+      },
+      {
+        "sha": "e9a8c15d830363df6840c0eb85f413b43dd63369",
+        "message": "#21501 V5.2.19 修正依頼表対応 No.133",
+        "author": "sachiko2023",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/e9a8c15d830363df6840c0eb85f413b43dd63369",
+        "date": "2025-08-20T02:14:21Z",
+        "userInfo": {
+          "login": "sachiko2023",
+          "avatar_url": "https://avatars.githubusercontent.com/u/122340071?v=4"
+        }
+      },
+      {
+        "sha": "7f57f850601871b4fedc6c9ae34b8a368cedce3c",
+        "message": "#20878 LEAD管理者機能対応6 No.276 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/7f57f850601871b4fedc6c9ae34b8a368cedce3c",
+        "date": "2025-08-20T02:00:04Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "4456714a41f2877998fc628591a9b1b93f04e4b1",
+        "message": "Merge origin/main into main",
+        "author": "SakiMimura",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/4456714a41f2877998fc628591a9b1b93f04e4b1",
+        "date": "2025-08-20T01:52:45Z",
+        "userInfo": {
+          "login": "SakiMimura",
+          "avatar_url": "https://avatars.githubusercontent.com/u/150644410?v=4"
+        }
+      },
+      {
+        "sha": "746ea7c07e236d4f65337016140c841d72b5f42c",
+        "message": "#20888 【レイアウト調整】スタイルのインライン記載箇所修正\t\t\t\t\t",
+        "author": "SakiMimura",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/746ea7c07e236d4f65337016140c841d72b5f42c",
+        "date": "2025-08-20T01:52:28Z",
+        "userInfo": {
+          "login": "SakiMimura",
+          "avatar_url": "https://avatars.githubusercontent.com/u/150644410?v=4"
+        }
+      },
+      {
+        "sha": "4d65cb3fca067ec93625b87fa7b67d1113f19377",
+        "message": "#20878 修正依頼表その6 No.200",
+        "author": "TeradaMomoko",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/4d65cb3fca067ec93625b87fa7b67d1113f19377",
+        "date": "2025-08-20T01:48:32Z",
+        "userInfo": {
+          "login": "TeradaMomoko",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129813720?v=4"
+        }
+      },
+      {
+        "sha": "2545a31fddd78aece7c5d9f0ebea9471daa7c64b",
+        "message": "#20888 【レイアウト調整】スタイルのインライン記載箇所修正\t\t\t\t\t",
+        "author": "SakiMimura",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/2545a31fddd78aece7c5d9f0ebea9471daa7c64b",
+        "date": "2025-08-20T01:03:04Z",
+        "userInfo": {
+          "login": "SakiMimura",
+          "avatar_url": "https://avatars.githubusercontent.com/u/150644410?v=4"
+        }
+      },
+      {
+        "sha": "a5bcea9984da2f5094c58a6e9fb8fdfa68bbec7c",
+        "message": "モジュール作成（5.2.19_0012）",
+        "author": "ikemit",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/a5bcea9984da2f5094c58a6e9fb8fdfa68bbec7c",
+        "date": "2025-08-19T10:21:03Z",
+        "userInfo": {
+          "login": "ikemit",
+          "avatar_url": "https://avatars.githubusercontent.com/u/16205308?v=4"
+        }
+      },
+      {
+        "sha": "0abf6e0b552b5aae7a1ae3d2a7da3e05a197ae33",
+        "message": "#20878 修正依頼表その6 No.323",
+        "author": "TeradaMomoko",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/0abf6e0b552b5aae7a1ae3d2a7da3e05a197ae33",
+        "date": "2025-08-19T10:12:22Z",
+        "userInfo": {
+          "login": "TeradaMomoko",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129813720?v=4"
+        }
+      },
+      {
+        "sha": "3bc0f93450246ae1cf520f55cd596d75d112835a",
+        "message": "#20888 【レイアウト調整】スタイルのインライン記載箇所修正\t\t\t\t\t",
+        "author": "SakiMimura",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/3bc0f93450246ae1cf520f55cd596d75d112835a",
+        "date": "2025-08-19T09:10:09Z",
+        "userInfo": {
+          "login": "SakiMimura",
+          "avatar_url": "https://avatars.githubusercontent.com/u/150644410?v=4"
+        }
+      },
+      {
+        "sha": "031c382e19604af453d09785b362135314539dfd",
+        "message": "#20888 【レイアウト調整】スタイルのインライン記載箇所修正\t\t\t\t\t",
+        "author": "SakiMimura",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/031c382e19604af453d09785b362135314539dfd",
+        "date": "2025-08-19T09:06:17Z",
+        "userInfo": {
+          "login": "SakiMimura",
+          "avatar_url": "https://avatars.githubusercontent.com/u/150644410?v=4"
+        }
+      },
+      {
+        "sha": "0a94d3ee674931c1f2a9c9a00a71dfed05706598",
+        "message": "#21031 公開メールのリッチテキストエディタ対応 のテストで発見した結果一覧エクスポートが0件障害対応",
+        "author": "sachiko2023",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/0a94d3ee674931c1f2a9c9a00a71dfed05706598",
+        "date": "2025-08-19T07:44:28Z",
+        "userInfo": {
+          "login": "sachiko2023",
+          "avatar_url": "https://avatars.githubusercontent.com/u/122340071?v=4"
+        }
+      },
+      {
+        "sha": "36cf6da7de6c2b2602e57ddcd0b5d662931c1d2e",
+        "message": "#21031 公開メールのリッチテキストエディタ対応 ルーム対応",
+        "author": "sachiko2023",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/36cf6da7de6c2b2602e57ddcd0b5d662931c1d2e",
+        "date": "2025-08-19T07:18:33Z",
+        "userInfo": {
+          "login": "sachiko2023",
+          "avatar_url": "https://avatars.githubusercontent.com/u/122340071?v=4"
+        }
+      },
+      {
+        "sha": "15e1894e9d8ec58311e9d44e95525762f2406d23",
+        "message": "#21031 公開メールのリッチテキストエディタ対応 公開メール不具合対応",
+        "author": "sachiko2023",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/15e1894e9d8ec58311e9d44e95525762f2406d23",
+        "date": "2025-08-19T07:17:34Z",
+        "userInfo": {
+          "login": "sachiko2023",
+          "avatar_url": "https://avatars.githubusercontent.com/u/122340071?v=4"
+        }
+      },
+      {
+        "sha": "edf2d1df58576f5580ada902e0fa2f69643ec9ba",
+        "message": "#21501 V5.2.19 修正依頼表対応 No.47",
+        "author": "WatanabeTomoaki",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/edf2d1df58576f5580ada902e0fa2f69643ec9ba",
+        "date": "2025-08-19T06:33:10Z",
+        "userInfo": {
+          "login": "WatanabeTomoaki",
+          "avatar_url": "https://avatars.githubusercontent.com/u/100738134?v=4"
+        }
+      },
+      {
+        "sha": "d0197b6c40f72b0095b1918ab7a536eb53ef3f99",
+        "message": "#21504 【LEAD】メールのMessage-IDをログに出力 を追加",
+        "author": "WatanabeTomoaki",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/d0197b6c40f72b0095b1918ab7a536eb53ef3f99",
+        "date": "2025-08-19T06:29:46Z",
+        "userInfo": {
+          "login": "WatanabeTomoaki",
+          "avatar_url": "https://avatars.githubusercontent.com/u/100738134?v=4"
+        }
+      },
+      {
+        "sha": "6c638272aee80d230c2f6bdea3b2b52e21ded2c1",
+        "message": "#21504 【LEAD】メールのMessage-IDをログに出力 を追加",
+        "author": "WatanabeTomoaki",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/6c638272aee80d230c2f6bdea3b2b52e21ded2c1",
+        "date": "2025-08-19T06:21:00Z",
+        "userInfo": {
+          "login": "WatanabeTomoaki",
+          "avatar_url": "https://avatars.githubusercontent.com/u/100738134?v=4"
+        }
+      },
+      {
+        "sha": "01d02daebcdbd3e980a899449271d0aa286af8c7",
+        "message": "#20038 LEAD管理者機能対応 5-4 No.149",
+        "author": "YasuhiroOba",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/01d02daebcdbd3e980a899449271d0aa286af8c7",
+        "date": "2025-08-19T01:48:35Z",
+        "userInfo": {
+          "login": "YasuhiroOba",
+          "name": "YasuhiroOba",
+          "avatar_url": "https://avatars.githubusercontent.com/u/49141315?v=4"
+        }
+      },
+      {
+        "sha": "03133d9168676becc217d98e38b9bc5eee65f00e",
+        "message": "#21493 【デザイン調整】eStudio素材／パッケージの作成者ID及びフォルダの一括変更機能\t\t\t\t\t",
+        "author": "SakiMimura",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/03133d9168676becc217d98e38b9bc5eee65f00e",
+        "date": "2025-08-19T01:26:17Z",
+        "userInfo": {
+          "login": "SakiMimura",
+          "avatar_url": "https://avatars.githubusercontent.com/u/150644410?v=4"
+        }
+      },
+      {
+        "sha": "26fb2790a55cd73e34167cbb9594f1472f6f8cca",
+        "message": "#20878 修正依頼表その6 No.200",
+        "author": "TeradaMomoko",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/26fb2790a55cd73e34167cbb9594f1472f6f8cca",
+        "date": "2025-08-19T01:10:10Z",
+        "userInfo": {
+          "login": "TeradaMomoko",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129813720?v=4"
+        }
+      },
+      {
+        "sha": "461f3c5e0837db61f0841ef2562c9421367a0a15",
+        "message": "Javaツールのバージョン更新",
+        "author": "RyoichiNishimura",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/461f3c5e0837db61f0841ef2562c9421367a0a15",
+        "date": "2025-08-19T00:33:19Z",
+        "userInfo": {
+          "login": "RyoichiNishimura",
+          "name": "Ryoichi Nishimura",
+          "avatar_url": "https://avatars.githubusercontent.com/u/13127535?v=4"
+        }
+      },
+      {
+        "sha": "899b03f1db59d993a3b3c7662a54aeb3dd3cc7ff",
+        "message": "モジュール作成（5.2.19_0011）",
+        "author": "ikemit",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/899b03f1db59d993a3b3c7662a54aeb3dd3cc7ff",
+        "date": "2025-08-18T10:03:22Z",
+        "userInfo": {
+          "login": "ikemit",
+          "avatar_url": "https://avatars.githubusercontent.com/u/16205308?v=4"
+        }
+      },
+      {
+        "sha": "20f8c514df9806017412ccd2879f3c59750264ba",
+        "message": "#21501 V5.2.19 修正依頼表対応 No.76",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/20f8c514df9806017412ccd2879f3c59750264ba",
+        "date": "2025-08-18T08:19:25Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      },
+      {
+        "sha": "aca72e2a72adda333824fa8f2d513f56dffd3df2",
+        "message": "#20985 履歴/申請管理(管理者用)から申請時の質問を更新する際に、設問が縦1行で表されるため見づらい",
+        "author": "YasuhiroOba",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/aca72e2a72adda333824fa8f2d513f56dffd3df2",
+        "date": "2025-08-18T08:01:21Z",
+        "userInfo": {
+          "login": "YasuhiroOba",
+          "name": "YasuhiroOba",
+          "avatar_url": "https://avatars.githubusercontent.com/u/49141315?v=4"
+        }
+      },
+      {
+        "sha": "08288bf45897cc6336b36243c1da10d82ba8077e",
+        "message": "#21394 人事連携のファイルアップロード時のリトライの考慮",
+        "author": "morita-ds-dev",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/08288bf45897cc6336b36243c1da10d82ba8077e",
+        "date": "2025-08-18T07:20:54Z",
+        "userInfo": {
+          "login": "morita-ds-dev",
+          "avatar_url": "https://avatars.githubusercontent.com/u/193848784?v=4"
+        }
+      },
+      {
+        "sha": "7782f41624eb5eb7cf7dacba5388b10b747f4a8a",
+        "message": "#20038 LEAD管理者機能対応5-3 No.248 修正",
+        "author": "SuchonKou",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/7782f41624eb5eb7cf7dacba5388b10b747f4a8a",
+        "date": "2025-08-18T07:18:20Z",
+        "userInfo": {
+          "login": "SuchonKou",
+          "avatar_url": "https://avatars.githubusercontent.com/u/143770248?v=4"
+        }
+      },
+      {
+        "sha": "54725f4aebcde43cff30c5855378f4c12ba75ba0",
+        "message": "#20878 修正依頼表その6 No.205",
+        "author": "TeradaMomoko",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/54725f4aebcde43cff30c5855378f4c12ba75ba0",
+        "date": "2025-08-18T06:17:17Z",
+        "userInfo": {
+          "login": "TeradaMomoko",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129813720?v=4"
+        }
+      },
+      {
+        "sha": "d5213bab79e4d3ddac91848c94fb5e4913177fe5",
+        "message": "#21501 V5.2.19 修正依頼表対応 No.72",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/d5213bab79e4d3ddac91848c94fb5e4913177fe5",
+        "date": "2025-08-18T05:01:08Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      },
+      {
+        "sha": "d646caebcf163afb9626135d10939eb8b273f583",
+        "message": "#20795 ガジェットのメッセージの「内容」に記載したURLからのリンクの挙動について",
+        "author": "morita-ds-dev",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/d646caebcf163afb9626135d10939eb8b273f583",
+        "date": "2025-08-18T04:40:18Z",
+        "userInfo": {
+          "login": "morita-ds-dev",
+          "avatar_url": "https://avatars.githubusercontent.com/u/193848784?v=4"
+        }
+      },
+      {
+        "sha": "9891f7d80b6264ff5228aff1a12538357927feb0",
+        "message": "#20038 LEAD管理者機能対応 5-3 No.414",
+        "author": "ratasaka",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/9891f7d80b6264ff5228aff1a12538357927feb0",
+        "date": "2025-08-18T02:59:54Z",
+        "userInfo": {
+          "login": "ratasaka",
+          "name": "heppoko",
+          "avatar_url": "https://avatars.githubusercontent.com/u/112600478?v=4"
+        }
+      },
+      {
+        "sha": "ee3702a25e472763edf2ce59b3a6b4bc92b9a26b",
+        "message": "#21501 V5.2.19 修正依頼表対応 No.96,97",
+        "author": "ManseonJeon",
+        "html_url": "https://github.com/digitalsheep/LEAD/commit/ee3702a25e472763edf2ce59b3a6b4bc92b9a26b",
+        "date": "2025-08-18T02:29:51Z",
+        "userInfo": {
+          "login": "ManseonJeon",
+          "avatar_url": "https://avatars.githubusercontent.com/u/129715220?v=4"
+        }
+      }
+    ],
+    "mergedPRs": [],
+    "openedIssues": [],
+    "closedIssues": []
+  }
+}

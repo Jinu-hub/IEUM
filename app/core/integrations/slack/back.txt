@@ -1,0 +1,227 @@
+// apps/integrations/slack/slackFetch.ts
+import "dotenv/config";
+import { WebClient, LogLevel } from "@slack/web-api";
+import dayjs from "dayjs";
+import fs from "node:fs";
+import path from "node:path";
+
+const token = process.env.SLACK_BOT_TOKEN!;
+if (!token) {
+  console.error("Missing SLACK_BOT_TOKEN");
+  process.exit(1);
+}
+const slack = new WebClient(token, { logLevel: LogLevel.ERROR });
+
+type UserInfo = {
+  id: string;
+  name?: string;
+  real_name?: string;
+  display_name?: string;
+  profile?: {
+    display_name?: string;
+    real_name?: string;
+    email?: string;
+    image_72?: string;
+  };
+};
+
+type FetchedMessage = {
+  ts: string;
+  user?: string;
+  userInfo?: UserInfo;
+  text?: string;
+  permalink?: string;
+  reactions?: { name: string; count: number; users?: string[] }[];
+  files?: { name?: string; url?: string }[];
+  thread?: {
+    replies: FetchedMessage[];
+  };
+};
+
+const TARGET_CHANNELS = (process.env.SLACK_CHANNEL_IDS || "").split(",").filter(Boolean);
+// 예: .env에 SLACK_CHANNEL_IDS=C0123ABCD,C0456EFGH 처럼 넣어두기
+const DAYS = Number(process.env.FETCH_DAYS || 7);
+
+// ユーザー情報キャッシュ
+const userCache = new Map<string, UserInfo>();
+
+async function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function fetchUserInfo(userId: string): Promise<UserInfo | null> {
+  // キャッシュから確認
+  if (userCache.has(userId)) {
+    return userCache.get(userId)!;
+  }
+
+  try {
+    const res = await slack.users.info({ user: userId });
+    if (res.user) {
+      const userInfo: UserInfo = {
+        id: userId,
+        name: (res.user as any).name,
+        real_name: (res.user as any).real_name,
+        display_name: (res.user as any).display_name,
+        profile: {
+          display_name: (res.user as any).profile?.display_name,
+          real_name: (res.user as any).profile?.real_name,
+          email: (res.user as any).profile?.email,
+          image_72: (res.user as any).profile?.image_72,
+        },
+      };
+      
+      // キャッシュに保存
+      userCache.set(userId, userInfo);
+      return userInfo;
+    }
+  } catch (error) {
+    console.warn(`Failed to fetch user info for ${userId}:`, error);
+  }
+  
+  return null;
+}
+
+async function listChannels(): Promise<{ id: string; name: string }[]> {
+  const out: any[] = [];
+  let cursor: string | undefined;
+  do {
+    const res = await slack.conversations.list({
+      types: "public_channel,private_channel",
+      limit: 200,
+      cursor,
+    });
+    out.push(...(res.channels || []));
+    cursor = res.response_metadata?.next_cursor || undefined;
+  } while (cursor);
+  return out.map((c) => ({ id: c.id!, name: (c as any).name }));
+}
+
+async function fetchPermalink(channel: string, ts: string) {
+  const res = await slack.chat.getPermalink({ channel, message_ts: ts });
+  return res.permalink;
+}
+
+async function fetchReplies(channel: string, thread_ts: string, oldest: string): Promise<FetchedMessage[]> {
+  const replies: FetchedMessage[] = [];
+  let cursor: string | undefined;
+  do {
+    const res = await slack.conversations.replies({
+      channel,
+      ts: thread_ts,
+      oldest,
+      limit: 200,
+      cursor,
+      include_all_metadata: true as any,
+    });
+    for (const m of res.messages ?? []) {
+      const userId = (m as any).user;
+      const userInfo = userId ? await fetchUserInfo(userId) : null;
+      
+      replies.push({
+        ts: m.ts!,
+        user: userId,
+        userInfo: userInfo || undefined,
+        text: m.text,
+        reactions: (m.reactions as any)?.map((r: any) => ({
+          name: r.name,
+          count: r.count,
+          users: r.users,
+        })),
+        files: (m.files as any)?.map((f: any) => ({ name: f.name, url: f.url_private })),
+      });
+    }
+    cursor = (res.response_metadata?.next_cursor as string) || undefined;
+    if (cursor) await sleep(350); // rate-limit 여유
+  } while (cursor);
+  return replies;
+}
+
+async function fetchChannelMessages(channel: string, oldestTs: string): Promise<FetchedMessage[]> {
+  const collected: FetchedMessage[] = [];
+  let cursor: string | undefined;
+
+  do {
+    try {
+      const res = await slack.conversations.history({
+        channel,
+        oldest: oldestTs,
+        limit: 200,
+        cursor,
+        include_all_metadata: true as any,
+      });
+
+      for (const m of res.messages ?? []) {
+        const userId = (m as any).user;
+        const userInfo = userId ? await fetchUserInfo(userId) : null;
+        
+        const base: FetchedMessage = {
+          ts: m.ts!,
+          user: userId,
+          userInfo: userInfo || undefined,
+          text: m.text,
+          reactions: (m.reactions as any)?.map((r: any) => ({
+            name: r.name,
+            count: r.count,
+            users: r.users,
+          })),
+          files: (m.files as any)?.map((f: any) => ({ name: f.name, url: f.url_private })),
+        };
+
+        // 스레드가 있으면 replies 수집
+        const thread_ts = (m as any).thread_ts;
+        if (thread_ts) {
+          base.thread = { replies: await fetchReplies(channel, thread_ts, oldestTs) };
+        }
+
+        // 퍼말링크
+        base.permalink = await fetchPermalink(channel, m.ts!);
+
+        collected.push(base);
+      }
+
+      cursor = res.response_metadata?.next_cursor || undefined;
+      if (cursor) await sleep(350);
+    } catch (e: any) {
+      if (e.data?.error === "ratelimited") {
+        const retry = Number(e.data?.headers?.["retry-after"] || 3) * 1000;
+        console.warn("429 ratelimited. wait", retry, "ms");
+        await sleep(retry);
+      } else {
+        console.error("history error:", e);
+        break;
+      }
+    }
+  } while (cursor);
+
+  return collected;
+}
+
+async function main() {
+  const now = dayjs();
+  const oldestTs = now.subtract(DAYS, "day").unix().toString();
+
+  const channelsToFetch = TARGET_CHANNELS.length
+    ? TARGET_CHANNELS
+    : (await listChannels()).slice(0, 3).map((c) => c.id); // 지정 없으면 샘플 3개
+
+  const result: Record<string, FetchedMessage[]> = {};
+  for (const ch of channelsToFetch) {
+    console.log("⏬ fetch channel:", ch);
+    result[ch] = await fetchChannelMessages(ch, oldestTs);
+  }
+
+  // 파일 저장(JSON) — DB 연동 전 임시 아웃풋
+  const fs = await import("node:fs");
+  const outDir = process.env.OUT_DIR || "output";
+  fs.mkdirSync(outDir, { recursive: true });
+  
+  const outputFile = path.join(outDir, "slack_raw.json");
+  fs.writeFileSync(outputFile, JSON.stringify(result, null, 2), "utf-8");
+  console.log(`✔ saved: ${outputFile}`);
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
