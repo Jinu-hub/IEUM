@@ -1,0 +1,148 @@
+slack_hunter_agent:
+  role: >
+    Slack Conversation & Activity Collector
+  goal: >
+    Collect and structure important Slack conversations, threads, and reactions,
+    filtering out irrelevant chatter.
+  backstory: >
+    You are an expert at analyzing workplace communications.
+    You can detect key issues and decisions within noisy daily discussions
+    and provide clean structured input for newsletters.
+  verbose: true
+  inject_date: true
+  llm: openai/o4-mini-2025-04-16
+
+  org_context:
+    timezone: "Asia/Tokyo"
+    default_locale: "ja"
+    fallback_locale: "en"
+  guardrails:
+    pii_mask: true
+    redact_regex:
+      - "(?i)(api[_-]?key|secret|token)\\s*[:=]\\s*\\S+"
+    external_link_policy: "internal-first"
+  input_assumptions:
+    data_source: "file"
+    schema_strict: true
+  collection_controls:
+    allowlist:
+      slack_channels: ["LEAD開発全体", "チームD3"]
+    window:
+      lookback_hours: 168
+    dedupe:
+      by: ["permalink"]
+      fuzzy_threshold: 0.92
+    scoring_weights:
+      reactions: 0.35
+      thread_length: 0.30
+      mentions: 0.20
+      keywords: 0.15
+  llm_controls:
+    temperature: 0.2
+    top_p: 0.9
+    max_tokens: 4000
+
+github_hunter_agent:
+  role: >
+    GitHub Commit & Issue Collector
+  goal: >
+    Collect pull requests, commits, and issues from designated repositories,
+    enriching them with contributor and context details.
+  backstory: >
+    You specialize in tracking and interpreting software development activities.
+    You can identify meaningful changes and highlight feature progress
+    instead of just dumping raw logs.
+  verbose: true
+  inject_date: true
+  llm: openai/o4-mini-2025-04-16
+
+  org_context:
+    timezone: "Asia/Tokyo"
+    default_locale: "ja"
+    fallback_locale: "en"
+  guardrails:
+    pii_mask: true
+    redact_regex:
+      - "(?i)(api[_-]?key|secret|token)\\s*[:=]\\s*\\S+"
+    external_link_policy: "internal-first"
+  input_assumptions:
+    data_source: "file"
+    schema_strict: true
+  collection_controls:
+    allowlist:
+      repos: ["org/repo1", "org/repo2"]
+    window:
+      lookback_hours: 168
+    dedupe:
+      by: ["sha"]
+      fuzzy_threshold: 0.92
+    scoring_weights:
+      commit_frequency: 0.30
+      issue_links: 0.30
+      keywords: 0.40
+  llm_controls:
+    temperature: 0.2
+    top_p: 0.9
+    max_tokens: 4000
+
+summarizer_agent:
+  role: >
+    Internal Report Summarizer
+  goal: >
+    Transform Slack and GitHub data into multi-level summaries
+    (one-liner, team briefing, comprehensive).
+  backstory: >
+    You are an analyst familiar with internal reporting culture.
+    You can distill complex activity logs into concise, insightful updates
+    any team member can quickly grasp.
+  verbose: true
+  inject_date: true
+  llm: openai/o4-mini-2025-04-16
+
+  org_context:
+    timezone: "Asia/Tokyo"
+    default_locale: "ja"
+    fallback_locale: "en"
+  guardrails:
+    pii_mask: true
+    redact_regex:
+      - "(?i)(api[_-]?key|secret|token)\\s*[:=]\\s*\\S+"
+  summarization_prefs:
+    levels: ["one_liner", "team_brief", "comprehensive"]
+    tone: "objective"
+    bilingual: true
+    include_links: true
+  llm_controls:
+    temperature: 0.3
+    top_p: 0.9
+    max_tokens: 6000
+
+curator_agent:
+  role: >
+    Newsletter Edition Curator
+  goal: >
+    Assemble Slack/GitHub summaries into a polished,
+    coherent newsletter edition with logical flow.
+  backstory: >
+    You are the chief editor of the internal newsletter.
+    You know how to prioritize, group, and write editorial transitions
+    that keep readers engaged and informed.
+  verbose: true
+  inject_date: true
+  llm: openai/o4-mini-2025-04-16
+
+  org_context:
+    timezone: "Asia/Tokyo"
+    default_locale: "ja"
+    fallback_locale: "en"
+  guardrails:
+    pii_mask: true
+  curation_prefs:
+    section_order: ["Key Issues", "Work in Progress", "Looking Ahead", "Editor’s Note"]
+    headline_style: "concise"
+    max_items_per_section: 6
+    add_editorial_transitions: true
+  llm_controls:
+    temperature: 0.25
+    top_p: 0.9
+    max_tokens: 5000

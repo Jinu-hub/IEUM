@@ -1,0 +1,173 @@
+slack_collection_task:
+  description: >
+    Ingest an existing Slack raw JSON (e.g., slack_raw.json) and
+    structure conversations, threads, and reactions for {team/project}.
+    (No new crawling/search.)
+
+    Input schema (example):
+    - message fields: ts, userInfo(id/name), text, reactions[], thread(replies[]), permalink
+      per provided sample. :contentReference[oaicite:6]{index=6} :contentReference[oaicite:7]{index=7}
+
+    Steps:
+    1) Normalize: ts→ISO time; userInfo→display name; thread.reply_count
+    2) Noise filter: drop/low‑weight empty auto posts
+    3) Topic detection: Redmine/issue links, keywords (e.g., LEAD, 修正依頼表)
+    4) Importance scoring: reactions + thread length + mentions + keyword match
+    5) Categorize: Announcement / Issue Discussion / Progress / Q&A / Decision
+    6) Relevance scoring to {team/project}
+
+  expected_output: >
+    # Slack Activity Collection: {team/project}
+
+    **Collection Summary**
+    - Messages:
+    - Threads (with replies):
+    - Total reactions:
+    - After filtering:
+    - Collected at:
+
+    ---
+
+    ## Message 1
+    **Author:**  
+    **Time:**  
+    **One‑line gist:**  
+    **Reactions/Thread:** 👍xN · N replies  
+    **Category:** Announcement/Discussion/Decision …  
+    **Links:** [Permalink]  
+    ---
+  agent: slack_hunter_agent
+  input_file: input/slack_raw.json
+  markdown: true
+  output_file: output/slack_collection.md
+  create_directory: true
+
+github_collection_task:
+  description: >
+    Ingest an existing GitHub raw JSON (e.g., github_raw.json) and
+    structure commits/PR/issue activity for {team/project}. (No new API calls.)
+
+    Input schema (example):
+    - commits[].{ sha, message, author, html_url, date, userInfo }, etc.,
+      per provided sample. :contentReference[oaicite:8]{index=8}
+
+    Steps:
+    1) Normalize: date→ISO; merge author/userInfo for display
+    2) Detect issue/ticket refs from messages (#12345, 修正依頼表)
+    3) Change typing: tags like 修正/出力対応/ログ/バージョン
+    4) Contributor rollup: counts per author, link to html_url
+    5) Relevance scoring to {team/project}
+
+  expected_output: >
+    # GitHub Activity Collection: {team/project}
+
+    **Collection Summary**
+    - Commits:
+    - Detected PR/Issue refs:
+    - Contributors:
+    - Collected at:
+
+    ---
+
+    ## Item 1 (Commit)
+    **SHA:** …  
+    **Message:** … (highlight ticket IDs)  
+    **Author:** …  
+    **Time:** …  
+    **Link:** …  
+    **Tags:** 修正/機能改修/出力/ログ/バージョン …  
+    ---
+  agent: github_hunter_agent
+  input_file: input/github_raw.json
+  markdown: true
+  output_file: output/github_collection.md
+  create_directory: true
+
+internal_summarization_task:
+  description: >
+    Generate multi‑level summaries based on the two collection outputs
+    (slack_collection.md, github_collection.md) and the key context found
+    in the original JSONs.
+
+    Levels:
+    1) **One‑liner (≤150 chars)** — decision/outcome
+    2) **Team Briefing (150–200 words)** — significance/impact/risks/next steps
+    3) **Comprehensive (400–600 words)** — background, discussion flow, stakeholders
+
+    Principles:
+    - Accuracy, objectivity, privacy (mask sensitive details)
+    - Attach helpful links (Slack permalinks, commit URLs)
+
+  expected_output: >
+    # Internal Activity Summaries: {team/project}
+
+    **Overview**
+    - Items processed:
+    - Generated at:
+
+    ---
+
+    ## Item 1: [Topic/Issue/Feature]
+    **Source:** Slack/GitHub  
+    **People:** …  
+    **Links:** [Slack] [Commit/Issue]
+
+    ### ✏ One‑liner
+    …
+
+    ### 📋 Team Briefing
+    …
+
+    ### 📖 Comprehensive
+    …
+
+    **Key Takeaways**
+    - Progress:
+    - Risks/Blockers:
+    - Next steps:
+    ---
+  agent: summarizer_agent
+  markdown: true
+  output_file: output/internal_summary.md
+  create_directory: true
+
+newsletter_assembly_task:
+  description: >
+    Assemble the weekly internal newsletter from the summaries,
+    applying editorial structure (sections, order, transitions) with intro/closing.
+
+  expected_output: >
+    # Weekly Internal Newsletter: {team/project}
+
+    **Date of Issue:**  
+    **Generated:**  
+    **Stories Covered:**  
+
+    ## 📰 This Week’s Highlights
+    …
+
+    ---
+
+    ## 🚩 Key Issues
+    ### [Issue Title]
+    [Team Briefing or Comprehensive]
+    **Source:** Slack/GitHub · [Link]
+
+    ---
+
+    ## ⚙ Work in Progress
+    - …
+
+    ---
+
+    ## 🌱 Looking Ahead
+    - …
+
+    ---
+
+    ## ✨ Editor’s Note
+    …
+  agent: curator_agent
+  markdown: true
+  output_file: output/final_internal_newsletter.md
+  create_directory: true
