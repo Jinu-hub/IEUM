@@ -120,16 +120,16 @@ const data = {
       icon: Settings2Icon,
       items: [
         {
+          title: "Integrations",
+          url: "/settings/integrations",
+        },
+        {
           title: "Workspace",
           url: "#",
         },
         {
           title: "Team",
           url: "#",
-        },
-        {
-          title: "Integrations",
-          url: "/settings/integrations",
         },
       ],
     },

@@ -44,19 +44,46 @@ export async function fetchUserInfo(slack: WebClient, userId: string): Promise<U
   return p;
 }
 
-export async function listChannels(slack: WebClient): Promise<{ id: string; name: string }[]> {
+export async function listChannels(slack: WebClient): Promise<{ id: string; name: string; is_private: boolean; is_member: boolean }[]> {
   const out: any[] = [];
   let cursor: string | undefined;
-  do {
-    const res = await slack.conversations.list({
-      types: "public_channel,private_channel",
-      limit: 200,
-      cursor,
+  
+  try {
+    // 1. 기본 conversations.list (Bot이 멤버인 채널들)
+    do {
+      const res = await slack.conversations.list({
+        types: "public_channel,private_channel",
+        limit: 200,
+        cursor,
+        exclude_archived: true,
+      });
+
+      // 봇이 멤버인 채널
+      /*
+      const accessibleChannels = (res.channels || []).filter((c: any) => 
+        c.is_member
+      );
+      */
+      out.push(...(res.channels || []));
+      cursor = res.response_metadata?.next_cursor || undefined;
+    } while (cursor);
+
+    const mappedChannels = out.map((c) => {
+      console.log('Channel:', c.name, 'is_member:', c.is_member);
+      return { 
+        id: c.id!, 
+        name: c.name,
+        is_private: c.is_private || false,
+        is_member: c.is_member || false
+      };
     });
-    out.push(...(res.channels || []));
-    cursor = res.response_metadata?.next_cursor || undefined;
-  } while (cursor);
-  return out.map((c) => ({ id: c.id!, name: (c as any).name }));
+    
+    return mappedChannels;
+    
+  } catch (error: any) {
+    logger.error('Error in listChannels', { error: error.message });
+    return [];
+  }
 }
 
 export async function fetchPermalink(slack: WebClient, channel: string, ts: string) {
