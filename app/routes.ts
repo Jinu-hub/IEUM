@@ -105,6 +105,7 @@ export default [
       ...prefix("/settings", [
         route("/integrations", "features/settings/screens/integrations.tsx"),
         route("/targets", "features/settings/screens/targets.tsx"),
+        route("/target/:targetId", "features/settings/screens/target-detail.tsx"),
       ]),
       route("/account/edit", "features/users/screens/account.tsx"),
     ]),

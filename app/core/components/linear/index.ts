@@ -15,4 +15,5 @@ export * from './linear-image-card';
 export * from './linear-navbar';
 export * from './linear-footer';
 export * from './linear-hero';
+export * from './linear-toggle';
 export * from './linear-icons';

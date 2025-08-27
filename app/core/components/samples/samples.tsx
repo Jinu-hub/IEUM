@@ -20,7 +20,8 @@ import {
   LinearProductCard,
   LinearNavbar,
   LinearFooter,
-  LinearHero
+  LinearHero,
+  LinearToggle
 } from '~/core/components/linear';
 import { Search, Bell, Home, User, Settings, Github, Twitter, Mail, Play, Star, Zap, Users, Award } from 'lucide-react';
 
@@ -28,6 +29,13 @@ export default function SamplesPage() {
   const [inputValue, setInputValue] = useState('');
   const [textareaValue, setTextareaValue] = useState('');
   const [progress, setProgress] = useState(65);
+  
+  // Toggle states
+  const [basicToggle, setBasicToggle] = useState(false);
+  const [notificationToggle, setNotificationToggle] = useState(true);
+  const [darkModeToggle, setDarkModeToggle] = useState(false);
+  const [maintenanceToggle, setMaintenanceToggle] = useState(false);
+  const [privacyToggle, setPrivacyToggle] = useState(true);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] py-12 px-4">
@@ -303,6 +311,183 @@ export default function SamplesPage() {
             </LinearCardContent>
           </LinearCard>
         </div>
+
+        {/* Toggle Section */}
+        <LinearCard className="mb-8">
+          <LinearCardHeader>
+            <LinearCardTitle>토글 컴포넌트</LinearCardTitle>
+            <LinearCardDescription>
+              설정이나 상태를 온/오프로 전환하는 토글 스위치입니다.
+            </LinearCardDescription>
+          </LinearCardHeader>
+          <LinearCardContent>
+            <div className="space-y-8">
+              {/* Basic Toggles */}
+              <div>
+                <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">기본 토글</h4>
+                <div className="space-y-4">
+                  <LinearToggle
+                    checked={basicToggle}
+                    onChange={setBasicToggle}
+                    label="기본 토글"
+                  />
+                  
+                  <LinearToggle
+                    checked={notificationToggle}
+                    onChange={setNotificationToggle}
+                    label="알림 받기"
+                    labelPosition="left"
+                  />
+                  
+                  <LinearToggle
+                    checked={false}
+                    disabled
+                    label="비활성화됨"
+                  />
+                </div>
+              </div>
+
+              {/* Toggle Sizes */}
+              <div>
+                <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">크기별 토글</h4>
+                <div className="flex items-center gap-6">
+                  <LinearToggle
+                    size="sm"
+                    checked={basicToggle}
+                    onChange={setBasicToggle}
+                    label="Small"
+                  />
+                  
+                  <LinearToggle
+                    size="md"
+                    checked={notificationToggle}
+                    onChange={setNotificationToggle}
+                    label="Medium"
+                  />
+                  
+                  <LinearToggle
+                    size="lg"
+                    checked={darkModeToggle}
+                    onChange={setDarkModeToggle}
+                    label="Large"
+                  />
+                </div>
+              </div>
+
+              {/* Toggle Variants */}
+              <div>
+                <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">변형별 토글</h4>
+                <div className="space-y-4">
+                  <LinearToggle
+                    variant="default"
+                    checked={basicToggle}
+                    onChange={setBasicToggle}
+                    label="기본 (Default)"
+                  />
+                  
+                  <LinearToggle
+                    variant="success"
+                    checked={notificationToggle}
+                    onChange={setNotificationToggle}
+                    label="성공 (Success)"
+                  />
+                  
+                  <LinearToggle
+                    variant="warning"
+                    checked={darkModeToggle}
+                    onChange={setDarkModeToggle}
+                    label="경고 (Warning)"
+                  />
+                  
+                  <LinearToggle
+                    variant="error"
+                    checked={maintenanceToggle}
+                    onChange={setMaintenanceToggle}
+                    label="에러 (Error)"
+                  />
+                </div>
+              </div>
+
+              {/* Real-world Examples */}
+              <div>
+                <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">실제 사용 예시</h4>
+                <div className="space-y-6">
+                  {/* Settings Group */}
+                  <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-3">개인정보 설정</h5>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-[#0D0E10] dark:text-[#FFFFFF]">프로필 공개</p>
+                          <p className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">다른 사용자가 내 프로필을 볼 수 있습니다</p>
+                        </div>
+                        <LinearToggle
+                          checked={privacyToggle}
+                          onChange={setPrivacyToggle}
+                          variant="success"
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-[#0D0E10] dark:text-[#FFFFFF]">이메일 알림</p>
+                          <p className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">중요한 업데이트를 이메일로 받습니다</p>
+                        </div>
+                        <LinearToggle
+                          checked={notificationToggle}
+                          onChange={setNotificationToggle}
+                          variant="default"
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-[#0D0E10] dark:text-[#FFFFFF]">다크 모드</p>
+                          <p className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">어두운 테마를 사용합니다</p>
+                        </div>
+                        <LinearToggle
+                          checked={darkModeToggle}
+                          onChange={setDarkModeToggle}
+                          variant="default"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Admin Controls */}
+                  <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-3">시스템 관리</h5>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-[#0D0E10] dark:text-[#FFFFFF]">유지보수 모드</p>
+                          <p className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">사이트를 유지보수 모드로 전환합니다</p>
+                        </div>
+                        <LinearToggle
+                          checked={maintenanceToggle}
+                          onChange={setMaintenanceToggle}
+                          variant="warning"
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between opacity-50">
+                        <div>
+                          <p className="text-sm text-[#0D0E10] dark:text-[#FFFFFF]">자동 백업</p>
+                          <p className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">일일 자동 백업을 활성화합니다</p>
+                        </div>
+                        <LinearToggle
+                          checked={true}
+                          disabled
+                          variant="success"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </LinearCardContent>
+        </LinearCard>
 
         {/* Progress Section */}
         <LinearCard className="mb-8">

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { 
   LinearCard, 
   LinearCardTitle, 
@@ -75,6 +76,7 @@ const formatLastSent = (lastSentAt?: string): string => {
 
 export default function TargetsScreen() {
   const [targets, setTargets] = useState<TargetData[]>(sampleTargets);
+  const navigate = useNavigate();
 
   // 활성 상태 토글
   const toggleTargetActive = (targetId: string) => {
@@ -89,8 +91,12 @@ export default function TargetsScreen() {
 
   // 타겟 추가 핸들러
   const handleAddTarget = () => {
-    // TODO: 타겟 추가 모달 또는 페이지로 이동
-    console.log("타겟 추가 구현 예정");
+    navigate('/settings/target/new');
+  };
+
+  // 타겟 카드 클릭 핸들러
+  const handleTargetCardClick = (targetId: string) => {
+    navigate(`/settings/target/${targetId}`);
   };
 
   // 타겟 삭제 핸들러
@@ -103,8 +109,7 @@ export default function TargetsScreen() {
 
   // 타겟 편집 핸들러
   const handleEditTarget = (targetId: string) => {
-    // TODO: 타겟 편집 모달 또는 페이지로 이동
-    console.log("타겟 편집:", targetId);
+    navigate(`/settings/target/${targetId}`);
   };
 
   // 타겟 복사 핸들러
@@ -159,7 +164,8 @@ export default function TargetsScreen() {
                 key={target.targetId} 
                 variant="elevated" 
                 hoverable
-                className="transition-all duration-200"
+                className="transition-all duration-200 cursor-pointer"
+                onClick={() => handleTargetCardClick(target.targetId)}
               >
                 <LinearCardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -168,7 +174,10 @@ export default function TargetsScreen() {
                       {/* 활성 상태 인디케이터 */}
                       <div className="flex flex-col items-center space-y-2">
                         <button
-                          onClick={() => toggleTargetActive(target.targetId)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleTargetActive(target.targetId);
+                          }}
                           className={cn(
                             "p-2 rounded-full transition-colors duration-200",
                             target.isActive 
@@ -240,8 +249,8 @@ export default function TargetsScreen() {
                       </div>
                     </div>
 
-                                        {/* 우측: 액션 버튼 */}
-                    <div className="flex items-center space-x-2 ml-4">
+                                         {/* 우측: 액션 버튼 */}
+                    <div className="flex items-center space-x-2 ml-4" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <LinearButton
