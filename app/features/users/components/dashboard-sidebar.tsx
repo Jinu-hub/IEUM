@@ -124,8 +124,8 @@ const data = {
           url: "/settings/integrations",
         },
         {
-          title: "Workspace",
-          url: "#",
+          title: "Targets",
+          url: "/settings/targets",
         },
         {
           title: "Team",

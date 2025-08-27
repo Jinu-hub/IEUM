@@ -69,7 +69,7 @@ export async function listChannels(slack: WebClient): Promise<{ id: string; name
     } while (cursor);
 
     const mappedChannels = out.map((c) => {
-      console.log('Channel:', c.name, 'is_member:', c.is_member);
+      //console.log('Channel:', c.name, 'is_private:', c.is_private);
       return { 
         id: c.id!, 
         name: c.name,
