@@ -16,5 +16,24 @@ export interface IntegrationSource {
     integrationId: string;
     sourceType: string; // 'github_repo' | 'slack_channel'
     sourceIdent: string; // repo name or channel name
-    }
+}
+
+// 메일 리스트 데이터 타입
+export interface MailListData {
+    mailingListId: string;
+    workspaceId: string;
+    name: string;
+    description?: string;
+    createdAt: string;
+    memberCount?: number; // 멤버 수 (계산된 값)
+}
+
+// 메일 리스트 멤버 데이터 타입
+export interface MailListMemberData {
+    mailingListId: string;
+    email: string;
+    displayName?: string;
+    metaJson: Record<string, any>;
+    createdAt: string;
+}
   

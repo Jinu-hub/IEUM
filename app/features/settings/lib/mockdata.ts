@@ -1,4 +1,4 @@
-import type { TargetData } from "../lib/types";
+import type { TargetData, MailListData, MailListMemberData } from "../lib/types";
 
 // 샘플 데이터
 export const sampleTargets: TargetData[] = [
@@ -96,3 +96,100 @@ export const sampleMailingLists = [
     value: (i + 1).toString(),
     label: `${i + 1}일`
   }));
+
+// 메일 리스트 샘플 데이터 (확장)
+export const sampleMailLists: MailListData[] = [
+  {
+    mailingListId: "1",
+    workspaceId: "workspace-1",
+    name: "Tech Newsletter",
+    description: "최신 기술 동향과 개발 소식을 전하는 뉴스레터",
+    createdAt: "2024-12-01T09:00:00Z",
+    memberCount: 1250
+  },
+  {
+    mailingListId: "2", 
+    workspaceId: "workspace-1",
+    name: "Product Updates",
+    description: "제품 업데이트와 새로운 기능 소개",
+    createdAt: "2024-11-15T10:00:00Z",
+    memberCount: 850
+  },
+  {
+    mailingListId: "3",
+    workspaceId: "workspace-1", 
+    name: "Emergency Alerts",
+    description: "긴급 공지사항 및 중요 알림",
+    createdAt: "2024-10-20T14:30:00Z",
+    memberCount: 2100
+  },
+  {
+    mailingListId: "4",
+    workspaceId: "workspace-1",
+    name: "Weekly Digest", 
+    description: "주간 요약 및 하이라이트",
+    createdAt: "2025-01-05T08:00:00Z",
+    memberCount: 680
+  },
+  {
+    mailingListId: "5",
+    workspaceId: "workspace-1",
+    name: "Marketing Updates",
+    description: "마케팅 캠페인 및 이벤트 소식",
+    createdAt: "2024-12-10T11:00:00Z", 
+    memberCount: 420
+  }
+];
+
+// 메일 리스트 멤버 샘플 데이터
+export const sampleMailListMembers: MailListMemberData[] = [
+  {
+    mailingListId: "1",
+    email: "john.doe@example.com",
+    displayName: "John Doe",
+    metaJson: { source: "signup_form", tags: ["developer", "senior"] },
+    createdAt: "2024-12-15T09:30:00Z"
+  },
+  {
+    mailingListId: "1", 
+    email: "jane.smith@company.com",
+    displayName: "Jane Smith",
+    metaJson: { source: "import", tags: ["manager", "frontend"] },
+    createdAt: "2024-12-12T14:20:00Z"
+  },
+  {
+    mailingListId: "1",
+    email: "mike.wilson@tech.io",
+    displayName: "Mike Wilson", 
+    metaJson: { source: "api", tags: ["backend", "junior"] },
+    createdAt: "2024-12-10T16:45:00Z"
+  },
+  {
+    mailingListId: "1",
+    email: "sarah.johnson@startup.com",
+    displayName: "Sarah Johnson",
+    metaJson: { source: "signup_form", tags: ["fullstack", "lead"] },
+    createdAt: "2024-12-08T11:15:00Z"
+  },
+  {
+    mailingListId: "1",
+    email: "alex.brown@design.co",
+    displayName: "Alex Brown",
+    metaJson: { source: "import", tags: ["designer", "ui"] },
+    createdAt: "2024-12-05T13:00:00Z"
+  },
+  {
+    mailingListId: "2",
+    email: "tom.davis@product.com",
+    displayName: "Tom Davis",
+    metaJson: { source: "signup_form", tags: ["product_manager"] },
+    createdAt: "2024-11-20T10:00:00Z"
+  },
+  {
+    mailingListId: "2",
+    email: "lisa.garcia@company.org",
+    displayName: "Lisa Garcia", 
+    metaJson: { source: "api", tags: ["analyst"] },
+    createdAt: "2024-11-18T15:30:00Z"
+  }
+];

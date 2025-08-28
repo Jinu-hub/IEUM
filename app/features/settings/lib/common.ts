@@ -232,3 +232,76 @@ export function getSourceTypeLabel(integrationType: 'github' | 'slack'): string 
       return '소스';
   }
 }
+
+// 날짜 포맷 함수
+export function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  
+  if (diffInDays < 7) {
+    return `${diffInDays}일 전`;
+  } else if (diffInDays < 30) {
+    const weeks = Math.floor(diffInDays / 7);
+    return `${weeks}주 전`;
+  } else {
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+};
+
+// 날짜 포맷 함수
+export function formatDateShort(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  
+  if (diffInDays < 1) {
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    return diffInHours < 1 ? '방금 전' : `${diffInHours}시간 전`;
+  } else if (diffInDays < 7) {
+    return `${diffInDays}일 전`;
+  } else {
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+};
+
+
+// 멤버 수 포맷 함수
+export function formatMemberCount(count: number): string {
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1)}k`;
+  }
+  return count.toString();
+};
+
+// 소스 라벨 함수
+export function getSourceLabel(source: string): string {
+  const labels: Record<string, string> = {
+    'signup_form': '가입 폼',
+    'import': '가져오기',
+    'api': 'API',
+    'manual': '수동 추가'
+  };
+  return labels[source] || source;
+};
+
+// 소스 색상 함수
+export function getSourceVariant(source: string): "success" | "info" | "warning" | "secondary" {
+  const variants: Record<string, "success" | "info" | "warning" | "secondary"> = {
+    'signup_form': 'success',
+    'import': 'info', 
+    'api': 'warning',
+    'manual': 'secondary'
+  };
+  return variants[source] || 'secondary';
+};

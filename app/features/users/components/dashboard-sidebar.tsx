@@ -128,8 +128,8 @@ const data = {
           url: "/settings/targets",
         },
         {
-          title: "Team",
-          url: "#",
+          title: "Mail List",
+          url: "/settings/mail-list",
         },
       ],
     },

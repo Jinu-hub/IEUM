@@ -106,6 +106,8 @@ export default [
         route("/integrations", "features/settings/screens/integrations.tsx"),
         route("/targets", "features/settings/screens/targets.tsx"),
         route("/target/:targetId", "features/settings/screens/target-detail.tsx"),
+        route("/mail-list", "features/settings/screens/mail-list.tsx"),
+        route("/mail-list/:mailListId", "features/settings/screens/mail-list-members.tsx"),
       ]),
       route("/account/edit", "features/users/screens/account.tsx"),
     ]),
