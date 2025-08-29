@@ -92,14 +92,15 @@ const data = {
       ],
     },
     {
-      title: "Sales",
+      title: "Contents",
       url: "#",
       icon: LineChartIcon,
       items: [
         {
-          title: "Pipeline",
-          url: "#",
+          title: "Sent Mail",
+          url: "/contents/sent-mail",
         },
+        /*
         {
           title: "Opportunities",
           url: "#",
@@ -112,6 +113,7 @@ const data = {
           title: "Invoices",
           url: "#",
         },
+        */
       ],
     },
     {

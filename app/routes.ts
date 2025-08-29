@@ -102,6 +102,17 @@ export default [
         index("features/users/screens/dashboard.tsx"),
         route("/payments", "features/payments/screens/payments.tsx"),
       ]),
+      ...prefix("/contents", [
+        route("/sent-mail", "features/contents/screens/sent-mail.tsx"),
+        /*
+        route("/sent-mail/:sentMailId", "features/contents/screens/sent-mail-detail.tsx"),
+        
+        route("/opportunities", "features/content/screens/opportunities.tsx"),
+        route("/quotes", "features/content/screens/quotes.tsx"),
+        route("/invoices", "features/content/screens/invoices.tsx"),
+        route("/deals", "features/content/screens/deals.tsx"),
+        */
+      ]),
       ...prefix("/settings", [
         route("/integrations", "features/settings/screens/integrations.tsx"),
         route("/targets", "features/settings/screens/targets.tsx"),
