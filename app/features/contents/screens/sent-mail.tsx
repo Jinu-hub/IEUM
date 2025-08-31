@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { 
   LinearCard, 
   LinearCardContent,
@@ -64,6 +65,7 @@ const getStatusConfig = (status: EmailStatus) => {
 };
 
 export default function SentMailScreen() {
+  const navigate = useNavigate();
   const [sentEmails, setSentEmails] = useState<SentEmailData[]>(sampleSentEmails);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -82,20 +84,28 @@ export default function SentMailScreen() {
     return matchesSearch && matchesStatus;
   });
 
+  // 메일 상세 페이지로 이동 핸들러
+  const handleEmailRowClick = (emailId: string) => {
+    navigate(`/contents/sent-mail/${emailId}`);
+  };
+
   // 메일 재발송 핸들러
-  const handleResendEmail = (emailId: string) => {
+  const handleResendEmail = (emailId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // 행 클릭 이벤트 버블링 방지
     console.log('메일 재발송:', emailId);
     // TODO: 메일 재발송 로직 구현
   };
 
   // 메일 ID 복사 핸들러
-  const handleCopyId = (messageId: string) => {
+  const handleCopyId = (messageId: string, event?: React.MouseEvent) => {
+    if (event) event.stopPropagation(); // 행 클릭 이벤트 버블링 방지
     navigator.clipboard.writeText(messageId);
     console.log('메시지 ID 복사됨:', messageId);
   };
 
   // 아카이브 링크 열기 핸들러
-  const handleViewArchive = (archiveUrl: string) => {
+  const handleViewArchive = (archiveUrl: string, event?: React.MouseEvent) => {
+    if (event) event.stopPropagation(); // 행 클릭 이벤트 버블링 방지
     window.open(archiveUrl, '_blank');
   };
 
@@ -214,9 +224,10 @@ export default function SentMailScreen() {
                 <div 
                   key={email.id}
                   className={cn(
-                    "px-6 py-4 hover:bg-[#F8F9FA] dark:hover:bg-[#2C2D30] transition-colors",
+                    "px-6 py-4 hover:bg-[#F8F9FA] dark:hover:bg-[#2C2D30] transition-colors cursor-pointer",
                     index !== filteredEmails.length - 1 && "border-b border-[#E1E4E8] dark:border-[#2C2D30]"
                   )}
+                  onClick={() => handleEmailRowClick(email.id)}
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
                     {/* 상태 */}
@@ -266,7 +277,7 @@ export default function SentMailScreen() {
                     </div>
 
                     {/* 액션 */}
-                    <div className="col-span-2 flex justify-end">
+                    <div className="col-span-2 flex justify-end" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <LinearButton variant="ghost" size="sm">
@@ -275,7 +286,7 @@ export default function SentMailScreen() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem 
-                            onClick={() => handleResendEmail(email.id)}
+                            onClick={(e) => handleResendEmail(email.id, e)}
                             className="flex items-center space-x-2"
                           >
                             <RotateCcw className="h-4 w-4" />
@@ -283,7 +294,7 @@ export default function SentMailScreen() {
                           </DropdownMenuItem>
                           {email.providerMessageId && (
                             <DropdownMenuItem 
-                              onClick={() => handleCopyId(email.providerMessageId!)}
+                              onClick={(e) => handleCopyId(email.providerMessageId!, e)}
                               className="flex items-center space-x-2"
                             >
                               <Copy className="h-4 w-4" />
@@ -292,7 +303,7 @@ export default function SentMailScreen() {
                           )}
                           {email.archiveUrl && (
                             <DropdownMenuItem 
-                              onClick={() => handleViewArchive(email.archiveUrl!)}
+                              onClick={(e) => handleViewArchive(email.archiveUrl!, e)}
                               className="flex items-center space-x-2"
                             >
                               <ExternalLink className="h-4 w-4" />

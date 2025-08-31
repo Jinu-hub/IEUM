@@ -103,10 +103,9 @@ export default [
         route("/payments", "features/payments/screens/payments.tsx"),
       ]),
       ...prefix("/contents", [
-        route("/sent-mail", "features/contents/screens/sent-mail.tsx"),
+        route("/sent-mail", "features/contents/screens/sent-mail.tsx"),  
+        route("/sent-mail/:emailId", "features/contents/screens/sent-mail-detail.tsx"),
         /*
-        route("/sent-mail/:sentMailId", "features/contents/screens/sent-mail-detail.tsx"),
-        
         route("/opportunities", "features/content/screens/opportunities.tsx"),
         route("/quotes", "features/content/screens/quotes.tsx"),
         route("/invoices", "features/content/screens/invoices.tsx"),
