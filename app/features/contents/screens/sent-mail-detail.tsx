@@ -19,12 +19,14 @@ import {
   Calendar,
   User,
   FileText,
-  Download
+  Download,
+  X
 } from 'lucide-react';
 import { cn } from '~/core/lib/utils';
 import type { SentEmailData, EmailStatus } from '../lib/types';
 import { formatTime, formatDetailedTime } from '../lib/common';
 import { sampleSentEmails } from '../lib/mackData';
+import { sampleEmailHTML } from '~/features/settings/lib/mockdata';
 
 export const meta = () => {
   return [{ title: `메일 상세 | ${import.meta.env.VITE_APP_NAME}` }];
@@ -64,6 +66,9 @@ export default function SentMailDetailScreen() {
   const { emailId } = useParams();
   const navigate = useNavigate();
   
+  // HTML 미리보기 상태
+  const [previewMode, setPreviewMode] = useState<'none' | 'preview' | 'html'>('none');
+  
   // 실제로는 API에서 가져올 데이터
   const email = sampleSentEmails.find(e => e.id === emailId);
   
@@ -98,6 +103,48 @@ export default function SentMailDetailScreen() {
   const handleCopyId = (messageId: string) => {
     navigator.clipboard.writeText(messageId);
     console.log('메시지 ID 복사됨:', messageId);
+  };
+
+  // HTML 미리보기 핸들러
+  const handlePreviewEmail = () => {
+    setPreviewMode('preview');
+  };
+
+  // HTML 코드 보기 핸들러
+  const handleViewHTML = () => {
+    setPreviewMode('html');
+  };
+
+  // HTML 다운로드 핸들러
+  const handleDownloadHTML = () => {
+    const htmlContent = getEmailHTML();
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `email-${email.id}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // 이메일 HTML 내용 가져오기
+  const getEmailHTML = () => {
+    // 실제로는 이메일 데이터에서 HTML을 가져와야 함
+    // 여기서는 샘플 데이터를 사용
+    const mailingListName = email.targetTitle || '';
+    
+    if (mailingListName.includes('기술 뉴스')) {
+      return sampleEmailHTML.techNewsletter;
+    } else if (mailingListName.includes('제품 업데이트')) {
+      return sampleEmailHTML.productUpdate;
+    } else if (mailingListName.includes('긴급 공지사항')) {
+      return sampleEmailHTML.emergencyAlert;
+    }
+    
+    // 기본 HTML
+    return sampleEmailHTML.techNewsletter;
   };
 
   // 아카이브 링크 열기 핸들러
@@ -236,6 +283,31 @@ export default function SentMailDetailScreen() {
                 </div>
               </div>
 
+              {/* 이메일 이벤트 상태 */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-muted-foreground">이메일 이벤트</h4>
+                <div className="flex items-center space-x-4 p-4 bg-[#F8F9FA] dark:bg-[#2C2D30] rounded-lg">
+                  <div className={cn("p-2 rounded-full", statusConfig.bgColor)}>
+                    <StatusIcon className={cn("h-4 w-4", statusConfig.color)} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">
+                        {statusConfig.label}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {formatDetailedTime(email.sentAt)}
+                      </span>
+                    </div>
+                    {email.failureReason && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {email.failureReason}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* 실패 사유 (실패한 경우에만) */}
               {email.failureReason && (
                 <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -256,39 +328,7 @@ export default function SentMailDetailScreen() {
           </LinearCardContent>
         </LinearCard>
 
-        {/* 이메일 이벤트 (MVP에서는 기본 상태만) */}
-        <LinearCard variant="outlined">
-          <LinearCardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              EMAIL EVENTS
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4 p-4 bg-[#F8F9FA] dark:bg-[#2C2D30] rounded-lg">
-                <div className={cn("p-2 rounded-full", statusConfig.bgColor)}>
-                  <StatusIcon className={cn("h-4 w-4", statusConfig.color)} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">
-                      {statusConfig.label}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {formatDetailedTime(email.sentAt)}
-                    </span>
-                  </div>
-                  {email.failureReason && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {email.failureReason}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </LinearCardContent>
-        </LinearCard>
-
-        {/* 이메일 미리보기 (향후 구현 예정) */}
+        {/* 이메일 미리보기 */}
         <LinearCard variant="outlined">
           <LinearCardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -296,32 +336,68 @@ export default function SentMailDetailScreen() {
                 이메일 미리보기
               </h3>
               <div className="flex items-center space-x-2">
-                <LinearButton variant="ghost" size="sm">
+                <LinearButton variant="ghost" size="sm" onClick={handlePreviewEmail}>
                   <Eye className="h-4 w-4 mr-1" />
                   미리보기
                 </LinearButton>
-                <LinearButton variant="ghost" size="sm">
+                <LinearButton variant="ghost" size="sm" onClick={handleViewHTML}>
                   <FileText className="h-4 w-4 mr-1" />
                   HTML
                 </LinearButton>
-                <LinearButton variant="ghost" size="sm">
+                <LinearButton variant="ghost" size="sm" onClick={handleDownloadHTML}>
                   <Download className="h-4 w-4 mr-1" />
                   다운로드
                 </LinearButton>
               </div>
             </div>
             
-            <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg bg-white dark:bg-[#1A1B1E] min-h-[300px] flex items-center justify-center">
-              <div className="text-center space-y-3">
-                <Mail className="h-12 w-12 mx-auto text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  이메일 미리보기는 향후 구현 예정입니다
-                </p>
-                <LinearButton variant="secondary" size="sm">
-                  이메일 내용 보기
-                </LinearButton>
+            {previewMode === 'none' ? (
+              <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg bg-white dark:bg-[#1A1B1E] min-h-[300px] flex items-center justify-center">
+                <div className="text-center space-y-3">
+                  <Mail className="h-12 w-12 mx-auto text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    버튼을 클릭하여 이메일을 미리보기하거나 HTML을 확인하세요
+                  </p>
+                  <LinearButton variant="secondary" size="sm" onClick={handlePreviewEmail}>
+                    이메일 미리보기
+                  </LinearButton>
+                </div>
               </div>
-            </div>
+            ) : previewMode === 'preview' ? (
+              <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg bg-white dark:bg-[#1A1B1E] overflow-hidden">
+                <div className="p-4 border-b border-[#E1E4E8] dark:border-[#2C2D30] bg-[#F8F9FA] dark:bg-[#2C2D30]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">이메일 미리보기</span>
+                    <LinearButton variant="ghost" size="sm" onClick={() => setPreviewMode('none')}>
+                      <X className="h-4 w-4" />
+                    </LinearButton>
+                  </div>
+                </div>
+                <div className="max-h-[600px] overflow-y-auto">
+                  <iframe
+                    srcDoc={getEmailHTML()}
+                    className="w-full h-[600px] border-0"
+                    title="이메일 미리보기"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg bg-white dark:bg-[#1A1B1E] overflow-hidden">
+                <div className="p-4 border-b border-[#E1E4E8] dark:border-[#2C2D30] bg-[#F8F9FA] dark:bg-[#2C2D30]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">HTML 코드</span>
+                    <LinearButton variant="ghost" size="sm" onClick={() => setPreviewMode('none')}>
+                      <X className="h-4 w-4" />
+                    </LinearButton>
+                  </div>
+                </div>
+                <div className="max-h-[600px] overflow-y-auto">
+                  <pre className="text-sm text-foreground p-4 bg-[#F8F9FA] dark:bg-[#2C2D30] overflow-x-auto whitespace-pre-wrap">
+                    <code>{getEmailHTML()}</code>
+                  </pre>
+                </div>
+              </div>
+            )}
           </LinearCardContent>
         </LinearCard>
       </div>
