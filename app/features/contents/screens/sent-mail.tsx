@@ -320,33 +320,7 @@ export default function SentMailScreen() {
           )}
         </div>
 
-        {/* 통계 요약 (MVP용 단순화) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {statusFilters.filter(f => f.value !== 'all').map((filter) => {
-            const statusConfig = getStatusConfig(filter.value as EmailStatus);
-            const StatusIcon = statusConfig.icon;
-            
-            return (
-              <LinearCard key={filter.value} variant="outlined" hoverable>
-                <LinearCardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className={cn("p-2 rounded-full", statusConfig.bgColor)}>
-                      <StatusIcon className={cn("h-5 w-5", statusConfig.color)} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        {filter.label}
-                      </p>
-                      <p className="text-2xl font-bold text-foreground">
-                        {filter.count}
-                      </p>
-                    </div>
-                  </div>
-                </LinearCardContent>
-              </LinearCard>
-            );
-          })}
-        </div>
+
       </div>
     </div>
   );
