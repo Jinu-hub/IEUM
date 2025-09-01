@@ -17,3 +17,4 @@ export * from './linear-footer';
 export * from './linear-hero';
 export * from './linear-toggle';
 export * from './linear-icons';
+export * from './linear-charts';

@@ -21,7 +21,26 @@ import {
   LinearNavbar,
   LinearFooter,
   LinearHero,
-  LinearToggle
+  LinearToggle,
+  // 차트 컴포넌트들
+  LinearAreaChart,
+  LinearAreaChartGradient,
+  LinearAreaChartStacked,
+  LinearBarChart,
+  LinearBarChartMultiple,
+  LinearBarChartStackedLegend,
+  LinearBarChartCustomLabel,
+  LinearLineChart,
+  LinearLineChartSmooth,
+  LinearLineChartArea,
+  LinearPieChartLabelList,
+  LinearPieChartDonutText,
+  LinearRadarChart,
+  LinearRadarChartDots,
+  LinearRadarChartFilled,
+  LinearRadialChartLabel,
+  LinearRadialChartText,
+  sampleChartData
 } from '~/core/components/linear';
 import { Search, Bell, Home, User, Settings, Github, Twitter, Mail, Play, Star, Zap, Users, Award } from 'lucide-react';
 
@@ -29,6 +48,7 @@ export default function SamplesPage() {
   const [inputValue, setInputValue] = useState('');
   const [textareaValue, setTextareaValue] = useState('');
   const [progress, setProgress] = useState(65);
+  const chartBox = "rounded-xl border border-[#E1E4E8] dark:border-[#2C2D30] bg-white dark:bg-[#0D0E10] p-4";
   
   // Toggle states
   const [basicToggle, setBasicToggle] = useState(false);
@@ -1073,6 +1093,132 @@ export default function SamplesPage() {
           </LinearCardContent>
         </LinearCard>
 
+        {/* Charts Section */}
+        <LinearCard className="mb-8">
+          <LinearCardHeader>
+            <LinearCardTitle>차트 컴포넌트</LinearCardTitle>
+            <LinearCardDescription>
+              Linear 디자인 시스템과 일관성 있는 다양한 차트 컴포넌트들입니다.
+            </LinearCardDescription>
+          </LinearCardHeader>
+          <LinearCardContent>
+            <div className="space-y-14">
+              {/* Bar Charts (shadcn) */}
+              <div>
+                <h4 className="text-sm font-semibold text-[#0D0E10] dark:text-[#FFFFFF] mb-6">Bar 차트 (shadcn 스타일)</h4>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">기본 Bar Chart</h5>
+                    <LinearBarChart data={sampleChartData.bar} className={chartBox} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Multiple Bar Chart</h5>
+                    <LinearBarChartMultiple data={sampleChartData.bar} className={chartBox} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Stacked + Legend</h5>
+                    <LinearBarChartStackedLegend data={sampleChartData.bar} className={chartBox} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Custom Label</h5>
+                    <LinearBarChartCustomLabel data={sampleChartData.bar} className={chartBox} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Line Charts */}
+              <div>
+                <h4 className="text-sm font-semibold text-[#0D0E10] dark:text-[#FFFFFF] mb-6">Line 차트</h4>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">기본</h5>
+                    <LinearLineChart data={sampleChartData.line} className={chartBox} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">스무스</h5>
+                    <LinearLineChartSmooth data={sampleChartData.line} className={chartBox} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Area + Line</h5>
+                    <LinearLineChartArea data={sampleChartData.line} className={chartBox} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Area Charts */}
+              <div>
+                <h4 className="text-sm font-semibold text-[#0D0E10] dark:text-[#FFFFFF] mb-6">Area 차트</h4>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">기본</h5>
+                    <LinearAreaChart data={sampleChartData.area} className={chartBox} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">그라데이션</h5>
+                    <LinearAreaChartGradient data={sampleChartData.area} className={chartBox} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">스택</h5>
+                    <LinearAreaChartStacked data={sampleChartData.area} className={chartBox} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Pie Charts (shadcn) */}
+              <div>
+                <h4 className="text-sm font-semibold text-[#0D0E10] dark:text-[#FFFFFF] mb-6">Pie 차트 (shadcn 스타일)</h4>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Label List</h5>
+                    <LinearPieChartLabelList data={sampleChartData.pie} className={chartBox} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Donut + Text</h5>
+                    <LinearPieChartDonutText data={sampleChartData.pie} className={chartBox} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Radial Charts (shadcn) */}
+              <div>
+                <h4 className="text-sm font-semibold text-[#0D0E10] dark:text-[#FFFFFF] mb-6">Radial 차트 (shadcn 스타일)</h4>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Label</h5>
+                    <LinearRadialChartLabel data={sampleChartData.radial} className={chartBox} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Text</h5>
+                    <LinearRadialChartText data={sampleChartData.radial} className={chartBox} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Radar Charts */}
+              <div>
+                <h4 className="text-sm font-semibold text-[#0D0E10] dark:text-[#FFFFFF] mb-6">Radar 차트</h4>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">기본</h5>
+                    <LinearRadarChart data={sampleChartData.radar} className={chartBox} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Dots</h5>
+                    <LinearRadarChartDots data={sampleChartData.radar} className={chartBox} />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Filled</h5>
+                    <LinearRadarChartFilled data={sampleChartData.radar} className={chartBox} />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </LinearCardContent>
+        </LinearCard>
+
         {/* Interactive Demo */}
         <LinearCard variant="gradient" className="text-white">
           <LinearCardHeader>
@@ -1139,3 +1285,4 @@ export default function SamplesPage() {
     </div>
   );
 }
+
