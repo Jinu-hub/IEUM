@@ -100,6 +100,7 @@ export default [
     layout("features/users/layouts/dashboard.layout.tsx", [
       ...prefix("/dashboard", [
         index("features/users/screens/dashboard.tsx"),
+        route("/analytics", "features/users/screens/analytics.tsx"),
         route("/payments", "features/payments/screens/payments.tsx"),
       ]),
       ...prefix("/contents", [

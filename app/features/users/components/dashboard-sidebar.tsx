@@ -64,7 +64,7 @@ const data = {
         },
         {
           title: "Analytics",
-          url: "#",
+          url: "/dashboard/analytics",
         },
         {
           title: "Reports",
@@ -72,6 +72,7 @@ const data = {
         },
       ],
     },
+    /*
     {
       title: "Customers",
       url: "#",
@@ -88,6 +89,26 @@ const data = {
         {
           title: "Deals",
           url: "#",
+        },
+      ],
+    },
+    */
+    {
+      title: "Settings",
+      url: "#",
+      icon: Settings2Icon,
+      items: [
+        {
+          title: "Integrations",
+          url: "/settings/integrations",
+        },
+        {
+          title: "Targets",
+          url: "/settings/targets",
+        },
+        {
+          title: "Mail List",
+          url: "/settings/mail-list",
         },
       ],
     },
@@ -114,25 +135,6 @@ const data = {
           url: "#",
         },
         */
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2Icon,
-      items: [
-        {
-          title: "Integrations",
-          url: "/settings/integrations",
-        },
-        {
-          title: "Targets",
-          url: "/settings/targets",
-        },
-        {
-          title: "Mail List",
-          url: "/settings/mail-list",
-        },
       ],
     },
   ],
