@@ -33,6 +33,10 @@ export const AUDIT_ACTION = [
   "insert", "update", "delete",
 ] as const;
 
+export const CONNECTION_STATUS = [
+  "connected", "expired", "revoked", "unauthorized", "error", "never",
+] as const;
+
 /* =========================================================
    Type Definitions
    ========================================================= */
@@ -44,3 +48,4 @@ export type IntegrationType = typeof INTEGRATION_TYPE[number];
 export type RuleType = typeof RULE_TYPE[number];
 export type DeliveryEventTypeEmail = typeof DELIVERY_EVENT_TYPE_EMAIL[number];
 export type AuditAction = typeof AUDIT_ACTION[number];
+export type ConnectionStatus = typeof CONNECTION_STATUS[number];

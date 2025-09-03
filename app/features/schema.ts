@@ -29,7 +29,8 @@ import {
   INTEGRATION_TYPE, 
   RULE_TYPE, 
   DELIVERY_EVENT_TYPE_EMAIL, 
-  AUDIT_ACTION 
+  AUDIT_ACTION,
+  CONNECTION_STATUS
 } from "~/core/lib/constants";
   
   /* =========================================================
@@ -42,6 +43,7 @@ import {
   export const ruleType = pgEnum("rule_type", RULE_TYPE);
   export const deliveryEventTypeEmail = pgEnum("delivery_event_type_email", DELIVERY_EVENT_TYPE_EMAIL);
   export const auditAction = pgEnum("audit_action", AUDIT_ACTION);
+  export const connectionStatusEnum = pgEnum("connection_status", CONNECTION_STATUS);
   
   
   // RLS 정책은 drizzle-orm의 pgPolicy를 사용하여 자동 생성됩니다
@@ -153,6 +155,36 @@ import {
       pgPolicy("integ_delete", { for: "delete", to: authenticatedRole, using: isAdmin(table.workspaceId)        }),
      ]
   );
+
+  /* =========================================================
+    3.4.1 integration_statuses
+    ========================================================= */
+  export const integrationStatuses = pgTable(
+    "integration_statuses",
+    {
+      integrationId: uuid("integration_id").primaryKey().references(() => integrations.integrationId, { onDelete: "cascade" }),
+      workspaceId: uuid("workspace_id").notNull().references(() => workspace.workspaceId, { onDelete: "cascade" }),
+      connectionStatus: connectionStatusEnum("connection_status").notNull().default("never"),
+      lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+      lastOkAt: timestamp("last_ok_at", { withTimezone: true }),
+      expiresAt: timestamp("expires_at", { withTimezone: true }),
+      providerErrorCode: text("provider_error_code"),
+      providerErrorMessage: text("provider_error_message"),
+      permissionsJson: jsonb("permissions_json").notNull().default(sql`'{}'::jsonb`),
+      resourceCacheJson: jsonb("resource_cache_json").notNull().default(sql`'{}'::jsonb`),
+    },
+    (table) => [
+      index("idx_ics_ws").on(table.workspaceId),
+      index("idx_ics_status_checked").on(table.connectionStatus, table.lastCheckedAt),
+      index("idx_ics_last_ok").on(table.workspaceId, table.connectionStatus, table.lastOkAt),
+      // CREATE INDEX idx_ics_permissions_json_gin ON integration_statuses USING GIN (permissions_json);
+      // CREATE INDEX idx_ics_resource_cache_json_gin ON integration_statuses USING GIN (resource_cache_json);
+      pgPolicy("ics_select", { for: "select", to: authenticatedRole, using: isMember(table.workspaceId) }),
+      pgPolicy("ics_insert", { for: "insert", to: serviceRole, withCheck: sql`true` }),
+      pgPolicy("ics_update", { for: "update", to: serviceRole, using: sql`true`, withCheck: sql`true` }),
+      pgPolicy("ics_delete", { for: "delete", to: serviceRole, using: sql`true` }),
+    ]
+  ); 
   
     /* =========================================================
       3.4 mail_list

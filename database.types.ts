@@ -172,6 +172,67 @@ export type Database = {
           },
         ]
       }
+      integration_statuses: {
+        Row: {
+          connection_status: Database["public"]["Enums"]["connection_status"]
+          expires_at: string | null
+          integration_id: string
+          last_checked_at: string | null
+          last_ok_at: string | null
+          permissions_json: Json
+          provider_error_code: string | null
+          provider_error_message: string | null
+          resource_cache_json: Json
+          workspace_id: string
+        }
+        Insert: {
+          connection_status?: Database["public"]["Enums"]["connection_status"]
+          expires_at?: string | null
+          integration_id: string
+          last_checked_at?: string | null
+          last_ok_at?: string | null
+          permissions_json?: Json
+          provider_error_code?: string | null
+          provider_error_message?: string | null
+          resource_cache_json?: Json
+          workspace_id: string
+        }
+        Update: {
+          connection_status?: Database["public"]["Enums"]["connection_status"]
+          expires_at?: string | null
+          integration_id?: string
+          last_checked_at?: string | null
+          last_ok_at?: string | null
+          permissions_json?: Json
+          provider_error_code?: string | null
+          provider_error_message?: string | null
+          resource_cache_json?: Json
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_statuses_integration_id_integrations_integration_id"
+            columns: ["integration_id"]
+            isOneToOne: true
+            referencedRelation: "integrations"
+            referencedColumns: ["integration_id"]
+          },
+          {
+            foreignKeyName: "integration_statuses_integration_id_integrations_integration_id"
+            columns: ["integration_id"]
+            isOneToOne: true
+            referencedRelation: "v_integration_is_connected"
+            referencedColumns: ["integration_id"]
+          },
+          {
+            foreignKeyName: "integration_statuses_workspace_id_workspace_workspace_id_fk"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
       integrations: {
         Row: {
           api_key_ref: string | null
@@ -815,6 +876,13 @@ export type Database = {
             referencedColumns: ["integration_id"]
           },
           {
+            foreignKeyName: "target_sources_integration_id_integrations_integration_id_fk"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "v_integration_is_connected"
+            referencedColumns: ["integration_id"]
+          },
+          {
             foreignKeyName: "target_sources_target_id_targets_target_id_fk"
             columns: ["target_id"]
             isOneToOne: false
@@ -971,13 +1039,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_integration_is_connected: {
+        Row: {
+          integration_id: string | null
+          is_connected: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
     }
     Enums: {
       audit_action: "insert" | "update" | "delete"
+      connection_status:
+        | "connected"
+        | "expired"
+        | "revoked"
+        | "unauthorized"
+        | "error"
+        | "never"
       delivery_event_type_email:
         | "delivered"
         | "opened"
@@ -1123,6 +1204,14 @@ export const Constants = {
   public: {
     Enums: {
       audit_action: ["insert", "update", "delete"],
+      connection_status: [
+        "connected",
+        "expired",
+        "revoked",
+        "unauthorized",
+        "error",
+        "never",
+      ],
       delivery_event_type_email: [
         "delivered",
         "opened",

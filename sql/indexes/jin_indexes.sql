@@ -6,3 +6,5 @@ CREATE INDEX idx_highlights_meta_gin ON highlights USING GIN (meta_json);
 CREATE INDEX idx_delivery_events_meta_gin ON delivery_events_email USING GIN (meta_json);
 CREATE INDEX idx_audit_logs_old_values_gin ON audit_logs USING GIN (old_values);
 CREATE INDEX idx_audit_logs_new_values_gin ON audit_logs USING GIN (new_values);
+
+CREATE INDEX idx_ics_resource_cache_json_gin ON integration_statuses USING GIN (resource_cache_json);
