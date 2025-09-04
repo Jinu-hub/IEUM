@@ -25,6 +25,7 @@
     "slack:fetch:cli": "tsx app/core/integrations/slack/fetch.ts --",
     "slack:report": "tsx app/core/integrations/slack/genReport.ts",
     "test:slack": "tsx app/core/integrations/slack/tests/run-tests.ts",
+    "migrate-secrets": "tsx scripts/migrate-to-secrets.ts",
     "format": "prettier --write \"app/**/*.{ts,tsx,js,jsx,json,css,md,mdx}\""
   },
   "dependencies": {

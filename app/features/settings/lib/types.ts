@@ -1,4 +1,11 @@
 
+// 연결 상태를 나타내는 타입
+export type ConnectionStatus = 
+    'connected' 
+    | 'disconnected' 
+    | 'connecting' 
+    | 'disconnecting';
+
 // 타겟 데이터의 타입 정의
 export interface TargetData {
     targetId: string;

@@ -19,26 +19,12 @@ import {
 } from '~/core/components/linear';
 import { cn } from '~/core/lib/utils';
 import type { Route } from "./+types/integrations";
+import type { ConnectionStatus } from '../lib/types';
+import type { IntegrationService } from '../lib/constants';
 
 export const meta: Route.MetaFunction = () => {
     return [{ title: `Integrations | ${import.meta.env.VITE_APP_NAME}` }];
   };
-
-// 연결 상태를 나타내는 타입
-type ConnectionStatus = 'connected' | 'disconnected' | 'connecting';
-
-// 통합 서비스 정보 타입
-interface IntegrationService {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  status: ConnectionStatus;
-  features: string[];
-  onConnect: () => void;
-  onDisconnect: () => void;
-  onConfigure?: () => void;
-}
 
 export default function IntegrationsScreen() {
   // 각 서비스의 연결 상태를 관리
@@ -138,7 +124,7 @@ export default function IntegrationsScreen() {
 
   // GitHub 연결 해제 처리  
   const handleGitHubDisconnect = async () => {
-    setGithubStatus('connecting');
+    setGithubStatus('disconnecting');
     
     const formData = new FormData();
     formData.append('action', 'disconnect');
@@ -173,7 +159,7 @@ export default function IntegrationsScreen() {
 
   // Slack 연결 해제 처리
   const handleSlackDisconnect = async () => {
-    setSlackStatus('connecting');
+    setSlackStatus('disconnecting');
     
     const formData = new FormData();
     formData.append('action', 'disconnect');

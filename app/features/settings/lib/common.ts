@@ -1,58 +1,11 @@
+import type { GitHubRepository } from "./constants";
+import type { SlackChannel } from "./constants";
+import type { SourceItem } from "./constants";
+import type { ConnectedIntegration } from "./constants";
+
 /**
  * Settings 페이지에서 공통으로 사용하는 유틸리티 함수들
  */
-
-// 연결된 인테그레이션 타입
-export interface ConnectedIntegration {
-  id: string;
-  name: string;
-  type: 'github' | 'slack';
-  status: 'connected' | 'disconnected';
-  data?: any;
-}
-
-// GitHub 레포지토리 타입
-export interface GitHubRepository {
-  id: number;
-  name: string;
-  full_name: string;
-  private: boolean;
-  description?: string;
-  html_url: string;
-  language?: string;
-  stargazers_count: number;
-  forks_count: number;
-  updated_at: string;
-  owner: {
-    login: string;
-    avatar_url: string;
-  };
-  relationship: 'owner' | 'collaborator';
-}
-
-// Slack 채널 타입
-export interface SlackChannel {
-  id: string;
-  name: string;
-  is_private: boolean;
-  is_member: boolean;
-  topic?: {
-    value: string;
-  };
-  purpose?: {
-    value: string;
-  };
-}
-
-// 소스 아이템 타입 (UI 표시용)
-export interface SourceItem {
-  id: string;
-  name: string;
-  description?: string;
-  url?: string;
-  icon?: React.ReactNode;
-  variant?: 'success' | 'warning' | 'secondary';
-}
 
 /**
  * API에서 가져온 GitHub 데이터를 SourceItem 배열로 변환
@@ -274,7 +227,6 @@ export function formatDateShort(dateString: string): string {
     });
   }
 };
-
 
 // 멤버 수 포맷 함수
 export function formatMemberCount(count: number): string {
