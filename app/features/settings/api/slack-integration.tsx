@@ -11,20 +11,27 @@ import makeServerClient from "~/core/lib/supa-client.server";
 import { createSlackClient } from "~/core/integrations/slack/client";
 import { listChannels } from "~/core/integrations/slack/fetchers";
 import { logger } from "~/core/lib/logger";
+import { secretsManager, getSlackBotToken, generateCredentialRef } from "~/core/lib/secrets-manager.server";
+import { createIntegration, deleteIntegration } from "../db/mutations";
+import { getIntegrations } from "../db/queries";
+import { deleteIntegrationSecret } from "./common";
 
 /**
  * Slack 통합 설정 스키마
  */
 const slackIntegrationSchema = z.object({
-  action: z.enum(['connect', 'disconnect', 'check']),
-  token: z.string().optional(),
-  channels: z.string().optional(), // comma-separated channel IDs
+  workspaceId: z.string(),
+  actionType: z.enum(['connect', 'disconnect', 'check']),
+  credentialRef: z.string().optional(),
+  config_json: z.any().optional(), // comma-separated channel IDs
 });
+
+type SlackIntegrationRequest = z.infer<typeof slackIntegrationSchema>;
 
 /**
  * Slack 연결 상태 확인
  */
-async function checkSlackConnection(token?: string): Promise<{
+async function checkSlackConnection(token: string): Promise<{
   connected: boolean;
   team?: any;
   bot?: any;
@@ -32,14 +39,6 @@ async function checkSlackConnection(token?: string): Promise<{
   error?: string;
 }> {
   try {
-    if (!token) {
-      // 환경변수에서 토큰 확인
-      token = process.env.SLACK_BOT_TOKEN;
-    }
-    
-    if (!token) {
-      return { connected: false, error: "No Slack bot token found" };
-    }
 
     const slack = createSlackClient(token);
     
@@ -135,7 +134,7 @@ async function removeSlackSettings(userId: string) {
 /**
  * Loader: 현재 Slack 연결 상태 반환
  */
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
   try {
     const [client] = makeServerClient(request);
     const { data: { user } } = await client.auth.getUser();
@@ -144,8 +143,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
       return data({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // credentialRef가 있으면 Secrets Manager에서 토큰 조회
+    const token = await getSlackBotToken(params.credentialRef) || undefined;
+    if (!token) {
+      return data({ 
+        status: 'error', 
+        error: 'No Slack bot token found' 
+      }, { status: 400 });
+    }
+
     // Slack 연결 상태 확인
-    const connectionStatus = await checkSlackConnection();
+    const connectionStatus = await checkSlackConnection(token);
     
     return data({
       status: 'success',
@@ -190,7 +198,15 @@ export async function action({ request }: ActionFunctionArgs) {
       }, { status: 400 });
     }
 
-    const { action: actionType, token, channels } = validationResult.data;
+    const { workspaceId, actionType, credentialRef, config_json } = validationResult.data;
+
+    const token = await getSlackBotToken(credentialRef) || undefined;
+    if (!token) {
+      return data({ 
+        status: 'error', 
+        error: 'No Slack bot token found' 
+      }, { status: 400 });
+    }
 
     switch (actionType) {
       case 'check': {
@@ -202,14 +218,7 @@ export async function action({ request }: ActionFunctionArgs) {
       }
 
       case 'connect': {
-        if (!token) {
-          return data({ 
-            status: 'error', 
-            error: 'Slack bot token is required for connection' 
-          }, { status: 400 });
-        }
-
-        // 토큰으로 연결 테스트
+        // credentialRef로 연결 테스트
         const connectionStatus = await checkSlackConnection(token);
         
         if (!connectionStatus.connected) {
@@ -219,24 +228,132 @@ export async function action({ request }: ActionFunctionArgs) {
           }, { status: 400 });
         }
 
-        // 설정 저장
-        await saveSlackSettings(user.id, { token, channels });
-        
-        return data({
-          status: 'success',
-          message: 'Slack integration connected successfully',
-          data: connectionStatus
-        });
+        try {
+          // 기존 integration 조회 및 Secret 정리
+          let existingCredentialRef = null;
+          try {
+            const integrations = await getIntegrations(client, { workspaceId, type: 'slack' });
+            existingCredentialRef = integrations?.credential_ref;
+          } catch (error) {
+            logger.warn('Failed to fetch existing integration for cleanup', { 
+              workspaceId, 
+              error: String(error) 
+            });
+          }
+
+          // 새로운 credentialRef 생성
+          const credentialRef_new = generateCredentialRef('slack', user.id.substring(0, 8));
+          
+          // Secrets Manager에 토큰 저장
+          const storeResult = await secretsManager.storeSecret(credentialRef_new, token, {
+            name: `Slack Bot Token - ${connectionStatus.team?.name || 'Unknown'}`,
+            description: `Slack integration token for workspace ${workspaceId}`,
+            type: 'slack_bot_token'
+          });
+
+          if (!storeResult.success) {
+            return data({
+              status: 'error',
+              error: `Failed to store Slack token: ${storeResult.error}`
+            }, { status: 500 });
+          }
+
+          // Integration 레코드를 데이터베이스에 저장
+          const dbError = await createIntegration(client, {
+            workspaceId: workspaceId,
+            type: 'slack',
+            name: `Slack - ${connectionStatus.team?.name || 'Unknown'}`,
+            credential_ref: credentialRef_new,
+            config_json: {
+              channels: config_json?.channels ? config_json.channels.split(',').map((c: string) => c.trim()) : [],
+              team: connectionStatus.team,
+              bot: connectionStatus.bot,
+              connected_at: new Date().toISOString()
+            }
+          });
+
+          if (dbError) {
+            logger.error('Failed to save integration record', { error: dbError });
+            // Secret 저장은 성공했으므로 롤백
+            await deleteIntegrationSecret({ credentialRef: credentialRef_new });
+            return data({
+              status: 'error',
+              error: 'Failed to save integration settings'
+            }, { status: 500 });
+          }
+
+          // 기존 Secret 삭제 (보안상 중요)
+          if (existingCredentialRef) {
+            await deleteIntegrationSecret({ credentialRef: existingCredentialRef });
+          }
+
+          logger.info('Slack integration connected successfully', { 
+            userId: user.id, 
+            credentialRef: credentialRef_new,
+            teamName: connectionStatus.team?.name 
+          });
+
+          return data({
+            status: 'success',
+            message: 'Slack integration connected successfully',
+            data: {
+              ...connectionStatus,
+              credentialRef: credentialRef_new
+            }
+          });
+        } catch (error) {
+          logger.error('Failed to connect Slack integration', { error });
+          return data({
+            status: 'error',
+            error: 'Failed to connect Slack integration'
+          }, { status: 500 });
+        }
       }
 
       case 'disconnect': {
-        // 설정 삭제
-        await removeSlackSettings(user.id);
-        
-        return data({
-          status: 'success',
-          message: 'Slack integration disconnected successfully'
-        });
+        try {
+          // 기존 integration 정보 조회
+          let existingIntegration = null;
+          try {
+            const integrations = await getIntegrations(client, { workspaceId, type: 'slack' });
+            existingIntegration = integrations;
+          } catch (error) {
+            logger.warn('Failed to fetch existing integration', { 
+              workspaceId, 
+              type: 'slack', 
+              error: String(error) 
+            });
+            // 조회 실패해도 계속 진행 (새로운 integration 생성)
+          }
+
+          // Secret 삭제 (integration이 있는 경우)
+          if (existingIntegration?.credential_ref) {
+            await deleteIntegrationSecret({ credentialRef: existingIntegration.credential_ref });
+          }
+
+          // Integration 레코드 삭제
+          const dbError = await deleteIntegration(client, { workspaceId, type: 'slack' });
+          if (dbError) {
+            logger.error('Failed to delete integration record', { error: dbError });
+            return data({
+              status: 'error',
+              error: 'Failed to disconnect integration'
+            }, { status: 500 });
+          }
+
+          logger.info('Slack integration disconnected successfully', { workspaceId });
+          
+          return data({
+            status: 'success',
+            message: 'Slack integration disconnected successfully'
+          });
+        } catch (error) {
+          logger.error('Failed to disconnect Slack integration', { error });
+          return data({
+            status: 'error',
+            error: 'Failed to disconnect Slack integration'
+          }, { status: 500 });
+        }
       }
 
       default:
