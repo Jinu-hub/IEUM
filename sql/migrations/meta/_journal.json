@@ -36,6 +36,13 @@
       "when": 1756910655988,
       "tag": "0004_strong_magdalene",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1757082043114,
+      "tag": "0005_stale_slipstream",
+      "breakpoints": true
     }
   ]
 }

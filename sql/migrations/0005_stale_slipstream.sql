@@ -1,0 +1,1 @@
+ALTER TABLE "integrations" ADD CONSTRAINT "unique_workspace_integration" UNIQUE("workspace_id","type");

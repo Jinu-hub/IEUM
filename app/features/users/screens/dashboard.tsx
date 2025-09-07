@@ -101,10 +101,12 @@ export default function Dashboard() {
   const githubFetcher = useFetcher();
   const slackFetcher = useFetcher();
 
+  const tempRef = 'dummy_ref';
+
   // 컴포넌트 마운트 시 연결 상태 확인
   useEffect(() => {
-    githubFetcher.load('/api/settings/github-integration');
-    slackFetcher.load('/api/settings/slack-integration');
+    githubFetcher.load(`/api/settings/github-integration/${tempRef}`);
+    slackFetcher.load(`/api/settings/slack-integration/${tempRef}`);
   }, []);
 
   // GitHub fetcher 응답 처리

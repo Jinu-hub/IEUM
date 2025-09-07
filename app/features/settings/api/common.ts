@@ -1,5 +1,4 @@
 import { logger } from "~/core/lib/logger";
-import { secretsManager } from "~/core/lib/secrets-manager.server";
 
 /**
  * Delete an integration secret
@@ -10,6 +9,7 @@ export const deleteIntegrationSecret = async (
     { credentialRef }: { credentialRef: string },
 ) => {
     try {
+        const { secretsManager } = await import("~/core/lib/secrets-manager.server");
         const deleteResult = await secretsManager.deleteSecret(credentialRef);
         if (deleteResult.success) {
           logger.info('Successfully deleted existing integration secret', { 

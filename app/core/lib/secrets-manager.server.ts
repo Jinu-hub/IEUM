@@ -276,26 +276,32 @@ export const secretsManager = new SecretsManager();
  * GitHub 토큰 조회
  */
 export async function getGitHubToken(credentialRef?: string): Promise<string | null> {
-  if (credentialRef) {
-    return await secretsManager.getSecret(credentialRef).then(secret => secret?.value || null);
+  // "undefined" 문자열도 falsy로 처리
+  if (credentialRef && credentialRef !== 'undefined') {
+    //return await secretsManager.getSecret(credentialRef).then(secret => secret?.value || null);
+    return process.env.GITHUB_TOKEN || null;
   }
   
   // Fallback to environment variable
   // for local development testing : TODO: remove this
-  return process.env.GITHUB_TOKEN || null;
+  //return process.env.GITHUB_TOKEN || null;
+  return null;
 }
 
 /**
  * Slack 토큰 조회
  */
 export async function getSlackBotToken(credentialRef?: string): Promise<string | null> {
-  if (credentialRef) {
-    return await secretsManager.getSecret(credentialRef).then(secret => secret?.value || null);
+  // "undefined" 문자열도 falsy로 처리
+  if (credentialRef && credentialRef !== 'undefined') {
+    //return await secretsManager.getSecret(credentialRef).then(secret => secret?.value || null);
+    return process.env.SLACK_BOT_TOKEN || null;
   }
   
   // Fallback to environment variable
   // for local development testing : TODO: remove this
-  return process.env.SLACK_BOT_TOKEN || null;
+  //return process.env.SLACK_BOT_TOKEN || null;
+  return null;
 }
 
 /**

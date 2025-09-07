@@ -19,6 +19,7 @@ import {
   uniqueIndex,
   numeric,
   index,
+  unique,
   pgPolicy,
 } from "drizzle-orm/pg-core";
 import { authUid, authUsers, authenticatedRole, serviceRole } from "drizzle-orm/supabase";
@@ -148,6 +149,9 @@ import {
       index("idx_integrations_created_by").on(table.createdBy),
       // GIN index for JSONB queries - created via SQL migration
       // CREATE INDEX idx_integrations_config_json ON integrations USING GIN (config_json);
+      
+      // Unique constraint for workspace_id and type combination
+      unique("unique_workspace_integration").on(table.workspaceId, table.type),
   
       pgPolicy("integ_select", { for: "select", to: authenticatedRole, using: isMember(table.workspaceId) }),
       pgPolicy("integ_insert", { for: "insert", to: authenticatedRole, withCheck: isAdmin(table.workspaceId) }),

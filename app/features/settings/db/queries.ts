@@ -41,6 +41,38 @@ export const getBookmarkCategories = async (
 };
 */
 
+
+export const getWorkspace = async (
+  client: SupabaseClient<Database>,
+  { userId }: { userId: string },
+) => {
+  const { data, error } = await client
+    .from('workspace')
+    .select('*')
+    .eq('owner_user_id', userId);
+  if (error) {
+    console.log('getWorkspace error', error);
+    throw error;
+  }
+  return data;
+};
+
+export const getLoginUserWorkspace = async (
+  client: SupabaseClient<Database>,
+  { userId , role}: { userId: string, role: string },
+) => {
+  const { data, error } = await client
+    .from('workspace_member')
+    .select('*')
+    .eq('user_id', userId)
+    .in('role', ['owner', 'admin']);
+  if (error) {
+    console.log('getLoginUserWorkspace error', error);
+    throw error;
+  }
+  return data;
+};
+
 /**
  * Retrieve all integrations for a specific workspace and type
  * 
@@ -66,10 +98,29 @@ export const getIntegrations = async (
     .eq('type', type as Database["public"]["Enums"]["integration_type"])
     .single();
   if (error) {
+    console.log('getIntegrations error', error);
     throw error;
   }
   return data;
 };
+
+export const getIntegrationsInfo = async (
+  client: SupabaseClient<Database>,
+  { workspaceId }: 
+  { workspaceId: string },
+) => {
+  const { data, error } = await client
+    .from('v_integration_info')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.log('getIntegrationsInfo error', error);
+    throw error;
+  }
+  return data;
+};
+
 /*
 export const getBookmark = async (
   client: SupabaseClient<Database>,

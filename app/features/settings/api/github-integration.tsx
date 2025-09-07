@@ -10,10 +10,8 @@ import { z } from "zod";
 import makeServerClient from "~/core/lib/supa-client.server";
 import { createOctokit } from "~/core/integrations/github/client";
 import { logger } from "~/core/lib/logger";
-import { secretsManager, getGitHubToken, generateCredentialRef } from "~/core/lib/secrets-manager.server";
 import { createIntegration, deleteIntegration } from "../db/mutations";
 import { getIntegrations } from "../db/queries";
-import { deleteIntegrationSecret } from "./common";
 
 /**
  * GitHub 통합 설정 스키마
@@ -22,7 +20,6 @@ const githubIntegrationSchema = z.object({
   workspaceId: z.string(),
   actionType: z.enum(['connect', 'disconnect', 'check']),
   credentialRef: z.string().optional(),
-  config_json: z.any().optional(), // comma-separated repository list
 });
 
 type GitHubIntegrationRequest = z.infer<typeof githubIntegrationSchema>;
@@ -53,14 +50,6 @@ async function checkGitHubConnection(token: string): Promise<{
       // affiliation: 모든 관련된 리포지토리 (소유자, 협력자, 조직 멤버)
       affiliation: 'owner,collaborator,organization_member',
     });
-    
-    /*
-    logger.info('GitHub repositories fetched', { 
-      count: repositories.length,
-      userLogin: user.login,
-      repositoryNames: repositories.map(r => r.full_name)
-    });
-    */
     
     // 접근 가능한 리포지토리 통계 계산
     const accessibleStats = {
@@ -150,8 +139,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     if (!user) {
       return data({ error: "Unauthorized" }, { status: 401 });
     }
-
+ 
     // credentialRef가 있으면 Secrets Manager에서 토큰 조회
+    const { getGitHubToken } = await import("~/core/lib/secrets-manager.server");
     const token = await getGitHubToken(params.credentialRef) || undefined;
     if (!token) {
       return data({ 
@@ -185,7 +175,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 /**
  * Action: GitHub 통합 설정 관리
  */
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, params }: ActionFunctionArgs) {
   try {
     const [client] = makeServerClient(request);
     const { data: { user } } = await client.auth.getUser();
@@ -196,7 +186,6 @@ export async function action({ request }: ActionFunctionArgs) {
 
     const formData = await request.formData();
     const rawData = Object.fromEntries(formData);
-    
     const validationResult = githubIntegrationSchema.safeParse(rawData);
     if (!validationResult.success) {
       return data({ 
@@ -206,10 +195,33 @@ export async function action({ request }: ActionFunctionArgs) {
       }, { status: 400 });
     }
 
-    const { workspaceId, actionType, credentialRef, config_json } = validationResult.data;
+    const { workspaceId, actionType } = validationResult.data;
+    // FormData에서 credentialRef 우선, URL 파라미터는 fallback
+    const credentialRef = rawData.credentialRef || params.credentialRef;
+    
+    // 첫 연결 시에는 credentialRef가 없을 수 있음 (OAuth 준비) TODO:
+    /*
+    if (actionType === 'connect' && (!credentialRef || credentialRef === 'new')) {
+      console.log('First time connection - OAuth flow will be implemented');
+      
+      // TODO: OAuth 2.0 구현 시 여기서 GitHub OAuth 리디렉션 처리
+      return data({
+        status: 'success',
+        message: 'OAuth integration will be implemented soon',
+        data: {
+          connected: false,
+          oauth_required: true,
+          oauth_url: 'https://github.com/login/oauth/authorize' // 추후 실제 OAuth URL
+        }
+      });
+    }
+    */
 
-    const token = await getGitHubToken(credentialRef) || undefined;;
+    const { getGitHubToken } = await import("~/core/lib/secrets-manager.server");
+    const token = await getGitHubToken(credentialRef as string) || undefined;
+    console.log('token', token);
     if (!token) {
+      console.log('No GitHub token found');
       return data({ 
         status: 'error', 
         error: 'No GitHub token found' 
@@ -239,64 +251,71 @@ export async function action({ request }: ActionFunctionArgs) {
         try {
           // 기존 integration 조회 및 Secret 정리
           let existingCredentialRef = null;
-          try {
-            const integrations = await getIntegrations(client, { workspaceId, type: 'github' });
-            existingCredentialRef = integrations?.credential_ref;
-          } catch (error) {
-            logger.warn('Failed to fetch existing integration for cleanup', { 
-              workspaceId, 
-              error: String(error) 
-            });
+          if (credentialRef && credentialRef !== 'new') {
+            try {
+              const integrations = await getIntegrations(client, { workspaceId, type: 'github' });
+              existingCredentialRef = integrations?.credential_ref;
+            } catch (error) {
+              logger.warn('Failed to fetch existing integration for cleanup', { 
+                workspaceId, 
+                error: String(error) 
+              });
+            }
           }
 
           // 새로운 credentialRef 생성
+          const { generateCredentialRef } = await import("~/core/lib/secrets-manager.server");
           const credentialRef_new = generateCredentialRef('github', user.id.substring(0, 8));
           
-          // Secrets Manager에 토큰 저장
+          // Secrets Manager에 토큰 저장 TODO:
+          /*
           const storeResult = await secretsManager.storeSecret(credentialRef_new, token, {
             name: `GitHub Token - ${connectionStatus.user?.login || 'Unknown'}`,
             description: `GitHub integration token for workspace ${workspaceId}`,
             type: 'github_token'
           });
-
+          
           if (!storeResult.success) {
             return data({
               status: 'error',
               error: `Failed to store GitHub token: ${storeResult.error}`
             }, { status: 500 });
           }
+          */
 
           // Integration 레코드를 데이터베이스에 저장
-          const dbError = await createIntegration(client, {
-            workspaceId: workspaceId,
-            type: 'github',
-            name: `GitHub - ${connectionStatus.user?.login || 'Unknown'}`,
-            credential_ref: credentialRef_new,
-            config_json: {
-              repos: config_json?.repos ? config_json.repos.split(',').map((r: string) => r.trim()) : [],
-              user: connectionStatus.user,
-              connected_at: new Date().toISOString()
-            }
-          });
-          
-          if (dbError) {
-            logger.error('Failed to save integration record', { error: dbError });
-            // Secret 저장은 성공했으므로 롤백
-            await deleteIntegrationSecret({ credentialRef: credentialRef_new });
+          try {
+            const integrationData = await createIntegration(client, {
+              workspaceId: workspaceId,
+              type: 'github',
+              name: `GitHub - ${connectionStatus.user?.login || 'Unknown'}`,
+              credential_ref: credentialRef_new,
+              config_json: {
+                repos: connectionStatus.repositories ? connectionStatus.repositories.map((r: any) => r.name) : [],
+                user: connectionStatus.user,
+                connected_at: new Date().toISOString()
+              }
+            });
+            
+            logger.info('Integration record saved successfully', { integrationId: integrationData.integration_id });
+          } catch (error) {
+            logger.error('Failed to save integration record', { error });
+            // Secret 저장은 성공했으므로 롤백 TODO:
+            //await deleteIntegrationSecret({ credentialRef: credentialRef_new });
             return data({
               status: 'error',
               error: 'Failed to save integration settings'
             }, { status: 500 });
           }
 
-          // 기존 Secret 삭제 (보안상 중요)
+          // 기존 Secret 삭제 (보안상 중요) TODO:
           if (existingCredentialRef) {
-            await deleteIntegrationSecret({ credentialRef: existingCredentialRef });
+            //await deleteIntegrationSecret({ credentialRef: existingCredentialRef });
           }
 
           logger.info('GitHub integration connected successfully', { 
             userId: user.id, 
-            credentialRef,
+            credentialRef_new,
             userLogin: connectionStatus.user?.login 
           });
 
@@ -305,7 +324,7 @@ export async function action({ request }: ActionFunctionArgs) {
             message: 'GitHub integration connected successfully',
             data: {
               ...connectionStatus,
-              credentialRef
+              credentialRef_new,
             }
           });
         } catch (error) {
@@ -334,9 +353,9 @@ export async function action({ request }: ActionFunctionArgs) {
             // 조회 실패해도 계속 진행 (새로운 integration 생성)
           }
 
-          // Secret 삭제 (integration이 있는 경우)
+          // Secret 삭제 (integration이 있는 경우) TODO:
           if (existingIntegration?.credential_ref) {
-            await deleteIntegrationSecret({ credentialRef: existingIntegration.credential_ref });
+          //  await deleteIntegrationSecret({ credentialRef: existingIntegration.credential_ref });
           }
 
           // Integration 레코드 삭제

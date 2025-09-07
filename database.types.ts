@@ -221,6 +221,13 @@ export type Database = {
             foreignKeyName: "integration_statuses_integration_id_integrations_integration_id"
             columns: ["integration_id"]
             isOneToOne: true
+            referencedRelation: "v_integration_info"
+            referencedColumns: ["integration_id"]
+          },
+          {
+            foreignKeyName: "integration_statuses_integration_id_integrations_integration_id"
+            columns: ["integration_id"]
+            isOneToOne: true
             referencedRelation: "v_integration_is_connected"
             referencedColumns: ["integration_id"]
           },
@@ -879,6 +886,13 @@ export type Database = {
             foreignKeyName: "target_sources_integration_id_integrations_integration_id_fk"
             columns: ["integration_id"]
             isOneToOne: false
+            referencedRelation: "v_integration_info"
+            referencedColumns: ["integration_id"]
+          },
+          {
+            foreignKeyName: "target_sources_integration_id_integrations_integration_id_fk"
+            columns: ["integration_id"]
+            isOneToOne: false
             referencedRelation: "v_integration_is_connected"
             referencedColumns: ["integration_id"]
           },
@@ -1039,6 +1053,47 @@ export type Database = {
       }
     }
     Views: {
+      v_integration_info: {
+        Row: {
+          api_key_ref: string | null
+          computed_status:
+            | Database["public"]["Enums"]["connection_status"]
+            | null
+          config_json: Json | null
+          connection_status:
+            | Database["public"]["Enums"]["connection_status"]
+            | null
+          created_at: string | null
+          created_by: string | null
+          credential_ref: string | null
+          expires_at: string | null
+          integration_id: string | null
+          is_active: boolean | null
+          last_checked_at: string | null
+          last_ok_at: string | null
+          minutes_since_last_check: number | null
+          minutes_since_last_ok: number | null
+          minutes_until_expiry: number | null
+          name: string | null
+          permissions_json: Json | null
+          provider_error_code: string | null
+          provider_error_message: string | null
+          resource_cache_json: Json | null
+          type: Database["public"]["Enums"]["integration_type"] | null
+          updated_at: string | null
+          webhook_url: string | null
+          workspace_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrations_workspace_id_workspace_workspace_id_fk"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
       v_integration_is_connected: {
         Row: {
           integration_id: string | null

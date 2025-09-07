@@ -28,8 +28,10 @@ export default [
     ...prefix("/settings", [
       route("/theme", "features/settings/api/set-theme.tsx"),
       route("/locale", "features/settings/api/set-locale.tsx"),
-      route("/github-integration", "features/settings/api/github-integration.tsx"),
-      route("/slack-integration", "features/settings/api/slack-integration.tsx"),
+      route("/github-integration/:credentialRef", "features/settings/api/github-integration.tsx"),
+     // route("/github-integration/new", "features/settings/api/github-integration.tsx"),
+      route("/slack-integration/:credentialRef", "features/settings/api/slack-integration.tsx"),
+     // route("/slack-integration/new", "features/settings/api/slack-integration.tsx"),
     ]),
     ...prefix("/users", [
       index("features/users/api/delete-account.tsx"),
