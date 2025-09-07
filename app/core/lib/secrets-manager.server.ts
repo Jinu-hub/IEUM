@@ -305,17 +305,6 @@ export async function getSlackBotToken(credentialRef?: string): Promise<string |
 }
 
 /**
- * Credential Reference 생성 (UUID 기반)
- */
-export function generateCredentialRef(type: string, suffix?: string): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 8);
-  const baseName = `${type}_${timestamp}_${random}`;
-  
-  return suffix ? `${baseName}_${suffix}` : baseName;
-}
-
-/**
  * Credential 유효성 검증
  */
 export async function validateCredential(
