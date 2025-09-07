@@ -1,10 +1,37 @@
 
-// 연결 상태를 나타내는 타입
+// UI에서 사용하는 연결 상태 타입
 export type ConnectionStatus = 
     'connected' 
     | 'disconnected' 
     | 'connecting' 
     | 'disconnecting';
+
+// DB에서 사용하는 연결 상태 타입 (Supabase enum과 매칭)
+export type DBConnectionStatus = 
+    'connected'
+    | 'disconnected'
+    | 'expired'
+    | 'revoked'
+    | 'unauthorized'
+    | 'error'
+    | 'never';
+
+// DB 상태를 UI 상태로 변환하는 함수
+export function mapDBStatusToUI(dbStatus: DBConnectionStatus | null | undefined): ConnectionStatus {
+    switch (dbStatus) {
+        case 'connected':
+            return 'connected';
+        case 'expired':
+        case 'revoked':
+        case 'unauthorized':
+        case 'error':
+        case 'never':
+        case null:
+        case undefined:
+        default:
+            return 'disconnected';
+    }
+}
 
 // 타겟 데이터의 타입 정의
 export interface TargetData {

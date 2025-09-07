@@ -51,7 +51,6 @@ interface UseIntegrationResponseOptions {
 export function useIntegrationResponse(
   fetcherData: IntegrationResponse | undefined,
   setStatus: (status: ConnectionStatus) => void,
-  setData: (data: IntegrationData | null) => void,
   integrationType: 'github' | 'slack',
   options: UseIntegrationResponseOptions = {}
 ) {
@@ -74,8 +73,9 @@ export function useIntegrationResponse(
           }
         } else {
           // 일반적인 연결 성공 처리
-          setStatus(data.connected ? 'connected' : 'disconnected');
-          setData(data);
+          const newStatus = data.connected ? 'connected' : 'disconnected';
+          console.log(`${integrationType} 상태 변경: ${newStatus}`);
+          setStatus(newStatus);
           
           if (integrationType === 'github') {
             console.log('GitHub 데이터 설정됨:', {
@@ -92,7 +92,6 @@ export function useIntegrationResponse(
       } else {
         // disconnect 성공 시
         setStatus('disconnected');
-        setData(null);
         if (options.onDisconnect) {
           options.onDisconnect();
         }
@@ -109,7 +108,7 @@ export function useIntegrationResponse(
         options.onError(error || 'Unknown error');
       }
     }
-  }, [fetcherData, setStatus, setData, integrationType, options]);
+  }, [fetcherData, setStatus, integrationType, options]);
 }
 
 export type { IntegrationResponse, UseIntegrationResponseOptions };

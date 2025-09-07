@@ -29,17 +29,31 @@ export const updateCredentialRef = async (
     { workspaceId, type, credential_ref }:
     { workspaceId: string, type: string, credential_ref: string },
 ) => {
-    const { data, error } = await client
+    const { data: integrationData, error: integrationError } = await client
         .from('integrations')
         .update({ credential_ref: credential_ref })
         .eq('workspace_id', workspaceId)
         .eq('type', type as Database["public"]["Enums"]["integration_type"])
         .select().single();
-    if (error) {
-        console.error('updateCredentialRef error', error);
-        throw error
+
+    if (credential_ref === '' && integrationData) {
+        const { data, error } = await client
+            .from('integration_statuses')
+            .update({ connection_status: 'disconnected' })
+            .eq('workspace_id', workspaceId)
+            .eq('integration_id', integrationData.integration_id)
+            .select().single();
+        if (error) {
+            console.error('updateCredentialRef error', error);
+            throw error
+        }
+        return data;
     }
-    return data;
+    if (integrationError) {
+        console.error('updateCredentialRef error', integrationError);
+        throw integrationError
+    }
+    return integrationData;
 }
 
 export const deleteIntegration = async (

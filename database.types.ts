@@ -1114,6 +1114,7 @@ export type Database = {
         | "unauthorized"
         | "error"
         | "never"
+        | "disconnected"
       delivery_event_type_email:
         | "delivered"
         | "opened"
@@ -1266,6 +1267,7 @@ export const Constants = {
         "unauthorized",
         "error",
         "never",
+        "disconnected",
       ],
       delivery_event_type_email: [
         "delivered",

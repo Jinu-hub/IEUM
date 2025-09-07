@@ -25,6 +25,7 @@ interface UseIntegrationUIOptions {
   handleGitHubDisconnect: () => void;
   handleSlackConnect: () => void;
   handleSlackDisconnect: () => void;
+  integrationsInfo?: any[]; // DB에서 가져온 integration 정보
 }
 
 /**
@@ -51,7 +52,8 @@ export function useIntegrationUI({
   handleGitHubConnect,
   handleGitHubDisconnect,
   handleSlackConnect,
-  handleSlackDisconnect
+  handleSlackDisconnect,
+  integrationsInfo = []
 }: UseIntegrationUIOptions) {
 
   /**
@@ -171,8 +173,18 @@ export function useIntegrationUI({
   };
 
   /**
-   * 통합 서비스 목록 생성
+   * DB 데이터에서 특정 integration 정보 찾기
    */
+  const getIntegrationInfo = (type: string) => {
+    return integrationsInfo.find((info: any) => info.type === type);
+  };
+
+  /**
+   * 통합 서비스 목록 생성 (DB 데이터와 머지)
+   */
+  const githubInfo = getIntegrationInfo('github');
+  const slackInfo = getIntegrationInfo('slack');
+
   const integrations: IntegrationService[] = [
     {
       id: 'github',
@@ -189,7 +201,17 @@ export function useIntegrationUI({
       ],
       onConnect: handleGitHubConnect,
       onDisconnect: handleGitHubDisconnect,
-      onConfigure: () => console.log('GitHub 설정')
+      onConfigure: () => console.log('GitHub 설정'),
+      // DB에서 가져온 추가 정보
+      ...(githubInfo && {
+        credentialRef: githubInfo.credential_ref,
+        connectionStatus: githubInfo.connection_status,
+        lastCheckedAt: githubInfo.last_checked_at,
+        lastOkAt: githubInfo.last_ok_at,
+        resourceCache: githubInfo.resource_cache_json,
+        connectedAt: githubInfo.config_json?.connected_at,
+        accessibleRepos: githubInfo.config_json?.accessible_repos
+      })
     },
     {
       id: 'slack',
@@ -206,7 +228,17 @@ export function useIntegrationUI({
       ],
       onConnect: handleSlackConnect,
       onDisconnect: handleSlackDisconnect,
-      onConfigure: () => console.log('Slack 설정')
+      onConfigure: () => console.log('Slack 설정'),
+      // DB에서 가져온 추가 정보
+      ...(slackInfo && {
+        credentialRef: slackInfo.credential_ref,
+        connectionStatus: slackInfo.connection_status,
+        lastCheckedAt: slackInfo.last_checked_at,
+        lastOkAt: slackInfo.last_ok_at,
+        resourceCache: slackInfo.resource_cache_json,
+        connectedAt: slackInfo.config_json?.connected_at,
+        accessibleChannels: slackInfo.config_json?.accessible_channels
+      })
     }
   ];
 

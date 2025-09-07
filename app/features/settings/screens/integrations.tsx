@@ -45,16 +45,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function IntegrationsScreen( { loaderData }: Route.ComponentProps ) {
-  const { user, workspaceId, integrationsInfo } = loaderData;
+  const { workspaceId, integrationsInfo } = loaderData;
   const githubCredentialRef = integrationsInfo.find((integration: any) => integration.type === 'github')?.credential_ref;
   const slackCredentialRef = integrationsInfo.find((integration: any) => integration.type === 'slack')?.credential_ref;
   const isConnectedGitHub = integrationsInfo.find((integration: any) => integration.type === 'github')?.connection_status === 'connected';
   const isConnectedSlack = integrationsInfo.find((integration: any) => integration.type === 'slack')?.connection_status === 'connected';
   // 각 서비스의 연결 상태를 관리
-  const [githubStatus, setGithubStatus] = useState<ConnectionStatus>('disconnected');
-  const [slackStatus, setSlackStatus] = useState<ConnectionStatus>('disconnected');
-  const [githubData, setGithubData] = useState<any>(null);
-  const [slackData, setSlackData] = useState<any>(null);
+  const [githubStatus, setGithubStatus] = useState<ConnectionStatus>(isConnectedGitHub ? 'connected' : 'disconnected');
+  const [slackStatus, setSlackStatus] = useState<ConnectionStatus>(isConnectedSlack ? 'connected' : 'disconnected');
+  //const [githubData, setGithubData] = useState<any>(null);
+  //const [slackData, setSlackData] = useState<any>(null);
   const [expandedChannels, setExpandedChannels] = useState(false);
   const [expandedRepos, setExpandedRepos] = useState(false);
 
@@ -101,7 +101,6 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   useIntegrationResponse(
     githubFetcher.data,
     setGithubStatus,
-    setGithubData,
     'github'
   );
 
@@ -109,7 +108,6 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   useIntegrationResponse(
     slackFetcher.data,
     setSlackStatus,
-    setSlackData,
     'slack'
   );
 
@@ -120,9 +118,9 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
     handleGitHubConnect,
     handleGitHubDisconnect,
     handleSlackConnect,
-    handleSlackDisconnect
+    handleSlackDisconnect,
+    integrationsInfo
   });
-
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
@@ -205,12 +203,12 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                     </p>
                     
                     {/* GitHub 연결 정보 */}
-                    {integration.id === 'github' && githubData && githubData.user && (
+                    {integration.id === 'github' && integration.resourceCache && integration.resourceCache.user && (
                       <div className="mt-3 pt-3 border-t border-[#E1E4E8] dark:border-[#2C2D30]">
                         <div className="flex items-center space-x-2 text-xs">
                           <span className="text-[#8B92B5] dark:text-[#6C6F7E]">연결된 계정:</span>
                           <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">
-                            {githubData.user.name || githubData.user.login}
+                            {integration.resourceCache.user.name || integration.resourceCache.user.login}
                           </span>
                         </div>
                         
@@ -219,24 +217,24 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                           <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2">
                             접근 가능한 리포지토리
                           </div>
-                          {githubData.repositories && githubData.repositories.length > 0 ? (
+                          {integration.resourceCache.repos && integration.resourceCache.repos.length > 0 ? (
                             <div>
                               {/* 통합된 통계 정보 */}
                               <div className="text-xs text-[#0D0E10] dark:text-[#FFFFFF] font-medium mb-2">
-                                총: {githubData.repositories.length}개 (
+                                총: {integration.accessibleRepos?.total}개 (
                                 <span >
-                                  공개: {githubData.user.accessible_repos?.public || githubData.repositories.filter((r: any) => !r.private).length}
+                                  공개: {integration.accessibleRepos?.public}
                                 </span>
                                 /
                                 <span >
-                                  비공개: {githubData.user.accessible_repos?.private || githubData.repositories.filter((r: any) => r.private).length}
+                                  비공개: {integration.accessibleRepos?.private}
                                 </span>
                                 )
                               </div>
                               
                               {/* 리포지토리 목록 */}
                               <div className="flex flex-wrap gap-1">
-                                {githubData.repositories
+                                {integration.resourceCache.repos
                                   .sort((a: any, b: any) => {
                                     // private 리포지토리를 먼저 표시
                                     if (a.private && !b.private) return -1;
@@ -244,7 +242,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                                     // 같은 타입이면 이름순 정렬
                                     return a.name.localeCompare(b.name);
                                   })
-                                  .slice(0, expandedRepos ? githubData.repositories.length : 10)
+                                  .slice(0, expandedRepos ? integration.resourceCache.repos.length : 10)
                                   .map((repo: any) => {
                                     const RepoIcon = repo.private ? LockIcon : BookOpenIcon;
                                     return (
@@ -259,19 +257,19 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                                       </LinearBadge>
                                     );
                                   })}
-                                {githubData.repositories.length > 10 && (
+                                {integration.resourceCache.repos.length > 10 && (
                                   <button
                                     onClick={() => setExpandedRepos(!expandedRepos)}
                                     className="text-xs text-[#5E6AD2] hover:text-[#7C89F9] dark:text-[#7C89F9] dark:hover:text-[#5E6AD2] underline cursor-pointer"
                                   >
-                                    {expandedRepos ? '축소하기' : `+${githubData.repositories.length - 10}개 더 보기`}
+                                    {expandedRepos ? '축소하기' : `+${integration.resourceCache.repos.length - 10}개 더 보기`}
                                   </button>
                                 )}
                               </div>
                             </div>
                           ) : (
                             <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] italic">
-                              {githubData.repositories === undefined 
+                              {integration.resourceCache.repos === undefined 
                                 ? "리포지토리 정보를 불러오는 중..." 
                                 : "접근 가능한 리포지토리가 없습니다."
                               }
@@ -279,6 +277,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                           )}
                         </div>
                         
+                        {/*
                         {githubData.rateLimit && (
                           <div className="flex items-center space-x-2 text-xs mt-3 pt-2 border-t border-[#E1E4E8] dark:border-[#2C2D30]">
                             <span className="text-[#8B92B5] dark:text-[#6C6F7E]">API 제한:</span>
@@ -297,27 +296,28 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                             )}
                           </div>
                         )}
+                        */}
                       </div>
                     )}
                     
                     {/* Slack 연결 정보 */}
-                    {integration.id === 'slack' && slackData && slackData.team && (
+                    {integration.id === 'slack' && integration.resourceCache && integration.resourceCache.team && (
                       <div className="mt-3 pt-3 border-t border-[#E1E4E8] dark:border-[#2C2D30]">
                         <div className="space-y-2 mb-3">
                           <div className="flex items-center space-x-2 text-xs">
                             <span className="text-[#8B92B5] dark:text-[#6C6F7E]">워크스페이스:</span>
                             <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">
-                              {slackData.team.name}
+                              {integration.resourceCache.team.name}
                             </span>
                           </div>
-                          {slackData.bot?.user_info && (
+                          {integration.resourceCache.bot?.user_info && (
                             <div className="flex items-center space-x-2 text-xs">
                               <span className="text-[#8B92B5] dark:text-[#6C6F7E]">연결된 봇:</span>
                               <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">
-                                {slackData.bot.user_info.profile?.display_name || 
-                                 slackData.bot.user_info.display_name || 
-                                 slackData.bot.user_info.real_name || 
-                                 slackData.bot.user_info.name}
+                                {integration.resourceCache.bot.user_info.profile?.display_name || 
+                                 integration.resourceCache.bot.user_info.display_name || 
+                                 integration.resourceCache.bot.user_info.real_name || 
+                                 integration.resourceCache.bot.user_info.name}
                               </span>
                             </div>
                           )}
@@ -328,24 +328,24 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                           <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2">
                             접근 가능한 채널 (연결된 봇이 멤버로 초대되어야 데이터를 수집가능)  
                           </div>
-                          {slackData.channels && slackData.channels.length > 0 ? (
+                          {integration.resourceCache.channels && integration.resourceCache.channels.length > 0 ? (
                             <div>
                               {/* 통합된 통계 정보 */}
                               <div className="text-xs text-[#0D0E10] dark:text-[#FFFFFF] font-medium mb-2">
-                                총: {slackData.channels.length}개 (
+                                총: {integration.resourceCache.channels.length}개 (
                                 <span className="text-green-600">
-                                  멤버: {slackData.channels.filter((ch: any) => ch.is_member).length}
+                                  멤버: {integration.resourceCache.channels.filter((ch: any) => ch.is_member).length}
                                 </span>
                                 /
                                 <span className="text-orange-600 ml-1">
-                                  비멤버: {slackData.channels.filter((ch: any) => !ch.is_member).length}
+                                  비멤버: {integration.resourceCache.channels.filter((ch: any) => !ch.is_member).length}
                                 </span>
                                 )
                               </div>
                               
                               {/* 채널 목록 */}
                               <div className="flex flex-wrap gap-1">
-                                {slackData.channels
+                                {integration.resourceCache.channels
                                   .sort((a: any, b: any) => {
                                     // 멤버 채널을 먼저 표시 (is_member가 true인 것이 먼저)
                                     if (a.is_member && !b.is_member) return -1;
@@ -353,7 +353,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                                     // 같은 타입이면 이름순 정렬
                                     return a.name.localeCompare(b.name);
                                   })
-                                  .slice(0, expandedChannels ? slackData.channels.length : 10)
+                                  .slice(0, expandedChannels ? integration.resourceCache.channels.length : 10)
                                   .map((channel: any, index: number) => {
                                     const isMember = channel.is_member;
                                     const isPrivate = channel.is_private;
@@ -371,19 +371,19 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                                       </LinearBadge>
                                     );
                                   })}
-                                {slackData.channels.length > 10 && (
+                                {integration.resourceCache.channels.length > 10 && (
                                   <button
                                     onClick={() => setExpandedChannels(!expandedChannels)}
                                     className="text-xs text-[#5E6AD2] hover:text-[#7C89F9] dark:text-[#7C89F9] dark:hover:text-[#5E6AD2] underline cursor-pointer"
                                   >
-                                    {expandedChannels ? '축소하기' : `+${slackData.channels.length - 10}개 더 보기`}
+                                    {expandedChannels ? '축소하기' : `+${integration.resourceCache.channels.length - 10}개 더 보기`}
                                   </button>
                                 )}
                               </div>
                             </div>
                           ) : (
                             <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] italic">
-                              {slackData.channels === undefined 
+                              {integration.resourceCache.channels === undefined 
                                 ? "채널 정보를 불러오는 중..." 
                                 : "접근 가능한 채널이 없습니다."
                               }

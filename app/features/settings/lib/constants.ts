@@ -1,4 +1,4 @@
-import type { ConnectionStatus } from "./types";
+import type { ConnectionStatus, DBConnectionStatus } from "./types";
 
 
 // 통합 서비스 정보 타입
@@ -12,6 +12,15 @@ export interface IntegrationService {
     onConnect: () => void;
     onDisconnect: () => void;
     onConfigure?: () => void;
+    // DB에서 가져온 추가 정보 (선택적)
+    credentialRef?: string;
+    connectionStatus?: DBConnectionStatus;
+    lastCheckedAt?: string;
+    lastOkAt?: string;
+    resourceCache?: any;
+    connectedAt?: string;
+    accessibleRepos?: any;
+    accessibleChannels?: any;
   }
 
   // 연결된 인테그레이션 타입
