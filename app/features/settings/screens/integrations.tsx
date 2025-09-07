@@ -23,6 +23,9 @@ import type { ConnectionStatus } from '../lib/types';
 import type { IntegrationService } from '../lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { getWorkspace, getIntegrationsInfo } from '../db/queries';
+import { useIntegrationResponse } from '../hooks/useIntegrationResponse';
+import { useIntegrationActions } from '../hooks/useIntegrationActions';
+import { useIntegrationUI } from '../hooks/useIntegrationUI';
 
 export const meta: Route.MetaFunction = () => {
     return [{ title: `Integrations | ${import.meta.env.VITE_APP_NAME}` }];
@@ -45,6 +48,8 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   const { user, workspaceId, integrationsInfo } = loaderData;
   const githubCredentialRef = integrationsInfo.find((integration: any) => integration.type === 'github')?.credential_ref;
   const slackCredentialRef = integrationsInfo.find((integration: any) => integration.type === 'slack')?.credential_ref;
+  const isConnectedGitHub = integrationsInfo.find((integration: any) => integration.type === 'github')?.connection_status === 'connected';
+  const isConnectedSlack = integrationsInfo.find((integration: any) => integration.type === 'slack')?.connection_status === 'connected';
   // 각 서비스의 연결 상태를 관리
   const [githubStatus, setGithubStatus] = useState<ConnectionStatus>('disconnected');
   const [slackStatus, setSlackStatus] = useState<ConnectionStatus>('disconnected');
@@ -54,10 +59,32 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   const [expandedRepos, setExpandedRepos] = useState(false);
 
   // API 호출을 위한 fetcher
-  const githubFetcher = useFetcher();
-  const slackFetcher = useFetcher();
+  // GitHub integration actions
+  const {
+    handleConnect: handleGitHubConnect,
+    handleDisconnect: handleGitHubDisconnect,
+    fetcher: githubFetcher
+  } = useIntegrationActions({
+    workspaceId,
+    credentialRef: githubCredentialRef,
+    integrationType: 'github',
+    setStatus: setGithubStatus
+  });
+
+  // Slack integration actions
+  const {
+    handleConnect: handleSlackConnect,
+    handleDisconnect: handleSlackDisconnect,
+    fetcher: slackFetcher
+  } = useIntegrationActions({
+    workspaceId,
+    credentialRef: slackCredentialRef,
+    integrationType: 'slack',
+    setStatus: setSlackStatus
+  });
 
   // 컴포넌트 마운트 시 연결 상태 확인
+  /*
   useEffect(() => {
     // GitHub 상태 확인 (credentialRef가 있을 때만)
     if (githubCredentialRef) {
@@ -68,277 +95,34 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
       slackFetcher.load(`/api/settings/slack-integration/${slackCredentialRef}`);
     }
   }, []);
+  */
 
-  // GitHub fetcher 응답 처리
-  useEffect(() => {
-    if (githubFetcher.data) {
-      const { status, data, error, message } = githubFetcher.data;
-      console.log('GitHub API 응답:', { status, data, error, message });
-      
-      if (status === 'success') {
-        if (data) {
-          if (data.oauth_required) {
-            // OAuth 구현 예정 메시지
-            setGithubStatus('disconnected');
-            console.log('OAuth integration will be implemented:', data.oauth_url);
-            alert('GitHub OAuth 연동 기능은 곧 구현될 예정입니다!');
-          } else {
-            setGithubStatus(data.connected ? 'connected' : 'disconnected');
-            setGithubData(data);
-            console.log('GitHub 데이터 설정됨:', {
-              connected: data.connected,
-              repositoriesCount: data.repositories?.length || 0,
-              repositories: data.repositories?.map((r: any) => r.name) || []
-            });
-          }
-        } else {
-          // disconnect 성공 시
-          setGithubStatus('disconnected');
-          setGithubData(null);
-        }
-        if (message) {
-          console.log(message);
-        }
-      } else {
-        setGithubStatus('disconnected');
-        console.error('GitHub 요청 실패:', error);
-      }
-    }
-  }, [githubFetcher.data]);
+  // GitHub fetcher 응답 처리 (커스텀 훅 사용)
+  useIntegrationResponse(
+    githubFetcher.data,
+    setGithubStatus,
+    setGithubData,
+    'github'
+  );
 
-  // Slack fetcher 응답 처리
-  useEffect(() => {
-    if (slackFetcher.data) {
-      const { status, data, error, message } = slackFetcher.data;
-      if (status === 'success') {
-        if (data) {
-          setSlackStatus(data.connected ? 'connected' : 'disconnected');
-          setSlackData(data);
-        } else {
-          // disconnect 성공 시
-          setSlackStatus('disconnected');
-          setSlackData(null);
-        }
-        if (message) {
-          console.log(message);
-        }
-      } else {
-        setSlackStatus('disconnected');
-        console.error('Slack 요청 실패:', error);
-      }
-    }
-  }, [slackFetcher.data]);
+  // Slack fetcher 응답 처리 (커스텀 훅 사용)
+  useIntegrationResponse(
+    slackFetcher.data,
+    setSlackStatus,
+    setSlackData,
+    'slack'
+  );
 
-  // GitHub 연결 처리
-  const handleGitHubConnect = async () => {
-    setGithubStatus('connecting');
-    
-    const formData = new FormData();
-    formData.append('actionType', 'connect');
-    formData.append('workspaceId', workspaceId);
-    
-    // credentialRef가 있으면 추가, 없으면 'new'로 처리
-    if (githubCredentialRef) {
-      formData.append('credentialRef', githubCredentialRef);
-    }
-    
-    // 첫 연결 시에는 /new 경로 사용
-    const actionUrl = githubCredentialRef 
-      ? `/api/settings/github-integration/${githubCredentialRef}`
-      : '/api/settings/github-integration/new';
-    
-    githubFetcher.submit(formData, {
-      method: 'POST',
-      action: actionUrl
-    });
-  };
+  // Integration UI 요소들 생성
+  const { integrations, getStatusBadge, getActionButton } = useIntegrationUI({
+    githubStatus,
+    slackStatus,
+    handleGitHubConnect,
+    handleGitHubDisconnect,
+    handleSlackConnect,
+    handleSlackDisconnect
+  });
 
-  // GitHub 연결 해제 처리  
-  const handleGitHubDisconnect = async () => {
-    setGithubStatus('disconnecting');
-    
-    const formData = new FormData();
-    formData.append('actionType', 'disconnect');
-    formData.append('workspaceId', workspaceId);
-    formData.append('credentialRef', githubCredentialRef || '');
-    
-    githubFetcher.submit(formData, {
-      method: 'POST', 
-      action: `/api/settings/github-integration/${githubCredentialRef}`
-    });
-  };
-
-  // Slack 연결 처리
-  const handleSlackConnect = async () => {
-    setSlackStatus('connecting');
-    
-    /*
-    // 사용자에게 토큰 입력 받기 (실제 구현에서는 모달이나 폼 사용)
-    const token = prompt('Slack Bot Token을 입력하세요:');
-    
-    if (!token) {
-      setSlackStatus('disconnected');
-      return;
-    }
-    */
-
-    const formData = new FormData();
-    formData.append('actionType', 'connect');
-    formData.append('workspaceId', workspaceId);
-    formData.append('credentialRef', slackCredentialRef || '');
-    
-    slackFetcher.submit(formData, {
-      method: 'POST',
-      action: slackCredentialRef 
-        ? `/api/settings/slack-integration/${slackCredentialRef}`
-        : '/api/settings/slack-integration/new'
-    });
-  };
-
-  // Slack 연결 해제 처리
-  const handleSlackDisconnect = async () => {
-    setSlackStatus('disconnecting');
-    
-    const formData = new FormData();
-    formData.append('actionType', 'disconnect');
-    formData.append('workspaceId', workspaceId);
-    formData.append('credentialRef', slackCredentialRef || '');
-    
-    slackFetcher.submit(formData, {
-      method: 'POST',
-      action: slackCredentialRef 
-        ? `/api/settings/slack-integration/${slackCredentialRef}`
-        : '/api/settings/slack-integration/new'
-    });
-  };
-
-  // 통합 서비스 목록
-  const integrations: IntegrationService[] = [
-    {
-      id: 'github',
-      name: 'GitHub',
-      description: 'GitHub 리포지토리에서 커밋, 이슈, PR 정보를 수집하고 리포트를 생성합니다.',
-      icon: <GitHubIcon className="w-8 h-8" />,
-      status: githubStatus,
-      features: [
-        '커밋 정보 수집',
-        'PR(Pull Request) 추적',
-        '이슈 관리',
-        '기여자 분석',
-        '자동 리포트 생성'
-      ],
-      onConnect: handleGitHubConnect,
-      onDisconnect: handleGitHubDisconnect,
-      onConfigure: () => console.log('GitHub 설정')
-    },
-    {
-      id: 'slack',
-      name: 'Slack',
-      description: 'Slack 워크스페이스의 채널 메시지와 활동을 수집하고 분석합니다.',
-      icon: <SlackIcon className="w-8 h-8" />,
-      status: slackStatus,
-      features: [
-        '채널 메시지 수집',
-        '사용자 활동 분석',
-        '반응 및 참여도 측정',
-        '팀 커뮤니케이션 인사이트',
-        '자동 리포트 생성'
-      ],
-      onConnect: handleSlackConnect,
-      onDisconnect: handleSlackDisconnect,
-      onConfigure: () => console.log('Slack 설정')
-    }
-  ];
-
-  // 상태별 배지 설정
-  const getStatusBadge = (status: ConnectionStatus) => {
-    switch (status) {
-      case 'connected':
-        return (
-          <LinearBadge 
-            variant="success" 
-            icon={<CheckCircleIcon className="w-3 h-3" />}
-            className="ml-3"
-          >
-            연결됨
-          </LinearBadge>
-        );
-      case 'connecting':
-        return (
-          <LinearBadge 
-            variant="warning" 
-            className="ml-3"
-          >
-            연결 중...
-          </LinearBadge>
-        );
-      case 'disconnected':
-      default:
-        return (
-          <LinearBadge 
-            variant="secondary" 
-            className="ml-3"
-          >
-            연결 안됨
-          </LinearBadge>
-        );
-    }
-  };
-
-  // 상태별 액션 버튼 설정
-  const getActionButton = (integration: IntegrationService) => {
-    const { status, onConnect, onDisconnect, onConfigure } = integration;
-    
-    if (status === 'connecting') {
-      return (
-        <LinearButton
-          variant="secondary"
-          size="sm"
-          loading={true}
-          disabled
-        >
-          연결 중...
-        </LinearButton>
-      );
-    }
-
-    if (status === 'connected') {
-      return (
-        <div className="flex gap-2">
-          {onConfigure && (
-            <LinearButton
-              variant="ghost"
-              size="sm"
-              leftIcon={<SettingsIcon className="w-4 h-4" />}
-              onClick={onConfigure}
-            >
-              설정
-            </LinearButton>
-          )}
-          <LinearButton
-            variant="secondary"
-            size="sm"
-            onClick={onDisconnect}
-            className="flex items-center space-x-2 cursor-pointer"
-          >
-            연결 해제
-          </LinearButton>
-        </div>
-      );
-    }
-
-    return (
-      <LinearButton
-        variant="primary"
-        size="sm"
-        leftIcon={<PlusIcon className="w-4 h-4" />}
-        onClick={onConnect}
-        className="flex items-center space-x-2 cursor-pointer"
-      >
-        연결하기
-      </LinearButton>
-    );
-  };
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">

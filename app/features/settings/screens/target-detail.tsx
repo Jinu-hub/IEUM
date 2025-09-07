@@ -21,7 +21,7 @@ import type { TargetData, IntegrationSource } from '../lib/types';
 import type {
   ConnectedIntegration,
   SourceItem,
-} from '../lib/common';
+} from '../lib/constants';
 import {
   getConnectedIntegrations,
   getSourcesForIntegration,
