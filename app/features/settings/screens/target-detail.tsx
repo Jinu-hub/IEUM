@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, useFetcher } from 'react-router';
+import { useNavigate, useParams, type LoaderFunctionArgs } from 'react-router';
 import { 
   LinearCard, 
   LinearCardContent,
@@ -17,27 +17,44 @@ import {
 } from "~/core/components/ui/select";
 import { ArrowLeft, Plus, X, Clock, Target as TargetIcon, Settings } from 'lucide-react';
 import { sampleTargets, sampleMailingLists, scheduleTypes, weekdays, hours, minutes, monthDays } from '../lib/mockdata';
-import type { TargetData, IntegrationSource } from '../lib/types';
-import type {
-  ConnectedIntegration,
-  SourceItem,
-} from '../lib/constants';
+import type { TargetData } from '../lib/types';
 import {
-  getConnectedIntegrations,
-  getSourcesForIntegration,
   getSourceTypeLabel,
-  handleGitHubFetcherResponse,
-  handleSlackFetcherResponse,
   getNonMemberSlackChannels,
 } from '../lib/common';
-
+import { useIntegrationSources } from '../hooks/useIntegrationSources';
+import { getIntegrationsInfo, getMailingList, getTarget, getWorkspace } from '../db/queries';
+import makeServerClient from '~/core/lib/supa-client.server';
+import { redirect } from 'react-router';
+import type { Route } from "./+types/target-detail";
 
 export const meta = ({ params }: { params: { targetId: string } }) => {
   const isNew = params.targetId === 'new';
   return [{ title: `${isNew ? '새 타겟 추가' : '타겟 편집'} | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
-export default function TargetDetailScreen() {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return redirect('/login');
+  }
+  const workspace = await getWorkspace(client, { userId: user.id });
+  const workspaceId = workspace[0].workspace_id;
+  const mailingLists = await getMailingList(client, { workspaceId: workspaceId });
+  const integrations = await getIntegrationsInfo(client, { workspaceId: workspaceId });
+
+  const targetId = params.targetId;
+  if (targetId && targetId !== 'new') {
+    const target = await getTarget(client, { targetId: targetId || '' });
+    return { workspaceId, target, mailingLists, integrations };
+  } else {
+    return { workspaceId, target: null, mailingLists, integrations };
+  }
+};
+
+export default function TargetDetailScreen( { loaderData }: Route.ComponentProps ) {
+  const { workspaceId, target, mailingLists, integrations } = loaderData;
   const navigate = useNavigate();
   const { targetId } = useParams();
   const isNew = targetId === 'new';
@@ -59,61 +76,28 @@ export default function TargetDetailScreen() {
   const [selectedMonthDay, setSelectedMonthDay] = useState('1');
   const [customCron, setCustomCron] = useState('');
 
-  // 인테그레이션 소스 상태
-  const [integrationSources, setIntegrationSources] = useState<IntegrationSource[]>([]);
-
   // 새 인테그레이션 소스 상태
   const [newIntegration, setNewIntegration] = useState({
-    integrationId: '',
+    integrationType: '',
     sourceType: '',
     sourceIdent: '',
   });
-
-  // 인테그레이션 연결 상태
-  const [githubStatus, setGithubStatus] = useState<'connected' | 'disconnected'>('disconnected');
-  const [slackStatus, setSlackStatus] = useState<'connected' | 'disconnected'>('disconnected');
-  const [githubData, setGithubData] = useState<any>(null);
-  const [slackData, setSlackData] = useState<any>(null);
   
-  // 연결된 인테그레이션 목록
-  const [connectedIntegrations, setConnectedIntegrations] = useState<ConnectedIntegration[]>([]);
-  
-  // API 호출을 위한 fetcher
-  const githubFetcher = useFetcher();
-  const slackFetcher = useFetcher();
-  
-  // 사용 가능한 소스 목록
-  const [availableSources, setAvailableSources] = useState<SourceItem[]>([]);
+  // 커스텀 훅으로 integration 소스 관리
+  const {
+    integrationSources,
+    availableSources,
+    setAvailableSources,
+    updateAvailableSources,
+    handleAddSource,
+    handleRemoveSource,
+  } = useIntegrationSources(integrations);
   
   // 비멤버 Slack 채널 목록
   const [nonMemberChannels, setNonMemberChannels] = useState<any[]>([]);
   
   // 비멤버 채널 목록 확장 상태
   const [expandedNonMemberChannels, setExpandedNonMemberChannels] = useState(false);
-
-  // 인테그레이션 데이터 로드
-  useEffect(() => {
-    // GitHub 상태 확인
-    githubFetcher.load('/api/settings/github-integration');
-    // Slack 상태 확인  
-    slackFetcher.load('/api/settings/slack-integration');
-  }, []);
-
-  // GitHub fetcher 응답 처리
-  useEffect(() => {
-    handleGitHubFetcherResponse(githubFetcher.data, setGithubStatus, setGithubData);
-  }, [githubFetcher.data]);
-
-  // Slack fetcher 응답 처리
-  useEffect(() => {
-    handleSlackFetcherResponse(slackFetcher.data, setSlackStatus, setSlackData);
-  }, [slackFetcher.data]);
-
-  // 연결된 인테그레이션 목록 업데이트
-  useEffect(() => {
-    const integrations = getConnectedIntegrations(githubStatus, githubData, slackStatus, slackData);
-    setConnectedIntegrations(integrations);
-  }, [githubStatus, githubData, slackStatus, slackData]);
 
   // 데이터 로드
   useEffect(() => {
@@ -153,11 +137,6 @@ export default function TargetDetailScreen() {
             setCustomCron(target.scheduleCron);
           }
         }
-
-        // 샘플 인테그레이션 소스 (실제로는 API에서 가져와야 함)
-        setIntegrationSources([
-          { id: '1', integrationId: '1', sourceType: 'github_repo', sourceIdent: 'facebook/react' },
-        ]);
       }
     }
   }, [targetId, isNew]);
@@ -223,14 +202,14 @@ export default function TargetDetailScreen() {
 
   // 인테그레이션 선택 시 소스 로드
   useEffect(() => {
-    if (newIntegration.integrationId) {
-      const sources = getSourcesForIntegration(newIntegration.integrationId, connectedIntegrations);
-      setAvailableSources(sources);
+    if (newIntegration.integrationType) {
+      updateAvailableSources(newIntegration.integrationType);
       
       // Slack인 경우 비멤버 채널도 가져오기
-      const integration = connectedIntegrations.find(i => i.id === newIntegration.integrationId);
-      if (integration?.type === 'slack' && integration.data?.channels) {
-        const nonMembers = getNonMemberSlackChannels(integration.data.channels);
+      const integration = integrations.find((i: any) => i.type === newIntegration.integrationType);
+      const rc: any = integration?.resource_cache_json as any;
+      if (integration?.type === 'slack' && Array.isArray(rc?.channels)) {
+        const nonMembers = getNonMemberSlackChannels(rc.channels as any);
         setNonMemberChannels(nonMembers);
         setExpandedNonMemberChannels(false); // 새로운 인테그레이션 선택 시 확장 상태 초기화
       } else {
@@ -242,35 +221,15 @@ export default function TargetDetailScreen() {
       setNonMemberChannels([]);
       setExpandedNonMemberChannels(false);
     }
-  }, [newIntegration.integrationId, connectedIntegrations]);
+  }, [newIntegration.integrationType, integrations, updateAvailableSources, setAvailableSources]);
 
-  // 인테그레이션 소스 추가
+  // 인테그레이션 소스 추가 핸들러
   const handleAddIntegrationSource = () => {
-    if (
-      newIntegration.integrationId && 
-      newIntegration.sourceIdent &&
-      newIntegration.integrationId !== 'no-integrations' &&
-      newIntegration.sourceIdent !== 'no-sources-available'
-    ) {
-      const integration = connectedIntegrations.find(i => i.id === newIntegration.integrationId);
-      const sourceType = integration?.type === 'github' ? 'github_repo' : 'slack_channel';
-      
-      const newSource: IntegrationSource = {
-        id: Date.now().toString(),
-        integrationId: newIntegration.integrationId,
-        sourceType,
-        sourceIdent: newIntegration.sourceIdent,
-      };
-
-      setIntegrationSources(prev => [...prev, newSource]);
-      setNewIntegration({ integrationId: '', sourceType: '', sourceIdent: '' });
+    const success = handleAddSource(newIntegration);
+    if (success) {
+      setNewIntegration({ integrationType: '', sourceType: '', sourceIdent: '' });
       setAvailableSources([]); // 소스 목록 초기화
     }
-  };
-
-  // 인테그레이션 소스 제거
-  const handleRemoveIntegrationSource = (id: string) => {
-    setIntegrationSources(prev => prev.filter(source => source.id !== id));
   };
 
   // 저장 핸들러
@@ -552,7 +511,7 @@ export default function TargetDetailScreen() {
               {integrationSources.length > 0 && (
                 <div className="space-y-3 mb-6">
                   {integrationSources.map((source) => {
-                    const integration = connectedIntegrations.find(i => i.id === source.integrationId);
+                    const integration = integrations.find((i: any) => i.type === source.integrationType);
                     return (
                       <div key={source.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-3">
@@ -570,7 +529,7 @@ export default function TargetDetailScreen() {
                         <LinearButton
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleRemoveIntegrationSource(source.id)}
+                          onClick={() => handleRemoveSource(source.id)}
                         >
                           <X className="h-4 w-4" />
                         </LinearButton>
@@ -584,15 +543,15 @@ export default function TargetDetailScreen() {
               <div className="space-y-4 p-4 border-2 border-dashed border-muted rounded-lg">
                 <h3 className="text-sm font-medium text-foreground">새 데이터 소스 추가</h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-6">
                   {/* 연결된 서비스 선택 */}
                   <div className="space-y-2">
                     <label className="text-xs font-medium text-muted-foreground">연결된 서비스</label>
                     <Select
-                      value={newIntegration.integrationId}
+                      value={newIntegration.integrationType}
                       onValueChange={(value) => setNewIntegration(prev => ({ 
                         ...prev, 
-                        integrationId: value,
+                        integrationType: value,
                         sourceIdent: '' // 서비스가 바뀌면 소스도 초기화
                       }))}
                     >
@@ -600,12 +559,17 @@ export default function TargetDetailScreen() {
                         <SelectValue placeholder="연결된 서비스를 선택하세요" />
                       </SelectTrigger>
                       <SelectContent>
-                        {connectedIntegrations.length > 0 ? (
-                          connectedIntegrations.map((integration) => (
-                            <SelectItem key={integration.id} value={integration.id}>
+                        {integrations.length > 0 ? (
+                          integrations.map((integration: any) => (
+                            <SelectItem key={integration.type} value={integration.type}>
                               <div className="flex items-center space-x-2">
                                 <span>{integration.name}</span>
-                                <LinearBadge variant="success" size="sm">연결됨</LinearBadge>
+                                {integration.connection_status === 'connected' && (
+                                  <LinearBadge variant="success" size="sm">연결됨</LinearBadge>
+                                )}
+                                {integration.connection_status === 'disconnected' && (
+                                  <LinearBadge variant="secondary" size="sm">연결안됨</LinearBadge>
+                                )}
                               </div>
                             </SelectItem>
                           ))
@@ -618,53 +582,106 @@ export default function TargetDetailScreen() {
                     </Select>
                   </div>
 
-                  {/* 소스 선택 (선택된 서비스에 따라 동적으로 로드) */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-muted-foreground">
+                  {/* 소스 선택과 추가 버튼 */}
+                  <div className="space-y-4">
+                    {/* 소스 선택 라벨 */}
+                    <label className="text-xs font-medium text-muted-foreground block">
                       {(() => {
-                        const selectedIntegration = connectedIntegrations.find(i => i.id === newIntegration.integrationId);
-                        return selectedIntegration ? getSourceTypeLabel(selectedIntegration.type) : '소스';
+                        const selectedIntegration = integrations.find((i: any) => i.type === newIntegration.integrationType);
+                        return selectedIntegration && (selectedIntegration.type === 'github' || selectedIntegration.type === 'slack')
+                          ? getSourceTypeLabel(selectedIntegration.type)
+                          : '소스';
                       })()}
                     </label>
-                    <Select
-                      value={newIntegration.sourceIdent}
-                      onValueChange={(value) => setNewIntegration(prev => ({ ...prev, sourceIdent: value }))}
-                      disabled={!newIntegration.integrationId}
-                    >
-                      <SelectTrigger>
-                        <SelectValue 
-                          placeholder={
-                            !newIntegration.integrationId 
-                              ? "먼저 서비스를 선택하세요"
-                              : "소스를 선택하세요"
-                          } 
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableSources.length > 0 ? (
-                          availableSources.map((source) => (
-                            <SelectItem key={source.id} value={source.name}>
-                              <div className="flex flex-col">
-                                <span>{source.name}</span>
-                                {source.description && (
-                                  <span className="text-xs text-muted-foreground">{source.description}</span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          ))
-                        ) : newIntegration.integrationId ? (
-                          <SelectItem value="no-sources-available" disabled>
-                            사용 가능한 소스가 없습니다
-                          </SelectItem>
-                        ) : null}
-                      </SelectContent>
-                    </Select>
+                    
+                    {/* 소스 선택과 추가 버튼을 반응형으로 배치 */}
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-start">
+                      <div className="flex-1 space-y-2">
+                        <Select
+                          value={newIntegration.sourceIdent}
+                          onValueChange={(value) => setNewIntegration(prev => ({ ...prev, sourceIdent: value }))}
+                          disabled={!newIntegration.integrationType}
+                        >
+                          <SelectTrigger>
+                            <SelectValue 
+                              placeholder={
+                                !newIntegration.integrationType 
+                                  ? "먼저 서비스를 선택하세요"
+                                  : "소스를 선택하세요"
+                              } 
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableSources.length > 0 ? (
+                              availableSources.map((source) => (
+                                <SelectItem key={source.id} value={source.name}>
+                                  <div className="flex flex-col">
+                                    <span>{source.name}</span>
+                                    {source.description && (
+                                      <span className="text-xs text-muted-foreground">{source.description}</span>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              ))
+                            ) : newIntegration.integrationType ? (
+                              <SelectItem value="no-sources-available" disabled>
+                                사용 가능한 소스가 없습니다
+                              </SelectItem>
+                            ) : null}
+                          </SelectContent>
+                        </Select>
+                        
+                        {/* 연결 상태 경고 메시지 */}
+                        {(() => {
+                          const selectedIntegration = integrations.find((i: any) => i.type === newIntegration.integrationType);
+                          return selectedIntegration && selectedIntegration.connection_status !== 'connected' ? (
+                            <div className="text-xs text-amber-600">
+                              선택한 서비스가 연결 해제되었습니다. 먼저 연결을 완료하세요.
+                            </div>
+                          ) : null;
+                        })()}
+                      </div>
+
+                      {/* 추가 버튼 또는 설정 버튼 */}
+                      {(() => {
+                        const selectedIntegration = integrations.find((i: any) => i.type === newIntegration.integrationType);
+                        
+                        if (selectedIntegration && selectedIntegration.connection_status !== 'connected') {
+                          // 연결 해제된 경우 설정 화면으로 이동하는 버튼
+                          return (
+                            <LinearButton
+                              variant="primary"
+                              size="sm"
+                              leftIcon={<Settings />}
+                              onClick={() => navigate('/settings/integrations')}
+                              className="w-full sm:w-auto sm:min-w-[120px] cursor-pointer"
+                            >
+                              연결 설정으로 이동
+                            </LinearButton>
+                          );
+                        }
+                        
+                        // 연결된 경우 추가 버튼
+                        return (
+                          <LinearButton
+                            variant="secondary"
+                            size="sm"
+                            leftIcon={<Plus />}
+                            onClick={handleAddIntegrationSource}
+                            disabled={!newIntegration.integrationType || !newIntegration.sourceIdent}
+                            className="w-full sm:w-auto sm:min-w-[120px] cursor-pointer"
+                          >
+                            추가
+                          </LinearButton>
+                        );
+                      })()}
+                    </div>
                     
                     {/* Slack 선택 시 안내 메시지 */}
                     {(() => {
-                      const selectedIntegration = connectedIntegrations.find(i => i.id === newIntegration.integrationId);
-                      return selectedIntegration?.type === 'slack' && (
-                        <div className="text-xs text-muted-foreground mt-2 p-2 bg-muted/50 rounded">
+                      const selectedIntegration = integrations.find((i: any) => i.type === newIntegration.integrationType);
+                      return selectedIntegration?.type === 'slack' && selectedIntegration.connection_status === 'connected' && (
+                        <div className="text-xs text-muted-foreground p-2 bg-muted/50 rounded">
                           <p>💡 봇이 초대된 채널만 데이터 수집이 가능합니다.</p>
                           {availableSources.length === 0 && (
                             <p className="mt-1 text-amber-600">아래 후보 채널에서 봇을 초대해주세요.</p>
@@ -673,26 +690,12 @@ export default function TargetDetailScreen() {
                       );
                     })()}
                   </div>
-
-                  {/* 추가 버튼 */}
-                  <div className="flex items-end">
-                    <LinearButton
-                      variant="secondary"
-                      size="sm"
-                      leftIcon={<Plus />}
-                      onClick={handleAddIntegrationSource}
-                      disabled={!newIntegration.integrationId || !newIntegration.sourceIdent}
-                      className="w-full"
-                    >
-                      추가
-                    </LinearButton>
-                  </div>
                 </div>
                 
                 {/* Slack 비멤버 채널 후보 목록 */}
                 {(() => {
-                  const selectedIntegration = connectedIntegrations.find(i => i.id === newIntegration.integrationId);
-                  return selectedIntegration?.type === 'slack' && nonMemberChannels.length > 0 && (
+                  const selectedIntegration = integrations.find((i: any) => i.type === newIntegration.integrationType);
+                  return selectedIntegration?.type === 'slack' && nonMemberChannels.length > 0 && selectedIntegration?.connection_status === 'connected' && (
                     <div className="mt-6 pt-4 border-t border-muted">
                       <div className="mb-3">
                         <h4 className="text-sm font-medium text-foreground mb-1">

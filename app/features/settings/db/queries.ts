@@ -121,6 +121,39 @@ export const getIntegrationsInfo = async (
   return data;
 };
 
+
+export const getTarget = async (
+  client: SupabaseClient<Database>,
+  { targetId }: { targetId: string },
+) => {
+  const { data, error } = await client
+    .from('targets')
+    .select('*')
+    .eq('target_id', targetId)
+    .single();
+  if (error) {
+    console.log('getTarget error', error);
+    throw error;
+  }
+  return data;
+};
+
+export const getMailingList = async (
+  client: SupabaseClient<Database>,
+  { workspaceId }: { workspaceId: string },
+) => {
+  const { data, error } = await client
+    .from('mail_list')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.log('getMailingList error', error);
+    throw error;
+  }
+  return data;
+};
+
 /*
 export const getBookmark = async (
   client: SupabaseClient<Database>,

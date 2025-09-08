@@ -48,6 +48,7 @@ export interface TargetData {
 export interface IntegrationSource {
     id: string;
     integrationId: string;
+    integrationType: string; // integration type을 저장 ('github', 'slack' 등)
     sourceType: string; // 'github_repo' | 'slack_channel'
     sourceIdent: string; // repo name or channel name
 }

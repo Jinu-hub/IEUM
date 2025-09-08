@@ -57,64 +57,6 @@ export function loadIntegrationData(
 }
 
 /**
- * GitHub fetcher 응답을 처리하는 헬퍼 함수
- */
-export function handleGitHubFetcherResponse(
-  fetcherData: any,
-  setStatus: (status: 'connected' | 'disconnected') => void,
-  setData: (data: any) => void
-) {
-  if (fetcherData) {
-    const { status, data, error, message } = fetcherData;
-    
-    if (status === 'success') {
-      if (data) {
-        setStatus(data.connected ? 'connected' : 'disconnected');
-        setData(data);
-      } else {
-        setStatus('disconnected');
-        setData(null);
-      }
-      if (message) {
-        console.log(message);
-      }
-    } else {
-      setStatus('disconnected');
-      console.error('GitHub 요청 실패:', error);
-    }
-  }
-}
-
-/**
- * Slack fetcher 응답을 처리하는 헬퍼 함수
- */
-export function handleSlackFetcherResponse(
-  fetcherData: any,
-  setStatus: (status: 'connected' | 'disconnected') => void,
-  setData: (data: any) => void
-) {
-  if (fetcherData) {
-    const { status, data, error, message } = fetcherData;
-    
-    if (status === 'success') {
-      if (data) {
-        setStatus(data.connected ? 'connected' : 'disconnected');
-        setData(data);
-      } else {
-        setStatus('disconnected');
-        setData(null);
-      }
-      if (message) {
-        console.log(message);
-      }
-    } else {
-      setStatus('disconnected');
-      console.error('Slack 요청 실패:', error);
-    }
-  }
-}
-
-/**
  * 연결된 인테그레이션 목록을 생성하는 헬퍼 함수
  */
 export function getConnectedIntegrations(

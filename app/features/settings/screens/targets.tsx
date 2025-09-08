@@ -301,7 +301,7 @@ export default function TargetsScreen() {
           "bg-sky-600 text-white hover:bg-sky-700",
           "hover:scale-105 active:scale-95",
           "focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2",
-          "dark:focus:ring-offset-background"
+          "dark:focus:ring-offset-background cursor-pointer"
         )}
         title="새 타겟 추가"
       >
