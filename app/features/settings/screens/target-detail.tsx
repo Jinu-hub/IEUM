@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, type LoaderFunctionArgs } from 'react-router';
+import { toast } from "sonner";
+import { useNavigate, useParams, useSubmit, useActionData, useNavigation, type LoaderFunctionArgs } from 'react-router';
 import { 
   LinearCard, 
   LinearCardContent,
@@ -20,10 +21,15 @@ import { sampleTargets, sampleMailingLists, scheduleTypes, weekdays, hours, minu
 import type { TargetData } from '../lib/types';
 import {
   getSourceTypeLabel,
-  getNonMemberSlackChannels,
+  getNonMemberSlackChannels,  
 } from '../lib/common';
 import { useIntegrationSources } from '../hooks/useIntegrationSources';
+import { 
+  parseCronExpression,
+  generateCronExpression
+} from '../lib/scheduleUtils';
 import { getIntegrationsInfo, getMailingList, getTarget, getWorkspace } from '../db/queries';
+import { createTargetWithSources } from '../db/mutations';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { redirect } from 'react-router';
 import type { Route } from "./+types/target-detail";
@@ -53,11 +59,111 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   }
 };
 
+export const action = async ({ request, params }: Route.ActionArgs) => {
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return redirect('/login');
+  }
+  
+  const workspace = await getWorkspace(client, { userId: user.id });
+  const workspaceId = workspace[0].workspace_id;
+  
+  if (!workspaceId) {
+    return {
+      status: 'error',
+      message: 'Workspace not found'
+    };
+  }
+
+  try {
+    const formData = await request.formData();
+    const actionType = formData.get('actionType') as string;
+
+    if (actionType === 'save') {
+      // Form 데이터 파싱
+      const targetData = {
+        targetId: formData.get('targetId') as string,
+        displayName: formData.get('displayName') as string,
+        isActive: formData.get('isActive') === 'true',
+        scheduleCron: formData.get('scheduleCron') as string || '',
+        mailingListId: formData.get('mailingListId') as string || '',
+        timezone: formData.get('timezone') as string || 'Asia/Seoul',
+      };
+
+      // Integration Sources 파싱
+      const sourcesJson = formData.get('integrationSources') as string;
+      const integrationSources = sourcesJson ? JSON.parse(sourcesJson) : [];
+
+      console.log('Saving target:', targetData);
+      console.log('Saving sources:', integrationSources);
+
+      // Target과 Sources 저장
+      const result = await createTargetWithSources(client, {
+        workspaceId,
+        targets: targetData,
+        sources: integrationSources
+      });
+
+      // 성공 메시지 구성
+      let message: string[] = [`타겟 "${targetData.displayName}"이(가) 성공적으로 저장되었습니다.`];
+      if (result.totalSources > 0) {
+        message.push(`${result.successfulSources}/${result.totalSources} 소스 연결 성공`);
+      }
+      if (result.failedSources > 0) {
+        message.push(`일부 소스 연결에 실패했습니다.`);
+      }
+
+      return {
+        status: 'success',
+        message: message, // 배열 그대로 전달
+        showToast: true,
+        redirectTo: '/settings/targets',
+        redirectDelay: 500
+      };
+    }
+
+    return {
+      status: 'error',
+      message: 'Invalid action type'
+    };
+
+  } catch (error) {
+    console.error('Target save error:', error);
+    
+    // 에러 메시지 상세화
+    let errorMessage = '저장 중 오류가 발생했습니다.';
+    if (error instanceof Error) {
+      if (error.message.includes('uuid')) {
+        errorMessage = '잘못된 데이터 형식입니다. 다시 시도해주세요.';
+      } else if (error.message.includes('duplicate')) {
+        errorMessage = '이미 존재하는 데이터입니다.';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    return {
+      status: 'error',
+      message: errorMessage,
+      error: true
+    };
+  }
+};
+
 export default function TargetDetailScreen( { loaderData }: Route.ComponentProps ) {
   const { workspaceId, target, mailingLists, integrations } = loaderData;
   const navigate = useNavigate();
+  const submit = useSubmit();
+  const actionData = useActionData();
+  const navigation = useNavigation();
   const { targetId } = useParams();
   const isNew = targetId === 'new';
+
+  // 저장 상태
+  const [isSaving, setIsSaving] = useState(false);
+  // 에러 처리 상태 (중복 alert 방지)
+  const [processedActionData, setProcessedActionData] = useState(null);
 
   // 폼 상태
   const [formData, setFormData] = useState<Partial<TargetData>>({
@@ -109,37 +215,69 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
         if (!target.scheduleCron) {
           setScheduleType('manual');
         } else {
-          const cronParts = target.scheduleCron.split(' ');
-          if (cronParts.length === 5) {
-            const [minute, hour, dayOfMonth, month, dayOfWeek] = cronParts;
-            
-            setSelectedHour(hour);
-            setSelectedMinute(minute);
-            
-            if (dayOfWeek !== '*' && dayOfMonth === '*') {
-              // 주간 스케줄
-              setScheduleType('weekly');
-              setSelectedWeekday(dayOfWeek);
-            } else if (dayOfMonth !== '*' && dayOfWeek === '*') {
-              // 월간 스케줄
-              setScheduleType('monthly');
-              setSelectedMonthDay(dayOfMonth);
-            } else if (dayOfMonth === '*' && dayOfWeek === '*') {
-              // 일간 스케줄
-              setScheduleType('daily');
-            } else {
-              // 커스텀
-              setScheduleType('custom');
-              setCustomCron(target.scheduleCron);
-            }
-          } else {
-            setScheduleType('custom');
-            setCustomCron(target.scheduleCron);
+          const parsed = parseCronExpression(target.scheduleCron);
+          
+          setScheduleType(parsed.scheduleType);
+          setSelectedHour(parsed.hour);
+          setSelectedMinute(parsed.minute);
+          
+          if (parsed.weekday) {
+            setSelectedWeekday(parsed.weekday);
+          }
+          if (parsed.monthDay) {
+            setSelectedMonthDay(parsed.monthDay);
+          }
+          if (parsed.customCron) {
+            setCustomCron(parsed.customCron);
           }
         }
       }
     }
   }, [targetId, isNew]);
+
+  // Action 결과 및 Navigation 상태 모니터링
+  useEffect(() => {
+    // Navigation 상태로 저장 상태 관리
+    const isSubmitting = navigation.state === 'submitting';
+    setIsSaving(isSubmitting);
+
+    // Action 결과 처리 (중복 방지)
+    if (actionData && !isSubmitting && actionData !== processedActionData) {
+      if (actionData.error || actionData.status === 'error') {
+        // 에러 처리
+        toast.error(actionData.message || '저장 중 오류가 발생했습니다.');
+        setIsSaving(false);
+        setProcessedActionData(actionData); // 처리 완료 표시
+      } else if (actionData.status === 'success') {
+        // 성공 처리
+        if (actionData.showToast && actionData.message) {
+          // Toast 표시 (배열을 직접 처리)
+          const messageLines = Array.isArray(actionData.message) 
+            ? actionData.message 
+            : [actionData.message];
+
+          toast.success(
+            <div className="text-left whitespace-pre-wrap">
+              {messageLines.join('\n')}
+            </div>
+          );
+          
+          // 딜레이된 리다이렉트
+          if (actionData.redirectTo) {
+            setTimeout(() => {
+              navigate(actionData.redirectTo);
+            }, actionData.redirectDelay || 500);
+          }
+        }
+        setProcessedActionData(actionData); // 처리 완료 표시
+      }
+    }
+
+    // 새로운 제출이 시작되면 처리 상태 초기화
+    if (isSubmitting) {
+      setProcessedActionData(null);
+    }
+  }, [actionData, navigation.state, processedActionData]);
 
   // 뒤로 가기
   const handleGoBack = () => {
@@ -151,38 +289,31 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Cron 문자열 생성 함수
-  const generateCronString = () => {
-    const minute = selectedMinute;
-    const hour = selectedHour;
-    
-    switch (scheduleType) {
-      case 'manual':
-        return '';
-      case 'daily':
-        return `${minute} ${hour} * * *`;
-      case 'weekly':
-        return `${minute} ${hour} * * ${selectedWeekday}`;
-      case 'monthly':
-        return `${minute} ${hour} ${selectedMonthDay} * *`;
-      case 'custom':
-        return customCron;
-      default:
-        return '';
-    }
-  };
-
   // 스케줄 타입 변경 핸들러
   const handleScheduleTypeChange = (value: string) => {
     setScheduleType(value);
-    const cronString = generateCronString();
+    const cronString = generateCronExpression({
+      scheduleType: value as 'daily' | 'weekly' | 'monthly' | 'custom',
+      hour: selectedHour,
+      minute: selectedMinute,
+      weekday: selectedWeekday,
+      monthDay: selectedMonthDay,
+      customCron
+    });
     handleInputChange('scheduleCron', cronString);
   };
 
   // 시간/분/요일/일자 변경 핸들러
   const handleScheduleDetailChange = () => {
     if (scheduleType !== 'custom' && scheduleType !== 'manual') {
-      const cronString = generateCronString();
+      const cronString = generateCronExpression({
+        scheduleType: scheduleType as 'daily' | 'weekly' | 'monthly' | 'custom',
+        hour: selectedHour,
+        minute: selectedMinute,
+        weekday: selectedWeekday,
+        monthDay: selectedMonthDay,
+        customCron
+      });
       handleInputChange('scheduleCron', cronString);
     }
   };
@@ -234,12 +365,30 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
 
   // 저장 핸들러
   const handleSave = () => {
-    // TODO: 실제 저장 로직 구현
+    // 유효성 검사
+    if (!formData.displayName?.trim()) {
+      alert('타겟 이름을 입력해주세요.');
+      return;
+    }
+
+    // FormData 객체 생성
+    const submitFormData = new FormData();
+    submitFormData.append('actionType', 'save');
+    submitFormData.append('targetId', formData.targetId || '');
+    submitFormData.append('displayName', formData.displayName);
+    submitFormData.append('isActive', formData.isActive ? 'true' : 'false');
+    submitFormData.append('scheduleCron', formData.scheduleCron || '');
+    submitFormData.append('mailingListId', formData.mailingListId || '');
+    submitFormData.append('timezone', formData.timezone || 'Asia/Seoul');
+    
+    // Integration Sources를 JSON 문자열로 변환
+    submitFormData.append('integrationSources', JSON.stringify(integrationSources));
+
     console.log('저장할 데이터:', formData);
     console.log('인테그레이션 소스:', integrationSources);
-    
-    // 임시로 targets 페이지로 이동
-    navigate('/settings/targets');
+
+    // 서버로 제출 (상태 관리는 useEffect에서 처리)
+    submit(submitFormData, { method: 'POST' });
   };
 
   return (
@@ -273,8 +422,10 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
             <LinearButton
               variant="primary"
               onClick={handleSave}
+              loading={isSaving}
+              disabled={isSaving}
             >
-              저장
+              {isSaving ? '저장 중...' : '저장'}
             </LinearButton>
           </div>
         </div>
@@ -299,6 +450,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                     placeholder="타겟 이름을 입력하세요"
                     value={formData.displayName || ''}
                     onChange={(e) => handleInputChange('displayName', e.target.value)}
+                    disabled={isSaving}
                   />
                 </div>
 
@@ -311,6 +463,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                     label={formData.isActive ? '활성' : '비활성'}
                     variant="success"
                     size="md"
+                    disabled={isSaving}
                   />
                 </div>
 
@@ -320,6 +473,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                   <Select
                     value={formData.mailingListName || ''}
                     onValueChange={(value) => handleInputChange('mailingListName', value)}
+                    disabled={isSaving}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="메일링 리스트를 선택하세요" />
@@ -351,7 +505,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                 {/* 스케줄 타입 선택 */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">스케줄 타입</label>
-                  <Select value={scheduleType} onValueChange={handleScheduleTypeChange}>
+                  <Select value={scheduleType} onValueChange={handleScheduleTypeChange} disabled={isSaving}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -375,6 +529,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                         <Select 
                           value={selectedHour} 
                           onValueChange={setSelectedHour}
+                          disabled={isSaving}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -394,6 +549,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                         <Select 
                           value={selectedMinute} 
                           onValueChange={setSelectedMinute}
+                          disabled={isSaving}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -418,6 +574,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                     <Select 
                       value={selectedWeekday} 
                       onValueChange={setSelectedWeekday}
+                      disabled={isSaving}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -440,6 +597,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                     <Select 
                       value={selectedMonthDay} 
                       onValueChange={setSelectedMonthDay}
+                      disabled={isSaving}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -466,6 +624,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                       placeholder="예: 0 9 * * 1 (매주 월요일 9시)"
                       value={customCron}
                       onChange={(e) => handleCustomCronChange(e.target.value)}
+                      disabled={isSaving}
                     />
                     <p className="text-xs text-muted-foreground">
                       Cron 형식: 분 시간 일 월 요일 (예: 0 9 * * 1)
@@ -530,6 +689,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveSource(source.id)}
+                          disabled={isSaving}
                         >
                           <X className="h-4 w-4" />
                         </LinearButton>
@@ -554,6 +714,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                         integrationType: value,
                         sourceIdent: '' // 서비스가 바뀌면 소스도 초기화
                       }))}
+                      disabled={isSaving}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="연결된 서비스를 선택하세요" />
@@ -600,7 +761,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                         <Select
                           value={newIntegration.sourceIdent}
                           onValueChange={(value) => setNewIntegration(prev => ({ ...prev, sourceIdent: value }))}
-                          disabled={!newIntegration.integrationType}
+                          disabled={!newIntegration.integrationType || isSaving}
                         >
                           <SelectTrigger>
                             <SelectValue 
@@ -655,6 +816,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                               leftIcon={<Settings />}
                               onClick={() => navigate('/settings/integrations')}
                               className="w-full sm:w-auto sm:min-w-[120px] cursor-pointer"
+                              disabled={isSaving}
                             >
                               연결 설정으로 이동
                             </LinearButton>
@@ -668,7 +830,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                             size="sm"
                             leftIcon={<Plus />}
                             onClick={handleAddIntegrationSource}
-                            disabled={!newIntegration.integrationType || !newIntegration.sourceIdent}
+                            disabled={!newIntegration.integrationType || !newIntegration.sourceIdent || isSaving}
                             className="w-full sm:w-auto sm:min-w-[120px] cursor-pointer"
                           >
                             추가
@@ -750,3 +912,4 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     </div>
   );
 }
+

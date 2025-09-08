@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "database.types";
+import type { TargetData, IntegrationSource } from "../lib/types";
 
 export const createIntegration = async (
     client: SupabaseClient<Database>,
@@ -203,115 +204,210 @@ export const createIntegrationWithStatus = async (
     }
 }
 
-/*
-export const updateBookmarkCategoryName = async (
+export const insertTarget = async (
     client: SupabaseClient<Database>,
-    { userId, name, categoryId }:
-    { userId: string, name: string, categoryId: number },
-) => {
-    const { error } = await client
-        .from('category')
-        .update({ category_name: name })
-        .eq('user_id', userId)
-        .eq('category_id', categoryId)  
-        .eq('content_type_id', 1)
-    if (error) {
-        throw error
-    }
-}
-
-export const deleteBookmarkCategory = async (
-    client: SupabaseClient<Database>,
-    { userId, categoryId }: { userId: string, categoryId: number },
+    { workspaceId, displayName, mailingListId, scheduleCron, timezone, isActive}:
+    { workspaceId: string, displayName: string, mailingListId: string, scheduleCron: string, timezone: string, isActive: boolean},
 ) => {
     const { data, error } = await client
-        .from('category')
-        .delete()
-        .eq('user_id', userId)
-        .eq('category_id', categoryId)
-        .eq('content_type_id', 1)
-    if (error) {
-        throw error
-    }
-    return data
-}
-
-
-export const createBookmark = async (
-    client: SupabaseClient<Database>,
-    { user_id, category_id, title, url, thumbnail_url, description }:
-    { user_id: string, category_id: number, title: string, url: string, thumbnail_url: string, description: string },
-) => {
-    const realCategoryId = category_id === 0 ? null : category_id;
-    const { data, error } = await client
-        .from('bookmark')
-        .insert({ 
-            user_id, 
-            category_id: realCategoryId, 
-            title, 
-            url, 
-            thumbnail_url, 
-            description,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+        .from('targets')
+        .insert({
+            workspace_id: workspaceId,
+            display_name: displayName,
+            mailing_list_id: mailingListId || null,
+            schedule_cron: scheduleCron,
+            timezone: timezone,
+            is_active: isActive
         })
         .select().single();
     if (error) {
-        console.error('createBookmark error', error);
+        console.error('createTarget error', error);
         throw error
     }
     return data;
 }
 
-export const updateBookmark = async (
+export const updateTarget = async (
     client: SupabaseClient<Database>,
-    { user_id, bookmark_id, category_id, title, url }:
-    { user_id: string, bookmark_id: number, category_id: number, title: string, url: string },
+    { targetId, displayName, mailingListId, scheduleCron, timezone, isActive}:
+    { targetId: string, displayName: string, mailingListId: string, scheduleCron: string, timezone: string, isActive: boolean},
 ) => {
-    const realCategoryId = category_id === 0 ? null : category_id;
     const { data, error } = await client
-        .from('bookmark')
-        .update({ category_id: realCategoryId, title, url })
-        .eq('user_id', user_id)
-        .eq('bookmark_id', bookmark_id)
+        .from('targets')
+        .update({
+            display_name: displayName,
+            mailing_list_id: mailingListId || null,
+            schedule_cron: scheduleCron,
+            timezone: timezone,
+            is_active: isActive
+        })
+        .eq('target_id', targetId)
         .select().single();
     if (error) {
+        console.error('createTarget error', error);
         throw error
     }
-    return data
+    return data;
 }
 
-export const deleteBookmark = async (
+export const createTarget = async (
     client: SupabaseClient<Database>,
-    { user_id, bookmark_id }: { user_id: string, bookmark_id: number },
+    { workspaceId, targets,  }:
+    { workspaceId: string, targets: TargetData },
+) => {
+    if (targets.targetId) {
+        return updateTarget(client, { 
+            targetId: targets.targetId, 
+            displayName: targets.displayName, 
+            mailingListId: targets.mailingListId || '' , 
+            scheduleCron: targets.scheduleCron || '', 
+            timezone: targets.timezone, 
+            isActive: targets.isActive });
+    } else {
+        return insertTarget(client, { 
+            workspaceId: workspaceId, 
+            displayName: targets.displayName, 
+            mailingListId: targets.mailingListId || '', 
+            scheduleCron: targets.scheduleCron || '', 
+            timezone: targets.timezone, 
+            isActive: targets.isActive });
+    }
+}
+
+export const createTargetSources = async (
+    client: SupabaseClient<Database>,
+    { workspaceId, targetId, sources }:
+    { workspaceId: string, targetId: string, sources: IntegrationSource },
 ) => {
     const { data, error } = await client
-        .from('bookmark')
-        .delete()
-        .eq('user_id', user_id)
-        .eq('bookmark_id', bookmark_id)
-        .select()
+        .from('target_sources')
+        .upsert({
+            workspace_id: workspaceId,
+            target_id: targetId,
+            integration_id: sources.integrationId,
+            source_type: sources.sourceType,
+            source_ident: sources.sourceIdent,
+        }, {
+            onConflict: 'workspace_id,target_id,integration_id,source_type,source_ident'
+        })
+        .select().single();
     if (error) {
+        console.error('createTargetSources error', error);
         throw error
     }
-    return data?.length > 0 ? data[0] : null;
+    return data;
 }
 
-export const updateBookmarkClickCount = async (
+export const deleteTarget = async (
+
     client: SupabaseClient<Database>,
-    { user_id, bookmark_id }: { user_id: string, bookmark_id: number },
+    { targetId }: { targetId: string },
 ) => {
+    const { data, error } = await client
+        .from('targets')
+        .delete()
+        .eq('target_id', targetId)
+        .select().single();
+    if (error) {
+        console.error('deleteTarget error', error);
+        throw error
+    }
+    return data;
+}
+
+// target과 sources를 함께 생성
+export const createTargetWithSources = async (
+    client: SupabaseClient<Database>,
+    { workspaceId, targets, sources }:
+    { workspaceId: string, targets: TargetData, sources: IntegrationSource[] },
+) => {
+    let wasExistingTarget = false;
+    let originalTargetData = null;
+    let createdSources: any[] = [];
+
     try {
-        const data = await registUserActivity(client, {
-            user_id,
-            content_type_id: 1,
-            target_id: bookmark_id,
-            activity_type: 'click',
+        // 1. 기존 Target이 있는지 확인
+        if (targets.targetId) {
+            const { data: existingTarget } = await client
+                .from('targets')
+                .select('*')
+                .eq('target_id', targets.targetId)
+                .single();
+
+            if (existingTarget) {
+                wasExistingTarget = true;
+                originalTargetData = { ...existingTarget };
+            }
+        }
+
+        // 2. Target 생성/업데이트
+        const targetData = await createTarget(client, {
+            workspaceId, targets
         });
-        return data;
+
+        // 3. 여러 Target Sources 생성 (배치 처리)
+        if (sources.length > 0) {
+            for (const source of sources) {
+                try {
+                    const sourceData = await createTargetSources(client, {
+                        targetId: targetData.target_id,
+                        workspaceId,
+                        sources: source
+                    });
+                    createdSources.push(sourceData);
+                } catch (sourceError) {
+                    console.error(`Failed to create source ${source.sourceIdent}:`, sourceError);
+                    // 개별 소스 실패는 전체를 실패시키지 않음 (부분 성공 허용)
+                    // 하지만 에러 로그는 남김
+                }
+            }
+        }
+
+        return {
+            target: targetData,
+            sources: createdSources,
+            totalSources: sources.length,
+            successfulSources: createdSources.length,
+            failedSources: sources.length - createdSources.length
+        };
     } catch (error) {
-        console.error("updateBookmarkClickCount error", error);
+        console.error('createTargetWithMultipleSources error', error);
+
+        try {
+            // 롤백 처리
+            if (wasExistingTarget && originalTargetData) {
+                // 기존 Target이 있었다면 원래 상태로 복원
+                await client
+                    .from('targets')
+                    .update({
+                        display_name: originalTargetData.display_name,
+                        mailing_list_id: originalTargetData.mailing_list_id,
+                        schedule_cron: originalTargetData.schedule_cron,
+                        timezone: originalTargetData.timezone,
+                        is_active: originalTargetData.is_active
+                    })
+                    .eq('target_id', targets.targetId);
+            } else if (targets.targetId) {
+                // 새로 생성된 Target이라면 삭제
+                await deleteTarget(client, { targetId: targets.targetId });
+            }
+
+            // 생성된 소스들도 삭제
+            for (const createdSource of createdSources) {
+                try {
+                    await client
+                        .from('target_sources')
+                        .delete()
+                        .eq('target_id', createdSource.target_id)
+                        .eq('integration_id', createdSource.integration_id);
+                } catch (deleteError) {
+                    console.error('Failed to delete source during rollback:', deleteError);
+                }
+            }
+        } catch (rollbackError) {
+            console.error('Rollback failed', rollbackError);
+        }
+        
         throw error;
     }
 }
-    */
