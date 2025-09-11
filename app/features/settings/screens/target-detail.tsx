@@ -174,6 +174,33 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     timezone: 'Asia/Seoul',
   });
 
+  // 타겟 편집 시 기존 데이터로 폼 초기화
+  useEffect(() => {
+    if (target && !isNew) {
+      setFormData({
+        targetId: target.target_id,
+        displayName: target.display_name,
+        isActive: target.is_active,
+        scheduleCron: target.schedule_cron ?? '',
+        lastSentAt: target.last_sent_at ?? '',
+        //mailingListName: target.mailing_list_name ?? '',
+        mailingListId: target.mailing_list_id ?? '',
+        timezone: target.timezone,
+      });
+
+      // 스케줄 정보가 있으면 UI 상태도 초기화
+      if (target.schedule_cron) {
+        const parsedSchedule = parseCronExpression(target.schedule_cron);
+        setScheduleType(parsedSchedule.scheduleType);
+        setSelectedHour(parsedSchedule.hour);
+        setSelectedMinute(parsedSchedule.minute);
+        setSelectedWeekday(parsedSchedule.weekday || '1');
+        setSelectedMonthDay(parsedSchedule.monthDay || '1');
+        setCustomCron(parsedSchedule.customCron || '');
+      }
+    }
+  }, [target, isNew]);
+
   // 스케줄 관련 상태
   const [scheduleType, setScheduleType] = useState('manual');
   const [selectedHour, setSelectedHour] = useState('9');

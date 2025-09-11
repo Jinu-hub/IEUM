@@ -168,3 +168,52 @@ export function validateCronExpression(cronString: string): { isValid: boolean; 
   
   return { isValid: true };
 }
+
+// 마지막 발송 시각 포맷 함수
+export function formatLastSent(lastSentAt?: string): string {
+  if (!lastSentAt) return "미발송";
+  
+  const date = new Date(lastSentAt);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+  
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}분 전`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours}시간 전`;
+  } else if (diffInDays < 7) {
+    return `${diffInDays}일 전`;
+  } else {
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+};
+
+// 스케줄 표시용 포맷 함수
+export function formatSchedule(cron?: string): string {
+  if (!cron) return "수동 발송";
+  
+  // 간단한 cron 문자열 해석
+  const parts = cron.split(' ');
+  if (parts.length !== 5) return cron;
+  
+  const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+  
+  if (dayOfWeek !== '*' && dayOfMonth === '*') {
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const dayIndex = parseInt(dayOfWeek);
+    return `매주 ${days[dayIndex]}요일 ${hour}:${minute.padStart(2, '0')}`;
+  }
+  
+  if (dayOfMonth !== '*' && dayOfWeek === '*') {
+    return `매월 ${dayOfMonth}일 ${hour}:${minute.padStart(2, '0')}`;
+  }
+  
+  return `매일 ${hour}:${minute.padStart(2, '0')}`;
+};

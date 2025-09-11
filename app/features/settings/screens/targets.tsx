@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { redirect, useNavigate } from 'react-router';
 import { 
   LinearCard, 
   LinearCardTitle, 
@@ -18,64 +18,32 @@ import {
 import { Target, Clock, Mail, MoreVertical, Power, PowerOff, Trash2, Edit, Copy } from 'lucide-react';
 import { cn } from '~/core/lib/utils';
 import type { Route } from "./+types/targets";
-import { sampleTargets } from '../lib/mockdata';
 import type { TargetData } from '../lib/types';
+import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
+import makeServerClient from '~/core/lib/supa-client.server';
+import { getWorkspace, getTargets } from '../db/queries';
 
 export const meta: Route.MetaFunction = () => {
   return [{ title: `타겟 | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
-// 스케줄 표시용 포맷 함수
-const formatSchedule = (cron?: string): string => {
-  if (!cron) return "수동 발송";
-  
-  // 간단한 cron 문자열 해석
-  const parts = cron.split(' ');
-  if (parts.length !== 5) return cron;
-  
-  const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
-  
-  if (dayOfWeek !== '*' && dayOfMonth === '*') {
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
-    const dayIndex = parseInt(dayOfWeek);
-    return `매주 ${days[dayIndex]}요일 ${hour}:${minute.padStart(2, '0')}`;
+export const loader = async ({ request }: Route.LoaderArgs) => {
+
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return redirect('/login');
   }
-  
-  if (dayOfMonth !== '*' && dayOfWeek === '*') {
-    return `매월 ${dayOfMonth}일 ${hour}:${minute.padStart(2, '0')}`;
-  }
-  
-  return `매일 ${hour}:${minute.padStart(2, '0')}`;
+
+  const workspace = await getWorkspace(client, { userId: user.id });
+  const workspaceId = workspace[0].workspace_id;
+  const targetData = await getTargets(client, { workspaceId: workspaceId });
+  return { workspaceId, targetData };
 };
 
-// 마지막 발송 시각 포맷 함수
-const formatLastSent = (lastSentAt?: string): string => {
-  if (!lastSentAt) return "미발송";
-  
-  const date = new Date(lastSentAt);
-  const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  const diffInDays = Math.floor(diffInHours / 24);
-  
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes}분 전`;
-  } else if (diffInHours < 24) {
-    return `${diffInHours}시간 전`;
-  } else if (diffInDays < 7) {
-    return `${diffInDays}일 전`;
-  } else {
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  }
-};
-
-export default function TargetsScreen() {
-  const [targets, setTargets] = useState<TargetData[]>(sampleTargets);
+export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
+  const { workspaceId, targetData } = loaderData;
+  const [targets, setTargets] = useState<TargetData[]>(targetData);
   const navigate = useNavigate();
 
   // 활성 상태 토글
@@ -94,22 +62,17 @@ export default function TargetsScreen() {
     navigate('/settings/target/new');
   };
 
-  // 타겟 카드 클릭 핸들러
-  const handleTargetCardClick = (targetId: string) => {
+  // 타겟 편집 핸들러
+  const handleEditTarget = (targetId: string) => {
     navigate(`/settings/target/${targetId}`);
   };
-
+  
   // 타겟 삭제 핸들러
   const handleDeleteTarget = (targetId: string) => {
     if (confirm("정말로 이 타겟을 삭제하시겠습니까?")) {
       setTargets(prev => prev.filter(target => target.targetId !== targetId));
       console.log("타겟 삭제됨:", targetId);
     }
-  };
-
-  // 타겟 편집 핸들러
-  const handleEditTarget = (targetId: string) => {
-    navigate(`/settings/target/${targetId}`);
   };
 
   // 타겟 복사 핸들러
@@ -165,7 +128,7 @@ export default function TargetsScreen() {
                 variant="elevated" 
                 hoverable
                 className="transition-all duration-200 cursor-pointer"
-                onClick={() => handleTargetCardClick(target.targetId)}
+                onClick={() => handleEditTarget(target.targetId)}
               >
                 <LinearCardContent className="p-6">
                   <div className="flex items-center justify-between">

@@ -121,6 +121,30 @@ export const getIntegrationsInfo = async (
   return data;
 };
 
+export const getTargets = async (
+  client: SupabaseClient<Database>,
+  { workspaceId }: { workspaceId: string },
+) => {
+  const { data, error } = await client
+    .from('targets')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.log('getTargets error', error);
+    throw error;
+  }
+  return data.map(target => ({
+    targetId: target.target_id,
+    displayName: target.display_name,
+    isActive: target.is_active,
+    scheduleCron: target.schedule_cron ?? undefined,
+    lastSentAt: target.last_sent_at ?? undefined,
+    mailingListId: target.mailing_list_id ?? undefined,
+    timezone: target.timezone,
+  }));
+};
+
 
 export const getTarget = async (
   client: SupabaseClient<Database>,
