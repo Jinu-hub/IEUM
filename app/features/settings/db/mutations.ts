@@ -274,6 +274,22 @@ export const createTarget = async (
     }
 }
 
+export const deleteTargetSources = async (
+    client: SupabaseClient<Database>,
+    { workspaceId, targetId }: { workspaceId: string, targetId: string },
+) => {
+    const { data, error } = await client
+        .from('target_sources')
+        .delete()
+        .eq('workspace_id', workspaceId)
+        .eq('target_id', targetId);
+    if (error) {
+        console.error('deleteTargetSources error', error);
+        throw error
+    }
+    return data;
+}
+
 export const createTargetSources = async (
     client: SupabaseClient<Database>,
     { workspaceId, targetId, sources }:
@@ -346,6 +362,7 @@ export const createTargetWithSources = async (
         });
 
         // 3. 여러 Target Sources 생성 (배치 처리)
+        await deleteTargetSources(client, { workspaceId, targetId: targetData.target_id });
         if (sources.length > 0) {
             for (const source of sources) {
                 try {
@@ -410,4 +427,35 @@ export const createTargetWithSources = async (
         
         throw error;
     }
+}
+
+
+export const switchTargetActive = async (
+    client: SupabaseClient<Database>,
+    { targetId }: { targetId: string },
+) => {
+    // 먼저 현재 상태를 조회
+    const { data: currentTarget, error: fetchError } = await client
+        .from('targets')
+        .select('is_active')
+        .eq('target_id', targetId)
+        .single();
+    
+    if (fetchError) {
+        console.error('fetchTargetActive error', fetchError);
+        throw fetchError;
+    }
+
+    // 현재 상태를 반전시켜서 업데이트
+    const { data, error } = await client
+        .from('targets')
+        .update({ is_active: !currentTarget.is_active })
+        .eq('target_id', targetId)
+        .select().single();
+    
+    if (error) {
+        console.error('switchTargetActive error', error);
+        throw error;
+    }
+    return data;
 }

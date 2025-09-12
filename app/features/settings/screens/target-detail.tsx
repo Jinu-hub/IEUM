@@ -28,7 +28,7 @@ import {
   parseCronExpression,
   generateCronExpression
 } from '../lib/scheduleUtils';
-import { getIntegrationsInfo, getMailingList, getTarget, getWorkspace } from '../db/queries';
+import { getIntegrationsInfo, getMailingList, getTarget, getTargetSources, getWorkspace } from '../db/queries';
 import { createTargetWithSources } from '../db/mutations';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { redirect } from 'react-router';
@@ -53,9 +53,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const targetId = params.targetId;
   if (targetId && targetId !== 'new') {
     const target = await getTarget(client, { targetId: targetId || '' });
-    return { workspaceId, target, mailingLists, integrations };
+    const targetSources = await getTargetSources(client, { workspaceId: workspaceId, targetId: targetId });
+    return { workspaceId, target, mailingLists, integrations, targetSources };
   } else {
-    return { workspaceId, target: null, mailingLists, integrations };
+    return { workspaceId, target: null, mailingLists, integrations, targetSources: [] };
   }
 };
 
@@ -152,7 +153,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 };
 
 export default function TargetDetailScreen( { loaderData }: Route.ComponentProps ) {
-  const { workspaceId, target, mailingLists, integrations } = loaderData;
+  const { workspaceId, target, mailingLists, integrations, targetSources } = loaderData;
   const navigate = useNavigate();
   const submit = useSubmit();
   const actionData = useActionData();
@@ -198,8 +199,21 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
         setSelectedMonthDay(parsedSchedule.monthDay || '1');
         setCustomCron(parsedSchedule.customCron || '');
       }
+
+      // 타겟 소스 정보로 UI 상태 초기화 (빈 배열이어도 초기화)
+      if (targetSources) {
+        // integrationType을 integrationId로부터 찾아서 추가
+        const sourcesWithType = targetSources.map(source => {
+          const integration = integrations.find(integ => integ.integration_id === source.integrationId);
+          return {
+            ...source,
+            integrationType: integration?.type || ''
+          };
+        });
+        setIntegrationSources(sourcesWithType);
+      }
     }
-  }, [target, isNew]);
+  }, [target, targetSources, integrations, isNew]);
 
   // 스케줄 관련 상태
   const [scheduleType, setScheduleType] = useState('manual');
@@ -220,6 +234,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   const {
     integrationSources,
     availableSources,
+    setIntegrationSources,
     setAvailableSources,
     updateAvailableSources,
     handleAddSource,

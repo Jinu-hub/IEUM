@@ -162,6 +162,31 @@ export const getTarget = async (
   return data;
 };
 
+export const getTargetSources = async (
+  client: SupabaseClient<Database>,
+  { workspaceId, targetId }: { workspaceId: string, targetId: string },
+) => {
+  const { data, error } = await client
+    .from('target_sources')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .eq('target_id', targetId)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.log('getTargetSources error', error);
+    throw error;
+  }
+  return data.map(source => ({
+    id: source.target_source_id,
+    integrationId: source.integration_id,
+    sourceType: source.source_type,
+    sourceIdent: source.source_ident,
+    filterJson: source.filter_json || {},
+    priority: source.priority,
+    isActive: source.is_active
+  }));
+};
+
 export const getMailingList = async (
   client: SupabaseClient<Database>,
   { workspaceId }: { workspaceId: string },

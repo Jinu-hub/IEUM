@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { redirect, useNavigate } from 'react-router';
+import { redirect, useNavigate, useSubmit } from 'react-router';
 import { 
   LinearCard, 
   LinearCardTitle, 
@@ -22,6 +22,8 @@ import type { TargetData } from '../lib/types';
 import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { getWorkspace, getTargets } from '../db/queries';
+import { switchTargetActive } from '../db/mutations';
+import { toast } from 'sonner';
 
 export const meta: Route.MetaFunction = () => {
   return [{ title: `타겟 | ${import.meta.env.VITE_APP_NAME}` }];
@@ -41,10 +43,46 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return { workspaceId, targetData };
 };
 
+export const action = async ({ request }: Route.ActionArgs) => {
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return redirect('/login');
+  }
+
+  const formData = await request.formData();
+  const targetId = formData.get('targetId') as string;
+  const actionType = formData.get('actionType') as string;
+  if (!targetId || !actionType) {
+    return {
+      status: 'error',
+      message: 'Target not found or action type not found'
+    };
+  }
+  try {
+    if (actionType === 'switchTargetActive') {
+      await switchTargetActive(client, { targetId: targetId});
+    } else {
+      return {
+        status: 'error',
+        message: 'Invalid action type'
+      };
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      message: 'Target active switch failed'
+    };
+  }
+  return { status: 'success', message: 'Target active switched' };
+};
+
+
 export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
   const { workspaceId, targetData } = loaderData;
   const [targets, setTargets] = useState<TargetData[]>(targetData);
   const navigate = useNavigate();
+  const submit = useSubmit();
 
   // 활성 상태 토글
   const toggleTargetActive = (targetId: string) => {
@@ -55,6 +93,15 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
           : target
       )
     );
+
+    const submitFormData = new FormData();
+    submitFormData.append('actionType', 'switchTargetActive');
+    submitFormData.append('targetId', targetId);
+    submit(submitFormData, { method: 'POST' });
+    
+    setTimeout(() => {
+      toast.success('Target active switched');
+    }, 500);
   };
 
   // 타겟 추가 핸들러
@@ -66,7 +113,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
   const handleEditTarget = (targetId: string) => {
     navigate(`/settings/target/${targetId}`);
   };
-  
+
   // 타겟 삭제 핸들러
   const handleDeleteTarget = (targetId: string) => {
     if (confirm("정말로 이 타겟을 삭제하시겠습니까?")) {
@@ -142,10 +189,12 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                             toggleTargetActive(target.targetId);
                           }}
                           className={cn(
-                            "p-2 rounded-full transition-colors duration-200",
+                            "p-2 rounded-full transition-all duration-200 cursor-pointer",
+                            "hover:scale-105 hover:shadow-md active:scale-95",
+                            "focus:outline-none focus:ring-2 focus:ring-offset-2",
                             target.isActive 
-                              ? "bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400" 
-                              : "bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-500"
+                              ? "bg-green-100 text-green-600 hover:bg-green-200 hover:shadow-green-200/50 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-800/40 dark:focus:ring-green-400" 
+                              : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:shadow-gray-200/50 dark:bg-gray-800 dark:text-gray-500 dark:hover:bg-gray-700 dark:focus:ring-gray-400"
                           )}
                           title={target.isActive ? "활성 - 클릭하여 비활성화" : "비활성 - 클릭하여 활성화"}
                         >
