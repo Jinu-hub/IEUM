@@ -189,18 +189,52 @@ export const getTargetSources = async (
 
 export const getMailingList = async (
   client: SupabaseClient<Database>,
-  { workspaceId }: { workspaceId: string },
+  { workspaceId, mailingListId }: { workspaceId: string, mailingListId?: string },
 ) => {
-  const { data, error } = await client
+  let query = client
     .from('mail_list')
     .select('*')
-    .eq('workspace_id', workspaceId)
-    .order('created_at', { ascending: false });
+    .eq('workspace_id', workspaceId);
+    
+  if (mailingListId) {
+    query = query.eq('mailing_list_id', mailingListId);
+  }
+  
+  const { data, error } = await query.order('created_at', { ascending: false });
   if (error) {
     console.log('getMailingList error', error);
     throw error;
   }
-  return data;
+  return data.map(mailList => ({
+    mailingListId: mailList.mailing_list_id,
+    workspaceId: mailList.workspace_id,
+    name: mailList.name,
+    description: mailList.description || undefined,
+    createdAt: mailList.created_at,
+    memberCount: 0,
+  }));
+};
+
+export const getMailingListMembers = async (
+  client: SupabaseClient<Database>,
+  { mailingListId }: { mailingListId: string },
+) => {
+  const { data, error } = await client
+    .from('mail_list_members')
+    .select('*')
+    .eq('mailing_list_id', mailingListId)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.log('getMailingListMembers error', error);
+    throw error;
+  }
+  return data.map(member => ({
+    mailingListId: member.mailing_list_id,
+    email: member.email,
+    displayName: member.display_name ?? undefined,
+    metaJson: member.meta_json as Record<string, any>,
+    createdAt: member.created_at,
+  }));
 };
 
 /*

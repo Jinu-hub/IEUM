@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { redirect, useNavigate, useSubmit, useFetcher, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
 import { 
   LinearCard, 
   LinearCardTitle,
@@ -33,39 +33,122 @@ import {
   MoreVertical, 
   Edit, 
   Trash2, 
-  Upload, 
   Download,
-  Filter,
   Calendar,
   Tag,
   User,
   X,
   Save,
-  Check
+  Upload,
 } from 'lucide-react';
 import { cn } from '~/core/lib/utils';
 import type { Route } from "./+types/mail-list-members";
-import { sampleMailLists, sampleMailListMembers } from '../lib/mockdata';
 import type { MailListData, MailListMemberData } from '../lib/types';
 import { formatDate, formatMemberCount, getSourceLabel, getSourceVariant } from '../lib/common';
+import makeServerClient from '~/core/lib/supa-client.server';
+import { getMailingList, getMailingListMembers, getWorkspace } from '../db/queries';
+import { upsertMailingList, upsertMailingListMember } from '../db/mutations';
+import { toast } from 'sonner';
+import { mailListUserSchema } from '../lib/constants';
+import { parseMetaJson } from '../lib/JsonUtils';
 
 export const meta = ({ params }: { params: { mailListId: string } }) => {
   return [{ title: `메일 리스트 멤버 | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
-export default function MailListMembersScreen() {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return redirect('/login');
+  }
+  const workspace = await getWorkspace(client, { userId: user.id });
+  const workspaceId = workspace[0].workspace_id;
+  const mailingListId = params.mailListId;
+  if (mailingListId && mailingListId !== 'new') {
+    const mailingList = await getMailingList(client, { workspaceId: workspaceId, mailingListId: mailingListId });
+    const members = await getMailingListMembers(client, { mailingListId: mailingListId });
+    let mailList = mailingList?.[0];
+    mailList.memberCount = members.length;
+    return { workspaceId, mailingList: mailList, members: members };
+  } else {
+    return { workspaceId, mailingList: null, members: [] };
+  }
+};
+
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return redirect('/login');
+  }
+
+  const formData = await request.formData();
+  const actionType = formData.get('actionType') as string;
+  if (!actionType || (actionType !== 'mailListSave' && actionType !== 'mailListMemberSave')) {
+    return {
+      status: 'error',
+      message: 'Action type not found or not valid'
+    };
+  }
+
+  const mailingListId = formData.get('mailingListId') as string;
+  const workspaceId = formData.get('workspaceId') as string;
+
+  if (actionType === 'mailListSave') {
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+
+    try {
+      const result = await upsertMailingList(client, {
+        mailingListId, workspaceId, name, description
+      });
+      return {
+        status: 'success', actionType: actionType, isNew: mailingListId === 'new',
+        message: 'Mail list save success', result: result
+      };
+    } catch (error) {
+      console.error('mailListSave error', error);
+      return {
+        status: 'error', actionType: actionType, isNew: mailingListId === 'new',
+        message: 'Mail list save failed', result: null
+      };
+    }
+
+  } else if (actionType === 'mailListMemberSave') {
+    const email = formData.get('email') as string;
+    const displayName = formData.get('displayName') as string;
+    const metaJson = formData.get('metaJson') as string;
+    try {
+      const result = await upsertMailingListMember(client, {
+        mailingListId, email, displayName, metaJson
+      });
+      return { status: 'success', actionType: actionType, result: result, 
+        message: 'Mail list member save success' };
+    } catch (error) {
+      console.error('mailListMemberSave error', error);
+      return { status: 'error', actionType: actionType, result: null, 
+        message: 'Mail list member save failed' };
+    }
+  }
+};
+
+export default function MailListMembersScreen( { loaderData }: Route.ComponentProps ) {
+  const { workspaceId, mailingList, members: initialMembers } = loaderData;
+  
   const navigate = useNavigate();
-  const { mailListId } = useParams();
-  const isNew = mailListId === 'new';
+  const isNew = mailingList === null;
+  const fetcher = useFetcher();
   
   // 상태
-  const [mailList, setMailList] = useState<MailListData | null>(null);
-  const [members, setMembers] = useState<MailListMemberData[]>([]);
+  const [mailList, setMailList] = useState<MailListData | null>(mailingList || null);
+  const [members, setMembers] = useState<MailListMemberData[]>(initialMembers || []);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
+  const [emailError, setEmailError] = useState('');
   
   // 편집 상태
   const [isEditing, setIsEditing] = useState(isNew);
@@ -78,7 +161,7 @@ export default function MailListMembersScreen() {
       // 새 메일 리스트 생성 모드
       const newMailList: MailListData = {
         mailingListId: 'new',
-        workspaceId: 'workspace-1',
+        workspaceId: workspaceId,
         name: '',
         description: '',
         createdAt: new Date().toISOString(),
@@ -88,31 +171,51 @@ export default function MailListMembersScreen() {
       setEditingName('');
       setEditingDescription('');
       setMembers([]);
-    } else if (mailListId) {
-      const foundMailList = sampleMailLists.find(list => list.mailingListId === mailListId);
-      if (foundMailList) {
-        setMailList(foundMailList);
-        setEditingName(foundMailList.name);
-        setEditingDescription(foundMailList.description || '');
-        
-        const listMembers = sampleMailListMembers.filter(member => member.mailingListId === mailListId);
-        setMembers(listMembers);
+    } else {
+      if (mailingList) {
+        setMailList(mailingList);
+        setEditingName(mailingList.name);
+        setEditingDescription(mailingList.description || '');
+        setMembers(members);
       }
     }
-  }, [mailListId, isNew]);
+  }, [mailingList, isNew]);
 
-  // 새 메일 리스트인 경우 이름 입력 필드에 포커스
+  // 후처리: fetcher 상태 변화 감지
   useEffect(() => {
-    if (isNew && isEditing) {
-      // 약간의 지연 후 포커스 (DOM 렌더링 완료 후)
-      setTimeout(() => {
-        const nameInput = document.querySelector('input[placeholder="예: 기술 뉴스레터"]') as HTMLInputElement;
-        if (nameInput) {
-          nameInput.focus();
+    if (fetcher.state === 'idle' && fetcher.data) {
+      if (fetcher.data.actionType === 'mailListSave') {
+        // 메일 리스트 정보 저장 처리
+        if (fetcher.data.status === 'success') {
+          toast.success(fetcher.data.message || '메일 리스트 정보가 저장되었습니다.');
+          setIsEditing(false);
+          if (fetcher.data.isNew) {
+            navigate(`/settings/mail-list/${fetcher.data.result.mailing_list_id}`);
+          } else {
+            setMailList(prev => prev ? {
+              ...prev,
+              name: editingName.trim(),
+              description: editingDescription.trim()
+            } : null);
+          }
+        } else if (fetcher.data.status === 'error') {
+          toast.error(fetcher.data.message || '메일 리스트 저장에 실패했습니다.');
         }
-      }, 100);
+      } else if (fetcher.data.actionType === 'mailListMemberSave') {
+        // 멤버 정보 저장 처리
+        if (fetcher.data.status === 'success') {
+          toast.success(fetcher.data.message || '멤버 정보가 저장되었습니다.');
+          setMembers(prev => [fetcher.data.result, ...prev]);
+          setNewMemberEmail('');
+          setNewMemberName('');
+          setIsAddMemberDialogOpen(false);
+          setMailList(prev => prev ? { ...prev, memberCount: (prev.memberCount || 0) + 1 } : null);
+        } else if (fetcher.data.status === 'error') {
+          toast.error(fetcher.data.message || '멤버 정보 저장에 실패했습니다.');
+        }
+      }
     }
-  }, [isNew, isEditing]);
+  }, [fetcher.state, fetcher.data]);
 
   // 검색 필터링
   const filteredMembers = members.filter(member =>
@@ -157,37 +260,13 @@ export default function MailListMembersScreen() {
       return;
     }
 
-    if (isNew) {
-      // 새 메일 리스트 생성
-      const newId = `maillist-${Date.now()}`;
-      const newMailList: MailListData = {
-        mailingListId: newId,
-        workspaceId: 'workspace-1',
-        name: editingName.trim(),
-        description: editingDescription.trim(),
-        createdAt: new Date().toISOString(),
-        memberCount: 0
-      };
-      
-      console.log('새 메일 리스트 생성:', newMailList);
-      setMailList(newMailList);
-      
-      // URL을 새로운 ID로 업데이트 (실제로는 navigate 대신 replace 사용)
-      navigate(`/settings/mail-list/${newId}`, { replace: true });
-    } else {
-      // 기존 메일 리스트 수정
-      if (mailList) {
-        const updatedMailList = {
-          ...mailList,
-          name: editingName.trim(),
-          description: editingDescription.trim()
-        };
-        setMailList(updatedMailList);
-        console.log('메일 리스트 업데이트:', updatedMailList);
-      }
-    }
-    
-    setIsEditing(false);
+    const submitFormData = new FormData();
+    submitFormData.append('actionType', 'mailListSave');
+    submitFormData.append('mailingListId', isNew ? 'new' : mailList?.mailingListId || '');
+    submitFormData.append('workspaceId', workspaceId);
+    submitFormData.append('name', editingName.trim());
+    submitFormData.append('description', editingDescription.trim());
+    fetcher.submit(submitFormData, { method: 'POST' });
   };
 
   // 멤버 선택 토글
@@ -210,30 +289,27 @@ export default function MailListMembersScreen() {
 
   // 새 멤버 추가
   const handleAddMember = () => {
-    if (newMemberEmail && mailList) {
-      // 새 메일 리스트인 경우 먼저 저장해야 함
-      if (isNew && !mailList.name) {
-        alert('먼저 메일 리스트 정보를 저장해주세요.');
-        return;
-      }
+    if (!mailList) return;
 
-      const currentMailListId = mailList.mailingListId;
-      const newMember: MailListMemberData = {
-        mailingListId: currentMailListId,
-        email: newMemberEmail,
-        displayName: newMemberName || undefined,
-        metaJson: { source: 'manual', tags: [] },
-        createdAt: new Date().toISOString()
-      };
-      
-      setMembers(prev => [newMember, ...prev]);
-      setNewMemberEmail('');
-      setNewMemberName('');
-      setIsAddMemberDialogOpen(false);
-      
-      // 멤버 수 업데이트
-      setMailList(prev => prev ? { ...prev, memberCount: (prev.memberCount || 0) + 1 } : null);
+    const validationData = {
+      actionType: 'mailListMemberSave' as const,
+      mailingListId: mailList.mailingListId,
+      workspaceId: workspaceId,
+      email: newMemberEmail,
+      displayName: newMemberName || '',
+      metaJson: JSON.stringify({ source: 'manual', tags: [] })
+    };
+
+    const validationResult = mailListUserSchema.safeParse(validationData);
+    if (!validationResult.success) {
+      setEmailError(validationResult.error.issues[0].message);
+      return;
     }
+    const submitFormData = new FormData();
+    Object.entries(validationData).forEach(([key, value]) => {
+      submitFormData.append(key, value);
+    });
+    fetcher.submit(submitFormData, { method: 'POST' });
   };
 
   // 선택된 멤버 삭제
@@ -269,6 +345,12 @@ export default function MailListMembersScreen() {
     link.href = URL.createObjectURL(blob);
     link.download = `${mailList?.name || 'mail-list'}-members.csv`;
     link.click();
+  };
+
+  // CSV 가져오기 TODO
+  const handleImportCSV = () => {
+    // TODO: CSV 가져오기 기능 구현
+    console.log('CSV 가져오기');
   };
 
   if (!mailList) {
@@ -435,14 +517,22 @@ export default function MailListMembersScreen() {
                 {selectedMembers.length}명 삭제
               </LinearButton>
             )}
-            
+            <LinearButton
+              variant="secondary"
+              size="sm"
+              leftIcon={<Upload />}
+              onClick={handleImportCSV}
+              disabled
+            >
+              CSV 업로드 (준비중)
+            </LinearButton>
             <LinearButton
               variant="secondary"
               size="sm"
               leftIcon={<Download />}
               onClick={handleExportCSV}
             >
-              내보내기
+              CSV 다운로드
             </LinearButton>
 
             <Dialog open={isAddMemberDialogOpen} onOpenChange={setIsAddMemberDialogOpen}>
@@ -486,7 +576,11 @@ export default function MailListMembersScreen() {
                         type="email"
                         placeholder="member@example.com"
                         value={newMemberEmail}
-                        onChange={(e) => setNewMemberEmail(e.target.value)}
+                        onChange={(e) => {
+                          setNewMemberEmail(e.target.value);
+                          if (emailError) setEmailError(''); // 입력 시 에러 메시지 초기화
+                        }}
+                        error={emailError}
                       />
                     </div>
                     <div className="space-y-2">
@@ -500,12 +594,14 @@ export default function MailListMembersScreen() {
                     <div className="flex justify-end space-x-2">
                       <LinearButton
                         variant="secondary"
+                        className="cursor-pointer"
                         onClick={() => setIsAddMemberDialogOpen(false)}
                       >
                         취소
                       </LinearButton>
                       <LinearButton
                         variant="primary"
+                        className="cursor-pointer"
                         onClick={handleAddMember}
                         disabled={!newMemberEmail}
                       >
@@ -618,10 +714,10 @@ export default function MailListMembersScreen() {
                                 {member.displayName || member.email.split('@')[0]}
                               </h4>
                               <LinearBadge 
-                                variant={getSourceVariant(member.metaJson.source || '')}
+                                variant={getSourceVariant(parseMetaJson(member.metaJson).source)}
                                 size="sm"
                               >
-                                {getSourceLabel(member.metaJson.source || '')}
+                                {getSourceLabel(parseMetaJson(member.metaJson).source)}
                               </LinearBadge>
                             </div>
                             
@@ -636,10 +732,10 @@ export default function MailListMembersScreen() {
                                 <span>{formatDate(member.createdAt)}</span>
                               </div>
                               
-                              {member.metaJson.tags && member.metaJson.tags.length > 0 && (
+                              {parseMetaJson(member.metaJson).tags && parseMetaJson(member.metaJson).tags.length > 0 && (
                                 <div className="flex items-center space-x-1">
                                   <Tag className="h-3 w-3" />
-                                  <span>{member.metaJson.tags.join(', ')}</span>
+                                  <span>{parseMetaJson(member.metaJson).tags.join(', ')}</span>
                                 </div>
                               )}
                             </div>

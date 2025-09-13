@@ -459,3 +459,76 @@ export const switchTargetActive = async (
     }
     return data;
 }
+
+
+export const upsertMailingList = async (
+    client: SupabaseClient<Database>,
+    { mailingListId, workspaceId, name, description }: { mailingListId: string, workspaceId: string, name: string, description: string },
+) => {
+    const isNew = mailingListId === 'new';
+    
+    if (isNew) {
+        // INSERT
+        const { data, error } = await client
+            .from('mail_list')
+            .insert({
+                workspace_id: workspaceId,
+                name: name,
+                description: description
+            })
+            .select().single();
+        return data;
+    } else {
+        // UPDATE
+        const { data, error } = await client
+            .from('mail_list')
+            .update({
+                name: name,
+                description: description
+            })
+            .eq('mailing_list_id', mailingListId)
+            .select().single();
+        return data;
+    }
+};
+
+export const upsertMailingListMember = async (
+    client: SupabaseClient<Database>,
+    { mailingListId, email, displayName, metaJson }: { mailingListId: string, email: string, displayName: string, metaJson: any },
+) => {
+    const { data, error } = await client
+        .from('mail_list_members')
+        .upsert({
+            mailing_list_id: mailingListId,
+            email: email,
+            display_name: displayName,
+            meta_json: metaJson
+        }, {
+            onConflict: 'mailing_list_id,email'
+        })
+        .select().single();
+    if (error) {
+        console.error('upsertMailingListMember error', error);
+        throw error;
+    }
+    return data;
+}
+
+export const deleteMailingListMember = async (
+    client: SupabaseClient<Database>,
+    { mailingListId, emails }: { mailingListId: string, emails: string | string[] },
+) => {
+    const emailArray = Array.isArray(emails) ? emails : [emails];
+    
+    const { data, error } = await client
+        .from('mail_list_members')
+        .delete()
+        .eq('mailing_list_id', mailingListId)
+        .in('email', emailArray)
+        .select();
+    if (error) {
+        console.error('deleteMailingListMember error', error);
+        throw error;
+    }
+    return data;
+}

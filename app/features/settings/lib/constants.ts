@@ -1,4 +1,5 @@
 import type { ConnectionStatus, DBConnectionStatus } from "./types";
+import { z } from "zod";
 
 
 // 통합 서비스 정보 타입
@@ -75,3 +76,19 @@ export interface ConnectedIntegration {
     variant?: 'success' | 'warning' | 'secondary';
   }
   
+/**
+ * Mail List User Schema
+ */
+export const mailListUserSchema = z.object({
+  workspaceId: z.string(),
+  actionType: z.enum(['mailListMemberSave']),
+  mailingListId: z.string(),
+  email: z.string()
+  .min(1, "이메일을 입력해주세요")
+  .refine(
+    (email) => email.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+    { message: "올바른 이메일 형식이 아닙니다" }
+  ),
+  displayName: z.string().optional(),
+  metaJson: z.string().optional(),
+});
