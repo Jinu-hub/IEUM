@@ -21,7 +21,7 @@ import type { Route } from "./+types/targets";
 import type { TargetData } from '../lib/types';
 import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
 import makeServerClient from '~/core/lib/supa-client.server';
-import { getWorkspace, getTargets } from '../db/queries';
+import { getWorkspace, getTargets, getMailingList } from '../db/queries';
 import { switchTargetActive } from '../db/mutations';
 import { toast } from 'sonner';
 
@@ -40,7 +40,17 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const workspace = await getWorkspace(client, { userId: user.id });
   const workspaceId = workspace[0].workspace_id;
   const targetData = await getTargets(client, { workspaceId: workspaceId });
-  return { workspaceId, targetData };
+  const mailingListData = await getMailingList(client, { workspaceId: workspaceId });
+  
+  const mergedTargetData = targetData.map(target => {
+    const mailingList = mailingListData.find(ml => ml.mailingListId === target.mailingListId);
+    return {
+      ...target,
+      mailingListName: mailingList?.name || undefined,
+    };
+  });
+  
+  return { workspaceId, targetData: mergedTargetData };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {

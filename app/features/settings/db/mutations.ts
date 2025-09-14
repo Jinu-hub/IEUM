@@ -492,6 +492,23 @@ export const upsertMailingList = async (
     }
 };
 
+export const deleteMailingList = async (
+    client: SupabaseClient<Database>,
+    { mailingListId, workspaceId }: { mailingListId: string, workspaceId: string },
+) => {
+    const { data, error } = await client
+        .from('mail_list')
+        .delete()
+        .eq('mailing_list_id', mailingListId)
+        .eq('workspace_id', workspaceId)
+        .select().single();
+    if (error) {
+        console.error('deleteMailingList error', error);
+        throw error;
+    }
+    return data;
+}
+
 export const upsertMailingListMember = async (
     client: SupabaseClient<Database>,
     { mailingListId, email, displayName, metaJson }: { mailingListId: string, email: string, displayName: string, metaJson: any },

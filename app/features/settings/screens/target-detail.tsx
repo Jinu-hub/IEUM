@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "~/core/components/ui/select";
 import { ArrowLeft, Plus, X, Clock, Target as TargetIcon, Settings } from 'lucide-react';
-import { sampleTargets, sampleMailingLists, scheduleTypes, weekdays, hours, minutes, monthDays } from '../lib/mockdata';
+import { scheduleTypes, weekdays, hours, minutes, monthDays } from '../lib/types';
 import type { TargetData } from '../lib/types';
 import {
   getSourceTypeLabel,
@@ -246,36 +246,6 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   
   // 비멤버 채널 목록 확장 상태
   const [expandedNonMemberChannels, setExpandedNonMemberChannels] = useState(false);
-
-  // 데이터 로드
-  useEffect(() => {
-    if (!isNew && targetId) {
-      const target = sampleTargets.find(t => t.targetId === targetId);
-      if (target) {
-        setFormData(target);
-        // scheduleCron 값을 파싱해서 UI 상태 설정
-        if (!target.scheduleCron) {
-          setScheduleType('manual');
-        } else {
-          const parsed = parseCronExpression(target.scheduleCron);
-          
-          setScheduleType(parsed.scheduleType);
-          setSelectedHour(parsed.hour);
-          setSelectedMinute(parsed.minute);
-          
-          if (parsed.weekday) {
-            setSelectedWeekday(parsed.weekday);
-          }
-          if (parsed.monthDay) {
-            setSelectedMonthDay(parsed.monthDay);
-          }
-          if (parsed.customCron) {
-            setCustomCron(parsed.customCron);
-          }
-        }
-      }
-    }
-  }, [targetId, isNew]);
 
   // Action 결과 및 Navigation 상태 모니터링
   useEffect(() => {
@@ -513,16 +483,16 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">송신 대상</label>
                   <Select
-                    value={formData.mailingListName || ''}
-                    onValueChange={(value) => handleInputChange('mailingListName', value)}
+                    value={formData.mailingListId || ''}
+                    onValueChange={(value) => handleInputChange('mailingListId', value)}
                     disabled={isSaving}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="메일링 리스트를 선택하세요" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sampleMailingLists.map((list) => (
-                        <SelectItem key={list.id} value={list.name}>
+                      {mailingLists.map((list) => (
+                        <SelectItem key={list.mailingListId} value={list.mailingListId}>
                           {list.name}
                         </SelectItem>
                       ))}

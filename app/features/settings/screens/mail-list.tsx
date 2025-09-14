@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { redirect, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
+import React, { useEffect, useState } from 'react';
+import { redirect, useFetcher, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
 import { 
   LinearCard, 
   LinearCardTitle, 
@@ -23,10 +23,47 @@ import type { MailListData } from '../lib/types';
 import { formatDate, formatMemberCount } from '../lib/common';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { getMailingList, getMailingListMemberCount, getWorkspace } from '../db/queries';
+import { deleteMailingList } from '../db/mutations';
+import { toast } from 'sonner';
 
 export const meta: Route.MetaFunction = () => {
   return [{ title: `메일 리스트 | ${import.meta.env.VITE_APP_NAME}` }];
 };
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return redirect('/login');
+  }
+  const formData = await request.formData();
+  const mailingListId = formData.get('mailingListId') as string;
+  const workspaceId = formData.get('workspaceId') as string;
+  const actionType = formData.get('actionType') as string;
+  if (!actionType || 
+      (
+        actionType !== 'deleteMailingList'
+      )) {
+    return {
+      status: 'error',
+      message: 'Action type not found or not valid'
+    };
+  }
+    if (actionType === 'deleteMailingList') {
+      try {
+        const result = await deleteMailingList(client, { mailingListId, workspaceId });
+        return {
+          status: 'success', actionType: actionType, result: result, 
+            message: 'Mail list deleted success' };
+        } catch (error) {
+          return {
+            status: 'error', actionType: actionType, result: null, 
+            message: 'Mail list deleted failed'
+          };
+        }
+    }
+};
+
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [client] = makeServerClient(request);
@@ -48,12 +85,27 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
   const [mailLists, setMailLists] = useState<MailListData[]>(mailListsData);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const fetcher = useFetcher();
 
   // 검색 필터링
   const filteredMailLists = mailLists.filter(mailList =>
     mailList.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (mailList.description && mailList.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // 후처리: fetcher 상태 변화 감지
+  useEffect(() => {
+    if (fetcher.state === 'idle' && fetcher.data) {
+      if (fetcher.data.actionType === 'deleteMailingList') {
+        if (fetcher.data.status === 'success') {
+          toast.success(fetcher.data.message || '메일 리스트가 삭제되었습니다.');
+          setMailLists(prev => prev.filter(mailList => mailList.mailingListId !== fetcher.data.result.mailing_list_id));
+        } else if (fetcher.data.status === 'error') {
+          toast.error(fetcher.data.message || '메일 리스트 삭제에 실패했습니다.');
+        }
+      }
+    }
+  }, [fetcher.state, fetcher.data]);
 
   // 메일 리스트 추가 핸들러
   const handleAddMailList = () => {
@@ -80,8 +132,11 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
   // 메일 리스트 삭제 핸들러
   const handleDeleteMailList = (mailingListId: string) => {
     if (confirm("정말로 이 메일 리스트를 삭제하시겠습니까? 모든 멤버 정보가 함께 삭제됩니다.")) {
-      setMailLists(prev => prev.filter(mailList => mailList.mailingListId !== mailingListId));
-      console.log("메일 리스트 삭제됨:", mailingListId);
+      const submitFormData = new FormData();
+      submitFormData.append('actionType', 'deleteMailingList');
+      submitFormData.append('mailingListId', mailingListId);
+      submitFormData.append('workspaceId', workspaceId);
+      fetcher.submit(submitFormData, { method: 'POST' });
     }
   };
 

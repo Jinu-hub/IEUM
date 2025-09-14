@@ -58,44 +58,6 @@ export const sampleMailingLists = [
     { id: '2', name: '#development' },
     { id: '3', name: '#announcements' },
   ];
-  
-  // 스케줄 타입
-  export const scheduleTypes = [
-    { value: 'manual', label: '수동 발송' },
-    { value: 'daily', label: '매일' },
-    { value: 'weekly', label: '매주' },
-    { value: 'monthly', label: '매월' },
-    { value: 'custom', label: '직접 입력 (Cron)' },
-  ];
-  
-  // 요일 옵션
-  export const weekdays = [
-    { value: '1', label: '월요일' },
-    { value: '2', label: '화요일' },
-    { value: '3', label: '수요일' },
-    { value: '4', label: '목요일' },
-    { value: '5', label: '금요일' },
-    { value: '6', label: '토요일' },
-    { value: '0', label: '일요일' },
-  ];
-  
-  // 시간 옵션 (24시간 형식)
-  export const hours = Array.from({ length: 24 }, (_, i) => ({
-    value: i.toString(),
-    label: `${i.toString().padStart(2, '0')}시`
-  }));
-  
-  // 분 옵션 (15분 단위)
-  export const minutes = Array.from({ length: 4 }, (_, i) => ({
-    value: (i * 15).toString(),
-    label: `${(i * 15).toString().padStart(2, '0')}분`
-  }));
-  
-  // 월 일자 옵션
-  export const monthDays = Array.from({ length: 28 }, (_, i) => ({
-    value: (i + 1).toString(),
-    label: `${i + 1}일`
-  }));
 
 // 메일 리스트 샘플 데이터 (확장)
 export const sampleMailLists: MailListData[] = [
