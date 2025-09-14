@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { redirect, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
 import { 
   LinearCard, 
   LinearCardTitle, 
@@ -19,16 +19,33 @@ import {
 import { Mail, Users, Search, MoreVertical, Edit, Trash2, Copy, Calendar } from 'lucide-react';
 import { cn } from '~/core/lib/utils';
 import type { Route } from "./+types/mail-list";
-import { sampleMailLists } from '../lib/mockdata';
 import type { MailListData } from '../lib/types';
 import { formatDate, formatMemberCount } from '../lib/common';
+import makeServerClient from '~/core/lib/supa-client.server';
+import { getMailingList, getMailingListMemberCount, getWorkspace } from '../db/queries';
 
 export const meta: Route.MetaFunction = () => {
   return [{ title: `메일 리스트 | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
-export default function MailListScreen() {
-  const [mailLists, setMailLists] = useState<MailListData[]>(sampleMailLists);
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return redirect('/login');
+  }
+  const workspace = await getWorkspace(client, { userId: user.id });
+  const workspaceId = workspace[0].workspace_id;
+  const mailLists = await getMailingList(client, { workspaceId: workspaceId });
+  for (const mailList of mailLists) {
+    mailList.memberCount = await getMailingListMemberCount(client, { mailingListId: mailList.mailingListId });
+  }
+  return { workspaceId, mailListsData: mailLists };
+};
+
+export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
+  const { workspaceId, mailListsData } = loaderData;
+  const [mailLists, setMailLists] = useState<MailListData[]>(mailListsData);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
@@ -155,40 +172,34 @@ export default function MailListScreen() {
                 className="transition-all duration-200 cursor-pointer"
                 onClick={() => handleMailListCardClick(mailList.mailingListId)}
               >
-                <LinearCardContent className="p-6">
+                <LinearCardContent className="p-3">
                   <div className="flex items-center justify-between">
                     {/* 좌측: 메일 리스트 정보 */}
-                    <div className="flex items-start space-x-4 flex-1">
+                    <div className="flex items-start space-x-2 flex-1">
                       {/* 아이콘 */}
-                      <div className="flex flex-col items-center space-y-2">
-                        <div className="p-3 rounded-full bg-primary/10">
-                          <Mail className="h-6 w-6 text-primary" />
+                      <div className="flex flex-col items-center">
+                        <div className="p-1.5 rounded-full bg-primary/10">
+                          <Mail className="h-4 w-4 text-primary" />
                         </div>
                       </div>
 
                       {/* 메일 리스트 상세 */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <h3 className="text-lg font-semibold text-foreground truncate">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h3 className="text-base font-semibold text-foreground truncate">
                             {mailList.name}
                           </h3>
-                          <LinearBadge 
-                            variant="secondary"
-                            size="sm"
-                          >
-                            {formatMemberCount(mailList.memberCount || 0)} 멤버
-                          </LinearBadge>
                         </div>
 
                         {/* 설명 */}
                         {mailList.description && (
-                          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                          <p className="text-xs text-muted-foreground mb-2 line-clamp-1">
                             {mailList.description}
                           </p>
                         )}
 
                         {/* 메타 정보 그리드 */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                           {/* 멤버 수 */}
                           <div className="flex items-center space-x-2">
                             <Users className="h-4 w-4 text-muted-foreground" />

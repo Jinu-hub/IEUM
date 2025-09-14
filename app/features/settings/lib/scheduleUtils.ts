@@ -169,30 +169,35 @@ export function validateCronExpression(cronString: string): { isValid: boolean; 
   return { isValid: true };
 }
 
-// 마지막 발송 시각 포맷 함수
+// 마지막 발송 시각 포맷 함수 (hydration-safe)
 export function formatLastSent(lastSentAt?: string): string {
   if (!lastSentAt) return "미발송";
   
   const date = new Date(lastSentAt);
-  const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  const diffInDays = Math.floor(diffInHours / 24);
   
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes}분 전`;
-  } else if (diffInHours < 24) {
-    return `${diffInHours}시간 전`;
-  } else if (diffInDays < 7) {
-    return `${diffInDays}일 전`;
-  } else {
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+  // 클라이언트에서만 상대적 시간 계산 (hydration mismatch 방지)
+  if (typeof window !== 'undefined') {
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}분 전`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours}시간 전`;
+    } else if (diffInDays < 7) {
+      return `${diffInDays}일 전`;
+    }
   }
+  
+  // 서버에서는 절대 날짜만 표시
+  return date.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
 };
 
 // 스케줄 표시용 포맷 함수

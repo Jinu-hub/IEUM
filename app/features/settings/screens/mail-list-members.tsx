@@ -44,10 +44,10 @@ import {
 import { cn } from '~/core/lib/utils';
 import type { Route } from "./+types/mail-list-members";
 import type { MailListData, MailListMemberData } from '../lib/types';
-import { formatDate, formatMemberCount, getSourceLabel, getSourceVariant } from '../lib/common';
+import { formatDate, getSourceLabel, getSourceVariant } from '../lib/common';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { getMailingList, getMailingListMembers, getWorkspace } from '../db/queries';
-import { upsertMailingList, upsertMailingListMember } from '../db/mutations';
+import { deleteMailingListMember, upsertMailingList, upsertMailingListMember } from '../db/mutations';
 import { toast } from 'sonner';
 import { mailListUserSchema } from '../lib/constants';
 import { parseMetaJson } from '../lib/JsonUtils';
@@ -85,7 +85,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   const formData = await request.formData();
   const actionType = formData.get('actionType') as string;
-  if (!actionType || (actionType !== 'mailListSave' && actionType !== 'mailListMemberSave')) {
+  if (!actionType || 
+      (
+        actionType !== 'mailListSave' && 
+        actionType !== 'mailListMemberSave' &&
+        actionType !== 'mailListMemberDelete'
+      )) {
     return {
       status: 'error',
       message: 'Action type not found or not valid'
@@ -130,6 +135,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       return { status: 'error', actionType: actionType, result: null, 
         message: 'Mail list member save failed' };
     }
+  } else if (actionType === 'mailListMemberDelete') {
+    const emailsString = formData.get('emails') as string;
+    const emails = emailsString.split(',').map(email => email.trim());
+    try {
+      const result = await deleteMailingListMember(client, { mailingListId, emails });
+      return { status: 'success', actionType: actionType, result: result, 
+        message: 'Mail list member delete success' };
+    } catch (error) {
+      console.error('mailListMemberDelete error', error);
+      return { status: 'error', actionType: actionType, result: null, 
+        message: 'Mail list member delete failed' };
+    }
   }
 };
 
@@ -145,10 +162,11 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
   const [members, setMembers] = useState<MailListMemberData[]>(initialMembers || []);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
-  const [newMemberEmail, setNewMemberEmail] = useState('');
-  const [newMemberName, setNewMemberName] = useState('');
+  const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
+  const [memberEmail, setMemberEmail] = useState('');
+  const [memberName, setMemberName] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [editingMember, setEditingMember] = useState<MailListMemberData | null>(null);
   
   // 편집 상태
   const [isEditing, setIsEditing] = useState(isNew);
@@ -201,17 +219,40 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
         } else if (fetcher.data.status === 'error') {
           toast.error(fetcher.data.message || '메일 리스트 저장에 실패했습니다.');
         }
-      } else if (fetcher.data.actionType === 'mailListMemberSave') {
-        // 멤버 정보 저장 처리
+        } else if (fetcher.data.actionType === 'mailListMemberSave') {
+          // 멤버 정보 저장 처리
+          if (fetcher.data.status === 'success') {
+            toast.success(fetcher.data.message || '멤버 정보가 저장되었습니다.');
+            
+            if (editingMember) {
+              // 편집 모드: 기존 멤버 업데이트
+              setMembers(prev => prev.map(member => 
+                member.email === editingMember.email ? fetcher.data.result : member
+              ));
+              setIsMemberDialogOpen(false);
+              setEditingMember(null);
+              setMemberEmail('');
+              setMemberName('');
+            } else {
+              // 추가 모드: 새 멤버 추가
+              setMembers(prev => [fetcher.data.result, ...prev]);
+              setMemberEmail('');
+              setMemberName('');
+              setIsMemberDialogOpen(false);
+              setMailList(prev => prev ? { ...prev, memberCount: (prev.memberCount || 0) + 1 } : null);
+            }
+          } else if (fetcher.data.status === 'error') {
+            toast.error(fetcher.data.message || '멤버 정보 저장에 실패했습니다.');
+          }
+        } else if (fetcher.data.actionType === 'mailListMemberDelete') {
+        // 멤버 삭제 처리
         if (fetcher.data.status === 'success') {
-          toast.success(fetcher.data.message || '멤버 정보가 저장되었습니다.');
-          setMembers(prev => [fetcher.data.result, ...prev]);
-          setNewMemberEmail('');
-          setNewMemberName('');
-          setIsAddMemberDialogOpen(false);
-          setMailList(prev => prev ? { ...prev, memberCount: (prev.memberCount || 0) + 1 } : null);
+          toast.success(fetcher.data.message || '멤버 정보가 삭제되었습니다.');
+          setSelectedMembers([]);
+          setMailList(prev => prev ? { ...prev, memberCount: (prev.memberCount || 0) - fetcher.data.result.length } : null);
+          setMembers(prev => prev.filter(member => !fetcher.data.result.some((result: any) => result.email === member.email)));
         } else if (fetcher.data.status === 'error') {
-          toast.error(fetcher.data.message || '멤버 정보 저장에 실패했습니다.');
+          toast.error(fetcher.data.message || '멤버 정보 삭제에 실패했습니다.');
         }
       }
     }
@@ -287,16 +328,16 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
     }
   };
 
-  // 새 멤버 추가
-  const handleAddMember = () => {
+  // 멤버 추가/편집
+  const handleRegisterMember = () => {
     if (!mailList) return;
-
+    
     const validationData = {
       actionType: 'mailListMemberSave' as const,
       mailingListId: mailList.mailingListId,
       workspaceId: workspaceId,
-      email: newMemberEmail,
-      displayName: newMemberName || '',
+      email: memberEmail,
+      displayName: memberName || '',
       metaJson: JSON.stringify({ source: 'manual', tags: [] })
     };
 
@@ -314,17 +355,34 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
 
   // 선택된 멤버 삭제
   const handleDeleteSelectedMembers = () => {
+    console.log('handleDeleteSelectedMembers', selectedMembers);
     if (selectedMembers.length > 0 && confirm(`선택한 ${selectedMembers.length}명의 멤버를 삭제하시겠습니까?`)) {
-      setMembers(prev => prev.filter(member => !selectedMembers.includes(member.email)));
-      setSelectedMembers([]);
+      const submitFormData = new FormData();
+      submitFormData.append('actionType', 'mailListMemberDelete');
+      submitFormData.append('mailingListId', mailList?.mailingListId || '');
+      submitFormData.append('emails', selectedMembers.join(','));
+      fetcher.submit(submitFormData, { method: 'POST' });
     }
   };
 
   // 단일 멤버 삭제
   const handleDeleteMember = (email: string) => {
     if (confirm("이 멤버를 삭제하시겠습니까?")) {
-      setMembers(prev => prev.filter(member => member.email !== email));
+      const submitFormData = new FormData();
+      submitFormData.append('actionType', 'mailListMemberDelete');
+      submitFormData.append('mailingListId', mailList?.mailingListId || '');
+      submitFormData.append('emails', email);
+      fetcher.submit(submitFormData, { method: 'POST' });
     }
+  };
+
+  // 멤버 편집 다이얼로그 열기
+  const handleEditMember = (member: MailListMemberData) => {
+    setEditingMember(member);
+    setMemberEmail(member.email);
+    setMemberName(member.displayName || '');
+    setEmailError('');
+    setIsMemberDialogOpen(true);
   };
 
   // CSV 내보내기
@@ -507,16 +565,6 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
 
           {/* 우측: 액션 버튼들 */}
           <div className="flex items-center space-x-2">
-            {selectedMembers.length > 0 && (
-              <LinearButton
-                variant="secondary"
-                size="sm"
-                leftIcon={<Trash2 />}
-                onClick={handleDeleteSelectedMembers}
-              >
-                {selectedMembers.length}명 삭제
-              </LinearButton>
-            )}
             <LinearButton
               variant="secondary"
               size="sm"
@@ -535,7 +583,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
               CSV 다운로드
             </LinearButton>
 
-            <Dialog open={isAddMemberDialogOpen} onOpenChange={setIsAddMemberDialogOpen}>
+            <Dialog open={isMemberDialogOpen} onOpenChange={setIsMemberDialogOpen}>
               <DialogTrigger asChild>
                 <LinearButton
                   variant="primary"
@@ -548,11 +596,13 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>새 멤버 추가</DialogTitle>
+                  <DialogTitle>{editingMember ? '멤버 편집' : '새 멤버 추가'}</DialogTitle>
                   <DialogDescription>
                     {isNew && !mailList?.name 
                       ? '메일 리스트 정보를 먼저 저장해주세요.'
-                      : '메일 리스트에 새로운 멤버를 추가합니다.'
+                      : editingMember 
+                        ? '멤버 정보를 수정합니다.'
+                        : '메일 리스트에 새로운 멤버를 추가합니다.'
                     }
                   </DialogDescription>
                 </DialogHeader>
@@ -563,7 +613,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     </p>
                     <LinearButton
                       variant="primary"
-                      onClick={() => setIsAddMemberDialogOpen(false)}
+                      onClick={() => setIsMemberDialogOpen(false)}
                     >
                       확인
                     </LinearButton>
@@ -575,9 +625,9 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                       <LinearInput
                         type="email"
                         placeholder="member@example.com"
-                        value={newMemberEmail}
+                        value={memberEmail}
                         onChange={(e) => {
-                          setNewMemberEmail(e.target.value);
+                          setMemberEmail(e.target.value);
                           if (emailError) setEmailError(''); // 입력 시 에러 메시지 초기화
                         }}
                         error={emailError}
@@ -587,25 +637,31 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                       <label className="text-sm font-medium">이름 (선택사항)</label>
                       <LinearInput
                         placeholder="홍길동"
-                        value={newMemberName}
-                        onChange={(e) => setNewMemberName(e.target.value)}
+                        value={memberName}
+                        onChange={(e) => setMemberName(e.target.value)}
                       />
                     </div>
                     <div className="flex justify-end space-x-2">
                       <LinearButton
                         variant="secondary"
                         className="cursor-pointer"
-                        onClick={() => setIsAddMemberDialogOpen(false)}
+                        onClick={() => {
+                          setIsMemberDialogOpen(false);
+                          setEditingMember(null);
+                          setMemberEmail('');
+                          setMemberName('');
+                          setEmailError('');
+                        }}
                       >
                         취소
                       </LinearButton>
                       <LinearButton
                         variant="primary"
                         className="cursor-pointer"
-                        onClick={handleAddMember}
-                        disabled={!newMemberEmail}
+                        onClick={handleRegisterMember}
+                        disabled={!memberEmail}
                       >
-                        추가
+                        {editingMember ? '저장' : '추가'}
                       </LinearButton>
                     </div>
                   </div>
@@ -645,7 +701,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     <LinearButton 
                       variant="primary" 
                       leftIcon={<PlusIcon />}
-                      onClick={() => setIsAddMemberDialogOpen(true)}
+                      onClick={() => setIsMemberDialogOpen(true)}
                     >
                       멤버 추가
                     </LinearButton>
@@ -664,12 +720,26 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     onChange={toggleSelectAll}
                     className="h-4 w-4 rounded border-muted-foreground"
                   />
-                  <span className="text-sm font-medium">
+                  <span 
+                    className="text-sm font-medium cursor-pointer"
+                    onClick={toggleSelectAll}
+                  >
                     {selectedMembers.length > 0 
                       ? `${selectedMembers.length}명 선택됨` 
                       : `전체 ${filteredMembers.length}명`
                     }
                   </span>
+                  {selectedMembers.length > 0 && (
+                    <LinearButton
+                      variant="secondary"
+                      size="sm"
+                      leftIcon={<Trash2 />}
+                      onClick={handleDeleteSelectedMembers}
+                      className="cursor-pointer"
+                    >
+                      {selectedMembers.length}명 삭제
+                    </LinearButton>
+                  )}
                 </div>
                 {selectedMembers.length > 0 && (
                   <LinearButton
@@ -692,49 +762,87 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     selectedMembers.includes(member.email) && "ring-2 ring-primary/20"
                   )}
                 >
-                  <LinearCardContent className="p-4">
+                  <LinearCardContent className="p-1 px-2">
                     <div className="flex items-center justify-between">
                       {/* 좌측: 선택박스 + 멤버 정보 */}
-                      <div className="flex items-center space-x-4 flex-1">
+                      <div className="flex items-center space-x-1 flex-1">
                         <input
                           type="checkbox"
                           checked={selectedMembers.includes(member.email)}
                           onChange={() => toggleMemberSelection(member.email)}
-                          className="h-4 w-4 rounded border-muted-foreground"
+                          className="h-3.5 w-3.5 rounded border-muted-foreground"
                         />
                         
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 rounded-full bg-primary/10">
-                            <User className="h-4 w-4 text-primary" />
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-3 mb-1">
-                              <h4 className="font-medium text-foreground">
-                                {member.displayName || member.email.split('@')[0]}
-                              </h4>
-                              <LinearBadge 
-                                variant={getSourceVariant(parseMetaJson(member.metaJson).source)}
-                                size="sm"
-                              >
-                                {getSourceLabel(parseMetaJson(member.metaJson).source)}
-                              </LinearBadge>
+                        {/* 모바일: 세로 레이아웃, 데스크톱: 가로 레이아웃 */}
+                        <div className="flex flex-col md:flex-row md:items-center space-y-0.5 md:space-y-0 md:space-x-1.5">
+                          {/* 아이콘 */}
+                          <div className="flex items-center space-x-1 md:space-x-1.5">
+                            <div className="p-0.5 rounded-full bg-primary/10">
+                              <User className="h-2.5 w-2.5 text-primary" />
                             </div>
                             
-                            <div className="text-sm text-muted-foreground">
+                            {/* 모바일에서만 표시되는 이름과 배지 */}
+                            <div className="md:hidden">
+                              <div className="flex items-center space-x-1">
+                                <h4 className="text-xs font-medium text-foreground">
+                                  {member.displayName || member.email.split('@')[0]}
+                                </h4>
+                                <LinearBadge 
+                                  variant={getSourceVariant(parseMetaJson(member.metaJson).source)}
+                                  size="sm"
+                                >
+                                  {getSourceLabel(parseMetaJson(member.metaJson).source)}
+                                </LinearBadge>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* 데스크톱: 가로 레이아웃 */}
+                          <div className="hidden md:flex md:items-center md:space-x-8 md:flex-1">
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-medium text-foreground truncate">
+                                {member.displayName || member.email.split('@')[0]}
+                              </h4>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {member.email}
+                              </div>
+                            </div>
+                            
+                            <LinearBadge 
+                              variant={getSourceVariant(parseMetaJson(member.metaJson).source)}
+                              size="sm"
+                            >
+                              {getSourceLabel(parseMetaJson(member.metaJson).source)}
+                            </LinearBadge>
+                            
+                            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                              <Calendar className="h-2.5 w-2.5" />
+                              <span>{formatDate(member.createdAt)}</span>
+                            </div>
+                            
+                            {parseMetaJson(member.metaJson).tags && parseMetaJson(member.metaJson).tags.length > 0 && (
+                              <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                                <Tag className="h-2.5 w-2.5" />
+                                <span className="truncate max-w-20">{parseMetaJson(member.metaJson).tags.join(', ')}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* 모바일: 하단 정보 */}
+                          <div className="md:hidden">
+                            <div className="text-xs text-muted-foreground">
                               {member.email}
                             </div>
                             
-                            {/* 태그 및 메타 정보 */}
-                            <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
+                            <div className="flex items-center space-x-1.5 text-xs text-muted-foreground">
                               <div className="flex items-center space-x-1">
-                                <Calendar className="h-3 w-3" />
+                                <Calendar className="h-2.5 w-2.5" />
                                 <span>{formatDate(member.createdAt)}</span>
                               </div>
                               
                               {parseMetaJson(member.metaJson).tags && parseMetaJson(member.metaJson).tags.length > 0 && (
                                 <div className="flex items-center space-x-1">
-                                  <Tag className="h-3 w-3" />
+                                  <Tag className="h-2.5 w-2.5" />
                                   <span>{parseMetaJson(member.metaJson).tags.join(', ')}</span>
                                 </div>
                               )}
@@ -754,7 +862,10 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                           </LinearButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem className="flex items-center space-x-2">
+                          <DropdownMenuItem 
+                            onClick={() => handleEditMember(member)}
+                            className="flex items-center space-x-2"
+                          >
                             <Edit className="h-4 w-4" />
                             <span>편집</span>
                           </DropdownMenuItem>
