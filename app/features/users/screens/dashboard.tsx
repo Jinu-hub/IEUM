@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import type { Route } from "./+types/dashboard";
-import { useFetcher } from 'react-router';
+import { data, redirect } from 'react-router';
 import { 
   LinearCard, 
   LinearCardContent,
@@ -17,153 +17,39 @@ import {
 import { cn } from '~/core/lib/utils';
 import type { EmailStatus } from '~/features/contents/lib/types';
 import { sampleSentEmails } from '~/features/contents/lib/mackData';
-import type { TargetData } from '~/features/settings/lib/types';
+import { getStatusConfig } from '~/features/contents/lib/common';
+import { getNextScheduledTime, formatTimeUntil } from '~/features/settings/lib/scheduleUtils';
 import { sampleTargets } from '~/features/settings/lib/mockdata';
-
-type ConnectionStatus = 'connected' | 'disconnected' | 'loading';
+import makeServerClient from '~/core/lib/supa-client.server';
+import { getIntegrationsInfo, getTargets, getWorkspace } from '~/features/settings/db/queries';
 
 export const meta: Route.MetaFunction = () => {
   return [{ title: `Dashboard | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
-// 다음 발송 예정 시각 계산 함수
-const getNextScheduledTime = (cronExpression?: string): Date | null => {
-  if (!cronExpression) return null;
-  
-  const now = new Date();
-  const parts = cronExpression.split(' ');
-  if (parts.length !== 5) return null;
-  
-  const [minute, hour, dayOfMonth, month, dayOfWeek] = parts.map(p => p === '*' ? -1 : parseInt(p));
-  
-  // 다음 스케줄 계산 (간단한 구현)
-  const nextDate = new Date(now);
-  
-  if (dayOfWeek !== -1 && dayOfMonth === -1) {
-    // 주간 스케줄
-    const currentDay = nextDate.getDay();
-    const targetDay = dayOfWeek === 0 ? 7 : dayOfWeek; // 일요일을 7로 변환
-    const currentDayAdjusted = currentDay === 0 ? 7 : currentDay;
-    
-    let daysUntilTarget = targetDay - currentDayAdjusted;
-    if (daysUntilTarget <= 0 || (daysUntilTarget === 0 && (nextDate.getHours() > hour || (nextDate.getHours() === hour && nextDate.getMinutes() >= minute)))) {
-      daysUntilTarget += 7;
-    }
-    
-    nextDate.setDate(nextDate.getDate() + daysUntilTarget);
-    nextDate.setHours(hour, minute, 0, 0);
-  } else if (dayOfMonth !== -1 && dayOfWeek === -1) {
-    // 월간 스케줄
-    nextDate.setDate(dayOfMonth);
-    nextDate.setHours(hour, minute, 0, 0);
-    
-    if (nextDate <= now) {
-      nextDate.setMonth(nextDate.getMonth() + 1);
-    }
-  } else {
-    // 일간 스케줄
-    nextDate.setHours(hour, minute, 0, 0);
-    
-    if (nextDate <= now) {
-      nextDate.setDate(nextDate.getDate() + 1);
-    }
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return redirect('/login');
   }
+  const workspace = await getWorkspace(client, { userId: user.id });
   
-  return nextDate;
+  const workspaceId = workspace[0].workspace_id;
+  const integrationsInfo = await getIntegrationsInfo(client, { workspaceId: workspaceId });
+  const targets = await getTargets(client, { workspaceId: workspaceId });
+  return data({ user, workspaceId, integrationsInfo, targets });
 };
 
-// 시간 차이를 한국어로 포맷
-const formatTimeUntil = (targetDate: Date): string => {
-  const now = new Date();
-  const diffInMs = targetDate.getTime() - now.getTime();
-  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  const diffInDays = Math.floor(diffInHours / 24);
-  
-  if (diffInDays > 0) {
-    return `${diffInDays}일 후`;
-  } else if (diffInHours > 0) {
-    return `${diffInHours}시간 후`;
-  } else if (diffInMinutes > 0) {
-    return `${diffInMinutes}분 후`;
-  } else {
-    return "곧 발송";
-  }
-};
 
-export default function Dashboard() {
-  const [githubStatus, setGithubStatus] = useState<ConnectionStatus>('loading');
-  const [slackStatus, setSlackStatus] = useState<ConnectionStatus>('loading');
-  const [githubData, setGithubData] = useState<any>(null);
-  const [slackData, setSlackData] = useState<any>(null);
-
-  // API 호출을 위한 fetcher
-  const githubFetcher = useFetcher();
-  const slackFetcher = useFetcher();
-
-  const tempRef = 'dummy_ref';
-
-  // 컴포넌트 마운트 시 연결 상태 확인
-  useEffect(() => {
-    githubFetcher.load(`/api/settings/github-integration/${tempRef}`);
-    slackFetcher.load(`/api/settings/slack-integration/${tempRef}`);
-  }, []);
-
-  // GitHub fetcher 응답 처리
-  useEffect(() => {
-    if (githubFetcher.data) {
-      const { status, data } = githubFetcher.data;
-      if (status === 'success' && data) {
-        setGithubStatus(data.connected ? 'connected' : 'disconnected');
-        setGithubData(data);
-      } else {
-        setGithubStatus('disconnected');
-      }
-    }
-  }, [githubFetcher.data]);
-
-  // Slack fetcher 응답 처리
-  useEffect(() => {
-    if (slackFetcher.data) {
-      const { status, data } = slackFetcher.data;
-      if (status === 'success' && data) {
-        setSlackStatus(data.connected ? 'connected' : 'disconnected');
-        setSlackData(data);
-      } else {
-        setSlackStatus('disconnected');
-      }
-    }
-  }, [slackFetcher.data]);
-
-  // 이메일 상태별 설정 함수
-  const getStatusConfig = (status: EmailStatus) => {
-    switch (status) {
-      case 'sent':
-        return {
-          icon: CheckCircleIcon,
-          label: '발송됨',
-          variant: 'info' as const,
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-50 dark:bg-blue-950',
-        };
-      case 'delivered':
-        return {
-          icon: CheckCircleIcon,
-          label: '송신 완료',
-          variant: 'success' as const,
-          color: 'text-green-600',
-          bgColor: 'bg-green-50 dark:bg-green-950',
-        };
-      case 'failed':
-        return {
-          icon: XCircleIcon,
-          label: '송신 실패',
-          variant: 'error' as const,
-          color: 'text-red-600',
-          bgColor: 'bg-red-50 dark:bg-red-950',
-        };
-    }
-  };
+export default function Dashboard( { loaderData }: Route.ComponentProps ) {
+  const { user, workspaceId, integrationsInfo, targets } = loaderData;
+  const isConnectedGitHub = integrationsInfo?.find((integration: any) => integration.type === 'github')?.connection_status === 'connected';
+  const isConnectedSlack = integrationsInfo?.find((integration: any) => integration.type === 'slack')?.connection_status === 'connected';
+  const githubData = integrationsInfo?.find((integration: any) => integration.type === 'github')?.resource_cache_json as any;
+  const slackData = integrationsInfo?.find((integration: any) => integration.type === 'slack')?.resource_cache_json as any;
+  const accessibleChannelsCount = slackData?.channels?.filter((channel: any) => channel.is_member === true).length || 0;
 
   // 이메일 통계 계산
   const emailStats = {
@@ -232,9 +118,7 @@ export default function Dashboard() {
                 </div>
                 <span className="font-semibold text-slate-900 dark:text-white text-lg">GitHub</span>
               </div>
-              {githubStatus === 'loading' ? (
-                <LinearBadge variant="secondary" size="sm">로딩 중</LinearBadge>
-              ) : githubStatus === 'connected' ? (
+              {isConnectedGitHub ? (
                 <LinearBadge variant="success" size="sm" icon={<CheckCircleIcon className="w-3 h-3" />}>
                   연결됨
                 </LinearBadge>
@@ -245,7 +129,7 @@ export default function Dashboard() {
               )}
             </div>
             
-            {githubStatus === 'connected' && githubData?.user ? (
+            {isConnectedGitHub && githubData?.user? (
               <div className="space-y-4 text-sm">
                 <div className="flex items-center space-x-2 p-3 bg-slate-100 dark:bg-white/10 rounded-lg">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -302,9 +186,7 @@ export default function Dashboard() {
                 </div>
                 <span className="font-semibold text-slate-900 dark:text-white text-lg">Slack</span>
               </div>
-              {slackStatus === 'loading' ? (
-                <LinearBadge variant="secondary" size="sm">로딩 중</LinearBadge>
-              ) : slackStatus === 'connected' ? (
+              {isConnectedSlack ? (
                 <LinearBadge variant="success" size="sm" icon={<CheckCircleIcon className="w-3 h-3" />}>
                   연결됨
                 </LinearBadge>
@@ -315,7 +197,7 @@ export default function Dashboard() {
               )}
             </div>
             
-            {slackStatus === 'connected' && slackData?.team ? (
+            {isConnectedSlack && slackData?.team ? (
               <div className="space-y-4 text-sm">
                 <div className="flex items-center space-x-2 p-3 bg-slate-100 dark:bg-white/10 rounded-lg">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -345,9 +227,9 @@ export default function Dashboard() {
                       <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="text-slate-500 dark:text-white/60 text-xs">상태</span>
+                      <span className="text-slate-500 dark:text-white/60 text-xs">접근가능</span>
                     </div>
-                    <span className="text-slate-900 dark:text-white font-bold text-lg">활성화됨</span>
+                    <span className="text-slate-900 dark:text-white font-bold text-lg">{accessibleChannelsCount}개</span>
                   </div>
                 </div>
                 
@@ -422,7 +304,7 @@ export default function Dashboard() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sampleTargets.length === 0 ? (
+          {targets.length === 0 ? (
             <LinearCard variant="outlined" className="col-span-full text-center py-8">
               <LinearCardContent>
                 <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
@@ -437,7 +319,7 @@ export default function Dashboard() {
               </LinearCardContent>
             </LinearCard>
           ) : (
-            sampleTargets.map((target) => {
+            targets.map((target) => {
               const nextSchedule = getNextScheduledTime(target.scheduleCron);
               const isActive = target.isActive;
               
@@ -479,7 +361,7 @@ export default function Dashboard() {
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">메일링 리스트:</span>
                         <span className="font-medium text-foreground">
-                          {target.mailingListName || "미설정"}
+                          {target.displayName || "미설정"}
                         </span>
                       </div>
                       
@@ -568,7 +450,9 @@ export default function Dashboard() {
                 <LinearCardContent className="p-4">
                   <div className="flex items-center space-x-3">
                     <div className={cn("p-2 rounded-full", statusConfig.bgColor)}>
-                      <StatusIcon className={cn("h-5 w-5", statusConfig.color)} />
+                      <div className={cn("h-5 w-5", statusConfig.color)}>
+                        <StatusIcon />
+                      </div>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">

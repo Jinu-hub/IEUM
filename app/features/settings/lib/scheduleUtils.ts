@@ -222,3 +222,69 @@ export function formatSchedule(cron?: string): string {
   
   return `매일 ${hour}:${minute.padStart(2, '0')}`;
 };
+
+
+// 다음 발송 예정 시각 계산 함수
+export const getNextScheduledTime = (cronExpression?: string): Date | null => {
+  if (!cronExpression) return null;
+  
+  const now = new Date();
+  const parts = cronExpression.split(' ');
+  if (parts.length !== 5) return null;
+  
+  const [minute, hour, dayOfMonth, month, dayOfWeek] = parts.map(p => p === '*' ? -1 : parseInt(p));
+  
+  // 다음 스케줄 계산 (간단한 구현)
+  const nextDate = new Date(now);
+  
+  if (dayOfWeek !== -1 && dayOfMonth === -1) {
+    // 주간 스케줄
+    const currentDay = nextDate.getDay();
+    const targetDay = dayOfWeek === 0 ? 7 : dayOfWeek; // 일요일을 7로 변환
+    const currentDayAdjusted = currentDay === 0 ? 7 : currentDay;
+    
+    let daysUntilTarget = targetDay - currentDayAdjusted;
+    if (daysUntilTarget <= 0 || (daysUntilTarget === 0 && (nextDate.getHours() > hour || (nextDate.getHours() === hour && nextDate.getMinutes() >= minute)))) {
+      daysUntilTarget += 7;
+    }
+    
+    nextDate.setDate(nextDate.getDate() + daysUntilTarget);
+    nextDate.setHours(hour, minute, 0, 0);
+  } else if (dayOfMonth !== -1 && dayOfWeek === -1) {
+    // 월간 스케줄
+    nextDate.setDate(dayOfMonth);
+    nextDate.setHours(hour, minute, 0, 0);
+    
+    if (nextDate <= now) {
+      nextDate.setMonth(nextDate.getMonth() + 1);
+    }
+  } else {
+    // 일간 스케줄
+    nextDate.setHours(hour, minute, 0, 0);
+    
+    if (nextDate <= now) {
+      nextDate.setDate(nextDate.getDate() + 1);
+    }
+  }
+  
+  return nextDate;
+};
+
+ // 시간 차이를 한국어로 포맷
+export const formatTimeUntil = (targetDate: Date): string => {
+  const now = new Date();
+  const diffInMs = targetDate.getTime() - now.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+  
+  if (diffInDays > 0) {
+    return `${diffInDays}일 후`;
+  } else if (diffInHours > 0) {
+    return `${diffInHours}시간 후`;
+  } else if (diffInMinutes > 0) {
+    return `${diffInMinutes}분 후`;
+  } else {
+    return "곧 발송";
+  }
+};
