@@ -41,7 +41,11 @@ export default [
         "features/users/api/disconnect-provider.tsx",
       ),
     ]),
-    ...prefix("/cron", [route("/mailer", "features/cron/api/mailer.tsx")]),
+    ...prefix("/cron", [
+      route("/mailer", "features/cron/api/mailer.tsx"),
+      route("/actions", "features/cron/api/actions.tsx"),
+      route("/test", "features/cron/api/test.tsx"),
+    ]),
     ...prefix("/blog", [route("/og", "features/blog/api/og.tsx")]),
   ]),
 
@@ -101,6 +105,7 @@ export default [
         index("features/users/screens/dashboard.tsx"),
         route("/analytics", "features/users/screens/analytics.tsx"),
         route("/payments", "features/payments/screens/payments.tsx"),
+        route("/test", "features/users/screens/test.tsx"),
       ]),
       ...prefix("/contents", [
         route("/sent-mail", "features/contents/screens/sent-mail.tsx"),  

@@ -26,12 +26,10 @@ const githubIntegrationSchema = z.object({
   credentialRef: z.string().optional(),
 });
 
-type GitHubIntegrationRequest = z.infer<typeof githubIntegrationSchema>;
-
 /**
  * GitHub 연결 상태 확인
  */
-async function checkGitHubConnection(token: string): Promise<{
+export async function checkGitHubConnection(token: string): Promise<{
   connected: boolean;
   user?: any;
   rateLimit?: any;
@@ -113,29 +111,6 @@ async function checkGitHubConnection(token: string): Promise<{
       error: error.message || 'Failed to connect to GitHub' 
     };
   }
-}
-
-/**
- * GitHub 설정 저장 (환경변수나 데이터베이스에)
- * 실제 구현에서는 사용자별 설정을 데이터베이스에 저장해야 합니다.
- */
-async function saveGitHubSettings(userId: string, settings: {
-  token?: string;
-  repos?: string;
-}) {
-  // TODO: 실제 구현에서는 사용자별 GitHub 설정을 데이터베이스에 저장
-  // 현재는 시뮬레이션만 수행
-  logger.info('Saving GitHub settings', { userId, hasToken: !!settings.token });
-  return true;
-}
-
-/**
- * GitHub 설정 삭제
- */
-async function removeGitHubSettings(userId: string) {
-  // TODO: 실제 구현에서는 사용자별 GitHub 설정을 데이터베이스에서 삭제
-  logger.info('Removing GitHub settings', { userId });
-  return true;
 }
 
 /**
@@ -250,6 +225,23 @@ export async function action({ request, params }: ActionFunctionArgs) {
       case 'connect': {
         // credentialRef로 연결 테스트
         const connectionStatus = await checkGitHubConnection(token);
+        
+        // repositories의 owner 정보를 자세히 로그로 출력
+        /*
+        if (connectionStatus.repositories && Array.isArray(connectionStatus.repositories)) {
+          console.log('📊 Repositories Owner 정보:');
+          connectionStatus.repositories.forEach((repo: any, index: number) => {
+            console.log(`  ${index + 1}. Repository: ${repo.name}`);
+            console.log(`     Owner: ${repo.owner?.login || repo.owner || 'Unknown'}`);
+            console.log(`     Full Name: ${repo.full_name || 'N/A'}`);
+            console.log(`     ID: ${repo.id || 'N/A'}`);
+            console.log(`     Private: ${repo.private ? 'Yes' : 'No'}`);
+            console.log('     ---');
+          });
+        } else {
+          console.log('❌ Repositories 정보가 없거나 배열이 아닙니다:', connectionStatus.repositories);
+        }
+        */
         const isConnected = connectionStatus.connected;
 
         try {
@@ -305,7 +297,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
                   repos: connectionStatus.repositories ? 
                      connectionStatus.repositories.map((r: any) => ({
                        id: r.id,
+                       owner: r.owner?.login,
                        name: r.name,
+                       full_name: r.full_name,
                        private: r.private,
                      })) : []
                 }

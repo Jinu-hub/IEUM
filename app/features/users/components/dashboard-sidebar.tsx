@@ -70,6 +70,10 @@ const data = {
           title: "Reports",
           url: "#",
         },
+        {
+          title: "Test",
+          url: "/dashboard/test"
+        }
       ],
     },
     /*
