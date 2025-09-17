@@ -5,9 +5,11 @@
  * 이 스크립트는 한 번만 실행되며, 기존 통합 설정들을 새로운 보안 저장소로 이전합니다.
  */
 
+import "dotenv/config";
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../database.types';
-import { secretsManager, generateCredentialRef } from '../app/core/lib/secrets-manager.server';
+import { secretsManager } from '../app/core/lib/secrets-manager.server';
+import { generateCredentialRef } from '../app/features/settings/api/common';
 import { logger } from '../app/core/lib/logger';
 
 interface MigrationConfig {
@@ -51,7 +53,7 @@ async function getExistingIntegrations(client: ReturnType<typeof createClient<Da
   const { data: integrations, error } = await client
     .from('integrations')
     .select('*')
-    .is('credential_ref', null); // credential_ref가 없는 기존 통합들만
+    .eq('credential_ref', ''); // credential_ref가 빈 문자열인 기존 통합들만
 
   if (error) {
     throw new Error(`Failed to fetch existing integrations: ${error.message}`);
@@ -66,14 +68,13 @@ async function getExistingIntegrations(client: ReturnType<typeof createClient<Da
 async function migrateGitHubToken(
   config: MigrationConfig,
   client: ReturnType<typeof createClient<Database>>,
-  dryRun: boolean
+  dryRun: boolean,
+  credentialRef: string,
 ): Promise<{ success: boolean; credentialRef?: string; error?: string }> {
   try {
     if (!config.githubToken) {
       return { success: false, error: 'No GitHub token found in environment variables' };
     }
-
-    const credentialRef = generateCredentialRef('github', 'migration');
 
     if (dryRun) {
       logger.info('DRY RUN: Would migrate GitHub token', { credentialRef });
@@ -81,11 +82,7 @@ async function migrateGitHubToken(
     }
 
     // Secrets Manager에 토큰 저장
-    const storeResult = await secretsManager.storeSecret(credentialRef, config.githubToken, {
-      name: 'GitHub Token (Migrated)',
-      description: 'GitHub integration token migrated from environment variables',
-      type: 'github_token'
-    });
+    const storeResult = await secretsManager.storeSecret(credentialRef, config.githubToken);
 
     if (!storeResult.success) {
       return { success: false, error: storeResult.error };
@@ -104,14 +101,13 @@ async function migrateGitHubToken(
 async function migrateSlackToken(
   config: MigrationConfig,
   client: ReturnType<typeof createClient<Database>>,
-  dryRun: boolean
+  dryRun: boolean,
+  credentialRef: string,
 ): Promise<{ success: boolean; credentialRef?: string; error?: string }> {
   try {
     if (!config.slackBotToken) {
       return { success: false, error: 'No Slack bot token found in environment variables' };
     }
-
-    const credentialRef = generateCredentialRef('slack', 'migration');
 
     if (dryRun) {
       logger.info('DRY RUN: Would migrate Slack token', { credentialRef });
@@ -119,11 +115,7 @@ async function migrateSlackToken(
     }
 
     // Secrets Manager에 토큰 저장
-    const storeResult = await secretsManager.storeSecret(credentialRef, config.slackBotToken, {
-      name: 'Slack Bot Token (Migrated)',
-      description: 'Slack integration token migrated from environment variables',
-      type: 'slack_bot_token'
-    });
+    const storeResult = await secretsManager.storeSecret(credentialRef, config.slackBotToken);
 
     if (!storeResult.success) {
       return { success: false, error: storeResult.error };
@@ -196,57 +188,77 @@ async function runMigration(config: MigrationConfig): Promise<MigrationResult> {
 
     // GitHub 토큰 마이그레이션
     if (config.githubToken) {
-      const githubResult = await migrateGitHubToken(config, client, config.dryRun || false);
+      const credentialRef = generateCredentialRef('github', 'migration');
+
+      // 1. 먼저 integrations 테이블 업데이트
+      const githubIntegrations = existingIntegrations.filter(i => i.type === 'github');
+      let integrationsUpdated = 0;
       
-      if (githubResult.success && githubResult.credentialRef) {
-        result.migratedSecrets++;
+      for (const integration of githubIntegrations) {
+        const updateResult = await updateIntegrationRecord(
+          client, 
+          integration.integration_id, 
+          credentialRef,
+          config.dryRun || false
+        );
         
-        // GitHub 통합 레코드들 업데이트
-        const githubIntegrations = existingIntegrations.filter(i => i.type === 'github');
-        for (const integration of githubIntegrations) {
-          const updateResult = await updateIntegrationRecord(
-            client, 
-            integration.integration_id, 
-            githubResult.credentialRef,
-            config.dryRun || false
-          );
-          
-          if (updateResult.success) {
-            result.updatedIntegrations++;
-          } else {
-            result.errors.push(`Failed to update GitHub integration ${integration.integration_id}: ${updateResult.error}`);
-          }
+        if (updateResult.success) {
+          integrationsUpdated++;
+        } else {
+          result.errors.push(`Failed to update GitHub integration ${integration.integration_id}: ${updateResult.error}`);
+        }
+      }
+
+      // 2. integrations 테이블 업데이트가 성공한 경우에만 Secret 저장
+      if (integrationsUpdated > 0) {
+        const githubResult = await migrateGitHubToken(config, client, config.dryRun || false, credentialRef);
+        
+        if (githubResult.success && githubResult.credentialRef) {
+          result.migratedSecrets++;
+          result.updatedIntegrations += integrationsUpdated;
+        } else {
+          result.errors.push(`GitHub token migration failed: ${githubResult.error}`);
         }
       } else {
-        result.errors.push(`GitHub token migration failed: ${githubResult.error}`);
+        result.errors.push('No GitHub integrations updated, skipping token migration');
       }
     }
 
     // Slack 토큰 마이그레이션
     if (config.slackBotToken) {
-      const slackResult = await migrateSlackToken(config, client, config.dryRun || false);
+      const credentialRef = generateCredentialRef('slack', 'migration');
+
+      // 1. 먼저 integrations 테이블 업데이트
+      const slackIntegrations = existingIntegrations.filter(i => i.type === 'slack');
+      let integrationsUpdated = 0;
       
-      if (slackResult.success && slackResult.credentialRef) {
-        result.migratedSecrets++;
+      for (const integration of slackIntegrations) {
+        const updateResult = await updateIntegrationRecord(
+          client, 
+          integration.integration_id, 
+          credentialRef,
+          config.dryRun || false
+        );
         
-        // Slack 통합 레코드들 업데이트
-        const slackIntegrations = existingIntegrations.filter(i => i.type === 'slack');
-        for (const integration of slackIntegrations) {
-          const updateResult = await updateIntegrationRecord(
-            client, 
-            integration.integration_id, 
-            slackResult.credentialRef,
-            config.dryRun || false
-          );
-          
-          if (updateResult.success) {
-            result.updatedIntegrations++;
-          } else {
-            result.errors.push(`Failed to update Slack integration ${integration.integration_id}: ${updateResult.error}`);
-          }
+        if (updateResult.success) {
+          integrationsUpdated++;
+        } else {
+          result.errors.push(`Failed to update Slack integration ${integration.integration_id}: ${updateResult.error}`);
+        }
+      }
+
+      // 2. integrations 테이블 업데이트가 성공한 경우에만 Secret 저장
+      if (integrationsUpdated > 0) {
+        const slackResult = await migrateSlackToken(config, client, config.dryRun || false, credentialRef);
+        
+        if (slackResult.success && slackResult.credentialRef) {
+          result.migratedSecrets++;
+          result.updatedIntegrations += integrationsUpdated;
+        } else {
+          result.errors.push(`Slack token migration failed: ${slackResult.error}`);
         }
       } else {
-        result.errors.push(`Slack token migration failed: ${slackResult.error}`);
+        result.errors.push('No Slack integrations updated, skipping token migration');
       }
     }
 
@@ -299,6 +311,7 @@ function printMigrationResult(result: MigrationResult, dryRun: boolean) {
 async function main() {
   try {
     const config = loadMigrationConfig();
+    console.log('config', config);
     const result = await runMigration(config);
     
     printMigrationResult(result, config.dryRun || false);
@@ -311,7 +324,7 @@ async function main() {
 }
 
 // CLI에서 직접 실행된 경우에만 main 함수 실행
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 

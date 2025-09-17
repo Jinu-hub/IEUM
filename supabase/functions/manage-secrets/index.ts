@@ -11,25 +11,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-interface SecretMetadata {
-  id: string;
-  name: string;
-  description?: string;
-  type: 'github_token' | 'slack_bot_token' | 'api_key' | 'webhook_secret';
-  createdAt: string;
-  updatedAt: string;
-  rotationPolicy?: {
-    enabled: boolean;
-    intervalDays: number;
-    lastRotated?: string;
-  };
-}
-
 interface SecretRequest {
-  action: 'store' | 'get' | 'update' | 'delete' | 'list';
+  action: 'store' | 'get' | 'update' | 'delete';
   credentialRef?: string;
   value?: string;
-  metadata?: SecretMetadata;
 }
 
 serve(async (req: Request) => {
@@ -39,6 +24,7 @@ serve(async (req: Request) => {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Cache-Control': 'no-store',
     }
 
     // OPTIONS 요청 처리
@@ -58,7 +44,7 @@ serve(async (req: Request) => {
     }
 
     // 인증 확인
-    const authHeader = req.headers.get('Authorization')
+    const authHeader = req.headers.get('Authorization') ?? ''
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
@@ -74,31 +60,29 @@ serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // 사용자 인증 확인
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    )
-
-    if (authError || !user) {
+    // Service Role Key로 호출하는지 확인 (서비스 레벨 호출)
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim()
+    if (!token) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (token !== supabaseServiceKey) {
+      return new Response(
+        JSON.stringify({ error: 'Service role required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     // 요청 본문 파싱
     const body: SecretRequest = await req.json()
-    const { action, credentialRef, value, metadata } = body
-
-    // Secrets는 Deno KV를 사용하여 암호화된 저장소에 저장
-    const kv = await Deno.openKv()
+    const { action, credentialRef, value } = body
 
     switch (action) {
       case 'store': {
-        if (!credentialRef || !value || !metadata) {
+        if (!credentialRef || !value) {
           return new Response(
             JSON.stringify({ error: 'Missing required fields for store action' }),
             { 
@@ -108,25 +92,17 @@ serve(async (req: Request) => {
           )
         }
 
-        // Secret 저장 (KV에 암호화되어 저장됨)
-        await kv.set(['secrets', credentialRef], {
-          value,
-          metadata: {
-            ...metadata,
-            createdBy: user.id,
-          }
-        })
+        // 1) Vault에 저장
+        const { data: insertedId, error: insertErr } = await supabase.rpc('secret_store_by_ref', {
+          p_credential_ref: credentialRef,   // vault unique name
+          p_value: value,
+        });
+        if (insertErr) throw insertErr;
 
-        // 메타데이터를 별도로 저장 (목록 조회용)
-        await kv.set(['secrets_metadata', credentialRef], {
-          ...metadata,
-          createdBy: user.id,
-        })
-
-        console.log(`Secret stored: ${credentialRef} (type: ${metadata.type})`)
+        console.log(`Secret stored: ${credentialRef} `)
 
         return new Response(
-          JSON.stringify({ success: true }),
+          JSON.stringify({ insertedId, success: true }),
           { 
             status: 200, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -145,9 +121,11 @@ serve(async (req: Request) => {
           )
         }
 
-        const result = await kv.get(['secrets', credentialRef])
+        const { data, error } = await supabase.rpc('secret_read_by_ref', {
+          p_credential_ref: credentialRef,
+        });
         
-        if (!result || !result.value) {
+        if (error || !data) {
           return new Response(
             JSON.stringify({ error: 'Secret not found' }),
             { 
@@ -157,19 +135,11 @@ serve(async (req: Request) => {
           )
         }
 
-        const secretData = result.value as { value: string; metadata: SecretMetadata }
-
         console.log(`Secret retrieved: ${credentialRef}`)
 
         return new Response(
-          JSON.stringify({
-            value: secretData.value,
-            metadata: secretData.metadata
-          }),
-          { 
-            status: 200, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
+          JSON.stringify({ value: data as string }), 
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }}
         )
       }
 
@@ -184,34 +154,14 @@ serve(async (req: Request) => {
           )
         }
 
-        // 기존 Secret 조회
-        const existingResult = await kv.get(['secrets', credentialRef])
-        if (!existingResult || !existingResult.value) {
-          return new Response(
-            JSON.stringify({ error: 'Secret not found' }),
-            { 
-              status: 404, 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            }
-          )
+        const { error: updateErr } = await supabase.rpc('secret_update_by_ref', {
+          p_credential_ref: credentialRef,
+          p_new_value: value,
+        });
+        if (updateErr) {
+          console.error(updateErr)
+          return new Response(JSON.stringify({ error: 'Failed to update secret' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }})
         }
-
-        const existingData = existingResult.value as { value: string; metadata: SecretMetadata }
-        const updatedMetadata = {
-          ...existingData.metadata,
-          ...metadata,
-          updatedAt: new Date().toISOString(),
-          updatedBy: user.id,
-        }
-
-        // Secret 업데이트
-        await kv.set(['secrets', credentialRef], {
-          value,
-          metadata: updatedMetadata
-        })
-
-        // 메타데이터 업데이트
-        await kv.set(['secrets_metadata', credentialRef], updatedMetadata)
 
         console.log(`Secret updated: ${credentialRef}`)
 
@@ -236,33 +186,19 @@ serve(async (req: Request) => {
         }
 
         // Secret 삭제
-        await kv.delete(['secrets', credentialRef])
-        await kv.delete(['secrets_metadata', credentialRef])
+        const { error: deleteErr } = await supabase.rpc('secret_delete_by_ref', {
+          p_credential_ref: credentialRef,
+        });
+
+        if (deleteErr) {
+          console.error(deleteErr)
+          return new Response(JSON.stringify({ error: 'Failed to delete secret' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }})
+        }
 
         console.log(`Secret deleted: ${credentialRef}`)
 
         return new Response(
           JSON.stringify({ success: true }),
-          { 
-            status: 200, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        )
-      }
-
-      case 'list': {
-        // 모든 메타데이터 조회
-        const secrets: SecretMetadata[] = []
-        const iter = kv.list({ prefix: ['secrets_metadata'] })
-        
-        for await (const entry of iter) {
-          secrets.push(entry.value as SecretMetadata)
-        }
-
-        console.log(`Listed ${secrets.length} secrets`)
-
-        return new Response(
-          JSON.stringify({ secrets }),
           { 
             status: 200, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }

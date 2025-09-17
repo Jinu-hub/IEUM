@@ -126,8 +126,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     }
  
     // credentialRef가 있으면 Secrets Manager에서 토큰 조회
-    const { getGitHubToken } = await import("~/core/lib/secrets-manager.server");
-    const token = await getGitHubToken(params.credentialRef) || undefined;
+    const { getGitHubToken, getGitHubTokenFromEnv } = await import("~/core/lib/secrets-manager.server");
+    //const token = await getGitHubToken(params.credentialRef) || undefined;
+    const token = await getGitHubTokenFromEnv() || undefined;
     if (!token) {
       return data({ 
         status: 'error', 
@@ -185,6 +186,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
     const credentialRef = rawData.credentialRef || params.credentialRef;
     
     // 첫 연결 시에는 credentialRef가 없을 수 있음 (OAuth 준비) TODO:
+    // 방법1. integration과 integration_statuses가 없거나 connection_status가 never인 경우에 OAuth 처리
+    // 방법2. (방법1을 포함)credentialRef가 유효하지 않은 경우에 OAuth 처리 : 좀더 빈번하게 OAuth처리를 하게됨
     /*
     if (actionType === 'connect' && (!credentialRef || credentialRef === 'new')) {
       console.log('First time connection - OAuth flow will be implemented');
@@ -202,8 +205,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
     */
 
-    const { getGitHubToken } = await import("~/core/lib/secrets-manager.server");
-    const token = await getGitHubToken(credentialRef as string) || undefined;
+    const { getGitHubToken, getGitHubTokenFromEnv } = await import("~/core/lib/secrets-manager.server");
+    //const token = await getGitHubToken(credentialRef as string) || undefined;
+    const token = await getGitHubTokenFromEnv() || undefined;
     console.log('token', token);
     if (!token) {
       console.log('No GitHub token found');
@@ -264,21 +268,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
           // 새로운 credentialRef 생성
           const credentialRef_new = generateCredentialRef('github', user.id.substring(0, 8));
           if (isConnected) {
-            // Secrets Manager에 토큰 저장 TODO:
-            /*
-            const storeResult = await secretsManager.storeSecret(credentialRef_new, token, {
-              name: `GitHub Token - ${connectionStatus.user?.login || 'Unknown'}`,
-              description: `GitHub integration token for workspace ${workspaceId}`,
-              type: 'github_token'
-            });
-            
-            if (!storeResult.success) {
-              return data({
-                status: 'error',
-                error: `Failed to store GitHub token: ${storeResult.error}`
-              }, { status: 500 });
-            }
-            */
 
             // Integration과 Status를 트랜잭션으로 함께 저장
             try {
@@ -304,12 +293,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
                      })) : []
                 }
               });
+
+            // Secrets Manager에 토큰 저장 TODO:
+            /*
+            const storeResult = await secretsManager.storeSecret(credentialRef_new, token);
+            if (!storeResult.success) {
+              return data({ status: 'error', error: `Failed to store GitHub token: ${storeResult.error}`
+              }, { status: 500 });
+            }
+            */
               
               logger.info('Integration record saved successfully', { integrationId: result.integration.integration_id });
             } catch (error) {
               logger.error('Failed to save integration record', { error });
-              // Secret 저장은 성공했으므로 롤백 TODO:
-              //await deleteIntegrationSecret({ credentialRef: credentialRef_new });
               return data({
                 status: 'error',
                 error: 'Failed to save integration settings'

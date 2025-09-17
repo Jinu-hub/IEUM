@@ -25,8 +25,6 @@ const slackIntegrationSchema = z.object({
   //config_json: z.any().optional(), // comma-separated channel IDs
 });
 
-type SlackIntegrationRequest = z.infer<typeof slackIntegrationSchema>;
-
 /**
  * Slack 연결 상태 확인
  */
@@ -108,29 +106,6 @@ async function checkSlackConnection(token: string): Promise<{
 }
 
 /**
- * Slack 설정 저장 (환경변수나 데이터베이스에)
- * 실제 구현에서는 사용자별 설정을 데이터베이스에 저장해야 합니다.
- */
-async function saveSlackSettings(userId: string, settings: {
-  token?: string;
-  channels?: string;
-}) {
-  // TODO: 실제 구현에서는 사용자별 Slack 설정을 데이터베이스에 저장
-  // 현재는 시뮬레이션만 수행
-  logger.info('Saving Slack settings', { userId, hasToken: !!settings.token });
-  return true;
-}
-
-/**
- * Slack 설정 삭제
- */
-async function removeSlackSettings(userId: string) {
-  // TODO: 실제 구현에서는 사용자별 Slack 설정을 데이터베이스에서 삭제
-  logger.info('Removing Slack settings', { userId });
-  return true;
-}
-
-/**
  * Loader: 현재 Slack 연결 상태 반환
  */
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -143,8 +118,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     }
 
     // credentialRef가 있으면 Secrets Manager에서 토큰 조회
-    const { getSlackBotToken } = await import("~/core/lib/secrets-manager.server");
-    const token = await getSlackBotToken(params.credentialRef) || undefined;
+    const { getSlackBotToken, getSlackBotTokenFromEnv } = await import("~/core/lib/secrets-manager.server");
+    //const token = await getSlackBotToken(params.credentialRef) || undefined;
+    const token = await getSlackBotTokenFromEnv() || undefined;
     if (!token) {
       return data({ 
         status: 'error', 
@@ -203,6 +179,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
     const credentialRef = (rawData as any).credentialRef || params.credentialRef;
 
     // 첫 연결 시에는 credentialRef가 없을 수 있음 (OAuth 준비) TODO:
+    // 방법1. integration과 integration_statuses가 없거나 connection_status가 never인 경우에 OAuth 처리
+    // 방법2. (방법1을 포함)credentialRef가 유효하지 않은 경우에 OAuth 처리 : 좀더 빈번하게 OAuth처리를 하게됨
     /*
     if (actionType === 'connect' && (!credentialRef || credentialRef === 'new')) {
       console.log('First time connection - OAuth flow will be implemented');
@@ -220,9 +198,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
     */
 
-    const { getSlackBotToken } = await import("~/core/lib/secrets-manager.server");
-    const token = await getSlackBotToken(credentialRef as string) || undefined;
-    //const token = process.env.SLACK_BOT_TOKEN || undefined;
+    const { getSlackBotToken, getSlackBotTokenFromEnv } = await import("~/core/lib/secrets-manager.server");
+    //const token = await getSlackBotToken(credentialRef as string) || undefined;
+    const token = await getSlackBotTokenFromEnv() || undefined;
     console.log('token', token);
     if (!token) {
       console.log('No Slack bot token found');
@@ -266,21 +244,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
           // 새로운 credentialRef 생성
           const credentialRef_new = generateCredentialRef('slack', user.id.substring(0, 8));
           if (isConnected) {
-            // Secrets Manager에 토큰 저장 TODO:
-            /*
-            const storeResult = await secretsManager.storeSecret(credentialRef_new, token, {
-              name: `Slack Bot Token - ${connectionStatus.team?.name || 'Unknown'}`,
-              description: `Slack integration token for workspace ${workspaceId}`,
-              type: 'slack_bot_token'
-            });
-            
-            if (!storeResult.success) {
-              return data({
-                status: 'error',
-                error: `Failed to store Slack token: ${storeResult.error}`
-              }, { status: 500 });
-            }
-            */
 
             // Integration 레코드를 데이터베이스에 저장
             try {
@@ -306,14 +269,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
                   })) : [],
                 }
               });
+
+              // Secrets Manager에 토큰 저장 TODO:
+              /*
+              const storeResult = await secretsManager.storeSecret(credentialRef_new, token);
+              if (!storeResult.success) {
+                return data({status: 'error', error: `Failed to store Slack token: ${storeResult.error}`
+                }, { status: 500 });
+              }
+              */
+
               logger.info('Integration record saved successfully', { integrationId: (integrationData as any).integration_id });
             } catch (error) {
               logger.error('Failed to save integration record', { error });
-              // Secret 저장은 성공했으므로 롤백 TODO:
-              //await deleteIntegrationSecret({ credentialRef: credentialRef_new });
               return data({
-                status: 'error',
-                error: 'Failed to save integration settings'
+                status: 'error', error: 'Failed to save integration settings'
               }, { status: 500 });
             }
           } else {

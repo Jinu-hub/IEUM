@@ -16,7 +16,7 @@
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Integration   │    │  Supabase Edge   │    │   Deno KV       │
+│   Integration   │    │  Supabase Edge   │    │   Vault        │
 │   API Calls     │───▶│    Function      │───▶│  (Encrypted)    │
 │                 │    │  manage-secrets  │    │   Storage       │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
@@ -39,27 +39,38 @@
 # Supabase CLI 설치 (아직 설치하지 않은 경우)
 # Homebrew로 설치
 brew install supabase/tap/supabase
+brew upgrade supabase
 
 # 설치 확인
 supabase --version
 
+
 # Supabase 프로젝트에 로그인
 supabase login
+# 로그인 확인
+supabase projects list
+
+# 필수 환경변수 설정 (불필요)
+#supabase secrets set SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
+#supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# 확인 
+supabase secrets list --project-ref xxxxxxxxxx
 
 # Edge Function 배포
-supabase functions deploy manage-secrets --project-ref jvdgefmtyduycwjdmfui
-```
+supabase functions deploy manage-secrets --project-ref xxxxxxxxx
+
+
 🚀 배포 시 일어나는 일
 코드 업로드: index.ts 파일이 Supabase 클라우드로 업로드
 Deno 런타임 실행: TypeScript가 Deno 환경에서 컴파일 및 실행
 엔드포인트 생성: https://[your-project].supabase.co/functions/v1/manage-secrets
 환경변수 주입: supabase secrets set으로 설정한 값들이 Deno.env.get()으로 접근 가능
 
-# 함수 목록 확인
-supabase functions list
 
-# 로그 확인
-supabase functions logs manage-secrets
+# 배포 후 확인
+supabase functions list --project-ref xxxxxxxxxxx
+
 
 
 ### 2. 환경변수 설정
@@ -72,7 +83,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 # 프로젝트 연결
 supabase init
-supabase link --project-ref YOUR_PROJECT_REF
+supabase link --project-ref jvdgefmtyduycwjdmfui
 
 # Supabase CLI로 환경변수 설정
 supabase secrets set SUPABASE_URL=https://your-project.supabase.co

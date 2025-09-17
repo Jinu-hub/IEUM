@@ -26,7 +26,7 @@ export interface SecretMetadata {
 
 export interface SecretValue {
   value: string;
-  metadata: SecretMetadata;
+  metadata?: SecretMetadata;
 }
 
 /**
@@ -45,7 +45,6 @@ export class SecretsManager {
   async storeSecret(
     credentialRef: string,
     value: string,
-    metadata: Omit<SecretMetadata, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<{ success: boolean; error?: string }> {
     try {
       // Supabase Edge Function을 통한 Secret 저장
@@ -53,13 +52,7 @@ export class SecretsManager {
         body: {
           action: 'store',
           credentialRef,
-          value,
-          metadata: {
-            ...metadata,
-            id: credentialRef,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
+          value
         }
       });
 
@@ -68,7 +61,7 @@ export class SecretsManager {
         return { success: false, error: error.message };
       }
 
-      logger.info('Secret stored successfully', { credentialRef, type: metadata.type });
+      logger.info('Secret stored successfully', { credentialRef });
       return { success: true };
     } catch (error) {
       logger.error('Error storing secret', { credentialRef, error });
@@ -97,10 +90,8 @@ export class SecretsManager {
         logger.warn('Secret not found', { credentialRef });
         return null;
       }
-
       return {
-        value: data.value,
-        metadata: data.metadata
+        value: data.value
       };
     } catch (error) {
       logger.error('Error getting secret', { credentialRef, error });
@@ -114,18 +105,13 @@ export class SecretsManager {
   async updateSecret(
     credentialRef: string,
     newValue: string,
-    updateMetadata?: Partial<SecretMetadata>
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const { data, error } = await this.supabaseClient.functions.invoke('manage-secrets', {
         body: {
           action: 'update',
           credentialRef,
-          value: newValue,
-          metadata: updateMetadata ? {
-            ...updateMetadata,
-            updatedAt: new Date().toISOString()
-          } : undefined
+          value: newValue
         }
       });
 
@@ -203,16 +189,7 @@ export class SecretsManager {
         return { success: false, error: 'Secret not found' };
       }
 
-      const updatedMetadata: Partial<SecretMetadata> = {
-        ...currentSecret.metadata,
-        rotationPolicy: {
-          enabled: currentSecret.metadata.rotationPolicy?.enabled ?? true,
-          intervalDays: currentSecret.metadata.rotationPolicy?.intervalDays ?? 90,
-          lastRotated: new Date().toISOString()
-        }
-      };
-
-      return await this.updateSecret(credentialRef, newValue, updatedMetadata);
+      return await this.updateSecret(credentialRef, newValue);
     } catch (error) {
       logger.error('Error rotating secret', { credentialRef, error });
       return { success: false, error: String(error) };
@@ -254,7 +231,7 @@ export class SecretsManager {
       logger.info('Successfully retrieved integration credential', { 
         integrationId, 
         credentialRef,
-        type: secret.metadata.type
+        type: secret.metadata?.type
       });
 
       return secret.value;
@@ -278,14 +255,16 @@ export const secretsManager = new SecretsManager();
 export async function getGitHubToken(credentialRef?: string): Promise<string | null> {
   // "undefined" 문자열도 falsy로 처리
   if (credentialRef && credentialRef !== 'undefined') {
-    //return await secretsManager.getSecret(credentialRef).then(secret => secret?.value || null);
-    return process.env.GITHUB_TOKEN || null;
+    return await secretsManager.getSecret(credentialRef).then(secret => secret?.value || null);
   }
-  
-  // Fallback to environment variable
-  // for local development testing : TODO: remove this
-  //return process.env.GITHUB_TOKEN || null;
   return null;
+}
+
+/**
+ * GitHub 토큰 조회
+ */
+export async function getGitHubTokenFromEnv(): Promise<string | null> {
+  return process.env.GITHUB_TOKEN || null;
 }
 
 /**
@@ -294,14 +273,16 @@ export async function getGitHubToken(credentialRef?: string): Promise<string | n
 export async function getSlackBotToken(credentialRef?: string): Promise<string | null> {
   // "undefined" 문자열도 falsy로 처리
   if (credentialRef && credentialRef !== 'undefined') {
-    //return await secretsManager.getSecret(credentialRef).then(secret => secret?.value || null);
-    return process.env.SLACK_BOT_TOKEN || null;
+    return await secretsManager.getSecret(credentialRef).then(secret => secret?.value || null);
   }
-  
-  // Fallback to environment variable
-  // for local development testing : TODO: remove this
-  //return process.env.SLACK_BOT_TOKEN || null;
   return null;
+}
+
+/**
+ * Slack 토큰 조회
+ */
+export async function getSlackBotTokenFromEnv(): Promise<string | null> {
+  return process.env.SLACK_BOT_TOKEN || null;
 }
 
 /**
@@ -317,7 +298,7 @@ export async function validateCredential(
       return { valid: false, error: 'Secret not found' };
     }
 
-    if (secret.metadata.type !== type) {
+    if (secret.metadata?.type !== type) {
       return { valid: false, error: 'Secret type mismatch' };
     }
 
