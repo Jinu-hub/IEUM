@@ -62,7 +62,7 @@ export const LinearImageCard: React.FC<LinearImageCardProps> = ({
   return (
     <LinearCard 
       className={cn("overflow-hidden", className)} 
-      padding="none"
+      padding={undefined}
       {...props}
     >
       {/* Image Container */}

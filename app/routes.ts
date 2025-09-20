@@ -29,7 +29,12 @@ export default [
       route("/theme", "features/settings/api/set-theme.tsx"),
       route("/locale", "features/settings/api/set-locale.tsx"),
       route("/github-integration/:credentialRef", "features/settings/api/github-integration.tsx"),
-      route("/slack-integration/:credentialRef", "features/settings/api/slack-integration.tsx"),    ]),
+      route("/slack-integration/:credentialRef", "features/settings/api/slack-integration.tsx"), 
+      //route("/github-callback", "features/settings/api/"),
+      //route("/slack-callback", "features/settings/api/"),   
+      //route("/github-webhook", "features/settings/api/"),   
+      //route("/github-webhook", "features/settings/api/"),   
+    ]),
     ...prefix("/users", [
       index("features/users/api/delete-account.tsx"),
       route("/password", "features/users/api/change-password.tsx"),
@@ -44,7 +49,7 @@ export default [
     ...prefix("/cron", [
       route("/mailer", "features/cron/api/mailer.tsx"),
       route("/actions", "features/cron/api/actions.tsx"),
-      route("/test", "features/cron/api/test.tsx"),
+      route("/test", "features/cron/api/test-api.tsx"),
     ]),
     ...prefix("/blog", [route("/og", "features/blog/api/og.tsx")]),
   ]),
@@ -105,7 +110,7 @@ export default [
         index("features/users/screens/dashboard.tsx"),
         route("/analytics", "features/users/screens/analytics.tsx"),
         route("/payments", "features/payments/screens/payments.tsx"),
-        route("/test", "features/users/screens/test.tsx"),
+        route("/test", "features/users/screens/test1.tsx"),
       ]),
       ...prefix("/contents", [
         route("/sent-mail", "features/contents/screens/sent-mail.tsx"),  
