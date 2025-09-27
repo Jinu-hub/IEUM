@@ -11,16 +11,18 @@ import type { ConnectionStatus } from '../lib/types';
 type IntegrationData = any; // 실제 타입으로 교체 가능
 
 interface IntegrationResponse {
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'redirect';
   data?: any;
   error?: string;
   message?: string;
+  redirectUrl?: string;
 }
 
 interface UseIntegrationResponseOptions {
   onOAuthRequired?: (oauthUrl: string) => void;
   onSuccess?: (data: any) => void;
   onError?: (error: string) => void;
+  onRedirect?: (redirectUrl: string) => void;
   onDisconnect?: () => void;
 }
 
@@ -43,7 +45,8 @@ interface UseIntegrationResponseOptions {
  *   {
  *     onOAuthRequired: (url) => window.open(url, '_blank'),
  *     onSuccess: (data) => console.log('Connected!', data),
- *     onError: (error) => toast.error(error)
+ *     onError: (error) => toast.error(error),
+ *     onRedirect: (url) => window.location.href = url
  *   }
  * );
  * ```
@@ -57,8 +60,8 @@ export function useIntegrationResponse(
   useEffect(() => {
     if (!fetcherData) return;
 
-    const { status, data, error, message } = fetcherData;
-    console.log(`${integrationType.toUpperCase()} API 응답:`, { status, data, error, message });
+    const { status, data, error, message, redirectUrl } = fetcherData;
+    console.log(`${integrationType.toUpperCase()} API 응답:`, { status, data, error, message, redirectUrl });
     
     if (status === 'success') {
       if (data) {
@@ -100,6 +103,19 @@ export function useIntegrationResponse(
       if (message) {
         console.log(message);
       }
+    } else if (status === 'redirect') {
+      // GitHub App 설치 리다이렉트 처리
+      console.log(`${integrationType.toUpperCase()} 설치 리다이렉트:`, redirectUrl);
+      setStatus('disconnected');
+      
+      if (redirectUrl) {
+        if (options.onRedirect) {
+          options.onRedirect(redirectUrl);
+        } else {
+          // 기본 동작: 현재 창에서 리다이렉트
+          window.location.href = redirectUrl;
+        }
+      }
     } else {
       // 에러 처리
       setStatus('disconnected');
@@ -110,5 +126,3 @@ export function useIntegrationResponse(
     }
   }, [fetcherData, setStatus, integrationType, options]);
 }
-
-export type { IntegrationResponse, UseIntegrationResponseOptions };

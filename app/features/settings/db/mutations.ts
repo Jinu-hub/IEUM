@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "database.types";
-import type { TargetData, IntegrationSource } from "../lib/types";
+import type { IntegrationSource, TargetData } from "../lib/types";
 
 export const createIntegration = async (
     client: SupabaseClient<Database>,
@@ -200,6 +200,63 @@ export const createIntegrationWithStatus = async (
             console.error('Rollback failed', rollbackError);
         }
         
+        throw error;
+    }
+}
+
+/**
+ * GitHub App용 Integration 생성/업데이트 함수
+ * installation_id와 메타데이터를 포함한 완전한 연결 정보를 저장
+ */
+export const createOrUpdateIntegration = async (
+    client: SupabaseClient<Database>,
+    { workspace_id, type, credential_ref, connection_status, metadata }:
+    { 
+        workspace_id: string, 
+        type: string, 
+        credential_ref: string, 
+        connection_status: Database["public"]["Enums"]["connection_status"],
+        metadata: any
+    },
+) => {
+    try {
+        // 1. Integration 생성/업데이트
+        const integrationData = await createIntegration(client, {
+            workspaceId: workspace_id,
+            type,
+            name: `GitHub App (${metadata.account?.login || 'Unknown'})`,
+            credential_ref,
+            config_json: {
+                installation_id: metadata.installation_id,
+                account: metadata.account,
+                repository_selection: metadata.repository_selection,
+                permissions: metadata.permissions,
+                setup_action: metadata.setup_action
+            }
+        });
+
+        // 2. Integration Status 생성/업데이트
+        /*
+        const statusData = await createIntegrationStatusSuccess(client, {
+            integrationId: integrationData.integration_id,
+            workspaceId: workspace_id,
+            connectionStatus: connection_status,
+            resourceCacheJson: {
+                installation_id: metadata.installation_id,
+                account: metadata.account,
+                created_at: metadata.created_at,
+                updated_at: metadata.updated_at,
+                last_sync_at: new Date().toISOString()
+            }
+        });
+        */
+
+        return {
+            integration: integrationData,
+            //status: statusData
+        };
+    } catch (error) {
+        console.error('createOrUpdateIntegration error', error);
         throw error;
     }
 }

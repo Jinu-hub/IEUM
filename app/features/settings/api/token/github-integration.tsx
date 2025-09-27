@@ -5,15 +5,17 @@
  * 연결 상태 확인, 연결 설정, 연결 해제 기능을 제공합니다.
  */
 
-import { type ActionFunctionArgs, data, type LoaderFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs, type ActionFunctionArgs, data } from "react-router";
 import { z } from "zod";
-// GitHub App 관련 import는 필요시 동적으로 로드
-import { logger } from "~/core/lib/logger";
 import makeServerClient from "~/core/lib/supa-client.server";
-import {
-  updateCredentialRef
-} from "../db/mutations";
-import { getIntegrations } from "../db/queries";
+import { createOctokit } from "~/core/integrations/github/client";
+import { logger } from "~/core/lib/logger";
+import { 
+   createIntegrationWithStatus
+  , createIntegrationStatusError    
+  , updateCredentialRef } from "../../db/mutations";
+import { getIntegrations } from "../../db/queries";
+import { generateCredentialRef } from "../common";
 
 /**
  * GitHub 통합 설정 스키마
@@ -27,7 +29,7 @@ const githubIntegrationSchema = z.object({
 /**
  * GitHub 연결 상태 확인
  */
-export async function checkGitHubConnection(installationId: string): Promise<{
+export async function checkGitHubConnection(token: string): Promise<{
   connected: boolean;
   user?: any;
   rateLimit?: any;
@@ -36,15 +38,19 @@ export async function checkGitHubConnection(installationId: string): Promise<{
   error?: string;
 }> {
   try {
-    
-    const { getInstallationOctokit } = await import("~/core/integrations/github/client");
-    const octokit = await getInstallationOctokit(Number(installationId));
 
-    const installs = await octokit.request("GET /app/installations");
-    const user = installs.data.find((i: any) => i.id === Number(installationId))?.account as any;
+    const octokit = createOctokit(token);
+    
+    // GitHub API로 인증 확인 (헤더 정보 포함)
+    const userResponse = await octokit.rest.users.getAuthenticated();
+    const { data: user } = userResponse;
+    const { data: rateLimit } = await octokit.rest.rateLimit.get();
+    
+    // GitHub API 응답 헤더에서 토큰 관련 정보 확인
+    //const tokenScopes = userResponse.headers['x-oauth-scopes'];
+    //const acceptedScopes = userResponse.headers['x-accepted-oauth-scopes'];
     
     // 사용자가 접근 가능한 모든 리포지토리 가져오기 (개인 + 팀 + 조직)
-    /*
     const { data: repositories } = await octokit.rest.repos.listForAuthenticatedUser({
       visibility: 'all', // 모든 리포지토리 (public + private)
       sort: 'updated',
@@ -52,12 +58,6 @@ export async function checkGitHubConnection(installationId: string): Promise<{
       // affiliation: 모든 관련된 리포지토리 (소유자, 협력자, 조직 멤버)
       affiliation: 'owner,collaborator,organization_member',
     });
-    */
-   
-    const repositories = await octokit.paginate(
-      octokit.rest.apps.listReposAccessibleToInstallation,
-      { per_page: 100 }
-    );
     
     // 접근 가능한 리포지토리 통계 계산
     const accessibleStats = {
@@ -68,13 +68,22 @@ export async function checkGitHubConnection(installationId: string): Promise<{
       collaborated: repositories.filter(repo => repo.owner.login !== user.login).length,
     };
 
-    const result = {
+    return {
       connected: true,
       user: {
         login: user.login,
+        name: user.name,
         avatar_url: user.avatar_url,
+        public_repos: user.public_repos,
+        total_private_repos: user.total_private_repos,
+        owned_private_repos: user.owned_private_repos,
         // 실제 접근 가능한 리포지토리 통계 추가
         accessible_repos: accessibleStats,
+      },
+      rateLimit: {
+        limit: rateLimit.rate.limit,
+        remaining: rateLimit.rate.remaining,
+        reset: rateLimit.rate.reset,
       },
       repositories: repositories.slice(0, 30).map(repo => ({
         id: repo.id,
@@ -95,9 +104,6 @@ export async function checkGitHubConnection(installationId: string): Promise<{
         relationship: repo.owner.login === user.login ? 'owner' : 'collaborator'
       }))
     };
-    console.log('result', result);
-    
-    return result;
   } catch (error: any) {
     logger.error('GitHub connection check failed', { error: error.message });
     return { 
@@ -177,12 +183,31 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
     const { workspaceId, actionType } = validationResult.data;
     // FormData에서 credentialRef 우선, URL 파라미터는 fallback
-    const installationId = rawData.credentialRef || params.credentialRef;
+    const credentialRef = rawData.credentialRef || params.credentialRef;
     
+    // 첫 연결 시에는 credentialRef가 없을 수 있음 (OAuth 준비) TODO:
+    // 방법1. integration과 integration_statuses가 없거나 connection_status가 never인 경우에 OAuth 처리
+    // 방법2. (방법1을 포함)credentialRef가 유효하지 않은 경우에 OAuth 처리 : 좀더 빈번하게 OAuth처리를 하게됨
     /*
+    if (actionType === 'connect' && (!credentialRef || credentialRef === 'new')) {
+      console.log('First time connection - OAuth flow will be implemented');
+      
+      // TODO: OAuth 2.0 구현 시 여기서 GitHub OAuth 리디렉션 처리
+      return data({
+        status: 'success',
+        message: 'OAuth integration will be implemented soon',
+        data: {
+          connected: false,
+          oauth_required: true,
+          oauth_url: 'https://github.com/login/oauth/authorize' // 추후 실제 OAuth URL
+        }
+      });
+    }
+    */
+
     const { getGitHubToken, getGitHubTokenFromEnv } = await import("~/core/lib/secrets-manager.server");
-    const token = await getGitHubToken() || undefined;
-    //const token = await getGitHubTokenFromEnv() || undefined;
+    //const token = await getGitHubToken(credentialRef as string) || undefined;
+    const token = await getGitHubTokenFromEnv() || undefined;
     console.log('token', token);
     if (!token) {
       console.log('No GitHub token found');
@@ -191,111 +216,144 @@ export async function action({ request, params }: ActionFunctionArgs) {
         error: 'No GitHub token found' 
       }, { status: 400 });
     }
-      */
 
     switch (actionType) {
       case 'check': {
-        /*
         const connectionStatus = await checkGitHubConnection(token);
         return data({
           status: 'success',
           data: connectionStatus
         });
-        */
       }
 
-        case 'connect': {
-          console.log('🔧 GitHub connect 시작');
-          console.log('🔧 installationId:', installationId);
-          console.log('🔧 workspaceId:', workspaceId);
-          console.log('🔧 user.id:', user.id);
+      case 'connect': {
+        // credentialRef로 연결 테스트
+        const connectionStatus = await checkGitHubConnection(token);
         
-        // installationId가 없으면 GitHub App 설치 페이지로 리다이렉트
-        if (!installationId || installationId === 'new') {
-          const { GITHUB_APP_SLUG } = await import("~/core/integrations/github/client");
-        
-          // GitHub App 설치 URL 생성
-          const installUrl = `https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`;
-          
-          // 콜백 URL 설정 (설치 완료 후 돌아올 URL)
-          const baseUrl = new URL(request.url).origin;
-          const setupUrl = `${baseUrl}/settings/integrations/github/callback`;
-          
-          // state 파라미터로 workspaceId 전달 (보안을 위해 JWT 토큰 사용 가능)
-          const state = Buffer.from(JSON.stringify({ workspaceId, userId: user.id })).toString('base64');
-          
-          // setup_url 파라미터로 콜백 URL 전달
-          const redirectUrl = `${installUrl}?state=${encodeURIComponent(state)}`;
-          //const redirectUrl = `${installUrl}?state=${encodeURIComponent(state)}&setup_url=${encodeURIComponent(setupUrl)}`;
-          
-          logger.info('Redirecting to GitHub App installation', { 
-            workspaceId, 
-            userId: user.id, 
-            redirectUrl 
+        // repositories의 owner 정보를 자세히 로그로 출력
+        /*
+        if (connectionStatus.repositories && Array.isArray(connectionStatus.repositories)) {
+          console.log('📊 Repositories Owner 정보:');
+          connectionStatus.repositories.forEach((repo: any, index: number) => {
+            console.log(`  ${index + 1}. Repository: ${repo.name}`);
+            console.log(`     Owner: ${repo.owner?.login || repo.owner || 'Unknown'}`);
+            console.log(`     Full Name: ${repo.full_name || 'N/A'}`);
+            console.log(`     ID: ${repo.id || 'N/A'}`);
+            console.log(`     Private: ${repo.private ? 'Yes' : 'No'}`);
+            console.log('     ---');
           });
-          
-          return data({
-            status: 'redirect',
-            redirectUrl,
-            message: 'Redirecting to GitHub App installation'
-          });
+        } else {
+          console.log('❌ Repositories 정보가 없거나 배열이 아닙니다:', connectionStatus.repositories);
         }
+        */
+        const isConnected = connectionStatus.connected;
 
-        // installationId가 있는 경우의 처리 (설치 완료 후 콜백에서 호출됨)
         try {
-          const { getInstallationOctokit } = await import("~/core/integrations/github/client");
-          
-          // Installation ID로 Octokit 인스턴스 생성하여 연결 테스트
-          const octokit = await getInstallationOctokit(Number(installationId));
-          const { data: installation } = await octokit.rest.apps.getInstallation({
-            installation_id: Number(installationId)
-          });
-          
-          // 데이터베이스에 integration 정보 저장
-          /*
-          const { createOrUpdateIntegration } = await import("../db/mutations");
-          await createOrUpdateIntegration(client, {
-            workspace_id: workspaceId,
-            type: 'github',
-            credential_ref: String(installationId),
-            connection_status: 'connected',
-            metadata: {
-              installation_id: Number(installationId),
-              account: installation.account,
-              created_at: installation.created_at,
-              updated_at: installation.updated_at
+          // 기존 integration 조회 및 Secret 정리
+          let existingCredentialRef = null;
+          let existingIntegrationId = null;
+          if (credentialRef && credentialRef !== 'new') {
+            try {
+              const integrations = await getIntegrations(client, { workspaceId, type: 'github' });
+              existingCredentialRef = integrations?.credential_ref;
+              existingIntegrationId = integrations?.integration_id;
+            } catch (error) {
+              logger.warn('Failed to fetch existing integration for cleanup', { 
+                workspaceId, 
+                error: String(error) 
+              });
             }
-          });
-          */
+          }
 
-          logger.info('GitHub App connected successfully', { 
-            workspaceId, 
-            installationId,
-            account: installation.account && "login" in installation.account ? installation.account.login : installation.account?.name 
-          });
+          // 새로운 credentialRef 생성
+          const credentialRef_new = generateCredentialRef('github', user.id.substring(0, 8));
+          if (isConnected) {
 
-          return data({
-            status: 'success',
-            message: 'GitHub App connected successfully',
-            data: {
-              connected: true,
-              installation_id: Number(installationId),
-              account: installation.account
+            // Integration과 Status를 트랜잭션으로 함께 저장
+            try {
+              const result = await createIntegrationWithStatus(client, {
+                workspaceId: workspaceId,
+                type: 'github',
+                name: `GitHub - ${connectionStatus.user?.login || 'Unknown'}`,
+                credential_ref: credentialRef_new,
+                config_json: {
+                  connected_at: new Date().toISOString()
+                  , accessible_repos: connectionStatus.user?.accessible_repos
+                },
+                connectionStatus: 'connected',
+                resourceCacheJson: {
+                  user: connectionStatus.user,
+                  repos: connectionStatus.repositories ? 
+                     connectionStatus.repositories.map((r: any) => ({
+                       id: r.id,
+                       owner: r.owner?.login,
+                       name: r.name,
+                       full_name: r.full_name,
+                       private: r.private,
+                     })) : []
+                }
+              });
+
+            // Secrets Manager에 토큰 저장 TODO:
+            /*
+            const storeResult = await secretsManager.storeSecret(credentialRef_new, token);
+            if (!storeResult.success) {
+              return data({ status: 'error', error: `Failed to store GitHub token: ${storeResult.error}`
+              }, { status: 500 });
             }
-          });
-        } catch (error: any) {
-          logger.error('Failed to connect GitHub App', { 
-            error: error.message, 
-            installationId 
-          });
-          
+            */
+              
+              logger.info('Integration record saved successfully', { integrationId: result.integration.integration_id });
+            } catch (error) {
+              logger.error('Failed to save integration record', { error });
+              return data({
+                status: 'error',
+                error: 'Failed to save integration settings'
+              }, { status: 500 });
+            }
+          } else {
+            await createIntegrationStatusError(client, { 
+              integrationId: existingIntegrationId as string,
+              workspaceId: workspaceId, connectionStatus: 'error', 
+              providerErrorCode: 'CONNECTION_ERROR', providerErrorMessage: connectionStatus.error as string});
+          }
+
+          // 기존 Secret 삭제 (보안상 중요) TODO:
+          if (existingCredentialRef) {
+            //await deleteIntegrationSecret({ credentialRef: existingCredentialRef });
+          }
+
+          if (isConnected) {
+            logger.info('GitHub integration connected successfully', { 
+              userId: user.id, credentialRef_new, userLogin: connectionStatus.user?.login 
+            });
+
+            return data({
+              status: 'success',
+              message: 'GitHub integration connected successfully',
+              data: {...connectionStatus, credentialRef_new}
+            });
+          } else {
+            logger.info('Failed to connect GitHub integration', { 
+              userId: user.id, userLogin: connectionStatus.user?.login 
+            });
+
+            return data({
+              status: 'error',
+              message: 'Failed to connect GitHub integration',
+              error: connectionStatus.error || 'Failed to connect to GitHub'
+            });
+          } 
+
+        } catch (error) {
+          logger.error('Failed to connect GitHub integration', { error });
           return data({
             status: 'error',
-            error: 'Failed to connect GitHub App: ' + error.message
+            error: 'Failed to connect GitHub integration'
           }, { status: 500 });
         }
       }
-      
+
       case 'disconnect': {
         try {
           

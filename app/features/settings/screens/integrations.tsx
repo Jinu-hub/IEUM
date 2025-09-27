@@ -1,31 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { data, redirect, useFetcher, type LoaderFunctionArgs } from 'react-router';
-import { 
-  LinearCard, 
-  LinearCardHeader, 
-  LinearCardTitle, 
-  LinearCardDescription, 
-  LinearCardContent,
-  LinearButton,
-  LinearBadge,
-  GitHubIcon,
-  SlackIcon,
+import { useEffect, useState } from 'react';
+import { data, redirect, useSearchParams, type LoaderFunctionArgs } from 'react-router';
+import {
+  BookOpenIcon,
   CheckCircleIcon,
-  PlusIcon,
-  SettingsIcon,
+  GitHubIcon,
   HashIcon,
+  LinearBadge,
+  LinearCard,
+  LinearCardContent,
+  LinearCardDescription,
+  LinearCardHeader,
+  LinearCardTitle,
   LockIcon,
-  BookOpenIcon
+  SlackIcon
 } from '~/core/components/linear';
-import { cn } from '~/core/lib/utils';
-import type { Route } from "./+types/integrations";
-import type { ConnectionStatus } from '../lib/types';
-import type { IntegrationService } from '../lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
-import { getWorkspace, getIntegrationsInfo } from '../db/queries';
-import { useIntegrationResponse } from '../hooks/useIntegrationResponse';
+import { cn } from '~/core/lib/utils';
+import { getIntegrationsInfo, getWorkspace } from '../db/queries';
 import { useIntegrationActions } from '../hooks/useIntegrationActions';
+import { useIntegrationResponse } from '../hooks/useIntegrationResponse';
 import { useIntegrationUI } from '../hooks/useIntegrationUI';
+import type { ConnectionStatus } from '../lib/types';
+import type { Route } from "./+types/integrations";
 
 export const meta: Route.MetaFunction = () => {
     return [{ title: `Integrations | ${import.meta.env.VITE_APP_NAME}` }];
@@ -57,6 +53,41 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   //const [slackData, setSlackData] = useState<any>(null);
   const [expandedChannels, setExpandedChannels] = useState(false);
   const [expandedRepos, setExpandedRepos] = useState(false);
+  
+  // URL 파라미터에서 상태 메시지 확인
+  const [searchParams] = useSearchParams();
+  const [statusMessage, setStatusMessage] = useState<{type: 'success' | 'error' | 'info', message: string} | null>(null);
+  
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const message = searchParams.get('message');
+    const error = searchParams.get('error');
+    
+    if (status === 'approval_pending' && message) {
+      setStatusMessage({
+        type: 'info',
+        message: decodeURIComponent(message)
+      });
+    } else if (error) {
+      setStatusMessage({
+        type: 'error', 
+        message: `연결 실패: ${error}`
+      });
+    } else if (status === 'success' && message) {
+      setStatusMessage({
+        type: 'success',
+        message: decodeURIComponent(message)
+      });
+    }
+    
+    // 메시지를 5초 후 자동으로 숨김
+    if (status || error) {
+      const timer = setTimeout(() => {
+        setStatusMessage(null);
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
 
   // API 호출을 위한 fetcher
   // GitHub integration actions
@@ -101,7 +132,19 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   useIntegrationResponse(
     githubFetcher.data,
     setGithubStatus,
-    'github'
+    'github',
+    {
+      onRedirect: (redirectUrl) => {
+        console.log('GitHub App 설치 페이지로 리다이렉트:', redirectUrl);
+        window.location.href = redirectUrl;
+      },
+      onSuccess: (data) => {
+        console.log('GitHub 연결 성공:', data);
+      },
+      onError: (error) => {
+        console.error('GitHub 연결 실패:', error);
+      }
+    }
   );
 
   // Slack fetcher 응답 처리 (커스텀 훅 사용)
@@ -133,6 +176,31 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
           GitHub, Slack 등 외부 서비스를 연결하여 데이터를 수집하고 리포트를 생성하세요.
         </p>
       </div>
+
+      {/* 상태 메시지 표시 */}
+      {statusMessage && (
+        <div className={cn(
+          "p-4 rounded-lg border mb-6",
+          statusMessage.type === 'success' && "bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200",
+          statusMessage.type === 'error' && "bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200",
+          statusMessage.type === 'info' && "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-200"
+        )}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              {statusMessage.type === 'success' && <CheckCircleIcon className="w-5 h-5" />}
+              {statusMessage.type === 'error' && <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs">!</div>}
+              {statusMessage.type === 'info' && <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">i</div>}
+              <span className="font-medium">{statusMessage.message}</span>
+            </div>
+            <button 
+              onClick={() => setStatusMessage(null)}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 통합 서비스 카드 목록 */}
       <div className="grid gap-6">

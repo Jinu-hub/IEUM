@@ -2,8 +2,9 @@
  * 간단한 테스트용 API 엔드포인트
  */
 
-import { App } from "octokit";
+import type { App } from "octokit";
 import { type LoaderFunctionArgs, data } from "react-router";
+import { getGitHubApp } from "~/core/integrations/github/client";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   console.log('🚀 Test API 호출됨:', request.url);
@@ -23,10 +24,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.log('✅ 환경 변수 확인 완료');
 
     // Octokit 인스턴스 생성
-    const app = new App({
-      appId: process.env.GITHUB_APP_ID!,
-      privateKey: process.env.GITHUB_APP_PRIVATE_KEY!,
-    });
+    const app = getGitHubApp();
     console.log('✅ Octokit 인스턴스 생성 완료');
 
     let result: any;
@@ -82,7 +80,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 // Installations 목록 조회
-async function handleInstallations(app: any) {
+async function handleInstallations(app: App) {
   try {
     const { data: installs } = await app.octokit.rest.apps.listInstallations();
     console.log("✅ Installations 조회 성공:", installs.length, "개");
@@ -159,11 +157,21 @@ async function handleAppInfo(app: any) {
     
     // 2) 설치 목록
     const installs = await app.octokit.request("GET /app/installations");
-    console.log("Installations:", installs.data.map((i: any) => ({ id: i.id, account: i.account?.login })));
+    console.log("Installations:", installs.data.map((i: any) => ({
+      id: i.id,
+      account: i.account?.login,
+      accountId: i.account?.id,
+      accountType: i.account?.type,
+      accountAvatarUrl: i.account?.avatar_url,
+      accountUrl: i.account?.html_url,
+      repos: i.repository_selection,
+      permissions: i.permissions,
+      createdAt: i.created_at,
+      updatedAt: i.updated_at
+    })));
     
     // 3) 설치 선택(환경변수 우선)
-    const installationId =
-      Number(process.env.GITHUB_INSTALLATION_ID) || installs.data[0]?.id;
+    const installationId = installs.data[0]?.id;
     if (!installationId) throw new Error("installation_id 없음: 앱을 설치했는지 확인하세요.");
     
     const insOcto = await app.getInstallationOctokit(installationId);
