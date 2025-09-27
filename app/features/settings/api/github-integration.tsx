@@ -43,58 +43,14 @@ export async function checkGitHubConnection(installationId: string): Promise<{
     const installs = await octokit.request("GET /app/installations");
     const user = installs.data.find((i: any) => i.id === Number(installationId))?.account as any;
     
-    // 사용자가 접근 가능한 모든 리포지토리 가져오기 (개인 + 팀 + 조직)
-    /*
-    const { data: repositories } = await octokit.rest.repos.listForAuthenticatedUser({
-      visibility: 'all', // 모든 리포지토리 (public + private)
-      sort: 'updated',
-      per_page: 100, // 더 많은 리포지토리 가져오기
-      // affiliation: 모든 관련된 리포지토리 (소유자, 협력자, 조직 멤버)
-      affiliation: 'owner,collaborator,organization_member',
-    });
-    */
-   
     const repositories = await octokit.paginate(
       octokit.rest.apps.listReposAccessibleToInstallation,
       { per_page: 100 }
     );
     
-    // 접근 가능한 리포지토리 통계 계산
-    const accessibleStats = {
-      total: repositories.length,
-      public: repositories.filter(repo => !repo.private).length,
-      private: repositories.filter(repo => repo.private).length,
-      owned: repositories.filter(repo => repo.owner.login === user.login).length,
-      collaborated: repositories.filter(repo => repo.owner.login !== user.login).length,
-    };
-
-    const result = {
-      connected: true,
-      user: {
-        login: user.login,
-        avatar_url: user.avatar_url,
-        // 실제 접근 가능한 리포지토리 통계 추가
-        accessible_repos: accessibleStats,
-      },
-      repositories: repositories.slice(0, 30).map(repo => ({
-        id: repo.id,
-        name: repo.name,
-        full_name: repo.full_name,
-        private: repo.private,
-        description: repo.description,
-        html_url: repo.html_url,
-        language: repo.language,
-        stargazers_count: repo.stargazers_count,
-        forks_count: repo.forks_count,
-        updated_at: repo.updated_at,
-        owner: {
-          login: repo.owner.login,
-          avatar_url: repo.owner.avatar_url,
-        },
-        // 사용자와의 관계 표시
-        relationship: repo.owner.login === user.login ? 'owner' : 'collaborator'
-      }))
-    };
+    const { createGitHubConnectionResult } = await import("../lib/github/data-utils");
+    const result = createGitHubConnectionResult(user, repositories, { repositoryLimit: 30 });
+    
     console.log('result', result);
     
     return result;
@@ -178,37 +134,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
     const { workspaceId, actionType } = validationResult.data;
     // FormData에서 credentialRef 우선, URL 파라미터는 fallback
     const installationId = rawData.credentialRef || params.credentialRef;
-    
-    /*
-    const { getGitHubToken, getGitHubTokenFromEnv } = await import("~/core/lib/secrets-manager.server");
-    const token = await getGitHubToken() || undefined;
-    //const token = await getGitHubTokenFromEnv() || undefined;
-    console.log('token', token);
-    if (!token) {
-      console.log('No GitHub token found');
-      return data({ 
-        status: 'error', 
-        error: 'No GitHub token found' 
-      }, { status: 400 });
-    }
-      */
 
     switch (actionType) {
       case 'check': {
-        /*
-        const connectionStatus = await checkGitHubConnection(token);
+        const connectionStatus = await checkGitHubConnection(installationId as string);
         return data({
           status: 'success',
           data: connectionStatus
         });
-        */
       }
 
-        case 'connect': {
-          console.log('🔧 GitHub connect 시작');
-          console.log('🔧 installationId:', installationId);
-          console.log('🔧 workspaceId:', workspaceId);
-          console.log('🔧 user.id:', user.id);
+      case 'connect': {
+        console.log('🔧 GitHub connect 시작');
+        console.log('🔧 installationId:', installationId);
+        console.log('🔧 workspaceId:', workspaceId);
+        console.log('🔧 user.id:', user.id);
         
         // installationId가 없으면 GitHub App 설치 페이지로 리다이렉트
         if (!installationId || installationId === 'new') {
@@ -218,11 +158,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
           const installUrl = `https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`;
           
           // 콜백 URL 설정 (설치 완료 후 돌아올 URL)
-          const baseUrl = new URL(request.url).origin;
-          const setupUrl = `${baseUrl}/settings/integrations/github/callback`;
+          //const baseUrl = new URL(request.url).origin;
+          //const setupUrl = `${baseUrl}/settings/integrations/github/callback`;
           
           // state 파라미터로 workspaceId 전달 (보안을 위해 JWT 토큰 사용 가능)
           const state = Buffer.from(JSON.stringify({ workspaceId, userId: user.id })).toString('base64');
+          
+          // 설치 요청 임시 저장 (웹훅에서 매칭하기 위함)
+          /*
+          const { saveInstallationRequest } = await import("../db/github-installation-requests");
+          await saveInstallationRequest(client, {
+            workspace_id: workspaceId,
+            user_id: user.id,
+            state_data: state
+          });
+          */
           
           // setup_url 파라미터로 콜백 URL 전달
           const redirectUrl = `${installUrl}?state=${encodeURIComponent(state)}`;
@@ -242,6 +192,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         }
 
         // installationId가 있는 경우의 처리 (설치 완료 후 콜백에서 호출됨)
+        /*
         try {
           const { getInstallationOctokit } = await import("~/core/integrations/github/client");
           
@@ -252,7 +203,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
           });
           
           // 데이터베이스에 integration 정보 저장
-          /*
           const { createOrUpdateIntegration } = await import("../db/mutations");
           await createOrUpdateIntegration(client, {
             workspace_id: workspaceId,
@@ -266,7 +216,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
               updated_at: installation.updated_at
             }
           });
-          */
 
           logger.info('GitHub App connected successfully', { 
             workspaceId, 
@@ -294,6 +243,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
             error: 'Failed to connect GitHub App: ' + error.message
           }, { status: 500 });
         }
+        */
       }
       
       case 'disconnect': {

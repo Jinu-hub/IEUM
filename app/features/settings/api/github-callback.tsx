@@ -36,7 +36,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       fullUrl: request.url,
       installationId,
       setupAction,
-      state: state ? 'present' : 'missing'
+      state: state ? 'present' : 'missing',
+      allParams: Object.fromEntries(url.searchParams.entries())
     });
 
     // setup_action이 'request'인 경우 관리자 승인 대기 상태
@@ -102,22 +103,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
         repositorySelection: installation.repository_selection 
       });
 
-      // 데이터베이스에 integration 정보 저장/업데이트
-      const { createOrUpdateIntegration } = await import("../db/mutations");
-      await createOrUpdateIntegration(client, {
-        workspace_id: stateData.workspaceId,
-        type: 'github',
-        credential_ref: installationId,
-        connection_status: 'connected',
-        metadata: {
-          installation_id: Number(installationId),
-          account: installation.account,
-          repository_selection: installation.repository_selection,
-          permissions: installation.permissions,
-          created_at: installation.created_at,
-          updated_at: installation.updated_at,
-          setup_action: setupAction
-        }
+      // GitHub App 설치 처리 (연결 상태 확인, 리소스 캐시 생성, DB 저장)
+      const { processGitHubInstallation } = await import("../lib/github/data-utils");
+      await processGitHubInstallation(client, installationId, stateData.workspaceId, {
+        installation_id: Number(installationId),
+        account: installation.account,
+        repository_selection: installation.repository_selection,
+        permissions: installation.permissions,
+        created_at: installation.created_at,
+        updated_at: installation.updated_at,
+        setup_action: setupAction
       });
 
       logger.info('GitHub integration saved successfully', { 

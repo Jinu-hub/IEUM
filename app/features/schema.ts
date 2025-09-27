@@ -7,31 +7,31 @@
 
 import { sql } from "drizzle-orm";
 import {
+  bigint,
+  boolean,
+  index,
+  integer,
   jsonb,
+  numeric,
+  pgEnum,
+  pgPolicy,
   pgTable,
   text,
   timestamp,
-  bigint,
-  uuid,
-  pgEnum,
-  boolean,
-  integer,
-  uniqueIndex,
-  numeric,
-  index,
   unique,
-  pgPolicy,
+  uniqueIndex,
+  uuid,
 } from "drizzle-orm/pg-core";
-import { authUid, authUsers, authenticatedRole, serviceRole } from "drizzle-orm/supabase";
-import { 
-  RUN_STATUS, 
-  STEP_NAME, 
-  STEP_STATUS, 
-  INTEGRATION_TYPE, 
-  RULE_TYPE, 
-  DELIVERY_EVENT_TYPE_EMAIL, 
+import { authUsers, authenticatedRole, serviceRole } from "drizzle-orm/supabase";
+import {
   AUDIT_ACTION,
-  CONNECTION_STATUS
+  CONNECTION_STATUS,
+  DELIVERY_EVENT_TYPE_EMAIL,
+  INTEGRATION_TYPE,
+  RULE_TYPE,
+  RUN_STATUS,
+  STEP_NAME,
+  STEP_STATUS
 } from "~/core/lib/constants";
   
   /* =========================================================
@@ -46,6 +46,13 @@ import {
   export const auditAction = pgEnum("audit_action", AUDIT_ACTION);
   export const connectionStatusEnum = pgEnum("connection_status", CONNECTION_STATUS);
   
+  // GitHub App 설치 요청 상태
+  export const installationRequestStatus = pgEnum("installation_request_status", [
+    "pending", 
+    "approved", 
+    "rejected", 
+    "expired"
+  ]);
   
   // RLS 정책은 drizzle-orm의 pgPolicy를 사용하여 자동 생성됩니다
   
@@ -590,6 +597,37 @@ import {
   );
 
   /* =========================================================
+     3.16 github_installation_requests (GitHub App 설치 요청 임시 저장)
+     ========================================================= */
+  export const githubInstallationRequests = pgTable(
+    "github_installation_requests", 
+    {
+      requestId: uuid("request_id").defaultRandom().primaryKey(),
+      workspaceId: uuid("workspace_id").notNull().references(() => workspace.workspaceId, { onDelete: "cascade" }),
+      userId: uuid("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+      stateData: text("state_data").notNull(), // base64 encoded JSON with workspaceId, userId
+      accountLogin: text("account_login"), // GitHub 계정 로그인 (알고 있는 경우)
+      installationId: integer("installation_id"), // 승인 완료 후 설정
+      status: installationRequestStatus("status").notNull().default("pending"),
+      createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+      expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), // 24시간 후 만료
+      approvedAt: timestamp("approved_at", { withTimezone: true }),
+    },
+    (table) => [
+      index("idx_github_install_req_ws_user").on(table.workspaceId, table.userId),
+      index("idx_github_install_req_account_status").on(table.accountLogin, table.status),
+      index("idx_github_install_req_status_expires").on(table.status, table.expiresAt),
+      index("idx_github_install_req_installation_id").on(table.installationId),
+
+      // RLS: 워크스페이스 멤버만 조회 가능, 생성자만 수정/삭제 가능
+      pgPolicy("gir_select", { for: "select", to: authenticatedRole, using: isMember(table.workspaceId) }),
+      pgPolicy("gir_insert", { for: "insert", to: authenticatedRole, withCheck: sql`user_id = auth.uid()` }),
+      pgPolicy("gir_update", { for: "update", to: [authenticatedRole, serviceRole], using: sql`user_id = auth.uid() OR auth.role() = 'service_role'`, withCheck: sql`user_id = auth.uid() OR auth.role() = 'service_role'` }),
+      pgPolicy("gir_delete", { for: "delete", to: [authenticatedRole, serviceRole], using: sql`user_id = auth.uid() OR auth.role() = 'service_role'` }),
+     ]
+  );
+
+  /* =========================================================
      Notes & Migration Guide
      ========================================================= */
   
@@ -612,6 +650,7 @@ import {
    *    ALTER TABLE highlights ENABLE ROW LEVEL SECURITY;
    *    ALTER TABLE delivery_events_email ENABLE ROW LEVEL SECURITY;
    *    ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+   *    ALTER TABLE github_installation_requests ENABLE ROW LEVEL SECURITY;
    *
    * 2. JSONB GIN 인덱스 생성:
    *    CREATE INDEX idx_integrations_config_gin ON integrations USING GIN (config_json);

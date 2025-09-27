@@ -114,20 +114,6 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
     setStatus: setSlackStatus
   });
 
-  // 컴포넌트 마운트 시 연결 상태 확인
-  /*
-  useEffect(() => {
-    // GitHub 상태 확인 (credentialRef가 있을 때만)
-    if (githubCredentialRef) {
-      githubFetcher.load(`/api/settings/github-integration/${githubCredentialRef}`);
-    }
-    // Slack 상태 확인 (credentialRef가 있을 때만)
-    if (slackCredentialRef) {
-      slackFetcher.load(`/api/settings/slack-integration/${slackCredentialRef}`);
-    }
-  }, []);
-  */
-
   // GitHub fetcher 응답 처리 (커스텀 훅 사용)
   useIntegrationResponse(
     githubFetcher.data,
@@ -289,13 +275,13 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                             <div>
                               {/* 통합된 통계 정보 */}
                               <div className="text-xs text-[#0D0E10] dark:text-[#FFFFFF] font-medium mb-2">
-                                총: {integration.accessibleRepos?.total}개 (
+                                총: {integration.resourceCache.user.accessible_repos?.total}개 (
                                 <span >
-                                  공개: {integration.accessibleRepos?.public}
+                                  공개: {integration.resourceCache.user.accessible_repos?.public}
                                 </span>
                                 /
                                 <span >
-                                  비공개: {integration.accessibleRepos?.private}
+                                  비공개: {integration.resourceCache.user.accessible_repos?.private}
                                 </span>
                                 )
                               </div>

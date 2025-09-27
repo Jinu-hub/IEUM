@@ -210,13 +210,14 @@ export const createIntegrationWithStatus = async (
  */
 export const createOrUpdateIntegration = async (
     client: SupabaseClient<Database>,
-    { workspace_id, type, credential_ref, connection_status, metadata }:
+    { workspace_id, type, credential_ref, connection_status, metadata, resourceCacheJson }:
     { 
         workspace_id: string, 
         type: string, 
         credential_ref: string, 
         connection_status: Database["public"]["Enums"]["connection_status"],
-        metadata: any
+        metadata: any,
+        resourceCacheJson?: any
     },
 ) => {
     try {
@@ -236,24 +237,16 @@ export const createOrUpdateIntegration = async (
         });
 
         // 2. Integration Status 생성/업데이트
-        /*
         const statusData = await createIntegrationStatusSuccess(client, {
             integrationId: integrationData.integration_id,
             workspaceId: workspace_id,
             connectionStatus: connection_status,
-            resourceCacheJson: {
-                installation_id: metadata.installation_id,
-                account: metadata.account,
-                created_at: metadata.created_at,
-                updated_at: metadata.updated_at,
-                last_sync_at: new Date().toISOString()
-            }
+            resourceCacheJson: resourceCacheJson || {}
         });
-        */
 
         return {
             integration: integrationData,
-            //status: statusData
+            status: statusData
         };
     } catch (error) {
         console.error('createOrUpdateIntegration error', error);

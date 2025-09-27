@@ -112,6 +112,53 @@ export type Database = {
           },
         ]
       }
+      github_installation_requests: {
+        Row: {
+          account_login: string | null
+          approved_at: string | null
+          created_at: string
+          expires_at: string
+          installation_id: number | null
+          request_id: string
+          state_data: string
+          status: Database["public"]["Enums"]["installation_request_status"]
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          account_login?: string | null
+          approved_at?: string | null
+          created_at?: string
+          expires_at: string
+          installation_id?: number | null
+          request_id?: string
+          state_data: string
+          status?: Database["public"]["Enums"]["installation_request_status"]
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          account_login?: string | null
+          approved_at?: string | null
+          created_at?: string
+          expires_at?: string
+          installation_id?: number | null
+          request_id?: string
+          state_data?: string
+          status?: Database["public"]["Enums"]["installation_request_status"]
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_installation_requests_workspace_id_workspace_workspace_i"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
       highlights: {
         Row: {
           archived_at: string | null
@@ -1103,7 +1150,43 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      secret_delete: {
+        Args: { p_name: string }
+        Returns: undefined
+      }
+      secret_delete_by_ref: {
+        Args: { p_credential_ref: string }
+        Returns: undefined
+      }
+      secret_insert: {
+        Args: { p_desc?: string; p_name: string; p_value: string }
+        Returns: string
+      }
+      secret_read: {
+        Args: { p_name: string }
+        Returns: string
+      }
+      secret_read_by_ref: {
+        Args: { p_credential_ref: string }
+        Returns: string
+      }
+      secret_store_by_ref: {
+        Args: { p_credential_ref: string; p_value: string }
+        Returns: string
+      }
+      secret_update: {
+        Args: {
+          p_id: string
+          p_new_desc?: string
+          p_new_name?: string
+          p_new_value: string
+        }
+        Returns: undefined
+      }
+      secret_update_by_ref: {
+        Args: { p_credential_ref: string; p_new_value: string }
+        Returns: undefined
+      }
     }
     Enums: {
       audit_action: "insert" | "update" | "delete"
@@ -1122,6 +1205,11 @@ export type Database = {
         | "bounced"
         | "complained"
         | "dropped"
+      installation_request_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "expired"
       integration_type: "slack" | "github" | "discord" | "lineworks"
       rule_type: "agents" | "tasks"
       run_status: "queued" | "running" | "success" | "failed" | "canceled"
@@ -1276,6 +1364,12 @@ export const Constants = {
         "bounced",
         "complained",
         "dropped",
+      ],
+      installation_request_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "expired",
       ],
       integration_type: ["slack", "github", "discord", "lineworks"],
       rule_type: ["agents", "tasks"],
