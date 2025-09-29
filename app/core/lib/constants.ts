@@ -18,7 +18,7 @@ export const STEP_STATUS = [
 ] as const;
 
 export const INTEGRATION_TYPE = [
-  "slack", "github", "discord", "lineworks",
+  "slack", "github", "discord", "lineworks", "slack_user",
 ] as const;
 
 export const RULE_TYPE = [

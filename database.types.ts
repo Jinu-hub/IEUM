@@ -1210,7 +1210,12 @@ export type Database = {
         | "approved"
         | "rejected"
         | "expired"
-      integration_type: "slack" | "github" | "discord" | "lineworks"
+      integration_type:
+        | "slack"
+        | "github"
+        | "discord"
+        | "lineworks"
+        | "slack_user"
       rule_type: "agents" | "tasks"
       run_status: "queued" | "running" | "success" | "failed" | "canceled"
       step_name:
@@ -1371,7 +1376,13 @@ export const Constants = {
         "rejected",
         "expired",
       ],
-      integration_type: ["slack", "github", "discord", "lineworks"],
+      integration_type: [
+        "slack",
+        "github",
+        "discord",
+        "lineworks",
+        "slack_user",
+      ],
       rule_type: ["agents", "tasks"],
       run_status: ["queued", "running", "success", "failed", "canceled"],
       step_name: [

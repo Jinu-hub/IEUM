@@ -75,19 +75,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       return data({ error: "Unauthorized" }, { status: 401 });
     }
  
-    // credentialRef가 있으면 Secrets Manager에서 토큰 조회
-    const { getGitHubToken, getGitHubTokenFromEnv } = await import("~/core/lib/secrets-manager.server");
-    //const token = await getGitHubToken(params.credentialRef) || undefined;
-    const token = await getGitHubTokenFromEnv() || undefined;
-    if (!token) {
+    const installationId = params.credentialRef || undefined;
+    if (!installationId) {
       return data({ 
         status: 'error', 
-        error: 'No GitHub token found' 
+        error: 'No GitHub installationId found' 
       }, { status: 400 });
     }
 
     // GitHub 연결 상태 확인
-    const connectionStatus = await checkGitHubConnection(token);
+    const connectionStatus = await checkGitHubConnection(installationId);
     
     return data({
       status: 'success',
@@ -157,27 +154,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
           // GitHub App 설치 URL 생성
           const installUrl = `https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`;
           
-          // 콜백 URL 설정 (설치 완료 후 돌아올 URL)
-          //const baseUrl = new URL(request.url).origin;
-          //const setupUrl = `${baseUrl}/settings/integrations/github/callback`;
-          
           // state 파라미터로 workspaceId 전달 (보안을 위해 JWT 토큰 사용 가능)
           const state = Buffer.from(JSON.stringify({ workspaceId, userId: user.id })).toString('base64');
           
-          // 설치 요청 임시 저장 (웹훅에서 매칭하기 위함)
-          /*
-          const { saveInstallationRequest } = await import("../db/github-installation-requests");
-          await saveInstallationRequest(client, {
-            workspace_id: workspaceId,
-            user_id: user.id,
-            state_data: state
-          });
-          */
-          
           // setup_url 파라미터로 콜백 URL 전달
           const redirectUrl = `${installUrl}?state=${encodeURIComponent(state)}`;
-          //const redirectUrl = `${installUrl}?state=${encodeURIComponent(state)}&setup_url=${encodeURIComponent(setupUrl)}`;
-          
+
           logger.info('Redirecting to GitHub App installation', { 
             workspaceId, 
             userId: user.id, 
@@ -190,60 +172,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
             message: 'Redirecting to GitHub App installation'
           });
         }
-
-        // installationId가 있는 경우의 처리 (설치 완료 후 콜백에서 호출됨)
-        /*
-        try {
-          const { getInstallationOctokit } = await import("~/core/integrations/github/client");
-          
-          // Installation ID로 Octokit 인스턴스 생성하여 연결 테스트
-          const octokit = await getInstallationOctokit(Number(installationId));
-          const { data: installation } = await octokit.rest.apps.getInstallation({
-            installation_id: Number(installationId)
-          });
-          
-          // 데이터베이스에 integration 정보 저장
-          const { createOrUpdateIntegration } = await import("../db/mutations");
-          await createOrUpdateIntegration(client, {
-            workspace_id: workspaceId,
-            type: 'github',
-            credential_ref: String(installationId),
-            connection_status: 'connected',
-            metadata: {
-              installation_id: Number(installationId),
-              account: installation.account,
-              created_at: installation.created_at,
-              updated_at: installation.updated_at
-            }
-          });
-
-          logger.info('GitHub App connected successfully', { 
-            workspaceId, 
-            installationId,
-            account: installation.account && "login" in installation.account ? installation.account.login : installation.account?.name 
-          });
-
-          return data({
-            status: 'success',
-            message: 'GitHub App connected successfully',
-            data: {
-              connected: true,
-              installation_id: Number(installationId),
-              account: installation.account
-            }
-          });
-        } catch (error: any) {
-          logger.error('Failed to connect GitHub App', { 
-            error: error.message, 
-            installationId 
-          });
-          
-          return data({
-            status: 'error',
-            error: 'Failed to connect GitHub App: ' + error.message
-          }, { status: 500 });
-        }
-        */
       }
       
       case 'disconnect': {
@@ -274,11 +202,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
                 error: 'Failed to disconnect integration'
               }, { status: 500 });
             }
-          }
-
-          // Secret 삭제 (integration이 있는 경우) TODO:
-          if (existingIntegration?.credential_ref) {
-            //  await deleteIntegrationSecret({ credentialRef: existingIntegration.credential_ref });
           }
 
           logger.info('GitHub integration disconnected successfully', { workspaceId });

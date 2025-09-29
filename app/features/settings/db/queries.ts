@@ -72,6 +72,7 @@ export const getIntegrationsInfo = async (
     .from('v_integration_info')
     .select('*')
     .eq('workspace_id', workspaceId)
+    .not('type', 'eq', 'slack_user')
     .order('created_at', { ascending: false });
   if (error) {
     console.log('getIntegrationsInfo error', error);

@@ -205,7 +205,7 @@ export const createIntegrationWithStatus = async (
 }
 
 /**
- * GitHub App용 Integration 생성/업데이트 함수
+ * 인테그레이션용 Integration 생성/업데이트 함수
  * installation_id와 메타데이터를 포함한 완전한 연결 정보를 저장
  */
 export const createOrUpdateIntegration = async (
@@ -221,19 +221,43 @@ export const createOrUpdateIntegration = async (
     },
 ) => {
     try {
-        // 1. Integration 생성/업데이트
-        const integrationData = await createIntegration(client, {
-            workspaceId: workspace_id,
-            type,
-            name: `GitHub App (${metadata.account?.login || 'Unknown'})`,
-            credential_ref,
-            config_json: {
+        // 1. Integration 생성/업데이트 (타입별 동적 처리)
+        let integrationName: string;
+        let config_json: any;
+        
+        if (type === 'github') {
+            integrationName = `GitHub (${metadata.account?.login || 'Unknown'})`;
+            config_json = {
                 installation_id: metadata.installation_id,
                 account: metadata.account,
                 repository_selection: metadata.repository_selection,
                 permissions: metadata.permissions,
                 setup_action: metadata.setup_action
-            }
+            };
+        } else if (type === 'slack') {
+            integrationName = `Slack - ${metadata.team_name || 'Unknown'}`;
+            config_json = {
+                team_id: metadata.team_id,
+                team_name: metadata.team_name,
+                bot_user_id: metadata.bot_user_id,
+                authed_user_id: metadata.authed_user_id,
+                scope: metadata.scope,
+                user_scope: metadata.user_scope,
+                app_id: metadata.app_id,
+                token_type: metadata.token_type,
+                created_at: metadata.created_at
+            };
+        } else {
+            integrationName = `${type} Integration`;
+            config_json = metadata;
+        }
+
+        const integrationData = await createIntegration(client, {
+            workspaceId: workspace_id,
+            type,
+            name: integrationName,
+            credential_ref,
+            config_json
         });
 
         // 2. Integration Status 생성/업데이트

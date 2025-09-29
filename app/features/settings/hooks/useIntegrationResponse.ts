@@ -5,7 +5,7 @@
  * 공통된 응답 패턴을 처리하고 상태 관리를 자동화합니다.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ConnectionStatus } from '../lib/types';
 
 type IntegrationData = any; // 실제 타입으로 교체 가능
@@ -16,6 +16,7 @@ interface IntegrationResponse {
   error?: string;
   message?: string;
   redirectUrl?: string;
+  timestamp?: number;
 }
 
 interface UseIntegrationResponseOptions {
@@ -57,11 +58,29 @@ export function useIntegrationResponse(
   integrationType: 'github' | 'slack',
   options: UseIntegrationResponseOptions = {}
 ) {
+  const processedRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!fetcherData) return;
 
     const { status, data, error, message, redirectUrl } = fetcherData;
-    console.log(`${integrationType.toUpperCase()} API 응답:`, { status, data, error, message, redirectUrl });
+    
+    // 중복 실행 방지: redirect 상태는 한 번만 처리
+    if (status === 'redirect' && redirectUrl) {
+      const dataKey = `${status}-${redirectUrl}`;
+      if (processedRef.current === dataKey) {
+        console.log(`⏭️ ${integrationType.toUpperCase()} 중복 리다이렉트 방지:`, redirectUrl);
+        return;
+      }
+      processedRef.current = dataKey;
+    }
+
+    console.log(`🔍 ${integrationType.toUpperCase()} useIntegrationResponse 실행:`, { 
+      status, 
+      hasOnRedirect: !!options.onRedirect,
+      redirectUrl,
+      timestamp: new Date().toISOString()
+    });
     
     if (status === 'success') {
       if (data) {
@@ -112,8 +131,19 @@ export function useIntegrationResponse(
         if (options.onRedirect) {
           options.onRedirect(redirectUrl);
         } else {
-          // 기본 동작: 현재 창에서 리다이렉트
-          window.location.href = redirectUrl;
+          // 기본 동작: 새 탭에서 열기
+          console.log('🔄 새 탭에서 GitHub App 설치 페이지 열기');
+          const newWindow = window.open(redirectUrl, '_blank', 'noopener,noreferrer');
+          
+          // 팝업 차단 확인
+          if (!newWindow) {
+            console.log('❌ 팝업이 차단되었습니다. 같은 탭에서 열기로 폴백');
+            alert('팝업이 차단되었습니다. 팝업을 허용하거나 수동으로 링크를 클릭해주세요.');
+            // 폴백: 같은 탭에서 열기
+            window.location.href = redirectUrl;
+          } else {
+            console.log('✅ 새 탭에서 GitHub App 설치 페이지 열림');
+          }
         }
       }
     } else {

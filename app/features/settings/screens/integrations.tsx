@@ -121,8 +121,28 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
     'github',
     {
       onRedirect: (redirectUrl) => {
-        console.log('GitHub App 설치 페이지로 리다이렉트:', redirectUrl);
-        window.location.href = redirectUrl;
+        console.log('GitHub App 설치 페이지로 리다이렉트 (새 탭):', redirectUrl);
+        const newWindow = window.open(redirectUrl, '_blank', 'noopener,noreferrer');
+        
+        // 팝업 차단 확인
+        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+          console.log('❌ 팝업이 차단되었습니다.');
+          // 사용자에게 선택권 제공 (자동 리다이렉트 제거)
+          const shouldRedirect = confirm(
+            '팝업이 차단되었습니다.\n\n' +
+            '1. "확인" - 현재 탭에서 GitHub 설치 페이지로 이동\n' +
+            '2. "취소" - 팝업을 허용한 후 다시 시도\n\n' +
+            '현재 탭에서 이동하시겠습니까?'
+          );
+          
+          if (shouldRedirect) {
+            window.location.href = redirectUrl;
+          } else {
+            console.log('사용자가 리다이렉트를 취소했습니다.');
+          }
+        } else {
+          console.log('✅ 새 탭에서 GitHub App 설치 페이지 열림 - 원본 페이지는 유지');
+        }
       },
       onSuccess: (data) => {
         console.log('GitHub 연결 성공:', data);
@@ -137,7 +157,39 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   useIntegrationResponse(
     slackFetcher.data,
     setSlackStatus,
-    'slack'
+    'slack',
+    {
+      onRedirect: (redirectUrl) => {
+        console.log('Slack OAuth 페이지로 리다이렉트 (새 탭):', redirectUrl);
+        const newWindow = window.open(redirectUrl, '_blank', 'noopener,noreferrer');
+        
+        // 팝업 차단 확인
+        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+          console.log('❌ 팝업이 차단되었습니다.');
+          // 사용자에게 선택권 제공
+          const shouldRedirect = confirm(
+            '팝업이 차단되었습니다.\n\n' +
+            '1. "확인" - 현재 탭에서 Slack 연결 페이지로 이동\n' +
+            '2. "취소" - 팝업을 허용한 후 다시 시도\n\n' +
+            '현재 탭에서 이동하시겠습니까?'
+          );
+          
+          if (shouldRedirect) {
+            window.location.href = redirectUrl;
+          } else {
+            console.log('사용자가 리다이렉트를 취소했습니다.');
+          }
+        } else {
+          console.log('✅ 새 탭에서 Slack OAuth 페이지 열림 - 원본 페이지는 유지');
+        }
+      },
+      onSuccess: (data) => {
+        console.log('Slack 연결 성공:', data);
+      },
+      onError: (error) => {
+        console.error('Slack 연결 실패:', error);
+      }
+    }
   );
 
   // Integration UI 요소들 생성
@@ -472,10 +524,10 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                 <span>GitHub 연결</span>
               </h4>
               <ul className="space-y-1 text-[#8B92B5] dark:text-[#6C6F7E] list-disc list-inside ml-6">
-                <li>Personal Access Token이 필요합니다</li>
-                <li>리포지토리 읽기 권한이 있어야 합니다</li>
-                <li>Issues, Pull Requests 권한 권장</li>
-                <li>수집할 리포지토리 목록을 설정할 수 있습니다</li>
+                <li>연결 중에 수집할 리포지토리 목록을 설정할 수 있습니다.</li>
+                <li>연결 완료 후 관리자 승인 대기 상태가 발생할 수 있습니다. <br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    승인 후 간단한 재연결이 필요합니다. [상세보기]</li>
               </ul>
             </div>
             <div>

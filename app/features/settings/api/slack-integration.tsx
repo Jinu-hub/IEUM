@@ -5,15 +5,12 @@
  * 연결 상태 확인, 연결 설정, 연결 해제 기능을 제공합니다.
  */
 
-import { type LoaderFunctionArgs, type ActionFunctionArgs, data } from "react-router";
+import { type ActionFunctionArgs, data, type LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
-import makeServerClient from "~/core/lib/supa-client.server";
-import { createSlackClient } from "~/core/integrations/slack/client";
-import { listChannels } from "~/core/integrations/slack/fetchers";
 import { logger } from "~/core/lib/logger";
-import { createIntegration, createIntegrationStatusError, createIntegrationWithStatus, deleteIntegration, updateCredentialRef } from "../db/mutations";
+import makeServerClient from "~/core/lib/supa-client.server";
+import { updateCredentialRef } from "../db/mutations";
 import { getIntegrations } from "../db/queries";
-import { generateCredentialRef } from "./common";
 
 /**
  * Slack 통합 설정 스키마
@@ -28,7 +25,7 @@ const slackIntegrationSchema = z.object({
 /**
  * Slack 연결 상태 확인
  */
-async function checkSlackConnection(token: string): Promise<{
+export async function checkSlackConnection(token: string): Promise<{
   connected: boolean;
   team?: any;
   bot?: any;
@@ -36,6 +33,9 @@ async function checkSlackConnection(token: string): Promise<{
   error?: string;
 }> {
   try {
+    // 서버 사이드에서만 동적 import
+    const { createSlackClient } = await import("~/core/integrations/slack/client");
+    const { listChannels } = await import("~/core/integrations/slack/fetchers");
 
     const slack = createSlackClient(token);
     
@@ -117,20 +117,34 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       return data({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // credentialRef가 있으면 Secrets Manager에서 토큰 조회
-    const { getSlackBotToken, getSlackBotTokenFromEnv } = await import("~/core/lib/secrets-manager.server");
-    //const token = await getSlackBotToken(params.credentialRef) || undefined;
-    const token = await getSlackBotTokenFromEnv() || undefined;
-    if (!token) {
+    const credentialRef = params.credentialRef || undefined;
+    if (!credentialRef) {
       return data({ 
         status: 'error', 
-        error: 'No Slack bot token found' 
+        error: 'No Slack credentialRef found' 
       }, { status: 400 });
     }
 
+    // Slack 토큰 조회
+    const { getSlackBotToken } = await import("~/core/lib/secrets-manager.server");
+    const token = await getSlackBotToken(credentialRef);
+    if (!token) {
+      console.log('No Slack bot token found');
+      return { 
+        connected: false, 
+        error: 'No Slack bot token found'
+      };
+    }
     // Slack 연결 상태 확인
     const connectionStatus = await checkSlackConnection(token);
-    
+
+    if (!connectionStatus.connected) {
+      return data({ 
+        status: 'error', 
+        error: 'Failed to check Slack connection' 
+      }, { status: 500 });
+    }
+
     return data({
       status: 'success',
       data: {
@@ -178,147 +192,72 @@ export async function action({ request, params }: ActionFunctionArgs) {
     // FormData에서 credentialRef 우선, URL 파라미터는 fallback
     const credentialRef = (rawData as any).credentialRef || params.credentialRef;
 
-    // 첫 연결 시에는 credentialRef가 없을 수 있음 (OAuth 준비) TODO:
-    // 방법1. integration과 integration_statuses가 없거나 connection_status가 never인 경우에 OAuth 처리
-    // 방법2. (방법1을 포함)credentialRef가 유효하지 않은 경우에 OAuth 처리 : 좀더 빈번하게 OAuth처리를 하게됨
-    /*
-    if (actionType === 'connect' && (!credentialRef || credentialRef === 'new')) {
-      console.log('First time connection - OAuth flow will be implemented');
-      
-      // TODO: OAuth 2.0 구현 시 여기서 Slack OAuth 리디렉션 처리
-      return data({
-        status: 'success',
-        message: 'OAuth integration will be implemented soon',
-        data: {
-          connected: false,
-          oauth_required: true,
-          oauth_url: 'https://slack.com/oauth/v2/authorize'
-        }
-      });
-    }
-    */
-
-    const { getSlackBotToken, getSlackBotTokenFromEnv } = await import("~/core/lib/secrets-manager.server");
-    //const token = await getSlackBotToken(credentialRef as string) || undefined;
-    const token = await getSlackBotTokenFromEnv() || undefined;
-    console.log('token', token);
-    if (!token) {
-      console.log('No Slack bot token found');
+    if (actionType !== "connect" 
+      && (!credentialRef || credentialRef === 'new')) {
       return data({ 
         status: 'error', 
-        error: 'No Slack bot token found' 
+        error: 'No Slack credentialRef Setted' 
       }, { status: 400 });
     }
 
     switch (actionType) {
       case 'check': {
+        // Slack 토큰 조회
+        const { getSlackBotToken } = await import("~/core/lib/secrets-manager.server");
+        const token = await getSlackBotToken(credentialRef);
+        if (!token) {
+          console.log('No Slack bot token found');
+          return { 
+            connected: false, 
+            error: 'No Slack bot token found'
+          };
+        }
         const connectionStatus = await checkSlackConnection(token);
-        return data({
-          status: 'success',
-          data: connectionStatus
-        });
+        if (!connectionStatus.connected) {
+          return data({ status: 'error',  error: 'Failed to check Slack connection' }, { status: 500 });
+        }
+        return data({status: 'success', data: connectionStatus });
       }
 
       case 'connect': {
-        // credentialRef로 연결 테스트
-        const connectionStatus = await checkSlackConnection(token);
-        const isConnected = connectionStatus.connected;
-
         try {
-          // 기존 integration 조회 및 Secret 정리
-          let existingCredentialRef = null;
-          let existingIntegrationId = null;
-          if (credentialRef && credentialRef !== 'new') {
-            try {
-              const integrations = await getIntegrations(client, { workspaceId, type: 'slack' });
-              existingCredentialRef = integrations?.credential_ref;
-              existingIntegrationId = integrations?.integration_id;
-            } catch (error) {
-              logger.warn('Failed to fetch existing integration for cleanup', { 
-                workspaceId, 
-                error: String(error) 
-              });
-            }
-          }
-
-          // 새로운 credentialRef 생성
-          const credentialRef_new = generateCredentialRef('slack', user.id.substring(0, 8));
-          if (isConnected) {
-
-            // Integration 레코드를 데이터베이스에 저장
-            try {
-              const integrationData = await createIntegrationWithStatus(client, {
-                workspaceId: workspaceId,
-                type: 'slack',
-                name: `Slack - ${connectionStatus.team?.name || 'Unknown'}`,
-                credential_ref: credentialRef_new,
-                config_json: {
-                  connected_at: new Date().toISOString()
-                  , accessible_channels: connectionStatus.channels ? connectionStatus.channels.map((c: any) => c.id).join(',') : ''
-                },
-                connectionStatus: 'connected',
-                resourceCacheJson: {
-                  team: connectionStatus.team,
-                  bot: connectionStatus.bot,
-                  channels: connectionStatus.channels ? 
-                    connectionStatus.channels.map((c: any) => ({
-                      id: c.id,
-                      name: c.name,
-                      is_private: c.is_private,
-                      is_member: c.is_member,
-                  })) : [],
-                }
-              });
-
-              // Secrets Manager에 토큰 저장 TODO:
-              /*
-              const storeResult = await secretsManager.storeSecret(credentialRef_new, token);
-              if (!storeResult.success) {
-                return data({status: 'error', error: `Failed to store Slack token: ${storeResult.error}`
-                }, { status: 500 });
-              }
-              */
-
-              logger.info('Integration record saved successfully', { integrationId: (integrationData as any).integration_id });
-            } catch (error) {
-              logger.error('Failed to save integration record', { error });
-              return data({
-                status: 'error', error: 'Failed to save integration settings'
-              }, { status: 500 });
-            }
-          } else {
-            await createIntegrationStatusError(client, { 
-              integrationId: existingIntegrationId as string,
-              workspaceId: workspaceId, connectionStatus: 'error', 
-              providerErrorCode: 'CONNECTION_ERROR', providerErrorMessage: connectionStatus.error as string});
-          }
-
-          // 기존 Secret 삭제 (보안상 중요) TODO:
-          if (existingCredentialRef) {
-            //await deleteIntegrationSecret({ credentialRef: existingCredentialRef });
-          }
-
-          if (isConnected) {
-            logger.info('Slack integration connected successfully', { 
-              userId: user.id, credentialRef_new, teamName: connectionStatus.team?.name 
-            });
-
-            return data({
-              status: 'success',
-              message: 'Slack integration connected successfully',
-              data: {...connectionStatus, credentialRef_new,}
-            });
-          } else {
-            logger.info('Failed to connect Slack integration', { 
-              userId: user.id, teamName: connectionStatus.team?.name 
-            });
-
+          const { SLACK_CLIENT_ID, SLACK_REDIRECT_URI, SCOPES, USER_SCOPES } = await import("~/core/integrations/slack/client");
+          
+          if (!SLACK_CLIENT_ID || !SLACK_REDIRECT_URI) {
+            logger.error('Missing Slack OAuth credentials');
             return data({
               status: 'error',
-              message: 'Failed to connect Slack integration',
-              error: connectionStatus.error || 'Failed to connect to Slack'
-            });
+              error: 'Slack OAuth credentials not configured'
+            }, { status: 500 });
           }
+
+          // Slack OAuth URL 생성
+          const state = Buffer.from(JSON.stringify({ 
+            workspaceId, 
+            userId: user.id,
+            timestamp: Date.now()
+          })).toString('base64');
+
+          const oauthUrl = `https://slack.com/oauth/v2/authorize?` + new URLSearchParams({
+            client_id: SLACK_CLIENT_ID,
+            scope: SCOPES,
+            redirect_uri: SLACK_REDIRECT_URI,
+            state: state,
+            user_scope: USER_SCOPES // 사용자 이메일 등 접근 권한
+          }).toString();
+
+          logger.info('Redirecting to Slack OAuth', {
+            workspaceId,
+            userId: user.id,
+            oauthUrl: oauthUrl.substring(0, 100) + '...' // 로그에는 URL 일부만
+          });
+
+          return data({
+            status: 'redirect',
+            redirectUrl: oauthUrl,
+            message: 'Redirecting to Slack OAuth'
+          });
+          
         } catch (error) {
           logger.error('Failed to connect Slack integration', { error });
           return data({
@@ -357,9 +296,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
             }
           }
 
-          // Secret 삭제 (integration이 있는 경우) TODO:
+          // Secret 삭제 (integration이 있는 경우) :
           if (existingIntegration?.credential_ref) {
-            //await deleteIntegrationSecret({ credentialRef: existingIntegration.credential_ref });
+            const { deleteIntegrationSecret } = await import("./common");
+            const credentialRef = existingIntegration.credential_ref;
+            await deleteIntegrationSecret({ credentialRef: credentialRef });
+            await deleteIntegrationSecret({ credentialRef: existingIntegration.integration_id });
           }
 
           logger.info('Slack integration disconnected successfully', { workspaceId });

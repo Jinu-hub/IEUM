@@ -7,9 +7,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from 'database.types';
-import adminClient from './supa-admin-client.server';
 import { logger } from './logger';
-
+import adminClient from './supa-admin-client.server';
 export interface SecretMetadata {
   id: string;
   name: string;
