@@ -5,18 +5,17 @@
  * UI 로직을 컴포넌트에서 분리하여 재사용성과 테스트 가능성을 높입니다.
  */
 
-import React from 'react';
-import { 
+import {
+  CheckCircleIcon,
+  GitHubIcon,
   LinearBadge,
   LinearButton,
-  CheckCircleIcon,
   PlusIcon,
   SettingsIcon,
-  GitHubIcon,
   SlackIcon
 } from '~/core/components/linear';
-import type { ConnectionStatus } from '../lib/types';
 import type { IntegrationService } from '../lib/constants';
+import type { ConnectionStatus } from '../lib/types';
 
 interface UseIntegrationUIOptions {
   githubStatus: ConnectionStatus;
@@ -187,7 +186,7 @@ export function useIntegrationUI({
 
   const integrations: IntegrationService[] = [
     {
-      id: 'github',
+      type: 'github',
       name: 'GitHub',
       description: 'GitHub 리포지토리에서 커밋, 이슈, PR 정보를 수집하고 리포트를 생성합니다.',
       icon: <GitHubIcon className="w-8 h-8" />,
@@ -204,6 +203,7 @@ export function useIntegrationUI({
       onConfigure: () => console.log('GitHub 설정'),
       // DB에서 가져온 추가 정보
       ...(githubInfo && {
+        id: githubInfo.integration_id,
         credentialRef: githubInfo.credential_ref,
         connectionStatus: githubInfo.connection_status,
         lastCheckedAt: githubInfo.last_checked_at,
@@ -214,7 +214,7 @@ export function useIntegrationUI({
       })
     },
     {
-      id: 'slack',
+      type: 'slack',
       name: 'Slack',
       description: 'Slack 워크스페이스의 채널 메시지와 활동을 수집하고 분석합니다.',
       icon: <SlackIcon className="w-8 h-8" />,
@@ -231,6 +231,7 @@ export function useIntegrationUI({
       onConfigure: () => console.log('Slack 설정'),
       // DB에서 가져온 추가 정보
       ...(slackInfo && {
+        id: slackInfo.integration_id,
         credentialRef: slackInfo.credential_ref,
         connectionStatus: slackInfo.connection_status,
         lastCheckedAt: slackInfo.last_checked_at,

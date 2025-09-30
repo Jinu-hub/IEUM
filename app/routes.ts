@@ -33,6 +33,7 @@ export default [
       route("/github-webhook", "features/settings/api/github-webhook.tsx"),
       route("/slack-integration/:credentialRef", "features/settings/api/slack-integration.tsx"), 
       route("/slack-callback", "features/settings/api/slack-callback.tsx"),
+      route("/slack-channel-members", "features/settings/api/slack-channel-members.tsx"),
     ]),
     ...prefix("/users", [
       index("features/users/api/delete-account.tsx"),

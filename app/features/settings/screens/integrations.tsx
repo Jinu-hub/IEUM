@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { data, redirect, useSearchParams, type LoaderFunctionArgs } from 'react-router';
+import { data, redirect, useFetcher, useSearchParams, type LoaderFunctionArgs } from 'react-router';
+import { toast } from 'sonner';
 import {
   BookOpenIcon,
   CheckCircleIcon,
@@ -102,6 +103,12 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
     setStatus: setGithubStatus
   });
 
+  // 채널 멤버십 관리를 위한 상태 및 fetcher
+  const [channelMemberships, setChannelMemberships] = useState<Record<string, boolean>>({});
+  const [loadingChannels, setLoadingChannels] = useState<Record<string, boolean>>({});
+  const [currentLoadingChannel, setCurrentLoadingChannel] = useState<string | null>(null);
+  const membershipFetcher = useFetcher();
+
   // Slack integration actions
   const {
     handleConnect: handleSlackConnect,
@@ -192,6 +199,80 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
     }
   );
 
+  // 채널 멤버십 토글 함수
+  const handleChannelToggle = async (channel: any, integration: any) => {
+    const channelId = channel.id;
+    const currentMembership = channelMemberships[channelId] ?? channel.is_member;
+    const action = currentMembership ? 'leave' : 'join';
+    
+    // 현재 로딩 중인 채널 추적
+    setCurrentLoadingChannel(channelId);
+    
+    // 로딩 상태 설정
+    setLoadingChannels(prev => ({ ...prev, [channelId]: true }));
+    
+    // 낙관적 업데이트
+    setChannelMemberships(prev => ({
+      ...prev,
+      [channelId]: !currentMembership
+    }));
+    
+    const formData = new FormData();
+    formData.append('workspaceId', workspaceId);
+    formData.append('integrationId', integration.id);
+    formData.append('channelId', channelId);
+    formData.append('action', action);
+    formData.append('credentialRef', integration.credentialRef);
+    
+    membershipFetcher.submit(formData, {
+      method: 'POST',
+      action: '/api/settings/slack-channel-members'
+    });
+  };
+
+  // 채널 멤버십 fetcher 상태 변화 모니터링
+  useEffect(() => {
+    // fetcher가 완료되었을 때 (성공 또는 실패)
+    if (membershipFetcher.state === 'idle' && currentLoadingChannel) {
+      if (membershipFetcher.data) {
+        const response = membershipFetcher.data as any;
+        
+        if (response.status === 'success') {
+          // 성공 시 로딩 상태 해제
+          setLoadingChannels(prev => ({ ...prev, [currentLoadingChannel]: false }));
+          toast.success(response.message);
+
+        } else if (response.status === 'error') {
+          // 실패 시 상태 롤백
+          setChannelMemberships(prev => ({
+            ...prev,
+            [currentLoadingChannel]: !prev[currentLoadingChannel] // 원래 상태로 롤백
+          }));
+          setLoadingChannels(prev => ({ ...prev, [currentLoadingChannel]: false }));
+          toast.error(response.error);
+        }
+      } else {
+        // 응답 데이터가 없는 경우 (네트워크 에러 등)
+        setChannelMemberships(prev => ({
+          ...prev,
+          [currentLoadingChannel]: !prev[currentLoadingChannel] // 원래 상태로 롤백
+        }));
+        setLoadingChannels(prev => ({ ...prev, [currentLoadingChannel]: false }));
+        
+        // 일반적인 에러 메시지 표시
+        setStatusMessage({
+          type: 'error',
+          message: 'Network error occurred. Please try again.'
+        });
+        
+        setTimeout(() => setStatusMessage(null), 5000);
+      }
+      
+      // 현재 로딩 채널 초기화
+      setCurrentLoadingChannel(null);
+    }
+  }, [membershipFetcher.state, membershipFetcher.data, currentLoadingChannel]);
+
   // Integration UI 요소들 생성
   const { integrations, getStatusBadge, getActionButton } = useIntegrationUI({
     githubStatus,
@@ -244,7 +325,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
       <div className="grid gap-6">
         {integrations.map((integration) => (
           <LinearCard
-            key={integration.id}
+            key={integration.type}
             variant="default"
             className="transition-all duration-200 hover:shadow-lg"
           >
@@ -253,8 +334,8 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                 <div className="flex items-center space-x-4">
                   <div className={cn(
                     "flex items-center justify-center w-12 h-12 rounded-lg",
-                    integration.id === 'github' && "bg-[#0D1117] text-white",
-                    integration.id === 'slack' && "bg-[#4A154B] text-white"
+                    integration.type === 'github' && "bg-[#0D1117] text-white",
+                    integration.type === 'slack' && "bg-[#4A154B] text-white"
                   )}>
                     {integration.icon}
                   </div>
@@ -309,7 +390,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                     </p>
                     
                     {/* GitHub 연결 정보 */}
-                    {integration.id === 'github' && integration.resourceCache && integration.resourceCache.user && (
+                    {integration.type === 'github' && integration.resourceCache && integration.resourceCache.user && (
                       <div className="mt-3 pt-3 border-t border-[#E1E4E8] dark:border-[#2C2D30]">
                         <div className="flex items-center space-x-2 text-xs">
                           <span className="text-[#8B92B5] dark:text-[#6C6F7E]">연결된 계정:</span>
@@ -407,7 +488,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                     )}
                     
                     {/* Slack 연결 정보 */}
-                    {integration.id === 'slack' && integration.resourceCache && integration.resourceCache.team && (
+                    {integration.type === 'slack' && integration.resourceCache && integration.resourceCache.team && (
                       <div className="mt-3 pt-3 border-t border-[#E1E4E8] dark:border-[#2C2D30]">
                         <div className="space-y-2 mb-3">
                           <div className="flex items-center space-x-2 text-xs">
@@ -432,7 +513,9 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                         {/* 접근 가능한 채널 */}
                         <div className="mt-3">
                           <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2">
-                            접근 가능한 채널 (연결된 봇이 멤버로 초대되어야 데이터를 수집가능)  
+                            채널 목록 (연결된 봇이 멤버가 되어야 데이터를 수집가능)  
+                            <br />
+                            데이터 수집 대상 채널을 특정 후 아래의 풍선을 클릭하세요.
                           </div>
                           {integration.resourceCache.channels && integration.resourceCache.channels.length > 0 ? (
                             <div>
@@ -461,19 +544,57 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                                   })
                                   .slice(0, expandedChannels ? integration.resourceCache.channels.length : 10)
                                   .map((channel: any, index: number) => {
-                                    const isMember = channel.is_member;
+                                    const currentMembership = channelMemberships[channel.id] ?? channel.is_member;
+                                    const isLoading = loadingChannels[channel.id] || false;
                                     const isPrivate = channel.is_private;
                                     const ChannelIcon = isPrivate ? LockIcon : HashIcon;
+                                    
+                                    // Leave 기능 비활성화 (channels:manage 권한 없음)
+                                    const canLeave = false; // TODO: channels:manage 권한 추가 시 true로 변경
+                                    const canInteract = !isLoading && (!currentMembership || canLeave);
                                     
                                     return (
                                       <LinearBadge
                                         key={channel.id || index}
-                                        variant={isMember ? "success" : "warning"}
+                                        variant={currentMembership ? "success" : "warning"}
                                         size="sm"
-                                        className="text-xs flex items-center gap-1"
-                                        icon={<ChannelIcon className="w-2.5 h-2.5" />}
+                                        className={`text-xs flex items-center gap-1 transition-all ${
+                                          canInteract 
+                                            ? 'cursor-pointer hover:opacity-80' 
+                                            : currentMembership 
+                                              ? 'cursor-not-allowed opacity-75' 
+                                              : 'cursor-pointer hover:opacity-80'
+                                        } ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
+                                        icon={
+                                          isLoading ? (
+                                            <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin" />
+                                          ) : (
+                                            <ChannelIcon className="w-2.5 h-2.5" />
+                                          )
+                                        }
+                                        onClick={() => {
+                                          if (!isLoading) {
+                                            if (currentMembership && !canLeave) {
+                                              // Leave 불가능한 경우 안내 메시지
+                                              toast.info('채널 나가기 기능은 추가 권한이 필요합니다. Join만 가능합니다.');
+                                              return;
+                                            }
+                                            handleChannelToggle(channel, integration);
+                                          }
+                                        }}
+                                        title={
+                                          currentMembership && !canLeave 
+                                            ? '채널 나가기는 추가 권한이 필요합니다' 
+                                            : currentMembership 
+                                              ? '클릭하여 채널 나가기' 
+                                              : '클릭하여 채널 참여'
+                                        }
                                       >
                                         {channel.name}
+                                        {currentMembership && !isLoading && <span className="ml-1 text-xs">✓</span>}
+                                        {currentMembership && !canLeave && !isLoading && (
+                                          <span className="ml-1 text-xs opacity-60">🔒</span>
+                                        )}
                                       </LinearBadge>
                                     );
                                   })}
@@ -536,10 +657,11 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                 <span>Slack 연결</span>
               </h4>
               <ul className="space-y-1 text-[#8B92B5] dark:text-[#6C6F7E] list-disc list-inside ml-6">
-                <li>Bot Token이 필요합니다 (xoxb-로 시작)</li>
-                <li>워크스페이스에 앱을 설치해야 합니다</li>
-                <li>채널 읽기, 메시지 히스토리 권한 필요</li>
-                <li>연결된 봇이 멤버로 초대된 채널에만 읽기 가능</li>
+                <li>연결이 완료되면 Slack봇이 워크스페이스에 생성됩니다.</li>
+                <li>프라이빗 채널은 봇을 수동으로 초대해야 데이터를 수집가능합니다.</li>
+                <li>봇 초대 방법: 채널에 소속된 사용자가 Slack에서 해당 채널로 이동<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    [/invite @Nexletter] 입력후엔터</li>
               </ul>
             </div>
 

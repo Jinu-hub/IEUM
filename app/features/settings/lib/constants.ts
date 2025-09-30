@@ -1,9 +1,10 @@
-import type { ConnectionStatus, DBConnectionStatus } from "./types";
 import { z } from "zod";
+import type { ConnectionStatus, DBConnectionStatus } from "./types";
 
 
 // 통합 서비스 정보 타입
 export interface IntegrationService {
+    type: string;
     id: string;
     name: string;
     description: string;

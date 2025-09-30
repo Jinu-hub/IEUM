@@ -623,3 +623,81 @@ export const deleteMailingListMember = async (
     }
     return data;
 }
+
+/**
+ * Slack 채널 멤버십 변경 시 resource_cache_json 업데이트
+ */
+export const updateSlackChannelMembership = async (
+    client: SupabaseClient<Database>,
+    {
+        workspaceId,
+        integrationId,
+        channelId,
+        isMember
+    }: {
+        workspaceId: string;
+        integrationId: string;
+        channelId: string;
+        isMember: boolean;
+    }
+): Promise<{ success: boolean; error?: string }> => {
+    try {
+        // 현재 integration_statuses 레코드 조회
+        const { data: integrationStatus, error: fetchError } = await client
+            .from('integration_statuses')
+            .select('resource_cache_json')
+            .eq('workspace_id', workspaceId)
+            .eq('integration_id', integrationId)
+            .single();
+            
+        if (fetchError) {
+            console.error('Failed to fetch integration status', fetchError);
+            return { success: false, error: `Failed to fetch integration status: ${fetchError.message}` };
+        }
+        
+        if (!integrationStatus?.resource_cache_json) {
+            return { success: false, error: 'No resource cache found' };
+        }
+        
+        // channels 배열에서 해당 채널의 is_member 업데이트
+        const resourceCache = integrationStatus.resource_cache_json as any;
+        if (!resourceCache.channels || !Array.isArray(resourceCache.channels)) {
+            return { success: false, error: 'Invalid channels data structure' };
+        }
+        
+        const updatedChannels = resourceCache.channels.map((channel: any) => {
+            if (channel.id === channelId) {
+                return {
+                    ...channel,
+                    is_member: isMember
+                };
+            }
+            return channel;
+        });
+        
+        const updatedResourceCache = {
+            ...resourceCache,
+            channels: updatedChannels
+        };
+        
+        // 데이터베이스 업데이트
+        const { error: updateError } = await client
+            .from('integration_statuses')
+            .update({ 
+                resource_cache_json: updatedResourceCache,
+            })
+            .eq('workspace_id', workspaceId)
+            .eq('integration_id', integrationId);
+            
+        if (updateError) {
+            console.error('Failed to update resource cache', updateError);
+            return { success: false, error: `Failed to update resource cache: ${updateError.message}` };
+        }
+        
+        return { success: true };
+        
+    } catch (error: any) {
+        console.error('Error updating Slack channel membership', error);
+        return { success: false, error: `Unexpected error: ${error.message}` };
+    }
+};
