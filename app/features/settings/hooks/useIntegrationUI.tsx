@@ -88,6 +88,15 @@ export function useIntegrationUI({
             해제 중...
           </LinearBadge>
         );
+      case 'unauthorized':
+        return (
+          <LinearBadge 
+            variant="warning" 
+            className="ml-3"
+          >
+            승인 대기
+          </LinearBadge>
+        );
       case 'disconnected':
       default:
         return (
@@ -129,6 +138,19 @@ export function useIntegrationUI({
           disabled
         >
           해제 중...
+        </LinearButton>
+      );
+    }
+
+    if (status === 'unauthorized') {
+      return (
+        <LinearButton
+          variant="secondary"
+          size="sm"
+          onClick={onConnect}
+          className="flex items-center space-x-2 cursor-pointer"
+        >
+          확인하기
         </LinearButton>
       );
     }

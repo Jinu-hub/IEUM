@@ -1,3 +1,4 @@
+import type { Database } from 'database.types';
 import { useEffect, useState } from 'react';
 import { data, redirect, useFetcher, useSearchParams, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
@@ -34,9 +35,25 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (!user) {
     return redirect('/login');
   }
+
   const workspace = await getWorkspace(client, { userId: user.id });
-  
   const workspaceId = workspace[0].workspace_id;
+
+  const url = new URL(request.url);
+  const status = url.searchParams.get('status');
+  
+  if (status === 'approval_pending') {
+    // 승인대기 상태로 업데이트
+    const { createOrUpdateIntegration } = await import("../db/mutations");
+    const result = await createOrUpdateIntegration(client, {
+      workspace_id: workspaceId,
+      type: 'github' as Database["public"]["Enums"]["integration_type"],
+      credential_ref: '',
+      connection_status: 'unauthorized',
+      metadata: {},
+      resourceCacheJson: {}
+    });
+  }
   const integrationsInfo = await getIntegrationsInfo(client, { workspaceId: workspaceId });
   return data({ user, workspaceId, integrationsInfo });
 };
@@ -463,27 +480,6 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                             </div>
                           )}
                         </div>
-                        
-                        {/*
-                        {githubData.rateLimit && (
-                          <div className="flex items-center space-x-2 text-xs mt-3 pt-2 border-t border-[#E1E4E8] dark:border-[#2C2D30]">
-                            <span className="text-[#8B92B5] dark:text-[#6C6F7E]">API 제한:</span>
-                            <span className={cn(
-                              "font-medium",
-                              githubData.rateLimit.remaining < 100 
-                                ? "text-red-600 dark:text-red-400" 
-                                : "text-[#0D0E10] dark:text-[#FFFFFF]"
-                            )}>
-                              {githubData.rateLimit.remaining}/{githubData.rateLimit.limit}
-                            </span>
-                            {githubData.rateLimit.remaining < 100 && (
-                              <LinearBadge variant="warning" size="sm" className="ml-1">
-                                제한 임박
-                              </LinearBadge>
-                            )}
-                          </div>
-                        )}
-                        */}
                       </div>
                     )}
                     

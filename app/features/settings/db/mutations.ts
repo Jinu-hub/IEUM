@@ -226,14 +226,14 @@ export const createOrUpdateIntegration = async (
         let config_json: any;
         
         if (type === 'github') {
-            integrationName = `GitHub (${metadata.account?.login || 'Unknown'})`;
-            config_json = {
+            integrationName = metadata ? `GitHub (${metadata.account?.login || 'Unknown'})` : 'GitHub';
+            config_json = metadata ? {
                 installation_id: metadata.installation_id,
                 account: metadata.account,
                 repository_selection: metadata.repository_selection,
                 permissions: metadata.permissions,
                 setup_action: metadata.setup_action
-            };
+            } : {};
         } else if (type === 'slack') {
             integrationName = `Slack - ${metadata.team_name || 'Unknown'}`;
             config_json = {

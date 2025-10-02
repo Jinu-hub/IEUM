@@ -4,7 +4,8 @@ export type ConnectionStatus =
     'connected' 
     | 'disconnected' 
     | 'connecting' 
-    | 'disconnecting';
+    | 'disconnecting'
+    | 'unauthorized';
 
 // DB에서 사용하는 연결 상태 타입 (Supabase enum과 매칭)
 export type DBConnectionStatus = 

@@ -34,7 +34,7 @@ export const AUDIT_ACTION = [
 ] as const;
 
 export const CONNECTION_STATUS = [
-  "connected", "expired", "revoked", "unauthorized", "error", "never",
+  "connected", "expired", "revoked", "unauthorized", "error", "never", "disconnected",
 ] as const;
 
 /* =========================================================
