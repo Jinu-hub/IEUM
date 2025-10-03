@@ -2,7 +2,9 @@
  * 간단한 테스트용 API 엔드포인트
  */
 
+import { mkdir, writeFile } from "fs/promises";
 import type { App } from "octokit";
+import { join } from "path";
 import { type LoaderFunctionArgs, data } from "react-router";
 import { getGitHubApp } from "~/core/integrations/github/client";
 
@@ -218,4 +220,36 @@ async function handleTest(app: any) {
       timestamp: new Date().toISOString()
     }
   };
+}
+
+/**
+ * ファイル保存用のヘルパー関数
+ */
+export async function saveContentToFile(content: any, outDir: string, 
+  prefix: string = 'test_data_',
+  ext: string = 'md'): Promise<string> {
+  // 現在の日時でファイル名を生成 (yyyyMMdd_HHmmss)
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  
+  const fileName = `${prefix}${year}${month}${day}_${hours}${minutes}${seconds}.${ext}`;
+  const filePath = join(outDir, fileName);
+  
+  // ディレクトリが存在しない場合は作成
+  await mkdir(outDir, { recursive: true });
+  
+  // コンテンツを文字列に変換
+  const contentString = typeof content === 'string' 
+    ? content 
+    : JSON.stringify(content, null, 2);
+  
+  // ファイルに書き込み
+  await writeFile(filePath, contentString, 'utf-8');
+  
+  return filePath;
 }

@@ -5,14 +5,15 @@
  * 연계액션 상태 확인, 연계액션을 실행하는 기능을 제공합니다.
  */
 
-import { type LoaderFunctionArgs, type ActionFunctionArgs, data } from "react-router";
-import { logger } from "~/core/lib/logger";
-import adminClient from "~/core/lib/supa-admin-client.server";
-import { isScheduledWithinHour } from "~/core/lib/cron-utils";
-import makeServerClient from "~/core/lib/supa-client.server";
-import { getIntegrationsInfo, getTargetSources } from "~/features/settings/db/queries";
+import { type ActionFunctionArgs, data, type LoaderFunctionArgs } from "react-router";
 import { runGithubFetch } from "~/core/integrations/github/run";
 import { runSlackFetch } from "~/core/integrations/slack/run";
+import { isScheduledWithinHour } from "~/core/lib/cron-utils";
+import { logger } from "~/core/lib/logger";
+import adminClient from "~/core/lib/supa-admin-client.server";
+import { getIntegrationsInfo, getTargetSources } from "~/features/settings/db/queries";
+import { createContents } from "./create-contents";
+import { saveContentToFile } from "./test-api";
 
 /**
  * 타겟 정보 타입 (데이터베이스 타입 기반)
@@ -110,7 +111,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         const slackCredentialRef = integrationsInfo.find((integration: any) => integration.type === 'slack')?.credential_ref;
         let githubToken = null;
         let slackToken = null;
-        
+        let githubResult = null;
+        let slackResult = null;
+
         if (githubCredentialRef && matchedRepos.length > 0) {
           githubToken = await getGitHubToken(githubCredentialRef as string) || undefined;
           githubRepos = matchedRepos.join(',');
@@ -119,7 +122,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
           logger.info(` token: ${githubToken}`);
           logger.info(` repos: ${githubRepos}`);
           
-          runGithubFetch({
+          githubResult = await runGithubFetch({
             repos: githubRepos,
             outDir: 'output-test',
             token: githubToken,
@@ -138,7 +141,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
           logger.info(` token: ${slackToken}`);
           logger.info(` channels: ${slackChannels}`);
           
-          runSlackFetch({
+          slackResult = await runSlackFetch({
             channels: slackChannels,
             outDir: 'output-test',
             token: slackToken,
@@ -149,6 +152,31 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         } else {
           logger.info('CredentialRef가 유효하지 않거나, 매칭된 Channel가 없습니다.');
         }
+
+        if (!githubResult && !slackResult) {
+          return new Response("Failed to fetch GitHub and Slack data", { status: 500 });
+        }
+
+        // コンテンツを生成
+        const contentsResult = await createContents({
+          githubResult : githubResult || null,
+          slackResult : slackResult || null,
+          workspaceId: target.workspace_id,
+          targetId: target.target_id
+        });
+        
+        logger.info('Contents generation completed', { 
+          targetId: target.target_id,
+          result: contentsResult.status
+        });
+
+        // ファイルに保存
+        const savedFilePath = await saveContentToFile(contentsResult.data.finalOutput, 'output-test');
+        logger.info('Content saved to file', { 
+          targetId: target.target_id,
+          filePath: savedFilePath
+        });
+        
       }
     }
 
@@ -276,7 +304,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
           logger.info(` token: ${slackToken}`);
           logger.info(` channels: ${slackChannels}`);
           
-          runSlackFetch({
+          const slackResult = await runSlackFetch({
             channels: slackChannels,
             outDir: 'output-test',
             token: slackToken,
@@ -287,6 +315,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         } else {
           logger.info('CredentialRef가 유효하지 않거나, 매칭된 Channel가 없습니다.');
         }
+        
       }
     }
     
