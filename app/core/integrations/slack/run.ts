@@ -1,12 +1,11 @@
-import "dotenv/config";
 import dayjs from "dayjs";
-import { getSlackConfig } from "./config";
-import { createSlackClient } from "./client";
-import { listChannels, fetchChannelMessages } from "./fetchers";
-import type { FetchedMessage } from "./types";
-import { FileWriter } from "../../lib/writer";
-import { logger } from "../../lib/logger";
+import "dotenv/config";
 import pLimit from "p-limit";
+import { logger } from "../../lib/logger";
+import { createSlackClient } from "./client";
+import { getSlackConfig } from "./config";
+import { fetchChannelMessages, listChannels } from "./fetchers";
+import type { FetchedMessage } from "./types";
 
 export async function runSlackFetch(overrides?: {
   token?: string;
@@ -35,9 +34,12 @@ export async function runSlackFetch(overrides?: {
     )
   );
 
+  /*
   const writer = new FileWriter<Record<string, FetchedMessage[]>>(cfg.outDir || "output", "slack_raw.json");
   await writer.save(result);
   logger.info("saved slack_raw.json", { path: `${cfg.outDir || "output"}/slack_raw.json` });
+  */
+  return result;
 }
 
 

@@ -105,7 +105,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   // Redirect to home page with authentication cookies in headers
-  return redirect("/", { headers });
+  return redirect("/dashboard", { headers });
 }
 
 /**

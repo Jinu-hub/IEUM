@@ -1,12 +1,11 @@
-import "dotenv/config";
 import dayjs from "dayjs";
-import { getGithubConfig } from "./config";
-import { createOctokit } from "./client";
-import { fetchCommits, fetchMergedPullRequests, fetchOpenedIssues, fetchClosedIssues } from "./fetchers";
-import type { FetchedRepoData, Repo } from "./types";
-import { FileWriter } from "../../lib/writer";
-import { logger } from "../../lib/logger";
+import "dotenv/config";
 import pLimit from "p-limit";
+import { logger } from "../../lib/logger";
+import { createOctokit } from "./client";
+import { getGithubConfig } from "./config";
+import { fetchClosedIssues, fetchCommits, fetchMergedPullRequests, fetchOpenedIssues } from "./fetchers";
+import type { FetchedRepoData, Repo } from "./types";
 
 export async function runGithubFetch(overrides?: {
   token?: string;
@@ -48,9 +47,12 @@ export async function runGithubFetch(overrides?: {
     )
   );
 
+  /*
   const writer = new FileWriter<Record<string, FetchedRepoData>>(cfg.outDir, "github_raw.json");
   await writer.save(result);
   logger.info("saved github_raw.json", { path: `${cfg.outDir}/github_raw.json` });
+  */
+  return result;
 }
 
 
