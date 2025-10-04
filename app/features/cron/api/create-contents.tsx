@@ -4,11 +4,11 @@ import {
 } from "@openai/agents";
 import type { ActionFunctionArgs } from "react-router";
 import { data } from "react-router";
-import { buildGithubPrompt } from "~/core/agents/prompts/prompt-builder";
-import { summarizerAgent } from "~/core/agents/test-agent";
 import type { FetchedRepoData } from "~/core/integrations/github/types";
 import type { FetchedMessage } from "~/core/integrations/slack/types";
 import { logger } from "~/core/lib/logger";
+import { buildGithubPrompt } from "~/core/openai/prompts/prompt-builder";
+import { summarizerAgent } from "~/core/openai/test-agent";
 
 /**
  * コンテンツ生成用のデータ型
