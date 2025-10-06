@@ -13,7 +13,6 @@ import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import { getIntegrationsInfo, getTargetSources } from "~/features/settings/db/queries";
 import { createContents } from "./create-contents";
-import { saveContentToFile } from "./test-api";
 
 /**
  * 타겟 정보 타입 (데이터베이스 타입 기반)
@@ -171,10 +170,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         });
 
         // ファイルに保存
-        const savedFilePath = await saveContentToFile(contentsResult.data.finalOutput, 'output-test');
+        //const savedFilePath = await saveContentToFile(contentsResult.data.finalOutput, 'output-test');
         logger.info('Content saved to file', { 
           targetId: target.target_id,
-          filePath: savedFilePath
+          //filePath: savedFilePath
         });
         
       }

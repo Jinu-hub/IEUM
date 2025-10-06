@@ -26,6 +26,8 @@ export type PRInfo = {
   html_url: string;
   merged_at: string;
   userInfo?: UserInfo;
+  closes?: string[];
+  merge_commit_sha?: string;
 };
 
 export type IssueInfo = {

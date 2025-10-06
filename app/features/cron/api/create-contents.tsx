@@ -1,24 +1,13 @@
 import {
-    run,
-    setDefaultOpenAIKey
+  setDefaultOpenAIKey
 } from "@openai/agents";
 import type { ActionFunctionArgs } from "react-router";
 import { data } from "react-router";
 import type { FetchedRepoData } from "~/core/integrations/github/types";
 import type { FetchedMessage } from "~/core/integrations/slack/types";
 import { logger } from "~/core/lib/logger";
-import { buildGithubPrompt } from "~/core/openai/prompts/prompt-builder";
-import { summarizerAgent } from "~/core/openai/test-agent";
-
-/**
- * コンテンツ生成用のデータ型
- */
-type CreateContentsInput = {
-  githubResult?: Record<string, FetchedRepoData> | null;
-  slackResult?: Record<string, FetchedMessage[]> | null;
-  workspaceId: string;
-  targetId: string;
-};
+import type { CreateContentsInput } from "~/core/lib/types";
+import { generateContents } from "~/core/processes/mainProcess";
 
 /**
  * OpenAI APIキーを初期化（一度だけ実行）
@@ -36,45 +25,51 @@ function initializeOpenAI() {
   }
 }
 
+export function createGithubStats(githubResult : Record<string, FetchedRepoData>) {
+  if (!githubResult) return null;
+  return {
+    repoCount: Object.keys(githubResult).length,
+    repos: Object.keys(githubResult),
+    totalCommits: Object.values(githubResult).reduce((acc, repo) => acc + (repo.commits?.length || 0), 0),
+    totalPRs: Object.values(githubResult).reduce((acc, repo) => acc + (repo.mergedPRs?.length || 0), 0),
+    totalOpenedIssues: Object.values(githubResult).reduce((acc, repo) => acc + (repo.openedIssues?.length || 0), 0),
+    totalClosedIssues: Object.values(githubResult).reduce((acc, repo) => acc + (repo.closedIssues?.length || 0), 0)
+  }
+}
+
+function createSlackStats(slackResult : Record<string, FetchedMessage[]>) {
+  if (!slackResult) return null;
+  return {
+    channelCount: Object.keys(slackResult).length,
+    channels: Object.keys(slackResult),
+    totalMessages: Object.values(slackResult).reduce((acc, messages) => acc + messages.length, 0)
+  }
+}
+
 /**
  * コンテンツを生成する関数（直接呼び出し可能）
  */
 export async function createContents(input: CreateContentsInput) {
-  // OpenAI APIキーを初期化
+
   initializeOpenAI();
-  // データの統計情報を計算（実際のデータは含めない）
-  const githubStats = input.githubResult 
-    ? {
-        repoCount: Object.keys(input.githubResult).length,
-        repos: Object.keys(input.githubResult),
-        totalCommits: Object.values(input.githubResult).reduce((acc, repo) => acc + (repo.commits?.length || 0), 0),
-        totalPRs: Object.values(input.githubResult).reduce((acc, repo) => acc + (repo.mergedPRs?.length || 0), 0),
-        totalOpenedIssues: Object.values(input.githubResult).reduce((acc, repo) => acc + (repo.openedIssues?.length || 0), 0),
-        totalClosedIssues: Object.values(input.githubResult).reduce((acc, repo) => acc + (repo.closedIssues?.length || 0), 0)
-      }
-    : null;
 
-  const slackStats = input.slackResult
-    ? {
-        channelCount: Object.keys(input.slackResult).length,
-        channels: Object.keys(input.slackResult),
-        totalMessages: Object.values(input.slackResult).reduce((acc, messages) => acc + messages.length, 0)
-      }
-    : null;
-
+  const githubStats = createGithubStats(input.githubResult || {});
+  const slackStats = createSlackStats(input.slackResult || {});
   logger.info('📝 Creating contents', { 
-    workspaceId: input.workspaceId,
-    targetId: input.targetId,
-    github: githubStats,
-    slack: slackStats
+    workspaceId: input.workspaceId, targetId: input.targetId, github: githubStats, slack: slackStats
   });
 
-  //const summaryPrompt = buildPromptFromGithubData(Object.values(input.githubResult || {}));
+  const handledData = await generateContents(input);
+
+  /*
   const summaryPrompt = buildGithubPrompt(
     Object.values(input.githubResult || {}),
     'ja' // 또는 input.language 같은 동적 값
   );
+  
   const content = await run(summarizerAgent, summaryPrompt);
+  */
+ const content = {}
 
   logger.info('✅ Contents created successfully', {
     targetId: input.targetId,
@@ -89,53 +84,6 @@ export async function createContents(input: CreateContentsInput) {
     data: content
   };
 }
-
-/**
- * 📦 runGithubFetch() 결과를 사람이 읽을 수 있는 텍스트 프롬프트로 변환
- */
-function buildPromptFromGithubData(repos: any[]): string {
-    return `
-  Generate a weekly engineering report based on the following GitHub activity:
-  
-  ${repos
-    .map(
-      (repo) => `
-  ### 📁 Repository: ${repo.repo.name}
-  
-  - **Commits (${repo.commits.length})**:
-  ${repo.commits
-    .slice(0, 5)
-    .map((c: any) => `  - ${c.message} (${c.author}, ${c.date})`)
-    .join("\n")}
-  
-  - **Merged PRs (${repo.mergedPRs.length})**:
-  ${repo.mergedPRs
-    .slice(0, 5)
-    .map((pr: any) => `  - #${pr.number}: ${pr.title} by ${pr.author}`)
-    .join("\n")}
-  
-  - **Opened Issues (${repo.openedIssues.length})**:
-  ${repo.openedIssues
-    .slice(0, 5)
-    .map((i: any) => `  - #${i.number}: ${i.title}`)
-    .join("\n")}
-  
-  - **Closed Issues (${repo.closedIssues.length})**:
-  ${repo.closedIssues
-    .slice(0, 5)
-    .map((i: any) => `  - #${i.number}: ${i.title}`)
-    .join("\n")}
-  `
-    )
-    .join("\n")}
-  
-  Write a markdown report with:
-  - 📝 **Project summaries** per repo
-  - 📊 Key stats (commit count, PR merged, issues opened/closed)
-  - ✨ Notable highlights (important PRs or issues)
-  - 📅 A short “Next week focus” suggestion if possible
-  `;
-  }
 
 /**
  * Action: HTTP POST経由でのコンテンツ生成
@@ -168,3 +116,5 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }, { status: 500 });
   }
 }
+
+
