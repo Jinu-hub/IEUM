@@ -1,0 +1,213 @@
+{
+  "overall": {
+    "commits": 60,
+    "prsMerged": 0,
+    "issuesOpened": 0,
+    "issuesClosed": 0
+  },
+  "perRepo": [
+    {
+      "repo": "digitalsheep/LEAD",
+      "commits": 60,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0
+    }
+  ],
+  "perUser": [
+    {
+      "user": "ikemit",
+      "repo": "digitalsheep/LEAD",
+      "commits": 4,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "モジュール作成（5.2.20_0008）",
+        "モジュール作成（5.2.20_0007）",
+        "モジュール作成（5.2.20_0006）",
+        "モジュール作成（5.2.20_0005）"
+      ]
+    },
+    {
+      "user": "TeradaMomoko",
+      "repo": "digitalsheep/LEAD",
+      "commits": 8,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#20038 修正依頼表その5の3 No.180",
+        "#20878 修正依頼表その6 No.204",
+        "#20878 修正依頼表その6 No.411",
+        "#20878 修正依頼表その6 No.462",
+        "#20878 修正依頼表その6 No.378",
+        "#20878 修正依頼表その6 No.438",
+        "#20878 修正依頼表その6 No.462、378"
+      ]
+    },
+    {
+      "user": "jinuSon",
+      "repo": "digitalsheep/LEAD",
+      "commits": 16,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#20878 LEAD管理者機能対応その6-No312-313：研修 インポート 外部カレンダー同期 入力チェック",
+        "#20038 LEAD管理者機能対応その5-No108：成果参照［基準別ユーザ一覧］「目標値」",
+        "#20038 LEAD管理者機能対応その5-No104：成果参照［ユーザ別基準一覧］「目標値」",
+        "#20038 LEAD管理者機能対応その5-No48：成果基準定義一覧「目標値」",
+        "#20878 LEAD管理者機能対応その6-No344：ルーム画面遷移エラー（ソースマージミス改善）",
+        "#20878 LEAD管理者機能対応その6-No298：研修 インポート 外部カレンダー同期 空白",
+        "#20878 LEAD管理者機能対応その6-No344：ルーム画面遷移エラー",
+        "#20038 LEAD管理者機能対応その5_4-No157：成果査定定義 インポート 分類区分変更 ",
+        "#20038 LEAD管理者機能対応その5_4-No145：成果管理 成果基準 プレイリスト使用（する/しない）",
+        "#20038 LEAD管理者機能対応その5_4-No133：成果管理 ユーザ別基準一覧「成果率-グラフ」",
+        "#20038 LEAD管理者機能対応その5_4-No119：成果管理 成果詳細一覧 検索「取得時組織名」",
+        "#20038 LEAD管理者機能対応その5_4-No110：成果管理 エクスポートオプション",
+        "#20038 LEAD管理者機能対応その5_4-No105：成果管理 ユーザ別基準一覧 検索「期間開始日・終了日」",
+        "#20038 LEAD管理者機能対応その5_4-No101：成果管理 ユーザ別基準一覧 ソート「達成率」",
+        "#20038 LEAD管理者機能対応その5_4-No103：成果管理 ユーザ別基準一覧「残り」0以下",
+        "#20038 LEAD管理者機能対応その5_4-No86 ：成果管理 検索 「##分類」"
+      ]
+    },
+    {
+      "user": "WatanabeTomoaki",
+      "repo": "digitalsheep/LEAD",
+      "commits": 1,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#21746 LEADのコース進捗再計算を実施すると修了時の「認定番号」が毎回変わってしまう"
+      ]
+    },
+    {
+      "user": "ManseonJeon",
+      "repo": "digitalsheep/LEAD",
+      "commits": 11,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#21754 V5.2.20 修正依頼表対応 No.5,51",
+        "#21754 V5.2.20 修正依頼表対応 No.14",
+        "#21754 V5.2.20 修正依頼表対応 No.44",
+        "#21754 V5.2.20 修正依頼表対応 No.26,40",
+        "#21754 V5.2.20 修正依頼表対応 No.21",
+        "#21754 V5.2.20 修正依頼表対応 No.20",
+        "#21754 V5.2.20 修正依頼表対応 No.17",
+        "#21754 V5.2.20 修正依頼表対応 No.3",
+        "#21762 EJB側にてプライベート/プロテクト変数を定義している箇所の改修（dispMode指定箇所）",
+        "#21164 eStudio素材の自動削除で削除されたスライド素材を含むラーニングパッケージをプレビューさせようとすると、「システムエラーが発生しました[2]」が画面に表示される",
+        "#21754 V5.2.20 修正依頼表対応 No.5"
+      ]
+    },
+    {
+      "user": "SuchonKou",
+      "repo": "digitalsheep/LEAD",
+      "commits": 14,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#20878 LEAD管理者機能対応6 No.405 修正",
+        "#20878 LEAD管理者機能対応6 No.401 修正",
+        "#20878 LEAD管理者機能対応6 No.363 修正",
+        "#20878 LEAD管理者機能対応6 No.457 修正",
+        "#20038 LEAD管理者機能対応5-4 No.244 修正",
+        "#20038 LEAD管理者機能対応5-4 No.227 修正",
+        "#20038 LEAD管理者機能対応5-4 No.225 修正",
+        "#20038 LEAD管理者機能対応5-4 No.158 修正",
+        "#20038 LEAD管理者機能対応5-4 No.224 修正",
+        "#20038 LEAD管理者機能対応5-4 No.223 修正",
+        "#20038 LEAD管理者機能対応5-4 No.222 修正",
+        "#20038 LEAD管理者機能対応5-4 No.221 修正",
+        "#20038 LEAD管理者機能対応5-4 No.220 修正",
+        "#20038 LEAD管理者機能対応5-4 No.213 修正"
+      ]
+    },
+    {
+      "user": "Yuuki-Imai",
+      "repo": "digitalsheep/LEAD",
+      "commits": 1,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#21754 V5.2.20 修正依頼表対応 No.24"
+      ]
+    },
+    {
+      "user": "Katsuya-Matsuzaki",
+      "repo": "digitalsheep/LEAD",
+      "commits": 4,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#21761 [No.511] 集合研修＞申請画面 の画面遷移に時間がかかる",
+        "#21553 [No.490] 特定のケースのみスロークエリになる",
+        "#21556 ［グループ管理］から対象者を追加した際の再計算処理において、コレクションの前提条件未達成フラグ（precon_unachieved_flg）がセットされていない可能性あり"
+      ]
+    },
+    {
+      "user": "SakiMimura",
+      "repo": "digitalsheep/LEAD",
+      "commits": 1,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#20888 【レイアウト調整】スタイルのインライン記載箇所修正"
+      ]
+    }
+  ],
+  "perCase": [
+    {
+      "case": "other",
+      "commits": 4
+    },
+    {
+      "case": "#20038",
+      "commits": 23
+    },
+    {
+      "case": "#20878",
+      "commits": 15
+    },
+    {
+      "case": "#21746",
+      "commits": 1
+    },
+    {
+      "case": "#21754",
+      "commits": 10
+    },
+    {
+      "case": "#21761",
+      "commits": 2
+    },
+    {
+      "case": "#21553",
+      "commits": 1
+    },
+    {
+      "case": "#21762",
+      "commits": 1
+    },
+    {
+      "case": "#21164",
+      "commits": 1
+    },
+    {
+      "case": "#21556",
+      "commits": 1
+    },
+    {
+      "case": "#20888",
+      "commits": 1
+    }
+  ]
+}

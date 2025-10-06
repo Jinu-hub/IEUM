@@ -1,5 +1,6 @@
 import type { CreateContentsInput } from "~/core/lib/types";
-import type { UnifiedActivityDoc } from "../lib/types";
+import type { LinkedActivityDoc, UnifiedActivityDoc } from "../lib/types";
+import { repoKpiExtractor, topicClustering } from "./analyze-data";
 import { crossLinker } from "./cross-linker";
 import { githubIngestor, slackIngestor } from "./ingestors";
 
@@ -16,7 +17,6 @@ export async function normalizeAndReduceData(input: CreateContentsInput) {
     return linkedData;
 }
 
-/*
 export async function analyzeData(input: CreateContentsInput, linkedData: LinkedActivityDoc): Promise<any> {
 
     // 3. github data를 기반으로 kpi snapshot을 생성
@@ -27,11 +27,10 @@ export async function analyzeData(input: CreateContentsInput, linkedData: Linked
     return { kpiInfo, topics };
 
 }
-*/
 
 export async function generateContents(input: CreateContentsInput) {
     const linkedData = await normalizeAndReduceData(input);
-    // const { kpiInfo, topics } = await analyzeData(input, linkedData);
+    const { kpiInfo, topics } = await analyzeData(input, linkedData);
     // await saveContentToFile(topics, 'output-test', 'topics_', 'json');
-    return { linkedData, kpiInfo: null, topics: null };
+    return { linkedData, kpiInfo, topics };
 }

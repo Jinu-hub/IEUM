@@ -1,4 +1,6 @@
 import { Agent } from "@openai/agents";
+import { TopicOutput } from "./models";
+import { getTopicClusteringTemplate } from "./templates";
 
 /**
  * GitHub 활동 요약 에이전트
@@ -11,3 +13,10 @@ export const summarizerAgent = new Agent({
   model: 'gpt-4.1-mini',
 });
 
+
+export const topicClusteringAgent = new Agent({
+  name: 'topic_clustering_agent',
+  instructions: getTopicClusteringTemplate('ja'),
+  model: 'gpt-4.1-mini',
+  outputType: TopicOutput,
+});
