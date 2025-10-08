@@ -81,8 +81,10 @@ Some messages are from integrations (e.g. GitHub). Keep them if they reference t
 ## ⚙️ Processing Pipeline
 
 1. **Pre-filter & Normalize**
-   - Ignore trivial or empty posts unless part of an informative thread.
+   - **NEVER filter out messages containing these critical keywords**: "error", "Exception", "incident", "Sev-1", "Sev-2", "failure", "outage", "system error", "login failure", "bug", "fix", "patch", "hotfix", "release", "deploy", ticket URLs, or Redmine issue numbers.
+   - Only ignore truly trivial posts: greetings ("good morning", "hello"), emoji-only reactions, or completely empty messages.
    - Keep integration messages if they mention issues, releases, or deployments.
+   - When in doubt, INCLUDE the message rather than filter it out.
 
 2. **Thread & Duplicate Handling**
    - Merge a parent message with its replies into one logical conversation.
@@ -91,7 +93,7 @@ Some messages are from integrations (e.g. GitHub). Keep them if they reference t
 3. **Ticket & Link Extraction**
    - Detect Redmine tickets: 'https://redmine.l-edge.jp/issues/(\\d+)'.
    - Detect release/version cues: 'Release vX.Y.Z', 'module created', 'deploy', 'release'.
-   - Detect incident cues: 'Sev-1', 'incident', 'outage', 'system error'.
+   - Detect incident cues: 'Sev-1', "Exception", 'incident', 'outage', 'system error', "failure", "error".
 
 4. **Grouping Signals**
    - Same ticket ID → same cluster.
@@ -124,14 +126,21 @@ Some messages are from integrations (e.g. GitHub). Keep them if they reference t
      If the release message includes organization-wide deployment or announcement cues (e.g., "<!channel>", "@channel", "@here"), assign **audience = "all"**.
    - When a cluster topic is **"Progress"**, use **audience = "internal"** (status sharing among team members).
    - When a cluster topic is **"Feature"** with subcategory **"Request"** or **"Estimate"**, use **audience = "engineering"**.
+   - **Engagement-based adjustment** (apply lightly):
+     - Count unique meta.userInfo.id values across all messages and their meta.replies arrays in a cluster.
+     - If unique participants ≥8 or total reply count ≥10, consider broadening audience scope (e.g., internal → engineering, engineering → product).
+     - High engagement indicates wider organizational interest and relevance.
 
 7. **Impact Scoring**
    - Use weighted signals:
      - Severity: Sev-1 +0.5, Sev-2 +0.35
      - Mentions: <!channel> +0.2, @here +0.15, direct @mentions up to +0.1
-     - Reactions: per reaction count +0.02 (max +0.2)
-     - Replies: ≥3 +0.1, ≥6 +0.2
-     - Ticket keywords: “requirements definition” or “login failure” +0.1~0.25
+     - Reactions: count all meta.reactions[].count values, +0.02 per reaction (max +0.2) — community feedback
+       → ≥5 reactions +0.05, ≥10 reactions +0.1 additional boost
+     - Replies: count meta.replies array length per message, +0.03 per reply (max +0.25) — active discussions
+     - Participant Engagement: count unique meta.userInfo.id across parent message and all meta.replies[].meta.userInfo.id values
+       → ≥3 unique users +0.1, ≥5 +0.2, ≥8 +0.3 — organizational interest
+     - Ticket keywords: "requirements definition" or "login failure" +0.1~0.25
      - Recency decay: older than 7 days −0.1, older than 30 days −0.25
    - Topic-based adjustments:
      - **Progress** clusters should generally be **low** impact (informational).
@@ -156,7 +165,7 @@ Some messages are from integrations (e.g. GitHub). Keep them if they reference t
 
 ## 🧩 Keyword Hints
 
-- Incident: "incident", "Sev-1", "error", "outage", "login failure".
+- Incident: "incident", "Exception", "Sev-1", "error", "outage", "login failure", "failure", "incident".
 - Release: "release", "deploy", "module created", "v[0-9.]+".
 - Bugfix: "hotfix", "fix", "bug", "patch", "correction".
 - Decision: "decision", "agreement", "approval".
@@ -172,6 +181,8 @@ Some messages are from integrations (e.g. GitHub). Keep them if they reference t
 - Do NOT fabricate data or IDs.
 - Do NOT output empty clusters.
 - Do NOT include fields outside the schema.
+- **Do NOT filter out messages with critical keywords** (errors, incidents, bugs, releases).
+- **ALWAYS include messages related to system errors, failures, or incidents** regardless of how trivial they may seem.
 - Keep the output strictly valid JSON according to TopicClusters schema.
 
 ---

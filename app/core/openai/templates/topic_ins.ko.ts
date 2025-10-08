@@ -85,8 +85,10 @@ export const TOPIC_CLUSTERING_INSTRUCTIONS_KO = `
 ## ⚙️ 처리 단계
 
 1. **사전 필터링 및 정규화**
-   - 의미 없는 메시지는 제외 (단, 유용한 스레드의 일부라면 유지)
+   - **다음 중요 키워드를 포함한 메시지는 절대 제외하지 않음**: "error", "Exception", "incident", "Sev-1", "Sev-2", "failure", "outage", "system error", "login failure", "bug", "fix", "patch", "hotfix", "release", "deploy", "오류", "에러", "장애", "사고", "수정", "릴리스", "배포", 티켓 URL, Redmine 이슈 번호.
+   - 정말 의미 없는 메시지만 제외: 인사말만 있는 경우("안녕하세요", "수고하세요"), 이모지만 있는 리액션, 완전히 빈 메시지.
    - 티켓/릴리스/배포 관련 통합 메시지는 유지
+   - 판단이 애매하면, 제외하기보다는 포함하는 것을 선택할 것.
 
 2. **스레드 및 중복 처리**
    - 부모 메시지와 답글을 하나의 대화로 통합
@@ -95,7 +97,7 @@ export const TOPIC_CLUSTERING_INSTRUCTIONS_KO = `
 3. **티켓 및 링크 추출**
    - Redmine 티켓: 'https://redmine.l-edge.jp/issues/(\\d+)'  
    - 릴리스/버전 단서: 'Release vX.Y.Z', 'module created', 'deploy', 'release', '릴리스', '버전', '모듈 생성', '배포'  
-   - 장애 단서: 'Sev-1', 'incident', 'outage', 'system error', '장애', '사고', '시스템 오류', '오류', '수정 요청'
+   - 장애 단서: 'Sev-1', "Exception", 'incident', 'outage', 'system error', '장애', '사고', '시스템 오류', '오류', '수정 요청', '파란스'
 
 4. **그룹핑 신호**
    - 같은 티켓 ID → 동일 클러스터  
@@ -118,14 +120,21 @@ export const TOPIC_CLUSTERING_INSTRUCTIONS_KO = `
    - 클러스터의 topic이 **"Progress"** 인 경우, **audience = "internal"** 로 설정합니다. (팀 내부의 진행상황 공유)
    - 클러스터의 topic이 **"Feature"** 이고, subcategory가 **"Request"** 또는 **"Estimate"** 인 경우  
      **audience = "engineering"** 으로 설정합니다.
+   - **참여도 기반 조정** (약하게 적용):
+     - 클러스터 내 모든 메시지 및 해당 meta.replies 배열에서 고유한 meta.userInfo.id 값의 수를 카운트합니다.
+     - 고유 참여자 수≥8명 또는 총 답글 수≥10개인 경우, 대상 범위 확대를 고려합니다(예: internal → engineering, engineering → product).
+     - 높은 참여도는 조직 전체의 관심과 관련성을 나타냅니다.
 
 7. **Impact 스코어링**
    - 다음의 가중 신호를 사용합니다:
      - 심각도(Severity): Sev-1 +0.5, Sev-2 +0.35  
      - 멘션: <!channel> +0.2, @here +0.15, 직접 멘션 최대 +0.1  
-     - 리액션: 개수당 +0.02 (최대 +0.2)  
-     - 답글 수: ≥3 +0.1, ≥6 +0.2  
-     - 티켓 키워드: “requirements definition” 또는 “login failure” +0.1~0.25  
+     - 리액션: 모든 meta.reactions[].count 값을 카운트, 리액션 1개당 +0.02 (최대 +0.2)  
+       → ≥5리액션 +0.05, ≥10리액션 +0.1 추가 부스트  
+     - 답글 수: 메시지별 meta.replies 배열 길이를 카운트, 답글당 +0.03 (최대 +0.25) — 활발한 토론
+     - 참여자 참여도: 부모 메시지의 meta.userInfo.id와 모든 meta.replies[].meta.userInfo.id에서 고유 값 카운트
+       → ≥3명 +0.1, ≥5명 +0.2, ≥8명 +0.3 — 조직적 관심도
+     - 티켓 키워드: "requirements definition" 또는 "login failure" +0.1~0.25  
      - 최신성 감점: 7일 이상 경과 시 −0.1, 30일 이상 −0.25  
    - 주제(topic)에 따른 보정:
      - **Progress** 클러스터는 일반적으로 **low** (정보 공유 수준) Impact로 간주합니다.  
@@ -150,7 +159,7 @@ export const TOPIC_CLUSTERING_INSTRUCTIONS_KO = `
 
 ## 🧩 키워드 힌트
 
-- Incident: "incident", "Sev-1", "error", "outage", "login failure", "장애", "사고", "시스템 오류", "오류", "수정 요청", "로그인 실패"
+- Incident: "incident", "Exception", "Sev-1", "error", "outage", "login failure", "장애", "사고", "시스템 오류", "오류", "수정 요청", "로그인 실패"
 - Release: "release", "deploy", "module created", "v[0-9.]+", "릴리스", "버전", "모듈 생성", "배포"
 - Bugfix: "hotfix", "fix", "bug", "patch", "correction", "수정", "버그", "패치", "수정 요청", "오류", "파란스"
 - Decision: "decision", "agreement", "approval", "결정", "동의", "승인"
@@ -166,6 +175,8 @@ export const TOPIC_CLUSTERING_INSTRUCTIONS_KO = `
 - 데이터나 ID를 임의로 생성하지 말 것  
 - 빈 클러스터를 출력하지 말 것  
 - 스키마 외 필드는 포함 금지  
+- **중요 키워드(에러, 장애, 버그, 릴리스)를 포함한 메시지 제외 금지**
+- **시스템 에러, 장애, 사고와 관련된 메시지는 사소해 보여도 반드시 포함할 것**
 - JSON은 TopicClusters 스키마를 엄격히 준수해야 함
 
 ---

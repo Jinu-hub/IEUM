@@ -49,3 +49,32 @@ export type RuleType = typeof RULE_TYPE[number];
 export type DeliveryEventTypeEmail = typeof DELIVERY_EVENT_TYPE_EMAIL[number];
 export type AuditAction = typeof AUDIT_ACTION[number];
 export type ConnectionStatus = typeof CONNECTION_STATUS[number];
+
+
+/* =========================================================
+   Topic Ranker Constants
+========================================================= */
+export const IMPACT_MAP = { critical: 1.0, high: 0.9, medium: 0.6, low: 0.3 } as const;
+export type ImpactKey = keyof typeof IMPACT_MAP;
+export const CFG_RANKER = {
+  weights: {
+    // Base = 토픽 기반 점수
+    impact: 0.5,
+    engagement: 0.25,  // signals.count & participants
+    recency: 0.15,     // signals.recencyScore (0~1)
+    confidence: 0.10,  // signals.crossLinkScore (0~1)
+  },
+  bonuses: {
+    audienceFit: 0.02,     // 뉴스레터 대상과 일치하면 +0.02
+    incidentCritical: 0.08,// Incident + critical 이면 +0.08
+    orgWideRelease: 0.06,  // Release + audience=all 이면 +0.06
+  },
+  penalties: {
+    repetition: 0.03,      // (옵션) 반복 공지 감점—지금은 0으로 둬도 됨
+  },
+  thresholds: {
+    topK: 7,
+    minScore: 0.5,         // 이하는 컷
+    maxPerTopic: 3,
+  },
+};

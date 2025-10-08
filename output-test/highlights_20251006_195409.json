@@ -1,0 +1,36 @@
+[
+  {
+    "clusterId": "lead-module-release-oct-2025",
+    "title": "2025年10月版のLEADモジュール作成に関する告知が複数チャネルで共有され、全社向けに周知されています。",
+    "summary": "2025年10月版のLEADモジュール作成に関する告知が複数チャネルで共有され、全社向けに周知されています。",
+    "audience": "all",
+    "score": 0.6768292725343761,
+    "parts": {
+      "base": 0.8567073229644111,
+      "kpiFactor": 0.7200000000000001,
+      "bonuses": 0.06,
+      "penalties": 0
+    },
+    "meta": {
+      "topic": "Release",
+      "impact": "high"
+    }
+  },
+  {
+    "clusterId": "lead-issues-support-updates",
+    "title": "複数のサポートチケットに関する修正や機能改修のアップデートが共有され、LEAD管理者機能や各種バグ修正が進行中です。",
+    "summary": "複数のサポートチケットに関する修正や機能改修のアップデートが共有され、LEAD管理者機能や各種バグ修正が進行中です。",
+    "audience": "engineering",
+    "score": 0.5256000000000001,
+    "parts": {
+      "base": 0.73,
+      "kpiFactor": 0.7200000000000001,
+      "bonuses": 0,
+      "penalties": 0
+    },
+    "meta": {
+      "topic": "Bugfix",
+      "impact": "medium"
+    }
+  }
+]

@@ -1,0 +1,504 @@
+{
+  "clusters": [
+    {
+      "id": "release-lead-2025-10-module-creation",
+      "topic": "Release",
+      "subcategory": "Monthly module",
+      "audience": "all",
+      "impact": "high",
+      "items": [
+        "slack:1759830105.557329",
+        "slack:1759743321.689389",
+        "slack:1759486015.792279",
+        "slack:1759398070.751519",
+        "slack:1759311348.215509"
+      ],
+      "signals": {
+        "count": 5,
+        "recencyScore": 0.95,
+        "crossLinkScore": 0.5,
+        "labelHits": [
+          "<!channel>"
+        ],
+        "keywordHits": [
+          "モジュール作成",
+          "release",
+          "リリース"
+        ],
+        "participants": 6,
+        "relevance": 0.8,
+        "importance": 0.7
+      },
+      "summary": "LEADの10月バージョンモジュール作成を複数回アナウンス。全社周知のうえで月次リリース準備が進行中です。"
+    },
+    {
+      "id": "incident-login-failure-21778",
+      "topic": "Incident",
+      "subcategory": "Login failure",
+      "audience": "leadership",
+      "impact": "high",
+      "items": [
+        "slack:1759398905.184509",
+        "slack:1759399175.753169",
+        "slack:1759796987.345349"
+      ],
+      "signals": {
+        "count": 3,
+        "recencyScore": 0.9,
+        "crossLinkScore": 0.4,
+        "labelHits": null,
+        "keywordHits": [
+          "システムエラー",
+          "ログイン不可",
+          "[8]",
+          "login"
+        ],
+        "participants": 2,
+        "relevance": 0.85,
+        "importance": 0.75
+      },
+      "summary": "「システムエラーが発生しました。[8]」により一部ユーザがログイン不可となる事象（#21778）の対応/更新が進行中です。影響範囲確認と原因調査が継続されています。"
+    },
+    {
+      "id": "announcement-pre-commit-approval-process",
+      "topic": "Announcement",
+      "subcategory": "Process",
+      "audience": "engineering",
+      "impact": "high",
+      "items": [
+        "slack:1759709428.521429",
+        "slack:1759724798.015049",
+        "slack:1759826930.989169"
+      ],
+      "signals": {
+        "count": 3,
+        "recencyScore": 0.88,
+        "crossLinkScore": 0.6,
+        "labelHits": [
+          "<!channel>"
+        ],
+        "keywordHits": [
+          "コミット前確認",
+          "承認",
+          "手続き"
+        ],
+        "participants": 5,
+        "relevance": 0.8,
+        "importance": 0.65
+      },
+      "summary": "LEAD/CLASSICのコミット前に内容・影響範囲・リスクを申告し、承認後にコミットする運用を開始しました。以降のコミットは本フローに従うよう周知されています。"
+    },
+    {
+      "id": "security-import-out-of-scope-21740",
+      "topic": "Security",
+      "subcategory": "Permission/Access control",
+      "audience": "leadership",
+      "impact": "high",
+      "items": [
+        "slack:1759367257.949599",
+        "slack:1759368016.952829",
+        "slack:1759310160.658219"
+      ],
+      "signals": {
+        "count": 3,
+        "recencyScore": 0.75,
+        "crossLinkScore": 0.4,
+        "labelHits": null,
+        "keywordHits": [
+          "参照範囲外",
+          "インポート更新",
+          "権限"
+        ],
+        "participants": 2,
+        "relevance": 0.78,
+        "importance": 0.62
+      },
+      "summary": "参照範囲外ユーザでもアイテム情報をインポート更新できる問題（#21740）を調査中です。権限絡みの潜在的リスクのため優先度高で対応が必要です。"
+    },
+    {
+      "id": "security-password-policy-default-change-21769-21770",
+      "topic": "Security",
+      "subcategory": "Password policy",
+      "audience": "engineering",
+      "impact": "medium",
+      "items": [
+        "slack:1759286841.007799",
+        "slack:1759286920.672799",
+        "slack:1759743480.871799"
+      ],
+      "signals": {
+        "count": 3,
+        "recencyScore": 0.82,
+        "crossLinkScore": 0.3,
+        "labelHits": null,
+        "keywordHits": [
+          "パスワードポリシー",
+          "初期値",
+          "セキュリティ"
+        ],
+        "participants": 2,
+        "relevance": 0.6,
+        "importance": 0.5
+      },
+      "summary": "LEAD/CLASSIC双方でパスワードポリシーの初期値変更（#21769, #21770）を起票・更新。セキュリティ基準整備の一環として検討が進んでいます。"
+    },
+    {
+      "id": "bugfix-collection-template-import-error-21747",
+      "topic": "Bugfix",
+      "subcategory": "Server error",
+      "audience": "engineering",
+      "impact": "medium",
+      "items": [
+        "slack:1759735977.029779",
+        "slack:1759737293.430169",
+        "slack:1759798038.528609"
+      ],
+      "signals": {
+        "count": 3,
+        "recencyScore": 0.85,
+        "crossLinkScore": 0.35,
+        "labelHits": null,
+        "keywordHits": [
+          "サーバ内部エラー",
+          "インポート",
+          "集合研修テンプレート"
+        ],
+        "participants": 1,
+        "relevance": 0.55,
+        "importance": 0.5
+      },
+      "summary": "集合研修テンプレートのインポートでキー名を複数列挙すると内部エラーとなる不具合（#21747）の対応がトラッキングされています。原因調査と修正が進行中です。"
+    },
+    {
+      "id": "bugfix-message-target-mismatch-21781",
+      "topic": "Bugfix",
+      "subcategory": "Message management",
+      "audience": "engineering",
+      "impact": "medium",
+      "items": [
+        "slack:1759476504.835599",
+        "slack:1759476739.545139",
+        "slack:1759745444.381779",
+        "slack:1759739683.276949"
+      ],
+      "signals": {
+        "count": 4,
+        "recencyScore": 0.82,
+        "crossLinkScore": 0.6,
+        "labelHits": null,
+        "keywordHits": [
+          "対象者が一致しない",
+          "メッセージ管理",
+          "corp_rid",
+          "重複データ"
+        ],
+        "participants": 4,
+        "relevance": 0.62,
+        "importance": 0.55
+      },
+      "summary": "メッセージ管理の「設定」と「閲覧状況」で対象者が一致しない問題（#21781）に対し、SQL抽出やcorp_rid追加などの是正策を検討・共有しました。"
+    },
+    {
+      "id": "refactor-performance-21761-training-slow",
+      "topic": "Refactor",
+      "subcategory": "Performance",
+      "audience": "engineering",
+      "impact": "medium",
+      "items": [
+        "slack:1759313841.969979",
+        "slack:1759299709.099459",
+        "slack:1759473758.310249",
+        "slack:1759478232.918459"
+      ],
+      "signals": {
+        "count": 4,
+        "recencyScore": 0.78,
+        "crossLinkScore": 0.4,
+        "labelHits": null,
+        "keywordHits": [
+          "画面遷移に時間",
+          "性能",
+          "集合研修"
+        ],
+        "participants": 3,
+        "relevance": 0.58,
+        "importance": 0.48
+      },
+      "summary": "集合研修の申請/進捗画面の表示遅延（#21761）の原因調査と改善対応が継続されています。処理見直しによるパフォーマンス改善が目的です。"
+    },
+    {
+      "id": "bugfix-collection-link-remains-21768",
+      "topic": "Bugfix",
+      "subcategory": "Data consistency",
+      "audience": "engineering",
+      "impact": "medium",
+      "items": [
+        "slack:1759292476.296929",
+        "slack:1759388045.288549",
+        "slack:1759400340.368079",
+        "slack:1759473926.076579"
+      ],
+      "signals": {
+        "count": 4,
+        "recencyScore": 0.8,
+        "crossLinkScore": 0.35,
+        "labelHits": null,
+        "keywordHits": [
+          "紐付け残存",
+          "削除",
+          "コレクション"
+        ],
+        "participants": 2,
+        "relevance": 0.55,
+        "importance": 0.45
+      },
+      "summary": "コレクションに紐づくアイテムを各管理機能で削除しても紐付けが残る問題（#21768）を追跡中。関連削除処理の整合性を修正予定です。"
+    },
+    {
+      "id": "feature-ui-layout-nsg-thread",
+      "topic": "Feature",
+      "subcategory": "Design/UI",
+      "audience": "engineering",
+      "impact": "medium",
+      "items": [
+        "slack:1759820570.875279"
+      ],
+      "signals": {
+        "count": 1,
+        "recencyScore": 0.9,
+        "crossLinkScore": 0.7,
+        "labelHits": null,
+        "keywordHits": [
+          "レイアウト調整",
+          "figma",
+          "HTML表示",
+          "アイコン表示"
+        ],
+        "participants": 5,
+        "relevance": 0.6,
+        "importance": 0.45
+      },
+      "summary": "NSG関連の画面レイアウト調整に関する仕様確認と合意形成をスレッドで実施しました。HTML表示方法やアイコン表示有無などの詳細を確定しています。"
+    },
+    {
+      "id": "feature-information-management-21627",
+      "topic": "Feature",
+      "subcategory": "Information management",
+      "audience": "engineering",
+      "impact": "medium",
+      "items": [
+        "slack:1759456430.793519",
+        "slack:1759298616.472149",
+        "slack:1759297941.662509"
+      ],
+      "signals": {
+        "count": 3,
+        "recencyScore": 0.76,
+        "crossLinkScore": 0.3,
+        "labelHits": null,
+        "keywordHits": [
+          "インフォメーション管理",
+          "LEAD対応",
+          "新規機能"
+        ],
+        "participants": 1,
+        "relevance": 0.5,
+        "importance": 0.45
+      },
+      "summary": "インフォメーション管理（全表示）のLEAD対応（#21627）の更新が進行中です。仕様適用と実装更新を追跡しています。"
+    },
+    {
+      "id": "bugfix-import-key-alert-21471",
+      "topic": "Bugfix",
+      "subcategory": "Import UX",
+      "audience": "engineering",
+      "impact": "medium",
+      "items": [
+        "slack:1759811747.143159",
+        "slack:1759811474.493959",
+        "slack:1759449827.306469",
+        "slack:1759298532.602269",
+        "slack:1759297930.654469"
+      ],
+      "signals": {
+        "count": 5,
+        "recencyScore": 0.84,
+        "crossLinkScore": 0.4,
+        "labelHits": null,
+        "keywordHits": [
+          "インポートキー",
+          "アラートメッセージ",
+          "サポート"
+        ],
+        "participants": 2,
+        "relevance": 0.55,
+        "importance": 0.45
+      },
+      "summary": "誤ったインポートキー入力時にアラートを出す改善（#21471）の更新が継続。ユーザ通知と誤操作防止のUX向上対応です。"
+    },
+    {
+      "id": "bugfix-popup-block-21763",
+      "topic": "Bugfix",
+      "subcategory": "External content",
+      "audience": "engineering",
+      "impact": "medium",
+      "items": [
+        "slack:1759368140.595229",
+        "slack:1759373300.971049"
+      ],
+      "signals": {
+        "count": 2,
+        "recencyScore": 0.7,
+        "crossLinkScore": 0.3,
+        "labelHits": null,
+        "keywordHits": [
+          "ポップアップブロック",
+          "電子書籍",
+          "確認ダイアログ"
+        ],
+        "participants": 2,
+        "relevance": 0.48,
+        "importance": 0.42
+      },
+      "summary": "電子書籍（外部受講サービス）にてポップアップブロックが発生する件（#21763）の解消検討が共有されています。確認ダイアログ周りの挙動を見直し予定です。"
+    },
+    {
+      "id": "bugfix-aitalk-seekbar-20130",
+      "topic": "Bugfix",
+      "subcategory": "eStudio/AITalk",
+      "audience": "engineering",
+      "impact": "low",
+      "items": [
+        "slack:1759389982.594839",
+        "slack:1759488188.125409"
+      ],
+      "signals": {
+        "count": 2,
+        "recencyScore": 0.68,
+        "crossLinkScore": 0.2,
+        "labelHits": null,
+        "keywordHits": [
+          "AItalk",
+          "シークバー",
+          "スライド教材"
+        ],
+        "participants": 2,
+        "relevance": 0.4,
+        "importance": 0.35
+      },
+      "summary": "eStudioでAItalkを適用したスライド教材にシークバーが表示されない問題（#20130）の対応状況が更新されました。原因確認と修正が進行中です。"
+    },
+    {
+      "id": "bugfix-v5-2-20-21754-commit-requests",
+      "topic": "Bugfix",
+      "subcategory": "V5.2.20 修正依頼表対応",
+      "audience": "engineering",
+      "impact": "low",
+      "items": [
+        "slack:1759816855.089989",
+        "slack:1759817665.938409",
+        "slack:1759485153.773359"
+      ],
+      "signals": {
+        "count": 3,
+        "recencyScore": 0.86,
+        "crossLinkScore": 0.45,
+        "labelHits": null,
+        "keywordHits": [
+          "コミット",
+          "修正依頼表",
+          "メールHTML",
+          "タグエンコード"
+        ],
+        "participants": 3,
+        "relevance": 0.45,
+        "importance": 0.35
+      },
+      "summary": "V5.2.20修正依頼表対応（#21754）でのコミット前承認依頼とチケット整理。メールHTML送信対応やインポート時のタグエンコード修正をコミット予定です。"
+    },
+    {
+      "id": "feature-estimate-gateway-dynamic-param-21779",
+      "topic": "Feature",
+      "subcategory": "Estimate",
+      "audience": "engineering",
+      "impact": "low",
+      "items": [
+        "slack:1759463655.138839"
+      ],
+      "signals": {
+        "count": 1,
+        "recencyScore": 0.72,
+        "crossLinkScore": 0.2,
+        "labelHits": null,
+        "keywordHits": [
+          "見積",
+          "gateway",
+          "動的パラメータ",
+          "API"
+        ],
+        "participants": 1,
+        "relevance": 0.4,
+        "importance": 0.3
+      },
+      "summary": "gatewayのAPIに動的パラメータを渡す要件（#21779）の見積依頼が作成されました。実装可否および工数見立てを行います。"
+    },
+    {
+      "id": "announcement-spec-review-invite-2025-10-06",
+      "topic": "Announcement",
+      "subcategory": "Meeting",
+      "audience": "internal",
+      "impact": "low",
+      "items": [
+        "slack:1759740905.940679"
+      ],
+      "signals": {
+        "count": 1,
+        "recencyScore": 0.78,
+        "crossLinkScore": 0.1,
+        "labelHits": null,
+        "keywordHits": [
+          "レビュー",
+          "概要書",
+          "月次MTG"
+        ],
+        "participants": 5,
+        "relevance": 0.4,
+        "importance": 0.3
+      },
+      "summary": "仕様概要書レビューと月次MTGの見学参加依頼。今後のレビュー進行の参考として関係者へ日程調整が行われました。"
+    },
+    {
+      "id": "progress-admin-fixes-daily-updates",
+      "topic": "Progress",
+      "subcategory": "LEAD 管理者機能・修正依頼表",
+      "audience": "internal",
+      "impact": "low",
+      "items": [
+        "slack:1759828547.745379",
+        "slack:1759799630.417659",
+        "slack:1759742228.046669",
+        "slack:1759713442.842039",
+        "slack:1759708911.613139",
+        "slack:1759312052.192399",
+        "slack:1759281426.005459",
+        "slack:1759367886.514009"
+      ],
+      "signals": {
+        "count": 8,
+        "recencyScore": 0.9,
+        "crossLinkScore": 0.6,
+        "labelHits": null,
+        "keywordHits": [
+          "本日の作業状況",
+          "作業予定",
+          "修正依頼表",
+          "人事連携"
+        ],
+        "participants": 7,
+        "relevance": 0.5,
+        "importance": 0.3
+      },
+      "summary": "管理者機能対応および修正依頼表に関する日々の作業予定・進捗が共有されました。人事連携や成果管理の対応など、タスク消化と優先度調整が進んでいます。"
+    }
+  ]
+}

@@ -84,8 +84,10 @@ export const TOPIC_CLUSTERING_INSTRUCTIONS_JA = `
 ## ⚙️ 処理パイプライン
 
 1. **前処理と正規化**
-   - 重要性の低いメッセージは除外（スレッドの一部として有益なら保持）
+   - **以下の重要キーワードを含むメッセージは絶対に除外しない**: "error", "Exception", "incident", "Sev-1", "Sev-2", "failure", "outage", "system error", "login failure", "bug", "fix", "patch", "hotfix", "release", "deploy", "エラー", "障害", "インシデント", "修正", "リリース", "デプロイ", チケットURL、Redmine課題番号。
+   - 本当に意味のない投稿のみ除外: 挨拶のみ（"おはよう"、"お疲れ様"）、絵文字のみのリアクション、完全に空のメッセージ。
    - チケットやリリース、デプロイを含む統合メッセージは保持
+   - 判断に迷った場合は、除外するよりも含める方を選択すること。
 
 2. **スレッドと重複処理**
    - 親メッセージと返信を1つの会話として統合
@@ -94,7 +96,7 @@ export const TOPIC_CLUSTERING_INSTRUCTIONS_JA = `
 3. **チケット・リンク抽出**
    - Redmineチケット: 'https://redmine.l-edge.jp/issues/(\\d+)'  
    - リリース・デプロイ指標: 'Release vX.Y.Z', 'module created', 'deploy', 'release', 'リリース', 'デプロイ', 'モジュール作成'
-   - インシデント指標: 'Sev-1', 'incident', 'outage', 'system error', 'インシデント', '障害', 'システムエラー', 'エラー', '修正依頼'
+   - インシデント指標: 'Sev-1', "Exception", 'incident', 'outage', 'system error', 'インシデント', '障害', 'システムエラー', 'エラー', '修正依頼', '異常終了'
 
 4. **グルーピングロジック**
    - 同一チケットID → 同一クラスタ  
@@ -117,14 +119,21 @@ export const TOPIC_CLUSTERING_INSTRUCTIONS_JA = `
    - クラスタの topic が **"Progress"** の場合、**audience = "internal"** を設定します。（チーム内の進捗共有）
    - クラスタの topic が **"Feature"** で subcategory が **"Request"** または **"Estimate"** の場合、  
      **audience = "engineering"** を設定します。
+   - **エンゲージメントに基づく調整**（控えめに適用）:
+     - クラスタ内の全メッセージおよびその meta.replies 配列から、ユニークな meta.userInfo.id の数をカウントします。
+     - ユニーク参加者数≥8人、または返信総数≥10件の場合、対象範囲の拡大を検討します（例: internal → engineering、engineering → product）。
+     - 高いエンゲージメントは、組織全体の関心と関連性の高さを示します。
 
 7. **Impact スコアリング**
    - 以下の重み付けシグナルを使用します:
      - 重大度（Severity）: Sev-1 +0.5、Sev-2 +0.35  
      - メンション: <!channel> +0.2、@here +0.15、直接メンション最大 +0.1  
-     - リアクション: 数ごとに +0.02（最大 +0.2）  
-     - 返信数: 3件以上 +0.1、6件以上 +0.2  
-     - チケットキーワード: “requirements definition” または “login failure” +0.1〜0.25  
+     - リアクション: 全ての meta.reactions[].count 値をカウントし、リアクション1件につき +0.02（最大 +0.2）  
+       → ≥5リアクション +0.05、≥10リアクション +0.1 追加ブースト  
+     - 返信数: メッセージごとに meta.replies 配列の長さをカウント、返信1件につき +0.03（最大 +0.25） — 活発な議論
+     - 参加者エンゲージメント: 親メッセージの meta.userInfo.id と全ての meta.replies[].meta.userInfo.id からユニーク数をカウント
+       → ≥3人 +0.1、≥5人 +0.2、≥8人 +0.3 — 組織的関心度
+     - チケットキーワード: "requirements definition" または "login failure" +0.1〜0.25  
      - 経過時間による減点: 7日超過 −0.1、30日超過 −0.25  
    - トピックに基づく調整:
      - **Progress** クラスタは一般的に **low**（情報共有レベル）のImpactとします。  
@@ -149,7 +158,7 @@ export const TOPIC_CLUSTERING_INSTRUCTIONS_JA = `
 
 ## 🧩 キーワード例
 
-- Incident: "incident", "Sev-1", "error", "outage", "login failure", "インシデント", "Sev-1", "障害", "失敗", "エラー", "システムエラー", "パフォーマンス", ”性能"
+- Incident: "incident", "Exception", "Sev-1", "error", "outage", "login failure", "インシデント", "Sev-1", "障害", "失敗", "エラー", "システムエラー", "パフォーマンス", ”性能", "異常終了"
 - Release: "release", "deploy", "module created", "v[0-9.]+", "リリース", "デプロイ", "モジュール作成"
 - Bugfix: "hotfix", "fix", "bug", "patch", "correction", "修正", "バグ", "パッチ", "修正依頼", "エラー", "パフォーマンス", "性能"
 - Decision: "decision", "agreement", "approval", "承認", "同意", "確認", "決定"
@@ -165,6 +174,8 @@ export const TOPIC_CLUSTERING_INSTRUCTIONS_JA = `
 - データやIDの創作は禁止  
 - 空クラスタの出力禁止  
 - スキーマ外のフィールドを含めない  
+- **重要キーワード（エラー、インシデント、バグ、リリース）を含むメッセージの除外は禁止**
+- **システムエラー、障害、インシデントに関連するメッセージは、些細に見えても必ず含めること**
 - JSON構造はTopicClustersスキーマに厳密に準拠
 
 ---

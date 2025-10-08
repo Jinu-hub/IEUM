@@ -1,9 +1,12 @@
 import { run } from "@openai/agents";
+import { z } from "zod";
 import { createGithubStats } from "~/features/cron/api/create-contents";
 import type { FetchedRepoData } from "../integrations/github/types";
-import type { CaseKpi, KpiSnapshot, LinkedActivityDoc, RepoKpi, UserRepoKpi } from "../lib/types";
-import { TopicInput, TopicOutput } from "../openai/models";
+import { CFG_RANKER } from "../lib/constants";
+import type { CaseKpi, KpiSnapshot, LinkedActivityDoc, RankedHighlight, RepoKpi, UserRepoKpi } from "../lib/types";
+import { Cluster, TopicInput, TopicOutput } from "../openai/models";
 import { topicClusteringAgent } from "../openai/test-agent";
+import { baseScore, buildKpiIndex, extractCaseId, kpiFactorOf, smallBonuses } from "./utils";
 
 /**
  * github data를 기반으로 kpi snapshot을 생성
@@ -57,6 +60,7 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
                 caseMap.set(caseNo, {
                     case: caseNo,
                     commits: 1,
+                    repo: repoName,
                 });
             }
         }
@@ -156,3 +160,64 @@ export async function topicClustering(linkedData: LinkedActivityDoc): Promise<ty
 
     return result.finalOutput as unknown as typeof TopicOutput;
 }
+
+
+export function rankHighlights(
+    topics: z.infer<typeof TopicOutput>,
+    kpi: KpiSnapshot,
+    opts?: { audience?: RankedHighlight["audience"]; topK?: number }
+  ): RankedHighlight[] {
+    const k = buildKpiIndex(kpi);
+    const topK = opts?.topK ?? CFG_RANKER.thresholds.topK;
+  
+    const ranked = topics.clusters.map<RankedHighlight>((c) => {
+      // 1) 토픽 기반 점수
+      const base = baseScore(c);
+  
+      // 2) KPI 보정
+      const caseId = extractCaseId(c);
+      const repoFromCase = caseId ? k.caseRepo.get(caseId) : undefined;
+      const repoShare = repoFromCase ? (k.repoShare.get(repoFromCase) ?? 0) : 0;
+      const caseShare = caseId ? (k.caseShare.get(caseId) ?? 0) : 0;
+      const kpiF = kpiFactorOf(repoShare, caseShare);
+  
+      // 3) 작은 보너스/패널티
+      let bonuses = smallBonuses(c);
+      if (opts?.audience && (c.audience === opts.audience || c.audience === "all")) {
+        bonuses += CFG_RANKER.bonuses.audienceFit;
+      }
+      const penalties = 0; // 반복공지 감지기 넣을 때 여기에 적용(초기엔 0)
+  
+      const total = base * kpiF + bonuses - penalties;
+  
+      return {
+        clusterId: c.id,
+        title: c.summary?.slice(0, 100) || `${c.topic} update`,
+        summary: c.summary,
+        audience: c.audience,
+        score: total,
+        parts: { base, kpiFactor: kpiF, bonuses, penalties },
+        meta: { topic: c.topic, impact: c.impact, caseId, repo: repoFromCase },
+        items: c.items,
+      };
+    });
+  
+    // 4) 정렬 및 간단 다양성(같은 토픽 과점 방지)
+    ranked.sort((a, b) => b.score - a.score);
+  
+    const picked: RankedHighlight[] = [];
+    const topicCount = new Map<z.infer<typeof Cluster>["topic"], number>();
+  
+    for (const r of ranked) {
+      if (r.score < CFG_RANKER.thresholds.minScore) continue; // 컷오프
+      const t = r.meta.topic;
+      const tCount = topicCount.get(t) ?? 0;
+      if (tCount >= CFG_RANKER.thresholds.maxPerTopic) continue; // 토픽 과점 방지
+      picked.push(r);
+      topicCount.set(t, tCount + 1);
+      if (picked.length >= topK) break;
+    }
+  
+    return picked;
+  }
+

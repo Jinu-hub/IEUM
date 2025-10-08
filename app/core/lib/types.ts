@@ -1,5 +1,7 @@
+import { z } from "zod";
 import type { FetchedRepoData } from "~/core/integrations/github/types";
 import type { FetchedMessage } from "~/core/integrations/slack/types";
+import type { Cluster } from "../openai/models";
 
 /**
  * コンテンツ生成用のデータ型
@@ -100,12 +102,12 @@ export type LinkedActivityDoc = {
     slack: Record<string, LinkedItem[]>; // 채널별 그룹화
     [key: string]: LinkedItem[] | Record<string, LinkedItem[]>;
   };
-/*
+
   index?: {
     byId: Record<string, LinkedItem>;
     edges: LinkEdge[];
   };
-  */
+
 };
 
 /** 
@@ -194,6 +196,7 @@ export type UserRepoKpi = {
 
 export type CaseKpi = {
   case: string;
+  repo: string;
   commits: number;
 };
 
@@ -209,3 +212,26 @@ export type KpiSnapshot = {
   perUser: UserRepoKpi[];
   perCase: CaseKpi[];
 };
+
+export type RankedHighlight = {
+  clusterId: string;
+  title: string;
+  summary?: string | null;
+  audience: "internal" | "engineering" | "product" | "leadership" | "all";
+  score: number;                  // 최종 점수 (간단 명료)
+  parts: {                        // 점수 근거 (설명가능성)
+    base: number;                 // 토픽 자체 점수
+    kpiFactor: number;            // KPI로 가중
+    bonuses: number;              // 하드룰/작은 보너스
+    penalties: number;            // 반복/잡음 패널티
+  };
+  meta: {
+    topic: z.infer<typeof Cluster>["topic"];
+    impact: z.infer<typeof Cluster>["impact"];
+    caseId?: string;              // "#12345" 같은 케이스 아이디
+    repo?: string;                // KPI에서 유추된 repo
+  };
+  items: z.infer<typeof Cluster>["items"];
+};
+
+

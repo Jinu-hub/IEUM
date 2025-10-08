@@ -404,12 +404,12 @@ import {
         issue: (itemsByType.issue as InternalItem[]) || [],
         slack: (itemsByType.slack as Record<string, InternalItem[]>) || {},
       },
-      /*
+      
       index: {
         byId: Object.fromEntries(allItems.map((i) => [i.id, i])),
         edges,
       },
-      */
+      
     };
   }
   

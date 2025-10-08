@@ -1,0 +1,143 @@
+[
+  {
+    "clusterId": "refactor-performance-21761-training-slow",
+    "title": "集合研修の申請/進捗画面の表示遅延（#21761）の原因調査と改善対応が継続されています。処理見直しによるパフォーマンス改善が目的です。",
+    "summary": "集合研修の申請/進捗画面の表示遅延（#21761）の原因調査と改善対応が継続されています。処理見直しによるパフォーマンス改善が目的です。",
+    "audience": "engineering",
+    "score": 0.6624984889563394,
+    "parts": {
+      "base": 0.607678161220686,
+      "kpiFactor": 1.090212765957447,
+      "bonuses": 0,
+      "penalties": 0
+    },
+    "meta": {
+      "topic": "Refactor",
+      "impact": "medium",
+      "caseId": "#21761",
+      "repo": "digitalsheep/LEAD"
+    },
+    "items": [
+      "slack:1759313841.969979",
+      "slack:1759299709.099459",
+      "slack:1759473758.310249",
+      "slack:1759478232.918459"
+    ]
+  },
+  {
+    "clusterId": "release-lead-2025-10-module-creation",
+    "title": "LEADの10月バージョンモジュール作成を複数回アナウンス。全社周知のうえで月次リリース準備が進行中です。",
+    "summary": "LEADの10月バージョンモジュール作成を複数回アナウンス。全社周知のうえで月次リリース準備が進行中です。",
+    "audience": "all",
+    "score": 0.6538323361184322,
+    "parts": {
+      "base": 0.8247671334978223,
+      "kpiFactor": 0.7200000000000001,
+      "bonuses": 0.06,
+      "penalties": 0
+    },
+    "meta": {
+      "topic": "Release",
+      "impact": "high"
+    },
+    "items": [
+      "slack:1759830105.557329",
+      "slack:1759743321.689389",
+      "slack:1759486015.792279",
+      "slack:1759398070.751519",
+      "slack:1759311348.215509"
+    ]
+  },
+  {
+    "clusterId": "announcement-pre-commit-approval-process",
+    "title": "LEAD/CLASSICのコミット前に内容・影響範囲・リスクを申告し、承認後にコミットする運用を開始しました。以降のコミットは本フローに従うよう周知されています。",
+    "summary": "LEAD/CLASSICのコミット前に内容・影響範囲・リスクを申告し、承認後にコミットする運用を開始しました。以降のコミットは本フローに従うよう周知されています。",
+    "audience": "engineering",
+    "score": 0.5712073274976447,
+    "parts": {
+      "base": 0.7933435104133952,
+      "kpiFactor": 0.7200000000000001,
+      "bonuses": 0,
+      "penalties": 0
+    },
+    "meta": {
+      "topic": "Announcement",
+      "impact": "high"
+    },
+    "items": [
+      "slack:1759709428.521429",
+      "slack:1759724798.015049",
+      "slack:1759826930.989169"
+    ]
+  },
+  {
+    "clusterId": "incident-login-failure-21778",
+    "title": "「システムエラーが発生しました。[8]」により一部ユーザがログイン不可となる事象（#21778）の対応/更新が進行中です。影響範囲確認と原因調査が継続されています。",
+    "summary": "「システムエラーが発生しました。[8]」により一部ユーザがログイン不可となる事象（#21778）の対応/更新が進行中です。影響範囲確認と原因調査が継続されています。",
+    "audience": "leadership",
+    "score": 0.5409673274976446,
+    "parts": {
+      "base": 0.7513435104133953,
+      "kpiFactor": 0.7200000000000001,
+      "bonuses": 0,
+      "penalties": 0
+    },
+    "meta": {
+      "topic": "Incident",
+      "impact": "high",
+      "caseId": "#21778"
+    },
+    "items": [
+      "slack:1759398905.184509",
+      "slack:1759399175.753169",
+      "slack:1759796987.345349"
+    ]
+  },
+  {
+    "clusterId": "security-import-out-of-scope-21740",
+    "title": "参照範囲外ユーザでもアイテム情報をインポート更新できる問題（#21740）を調査中です。権限絡みの潜在的リスクのため優先度高で対応が必要です。",
+    "summary": "参照範囲外ユーザでもアイテム情報をインポート更新できる問題（#21740）を調査中です。権限絡みの潜在的リスクのため優先度高で対応が必要です。",
+    "audience": "leadership",
+    "score": 0.5247673274976447,
+    "parts": {
+      "base": 0.7288435104133952,
+      "kpiFactor": 0.7200000000000001,
+      "bonuses": 0,
+      "penalties": 0
+    },
+    "meta": {
+      "topic": "Security",
+      "impact": "high",
+      "caseId": "#21740"
+    },
+    "items": [
+      "slack:1759367257.949599",
+      "slack:1759368016.952829",
+      "slack:1759310160.658219"
+    ]
+  },
+  {
+    "clusterId": "bugfix-v5-2-20-21754-commit-requests",
+    "title": "V5.2.20修正依頼表対応（#21754）でのコミット前承認依頼とチケット整理。メールHTML送信対応やインポート時のタグエンコード修正をコミット予定です。",
+    "summary": "V5.2.20修正依頼表対応（#21754）でのコミット前承認依頼とチケット整理。メールHTML送信対応やインポート時のタグエンコード修正をコミット予定です。",
+    "audience": "engineering",
+    "score": 0.5187504932472934,
+    "parts": {
+      "base": 0.4607194478953663,
+      "kpiFactor": 1.125957446808511,
+      "bonuses": 0,
+      "penalties": 0
+    },
+    "meta": {
+      "topic": "Bugfix",
+      "impact": "low",
+      "caseId": "#21754",
+      "repo": "digitalsheep/LEAD"
+    },
+    "items": [
+      "slack:1759816855.089989",
+      "slack:1759817665.938409",
+      "slack:1759485153.773359"
+    ]
+  }
+]
