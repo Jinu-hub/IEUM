@@ -1,10 +1,14 @@
 import { run } from "@openai/agents";
 import { z } from "zod";
 import { createGithubStats } from "~/features/cron/api/create-contents";
+import { saveContentToFile } from "~/features/cron/api/test-api";
 import type { FetchedRepoData } from "../integrations/github/types";
 import { CFG_RANKER } from "../lib/constants";
 import type { CaseKpi, KpiSnapshot, LinkedActivityDoc, RankedHighlight, RepoKpi, UserRepoKpi } from "../lib/types";
-import { Cluster, TopicInput, TopicOutput } from "../openai/models";
+import {
+    ActivityOutput, Cluster,
+    TopicInput, TopicOutput
+} from "../openai/models";
 import { topicClusteringAgent } from "../openai/test-agent";
 import { baseScore, buildKpiIndex, extractCaseId, kpiFactorOf, smallBonuses } from "./utils";
 
@@ -146,22 +150,6 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
 
 }
 
-export async function topicClustering(linkedData: LinkedActivityDoc): Promise<typeof TopicOutput> {
-    const slackData = linkedData.items.slack;
-    const slackDataString = JSON.stringify(slackData);
-    const input = TopicInput.parse({
-        project: "LEAD",
-        linked: slackDataString,
-      });
-    const result = await run(
-        topicClusteringAgent,
-        JSON.stringify(input)
-      );
-
-    return result.finalOutput as unknown as typeof TopicOutput;
-}
-
-
 export function rankHighlights(
     topics: z.infer<typeof TopicOutput>,
     kpi: KpiSnapshot,
@@ -221,3 +209,86 @@ export function rankHighlights(
     return picked;
   }
 
+export async function topicClustering(linkedData: LinkedActivityDoc): Promise<typeof TopicOutput> {
+    const slackData = linkedData.items.slack;
+    const slackDataString = JSON.stringify(slackData);
+    const input = TopicInput.parse({
+        project: "LEAD",
+        linked: slackDataString,
+      });
+    const result = await run(
+        topicClusteringAgent,
+        JSON.stringify(input)
+      );
+
+    return result.finalOutput as unknown as typeof TopicOutput;
+}
+
+export async function summarizeMemberActivity(
+    linkedData: LinkedActivityDoc,
+    language: 'en' | 'ko' | 'ja' = 'en'
+): Promise<typeof ActivityOutput> {
+
+    const memberData = linkedData.items.member;
+    const messageIndexIdArray =linkedData.index?.byId;
+    let memberDataWithMessages: Record<string, any> = {};
+
+    // Build a lookup for Slack replies (not present in index.byId)
+    const replyIndex: Record<string, any> = {};
+    const slackByChannel = linkedData.items.slack || {};
+    for (const arr of Object.values(slackByChannel)) {
+        for (const parent of arr as any[]) {
+            const replies = (parent?.meta?.replies as any[] | undefined) || [];
+            for (const r of replies) {
+                if (r?.id) replyIndex[r.id] = r;
+            }
+        }
+    }
+
+    // Select members with total messages > 4 and attach their LinkedItem messages from index.byId
+    if (memberData && messageIndexIdArray) {
+        for (const member of Object.values(memberData)) {
+            const total = member?.messageCount?.total ?? 0;
+            if (member.displayName === "GitHub" 
+                || member.displayName === "Slackbot"
+                || member.displayName === "GitHub"
+                || (total <= 4 || !Array.isArray(member.messageIds) || member.messageIds.length === 0)) {
+                continue;
+            } else {
+                memberDataWithMessages[member.memberId] = {
+                    displayName: member.displayName,
+                    messages: [],
+                };
+                const messages = member.messageIds
+                    .map((mid) => messageIndexIdArray[mid] || replyIndex[mid])
+                    .filter((it): it is NonNullable<typeof it> => Boolean(it));
+                (memberDataWithMessages[member.memberId] as any).messages = messages;
+            }
+        }
+    }
+
+    await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
+
+    return null as unknown as typeof ActivityOutput;
+/*
+    const slackData = linkedData.items.slack;
+    const slackDataString = JSON.stringify(slackData);
+    const input = ActivityInput.parse({
+        project: "LEAD",
+        linked: slackDataString,
+    });
+    
+    const agent = createActivitySummaryAgent(
+        language
+        , 'Slack'
+        , 'JST'
+        , '2025-10-02 to 2025-10-08');
+    
+    const result = await run(
+        agent,
+        JSON.stringify(input)
+    );
+
+    return result.finalOutput as unknown as typeof ActivityOutput;
+    */
+}

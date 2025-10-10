@@ -100,7 +100,8 @@ export type LinkedActivityDoc = {
     pr: LinkedItem[];
     issue: LinkedItem[];
     slack: Record<string, LinkedItem[]>; // 채널별 그룹화
-    [key: string]: LinkedItem[] | Record<string, LinkedItem[]>;
+    member: Record<string, userActivity>;
+    [key: string]: LinkedItem[] | Record<string, LinkedItem[]> | Record<string, userActivity>;
   };
 
   index?: {
@@ -108,6 +109,17 @@ export type LinkedActivityDoc = {
     edges: LinkEdge[];
   };
 
+};
+
+export type userActivity = {
+  memberId: string;
+  displayName: string;
+  messageCount: {
+    direct: number;
+    replies: number;
+    total: number;
+  };
+  messageIds: string[];
 };
 
 /** 

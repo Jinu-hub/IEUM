@@ -3,6 +3,7 @@ import {
   type LinkedActivityDoc,
   type LinkedItem,
   type UnifiedActivityDoc,
+  type userActivity,
 } from "../lib/types";
   
   /**
@@ -374,7 +375,7 @@ import {
     });
 
     // type별로 그룹화 (slack은 채널별로 추가 그룹화)
-    const itemsByType: Record<string, InternalItem[] | Record<string, InternalItem[]>> = {};
+    const itemsByType: Record<string, InternalItem[] | Record<string, InternalItem[]> | Record<string, userActivity>> = {};
     for (const item of allItems) {
       if (!itemsByType[item.type]) {
         if (item.type === "slack") {
@@ -397,11 +398,64 @@ import {
       }
     }
 
+    // member 맵 생성: Slack 메시지와 replies의 userInfo에서 활동 카운트(userActivity)
+    const memberMap: Record<string, userActivity> = {};
+    for (const item of allItems) {
+      if (item.type !== "slack") continue;
+
+      const ui = item.meta?.userInfo as any | undefined;
+      const topId = (ui && (ui.id || ui.userId)) || (item.meta?.user as string | undefined);
+      const topName = (ui && (ui.real_name || ui.name)) || (item.meta?.user as string | undefined);
+      if (topId) {
+        const existing = memberMap[topId];
+        const displayName = topName || existing?.displayName || topId;
+        const base = existing || {
+          memberId: topId,
+          displayName,
+          messageCount: { direct: 0, replies: 0, total: 0 },
+          messageIds: [],
+        };
+        base.displayName = displayName;
+        base.messageCount.direct += 1;
+        base.messageIds.push(item.id);
+        memberMap[topId] = base;
+      }
+
+      const replies = (item.meta?.replies as InternalItem[] | undefined) || [];
+      for (const r of replies) {
+        const rui = (r.meta?.userInfo as any | undefined) || undefined;
+        const rid = (rui && (rui.id || rui.userId)) || (r.meta?.user as string | undefined);
+        const rname = (rui && (rui.real_name || rui.name)) || (r.meta?.user as string | undefined);
+        if (!rid) continue;
+        const existing = memberMap[rid];
+        const displayName = rname || existing?.displayName || rid;
+        const base = existing || {
+          memberId: rid,
+          displayName,
+          messageCount: { direct: 0, replies: 0, total: 0 },
+          messageIds: [],
+        };
+        base.displayName = displayName;
+        base.messageCount.replies += 1;
+        base.messageIds.push(r.id);
+        memberMap[rid] = base;
+      }
+    }
+
+    // total 재계산
+    for (const k of Object.keys(memberMap)) {
+      const mc = memberMap[k].messageCount;
+      mc.total = mc.direct + mc.replies;
+    }
+
+    (itemsByType as Record<string, any>).member = memberMap;
+
     return {
       items: {
         commit: (itemsByType.commit as InternalItem[]) || [],
         pr: (itemsByType.pr as InternalItem[]) || [],
         issue: (itemsByType.issue as InternalItem[]) || [],
+        member: (itemsByType.member as Record<string, userActivity>) || {},
         slack: (itemsByType.slack as Record<string, InternalItem[]>) || {},
       },
       

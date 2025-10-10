@@ -82,8 +82,51 @@ export const TopicInput = z.object({
     team: z.string().optional().nullable(),
     project: z.string(),
     linked: z.string(),
-  });
+});
 
 export const TopicOutput = z.object({
   clusters: z.array(Cluster),
+});
+
+/**
+ * Member schema for activity summary
+ */
+export const Member = z.object({
+  memberId: z.string(),
+  displayName: z.string(),
+  messageCount: z.object({
+    direct: z.number(),
+    replies: z.number(),
+    total: z.number(),
+  }),
+  daily: z.array(
+    z.object({
+      date: z.string(),
+      bullets: z.array(z.string()),
+    })
+  ),
+  conversations: z.array(
+    z.object({
+      title: z.string(),
+      takeaway: z.string(),
+      refs: z.array(z.string()).optional().nullable(),
+    })
+  ).optional().default([]),
+  highlights: z.array(
+    z.object({
+      title: z.string(),
+      ref: z.string().optional().nullable(),
+    })
+  ).optional().default([]),
+});
+
+export const ActivityInput = z.object({
+  team: z.string().optional().nullable(),
+  project: z.string(),
+  linked: z.string(),
+});
+
+export const ActivityOutput = z.object({
+  generatedAtISO: z.string(),
+  members: z.array(Member),
 });
