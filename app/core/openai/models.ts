@@ -89,35 +89,28 @@ export const TopicOutput = z.object({
 });
 
 /**
- * Member schema for activity summary
+ * Member schema for activity summary (Refined for Pre-Grouped Member Data)
+ * - Focuses on qualitative summary fields, not daily/conversation lists
  */
 export const Member = z.object({
   memberId: z.string(),
   displayName: z.string(),
-  messageCount: z.object({
-    direct: z.number(),
-    replies: z.number(),
-    total: z.number(),
+  summary: z.object({
+    tone: z.enum(["neutral", "positive", "mixed"]),
+    mainThemes: z.array(z.string()).default([]), // 2–5 typical, but allow empty
+    weeklyHighlights: z
+      .array(
+        z.object({
+          title: z.string(), // ≤120 chars (not enforced here)
+          ref: z.string(),   // must match an input message id
+        })
+      )
+      .default([]), // 0–3 allowed
+    collaboration: z.array(z.string()).default([]),        // short phrases
+    decisionsOrActions: z.array(z.string()).default([]),   // ≤3 recommended
+    openQuestions: z.array(z.string()).default([]),        // ≤2 recommended
+    overallSummary: z.string(),                            // 2–3 sentences
   }),
-  daily: z.array(
-    z.object({
-      date: z.string(),
-      bullets: z.array(z.string()),
-    })
-  ),
-  conversations: z.array(
-    z.object({
-      title: z.string(),
-      takeaway: z.string(),
-      refs: z.array(z.string()).optional().nullable(),
-    })
-  ).optional().default([]),
-  highlights: z.array(
-    z.object({
-      title: z.string(),
-      ref: z.string().optional().nullable(),
-    })
-  ).optional().default([]),
 });
 
 export const ActivityInput = z.object({

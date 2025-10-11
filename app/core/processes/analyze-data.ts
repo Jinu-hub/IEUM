@@ -6,10 +6,10 @@ import type { FetchedRepoData } from "../integrations/github/types";
 import { CFG_RANKER } from "../lib/constants";
 import type { CaseKpi, KpiSnapshot, LinkedActivityDoc, RankedHighlight, RepoKpi, UserRepoKpi } from "../lib/types";
 import {
-    ActivityOutput, Cluster,
+    ActivityInput, ActivityOutput, Cluster,
     TopicInput, TopicOutput
 } from "../openai/models";
-import { topicClusteringAgent } from "../openai/test-agent";
+import { createActivitySummaryAgent, topicClusteringAgent } from "../openai/test-agent";
 import { baseScore, buildKpiIndex, extractCaseId, kpiFactorOf, smallBonuses } from "./utils";
 
 /**
@@ -229,8 +229,37 @@ export async function summarizeMemberActivity(
     language: 'en' | 'ko' | 'ja' = 'en'
 ): Promise<typeof ActivityOutput> {
 
+    const memberDataWithMessages = prepareMemberDataWithMessages(linkedData);
+
+    await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
+    const input = ActivityInput.parse({
+        project: "LEAD",
+        linked: JSON.stringify(memberDataWithMessages),
+    });
+    const agent = createActivitySummaryAgent(
+        language);
+    
+    const result = await run(
+        agent,
+        JSON.stringify(input)
+    );
+
+    return result.finalOutput as unknown as typeof ActivityOutput;
+    
+}
+
+/**
+ * linkedData에서 멤버 데이터를 필터링하고 메시지를 첨부합니다.
+ * - 총 메시지 수가 4보다 큰 멤버만 선택
+ * - GitHub, Slackbot 등 봇 계정 제외
+ * - 각 멤버의 메시지 ID를 실제 메시지 객체로 변환
+ * 
+ * @param linkedData - 링크된 활동 데이터
+ * @returns 멤버 ID를 키로 하고, displayName과 messages 배열을 포함하는 객체
+ */
+function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc): Record<string, any> {
     const memberData = linkedData.items.member;
-    const messageIndexIdArray =linkedData.index?.byId;
+    const messageIndexIdArray = linkedData.index?.byId;
     let memberDataWithMessages: Record<string, any> = {};
 
     // Build a lookup for Slack replies (not present in index.byId)
@@ -267,28 +296,5 @@ export async function summarizeMemberActivity(
         }
     }
 
-    await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
-
-    return null as unknown as typeof ActivityOutput;
-/*
-    const slackData = linkedData.items.slack;
-    const slackDataString = JSON.stringify(slackData);
-    const input = ActivityInput.parse({
-        project: "LEAD",
-        linked: slackDataString,
-    });
-    
-    const agent = createActivitySummaryAgent(
-        language
-        , 'Slack'
-        , 'JST'
-        , '2025-10-02 to 2025-10-08');
-    
-    const result = await run(
-        agent,
-        JSON.stringify(input)
-    );
-
-    return result.finalOutput as unknown as typeof ActivityOutput;
-    */
+    return memberDataWithMessages;
 }

@@ -3,8 +3,8 @@ import type { CreateContentsInput, KpiSnapshot, RankedHighlight } from "~/core/l
 //import { saveContentToFile } from "~/features/cron/api/test-api";
 import { logger } from "../lib/logger";
 import type { LinkedActivityDoc, UnifiedActivityDoc } from "../lib/types";
-import { TopicOutput } from "../openai/models";
-import { rankHighlights, repoKpiExtractor, topicClustering } from "./analyze-data";
+import { ActivityOutput, TopicOutput } from "../openai/models";
+import { rankHighlights, repoKpiExtractor, summarizeMemberActivity, topicClustering } from "./analyze-data";
 import { crossLinker } from "./cross-linker";
 import { githubIngestor, slackIngestor } from "./ingestors";
 
@@ -17,6 +17,7 @@ export async function normalizeData(input: CreateContentsInput) {
     // 2. 중복 제거 & 연결(Deduplication & Linking)
     const linkedData = await crossLinker({ ...githubData, ...slackData } as UnifiedActivityDoc);
     //await saveContentToFile(linkedData, 'output-test', 'linked_', 'json');
+    console.log(linkedData.items.member);
 
     logger.info('📝 Normalizing and reducing data completed');
     return linkedData;
@@ -37,12 +38,20 @@ export async function analyzeData(input: CreateContentsInput, linkedData: Linked
     const highlights = rankHighlights(topics as unknown as z.infer<typeof TopicOutput>, kpiInfo);
     logger.info('📝 Rank highlights created');
 
+    // 6. slack data를 기반으로 member activity summary을 생성
+    const activitySummary = await summarizeMemberActivity(linkedData, 'ja');
+    logger.info('📝 Member activity summary created');
+
     logger.info('📝 Analyzing data completed');
-    return { kpiInfo, topics, highlights };
+    return { kpiInfo, topics: null, highlights: null, activitySummary };
 
 }
 
-export async function draftingData(linkedData: LinkedActivityDoc, kpiInfo: KpiSnapshot, topics: z.infer<typeof TopicOutput>, highlights: RankedHighlight[]) {
+export async function draftingData(linkedData: LinkedActivityDoc, 
+    kpiInfo: KpiSnapshot, 
+    highlights: RankedHighlight[], 
+    topics: z.infer<typeof TopicOutput>,
+    activitySummary: z.infer<typeof ActivityOutput>) {
     logger.info('📝 Drafting data started');
 
     logger.info('📝 Drafting data completed');
@@ -51,12 +60,12 @@ export async function draftingData(linkedData: LinkedActivityDoc, kpiInfo: KpiSn
 
 export async function generateContents(input: CreateContentsInput) {
     const linkedData = await normalizeData(input);
-    const { kpiInfo, topics, highlights } = await analyzeData(input, linkedData);
+    const { kpiInfo, topics, highlights, activitySummary } = await analyzeData(input, linkedData);
     //await saveContentToFile(linkedData, 'output-test', 'linked_', 'json');
     //await saveContentToFile(topics, 'output-test', 'topics_', 'json');
     //await saveContentToFile(kpiInfo, 'output-test', 'repo_kpi_', 'json');
     //await saveContentToFile(highlights, 'output-test', 'highlights_', 'json');
+    //await saveContentToFile(activitySummary, 'output-test', 'activity_summary_', 'json');
 
-
-    return { linkedData, kpiInfo, topics, highlights };
+    return { linkedData, kpiInfo, topics, highlights, activitySummary };
 }
