@@ -1,46 +1,67 @@
 /**
  * Prompt Builder - Combines Templates with Formatted Data
  */
-import type { FetchedRepoData } from "~/core/integrations/github/types";
-import { formatGithubData } from "../formatters/github-formatter";
-import type { SupportedLanguage } from "../templates";
-import { getGithubTemplate } from "../templates";
+import { getPrompt } from ".";
+import { LANGUAGE_NAMES, type SupportedLanguage } from "../config/style-guide";
+import { CRITICAL_KEYWORDS, GREETINGS, KEYWORD_DETECTION_RULES } from "../formatters/keyword.en";
+import { CRITICAL_KEYWORDS_JA, GREETINGS_JA, KEYWORD_DETECTION_RULES_JA } from "../formatters/keyword.ja";
+import { CRITICAL_KEYWORDS_KO, GREETINGS_KO, KEYWORD_DETECTION_RULES_KO } from "../formatters/keyword.ko";
+import type { PromptType } from "./types";
+
 
 /**
- * GitHub 데이터를 기반으로 다국어 프롬프트 생성
+ * 다국어 프롬프트 생성
  * 
- * @param repos - GitHub 저장소 데이터 배열
+ * @param promptType - 데이터 배열
  * @param language - 출력 언어 ('en' | 'ko' | 'ja', 기본값: 'en')
+ * @param source - 데이터 소스 (기본값: 'slack')
  * @returns 완성된 프롬프트 문자열
  * 
  * @example
  * ```typescript
- * const prompt = buildGithubPrompt(repos, 'ko');
+ * const prompt = buildPrompt(promptType, language, source);
  * const result = await run(agent, prompt);
  * ```
  */
-export function buildGithubPrompt(
-  repos: FetchedRepoData[], 
-  language: SupportedLanguage = 'en'
+export function buildPrompt(
+  promptType: PromptType,
+  language: SupportedLanguage = 'en',
+  source: string = 'slack'
 ): string {
-  // 1. 언어에 맞는 템플릿 가져오기
-  const template = getGithubTemplate(language);
+  // 1. 프롬프트 가져오기
+  const tempPrompt = getPrompt(promptType);
+
+  // 2. 특수 키워드 치환
+  const replacedPrompt = keywordReplacer(promptType, tempPrompt, language);
   
-  // 2. 데이터를 언어에 맞게 포맷팅
-  const formattedData = formatGithubData(repos, language);
-  
-  // 3. 템플릿의 {{REPO_DATA}} 플레이스홀더를 실제 데이터로 교체
-  const prompt = template.replace('{{REPO_DATA}}', formattedData);
+  // 3. 공통 플레이스홀더 치환
+  const prompt = replacedPrompt
+    .replace(/\{\{LANGUAGE\}\}/g, LANGUAGE_NAMES[language])
+    .replace(/\{\{SOURCE\}\}/g, source);
   
   return prompt;
 }
 
-/**
- * 기존 buildPromptFromGithubData와 호환되는 래퍼 함수 (영어 버전)
- * 
- * @deprecated 다국어 지원을 위해 buildGithubPrompt 사용을 권장합니다
- */
-export function buildPromptFromGithubData(repos: FetchedRepoData[]): string {
-  return buildGithubPrompt(repos, 'en');
+function keywordReplacer(promptType: PromptType, prompt: string, language: SupportedLanguage = 'en'): string {
+  switch (promptType) {
+    case 'topic_clustering':
+      let criticalKeywords = CRITICAL_KEYWORDS;
+      let greetings = GREETINGS;
+      let keywordDetectionRules = KEYWORD_DETECTION_RULES;
+      if (language === 'ja') {
+        criticalKeywords = CRITICAL_KEYWORDS_JA;
+        greetings = GREETINGS_JA;
+        keywordDetectionRules = KEYWORD_DETECTION_RULES_JA;
+      } else if (language === 'ko') {
+        criticalKeywords = CRITICAL_KEYWORDS_KO;
+        greetings = GREETINGS_KO;
+        keywordDetectionRules = KEYWORD_DETECTION_RULES_KO;
+      }
+      return prompt.replace(/\{\{CRITICAL_KEYWORDS\}\}/g, criticalKeywords)
+                  .replace(/\{\{GREETINGS\}\}/g, greetings)
+                  .replace(/\{\{KEYWORD_DETECTION_RULES\}\}/g, keywordDetectionRules);
+  }
+  return prompt;
 }
+
 

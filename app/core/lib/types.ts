@@ -11,6 +11,8 @@ export type CreateContentsInput = {
   slackResult?: Record<string, FetchedMessage[]> | null;
   workspaceId: string;
   targetId: string;
+  language: 'en' | 'ko' | 'ja';
+  source: string;
 };
 
 /** 파이프라인 공용 루트 문서 */
@@ -244,6 +246,7 @@ export type RankedHighlight = {
     repo?: string;                // KPI에서 유추된 repo
   };
   items: z.infer<typeof Cluster>["items"];
+  messages?: LinkedItem[];
 };
 
 

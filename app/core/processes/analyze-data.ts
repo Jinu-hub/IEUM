@@ -1,15 +1,15 @@
 import { run } from "@openai/agents";
 import { z } from "zod";
 import { createGithubStats } from "~/features/cron/api/create-contents";
-import { saveContentToFile } from "~/features/cron/api/test-api";
 import type { FetchedRepoData } from "../integrations/github/types";
 import { CFG_RANKER } from "../lib/constants";
 import type { CaseKpi, KpiSnapshot, LinkedActivityDoc, RankedHighlight, RepoKpi, UserRepoKpi } from "../lib/types";
+import type { SupportedLanguage } from "../openai/config/style-guide";
 import {
     ActivityInput, ActivityOutput, Cluster,
     TopicInput, TopicOutput
 } from "../openai/models";
-import { createActivitySummaryAgent, topicClusteringAgent } from "../openai/test-agent";
+import { createActivitySummaryAgent, createTopicClusteringAgent } from "../openai/test-agent";
 import { baseScore, buildKpiIndex, extractCaseId, kpiFactorOf, smallBonuses } from "./utils";
 
 /**
@@ -209,15 +209,20 @@ export function rankHighlights(
     return picked;
   }
 
-export async function topicClustering(linkedData: LinkedActivityDoc): Promise<typeof TopicOutput> {
+export async function topicClustering(
+    linkedData: LinkedActivityDoc, 
+    language: SupportedLanguage = 'en',
+    source: string = 'slack'
+): Promise<typeof TopicOutput> {
     const slackData = linkedData.items.slack;
     const slackDataString = JSON.stringify(slackData);
     const input = TopicInput.parse({
         project: "LEAD",
         linked: slackDataString,
       });
+    const agent = createTopicClusteringAgent(language, source);
     const result = await run(
-        topicClusteringAgent,
+        agent,
         JSON.stringify(input)
       );
 
@@ -231,13 +236,12 @@ export async function summarizeMemberActivity(
 
     const memberDataWithMessages = prepareMemberDataWithMessages(linkedData);
 
-    await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
+    //await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
     const input = ActivityInput.parse({
         project: "LEAD",
-        linked: JSON.stringify(memberDataWithMessages),
+        contents: JSON.stringify(memberDataWithMessages),
     });
-    const agent = createActivitySummaryAgent(
-        language);
+    const agent = createActivitySummaryAgent(language);
     
     const result = await run(
         agent,

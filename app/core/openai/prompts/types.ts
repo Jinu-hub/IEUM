@@ -1,0 +1,4 @@
+export type PromptType = 
+    'topic_clustering' 
+    | 'activity_summary' 
+    | 'highlights_summary'
