@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { CreateContentsInput } from "~/core/lib/types";
-import { saveContentToFile } from "~/features/cron/api/test-api";
 import { logger } from "../lib/logger";
 import type { KpiSnapshot, LinkedActivityDoc, RankedHighlight, UnifiedActivityDoc } from "../lib/types";
 import { ActivityOutput, TopicOutput } from "../openai/models";
@@ -90,12 +89,12 @@ export async function draftingData(linkedData: LinkedActivityDoc,
 export async function generateContents(input: CreateContentsInput) {
     const linkedData = await normalizeData(input);
     const { kpiInfo, topics, highlights, activitySummary }  = await analyzeData(input, linkedData);
-    //const highlightsSummary = await draftingData(linkedData, kpiInfo, highlights, topics, activitySummary);
+    const highlightsSummary = await draftingData(linkedData, kpiInfo, highlights, topics, activitySummary);
     
     //await saveContentToFile(linkedData, 'output-test', 'linked_', 'json');
-    await saveContentToFile(topics, 'output-test', 'topics_', 'json');
+    //await saveContentToFile(topics, 'output-test', 'topics_', 'json');
     //await saveContentToFile(kpiInfo, 'output-test', 'repo_kpi_', 'json');
-    await saveContentToFile(highlights, 'output-test', 'highlights_', 'json');
+    //await saveContentToFile(highlights, 'output-test', 'highlights_', 'json');
     //await saveContentToFile(activitySummary, 'output-test', 'activity_summary_', 'json');
 
     return { linkedData, kpiInfo, topics, highlights, activitySummary };

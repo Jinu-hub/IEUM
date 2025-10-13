@@ -1,7 +1,6 @@
 import { Agent } from "@openai/agents";
-import { saveContentToFile } from "~/features/cron/api/test-api";
 import type { SupportedLanguage } from "./config/style-guide";
-import { ActivityOutput, TopicOutput } from "./models";
+import { ActivityOutput, HighlightsOutput, TopicOutput } from "./models";
 import { buildPrompt } from "./prompts";
 
 /**
@@ -26,7 +25,7 @@ export function createTopicClusteringAgent(
   source: string = 'slack'
 ) {
   const instructions = buildPrompt('topic_clustering', language, source);
-  saveContentToFile(instructions, 'output-test', 'topic_clustering_instructions_', 'md');
+  //saveContentToFile(instructions, 'output-test', 'topic_clustering_instructions_', 'md');
   return new Agent({
     name: 'topic_clustering_agent',
     instructions: instructions,
@@ -55,11 +54,15 @@ export function createActivitySummaryAgent(
   });
 }
 
-/*
+/**
+ * Highlights Summary Agent を言語に応じて生成（単一ファイル + 文字列置換方式）
+ * @param language - 出力言語 ('en' | 'ko' | 'ja')
+ * @returns Agent instance
+ */
 export function createHighlightsSummaryAgent(
   language: SupportedLanguage = 'en',
 ) {
-  const instructions = getHighlightsSummaryTemplate(language);
+  const instructions = buildPrompt('highlights_summary', language);
   return new Agent({
     name: 'highlights_summary_agent',
     instructions: instructions,
@@ -67,4 +70,3 @@ export function createHighlightsSummaryAgent(
     outputType: HighlightsOutput,
   });
 }
-  */

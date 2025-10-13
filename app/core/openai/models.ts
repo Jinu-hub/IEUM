@@ -116,10 +116,25 @@ export const Member = z.object({
 export const ActivityInput = z.object({
   team: z.string().optional().nullable(),
   project: z.string(),
-  linked: z.string(),
+  contents: z.string(),
 });
 
 export const ActivityOutput = z.object({
   generatedAtISO: z.string(),
   members: z.array(Member),
 });
+
+export const HighlightsInput = z.object({ 
+  project: z.string(),
+  contents: z.string(),
+});
+
+export const HighlightsOutput = z.object({
+  generatedAtISO: z.string(),
+  highlights: z.array(z.object({
+    summary: z.string(),
+    conversations: z.array(z.string()),
+  })),
+});
+
+
