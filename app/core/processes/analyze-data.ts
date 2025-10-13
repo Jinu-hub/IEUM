@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createGithubStats } from "~/features/cron/api/create-contents";
 import type { FetchedRepoData } from "../integrations/github/types";
 import { CFG_RANKER } from "../lib/constants";
+import { logger } from "../lib/logger";
 import type { CaseKpi, KpiSnapshot, LinkedActivityDoc, RankedHighlight, RepoKpi, UserRepoKpi } from "../lib/types";
 import type { SupportedLanguage } from "../openai/config/style-guide";
 import {
@@ -213,20 +214,82 @@ export async function topicClustering(
     linkedData: LinkedActivityDoc, 
     language: SupportedLanguage = 'en',
     source: string = 'slack'
-): Promise<typeof TopicOutput> {
+): Promise<z.infer<typeof TopicOutput>> {
     const slackData = linkedData.items.slack;
-    const slackDataString = JSON.stringify(slackData);
-    const input = TopicInput.parse({
-        project: "LEAD",
-        linked: slackDataString,
-      });
-    const agent = createTopicClusteringAgent(language, source);
-    const result = await run(
-        agent,
-        JSON.stringify(input)
-      );
-
-    return result.finalOutput as unknown as typeof TopicOutput;
+    
+    // 채널별로 데이터를 처리하기 위한 배열
+    const channelKeys = Object.keys(slackData);
+    const allClusters: any[] = [];
+    
+    logger.info("🔄 TopicClustering started", {
+        "total channels": channelKeys.length,
+        "channel list": channelKeys,
+    });
+    
+    // 각 채널별로 TopicClustering 실행
+    for (let i = 0; i < channelKeys.length; i++) {
+        const channelKey = channelKeys[i];
+        const channelData = slackData[channelKey];
+        
+        // 채널 데이터가 비어있으면 스킵
+        if (!channelData || channelData.length === 0) {
+            logger.info(`⏭️  channel skip (${i + 1}/${channelKeys.length})`, {
+                "channel": channelKey,
+                "reason": "no data"
+            });
+            continue;
+        }
+        
+        logger.info(`🔍 channel processing (${i + 1}/${channelKeys.length})`, {
+            "channel": channelKey,
+            "message count": channelData.length,
+        });
+        
+        // 채널별 데이터를 객체로 감싸서 전달
+        const channelDataString = JSON.stringify({ [channelKey]: channelData });
+        const input = TopicInput.parse({
+            project: channelKey,
+            linked: channelDataString,
+        });
+        
+        const agent = createTopicClusteringAgent(language, source);
+        const result = await run(
+            agent,
+            JSON.stringify(input)
+        );
+        
+        const output: any = result.finalOutput;
+        
+        // 각 클러스터에 채널 정보 추가 및 수집
+        if (output.clusters && Array.isArray(output.clusters)) {
+            const clustersWithChannel = output.clusters.map((cluster: any) => ({
+                ...cluster,
+                // 채널 정보를 메타데이터에 추가
+                channel: channelKey,
+            }));
+            
+            logger.info(`✅ channel processing completed (${i + 1}/${channelKeys.length})`, {
+                "channel": channelKey,
+                "created cluster count": clustersWithChannel.length,
+            });
+            
+            allClusters.push(...clustersWithChannel);
+        } else {
+            logger.warn(`⚠️ channel processing result empty (${i + 1}/${channelKeys.length})`, {
+                "channel": channelKey,
+            });
+        }
+    }
+    
+    logger.info("✨ TopicClustering completed", {
+        "processed channel count": channelKeys.length,
+        "total cluster count": allClusters.length,
+    });
+    
+    // 모든 채널의 클러스터를 머지하여 반환
+    return {
+        clusters: allClusters,
+    };
 }
 
 export async function summarizeMemberActivity(

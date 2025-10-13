@@ -1,7 +1,7 @@
 import type { WebClient } from "@slack/web-api";
-import type { FetchedMessage, UserInfo } from "./types";
-import { logger } from "../../lib/logger";
 import pLimit from "p-limit";
+import { logger } from "../../lib/logger";
+import type { FetchedMessage, UserInfo } from "./types";
 
 const userCache = new Map<string, UserInfo>();
 const pendingUser = new Map<string, Promise<UserInfo | null>>();
@@ -42,6 +42,19 @@ export async function fetchUserInfo(slack: WebClient, userId: string): Promise<U
 
   pendingUser.set(userId, p);
   return p;
+}
+
+export async function fetchChannelInfo(slack: WebClient, channelId: string): Promise<any | null> {
+  try {
+    const res = await slack.conversations.info({
+      channel: channelId,
+      include_num_members: true,
+    });
+    return res.channel;
+  } catch (error: any) {
+    logger.error('Error fetching channel info', { channelId, error: error.message });
+    return null;
+  }
 }
 
 export async function listChannels(slack: WebClient): Promise<{ id: string; name: string; is_private: boolean; is_member: boolean }[]> {

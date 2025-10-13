@@ -4,7 +4,7 @@ import pLimit from "p-limit";
 import { logger } from "../../lib/logger";
 import { createSlackClient } from "./client";
 import { getSlackConfig } from "./config";
-import { fetchChannelMessages, listChannels } from "./fetchers";
+import { fetchChannelInfo, fetchChannelMessages, listChannels } from "./fetchers";
 import type { FetchedMessage } from "./types";
 
 export async function runSlackFetch(overrides?: {
@@ -28,8 +28,31 @@ export async function runSlackFetch(overrides?: {
   await Promise.all(
     channelIds.map((ch) =>
       limit(async () => {
-        logger.info("fetch channel", { channel: ch });
-        result[ch] = await fetchChannelMessages(slack, ch, oldestTs);
+        // 채널 정보 가져오기
+        const channelInfo = await fetchChannelInfo(slack, ch);
+        if (channelInfo) {
+          logger.info("📢 fetch channel info", {
+            "channel ID": channelInfo.id,
+            "channel name": channelInfo.name,
+            "description": channelInfo.purpose?.value || "none",
+            "topic": channelInfo.topic?.value || "none",
+            "members": channelInfo.num_members,
+          });
+
+          // 탭 정보가 있으면 출력
+          /*
+          if (channelInfo.properties?.tabs && channelInfo.properties.tabs.length > 0) {
+            const tabs = channelInfo.properties.tabs
+              .filter((tab: any) => tab.label)
+              .map((tab: any) => tab.label);
+            if (tabs.length > 0) {
+              logger.info("  📌 채널 탭", { tabs });
+            }
+          }
+          */
+        }
+        const key = ch + ":" + (channelInfo?.name || "");
+        result[key] = await fetchChannelMessages(slack, ch, oldestTs);
       })
     )
   );

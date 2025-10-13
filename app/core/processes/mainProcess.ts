@@ -2,10 +2,11 @@ import { z } from "zod";
 import type { CreateContentsInput } from "~/core/lib/types";
 import { saveContentToFile } from "~/features/cron/api/test-api";
 import { logger } from "../lib/logger";
-import type { LinkedActivityDoc, UnifiedActivityDoc } from "../lib/types";
-import { TopicOutput } from "../openai/models";
+import type { KpiSnapshot, LinkedActivityDoc, RankedHighlight, UnifiedActivityDoc } from "../lib/types";
+import { ActivityOutput, TopicOutput } from "../openai/models";
 import { rankHighlights, repoKpiExtractor, topicClustering } from "./analyze-data";
 import { crossLinker } from "./cross-linker";
+import { createHighlightsSummary } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
 
 
@@ -71,20 +72,20 @@ export async function analyzeData(
  * @param activitySummary 
  * @returns 
  */
-// export async function draftingData(linkedData: LinkedActivityDoc, 
-//     kpiInfo: KpiSnapshot, 
-//     highlights: RankedHighlight[], 
-//     topics: z.infer<typeof TopicOutput>,
-//     activitySummary: z.infer<typeof ActivityOutput>) {
-//     logger.info('📝 Drafting data started');
+export async function draftingData(linkedData: LinkedActivityDoc, 
+    kpiInfo: KpiSnapshot, 
+    highlights: RankedHighlight[], 
+    topics: z.infer<typeof TopicOutput>,
+    activitySummary: z.infer<typeof ActivityOutput>) {
+    logger.info('📝 Drafting data started');
 
-//     // 3-1. highlights summary을 생성
-//     const highlightsSummary = await createHighlightsSummary(linkedData, highlights, 'ja');
-//     logger.info('📝 Highlights summary created');
+    // 3-1. highlights summary을 생성
+    const highlightsSummary = await createHighlightsSummary(linkedData, highlights, 'ja');
+    logger.info('📝 Highlights summary created');
 
-//     logger.info('📝 Drafting data completed');
-//     return { linkedData, kpiInfo, topics, highlights };
-// }
+    logger.info('📝 Drafting data completed');
+    return { linkedData, kpiInfo, topics, highlights };
+}
 
 export async function generateContents(input: CreateContentsInput) {
     const linkedData = await normalizeData(input);

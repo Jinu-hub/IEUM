@@ -11,8 +11,8 @@ import { runSlackFetch } from "~/core/integrations/slack/run";
 import { isScheduledWithinHour } from "~/core/lib/cron-utils";
 import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
+import { createContents } from "~/features/cron/api/create-contents";
 import { getIntegrationsInfo, getTargetSources } from "~/features/settings/db/queries";
-import { createContents } from "./create-contents";
 
 /**
  * 타겟 정보 타입 (데이터베이스 타입 기반)
@@ -161,7 +161,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
           githubResult : githubResult || null,
           slackResult : slackResult || null,
           workspaceId: target.workspace_id,
-          targetId: target.target_id
+          targetId: target.target_id,
+          language: "ja",
+          source: "slack"
         });
         
         logger.info('Contents generation completed', { 
