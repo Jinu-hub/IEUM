@@ -7,10 +7,10 @@ import { logger } from "../lib/logger";
 import type { CaseKpi, KpiSnapshot, LinkedActivityDoc, RankedHighlight, RepoKpi, UserRepoKpi } from "../lib/types";
 import type { SupportedLanguage } from "../openai/config/style-guide";
 import {
-    ActivityInput, ActivityOutput, Cluster,
+    Cluster,
     TopicInput, TopicOutput
 } from "../openai/models";
-import { createActivitySummaryAgent, createTopicClusteringAgent } from "../openai/test-agent";
+import { createTopicClusteringAgent } from "../openai/test-agent";
 import { baseScore, buildKpiIndex, extractCaseId, kpiFactorOf, smallBonuses } from "./utils";
 
 /**
@@ -151,65 +151,13 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
 
 }
 
-export function rankHighlights(
-    topics: z.infer<typeof TopicOutput>,
-    kpi: KpiSnapshot,
-    opts?: { audience?: RankedHighlight["audience"]; topK?: number }
-  ): RankedHighlight[] {
-    const k = buildKpiIndex(kpi);
-    const topK = opts?.topK ?? CFG_RANKER.thresholds.topK;
-  
-    const ranked = topics.clusters.map<RankedHighlight>((c) => {
-      // 1) 토픽 기반 점수
-      const base = baseScore(c);
-  
-      // 2) KPI 보정
-      const caseId = extractCaseId(c);
-      const repoFromCase = caseId ? k.caseRepo.get(caseId) : undefined;
-      const repoShare = repoFromCase ? (k.repoShare.get(repoFromCase) ?? 0) : 0;
-      const caseShare = caseId ? (k.caseShare.get(caseId) ?? 0) : 0;
-      const kpiF = kpiFactorOf(repoShare, caseShare);
-  
-      // 3) 작은 보너스/패널티
-      let bonuses = smallBonuses(c);
-      if (opts?.audience && (c.audience === opts.audience || c.audience === "all")) {
-        bonuses += CFG_RANKER.bonuses.audienceFit;
-      }
-      const penalties = 0; // 반복공지 감지기 넣을 때 여기에 적용(초기엔 0)
-  
-      const total = base * kpiF + bonuses - penalties;
-  
-      return {
-        clusterId: c.id,
-        title: c.summary?.slice(0, 100) || `${c.topic} update`,
-        summary: c.summary,
-        audience: c.audience,
-        score: total,
-        parts: { base, kpiFactor: kpiF, bonuses, penalties },
-        meta: { topic: c.topic, impact: c.impact, caseId, repo: repoFromCase },
-        items: c.items,
-      };
-    });
-  
-    // 4) 정렬 및 간단 다양성(같은 토픽 과점 방지)
-    ranked.sort((a, b) => b.score - a.score);
-  
-    const picked: RankedHighlight[] = [];
-    const topicCount = new Map<z.infer<typeof Cluster>["topic"], number>();
-  
-    for (const r of ranked) {
-      if (r.score < CFG_RANKER.thresholds.minScore) continue; // 컷오프
-      const t = r.meta.topic;
-      const tCount = topicCount.get(t) ?? 0;
-      if (tCount >= CFG_RANKER.thresholds.maxPerTopic) continue; // 토픽 과점 방지
-      picked.push(r);
-      topicCount.set(t, tCount + 1);
-      if (picked.length >= topK) break;
-    }
-  
-    return picked;
-  }
-
+/**
+ * slack data를 기반으로 topic clustering을 생성
+ * @param linkedData 
+ * @param language 
+ * @param source 
+ * @returns 
+ */
 export async function topicClustering(
     linkedData: LinkedActivityDoc, 
     language: SupportedLanguage = 'en',
@@ -292,76 +240,68 @@ export async function topicClustering(
     };
 }
 
-export async function summarizeMemberActivity(
-    linkedData: LinkedActivityDoc,
-    language: 'en' | 'ko' | 'ja' = 'en'
-): Promise<typeof ActivityOutput> {
-
-    const memberDataWithMessages = prepareMemberDataWithMessages(linkedData);
-
-    //await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
-    const input = ActivityInput.parse({
-        project: "LEAD",
-        contents: JSON.stringify(memberDataWithMessages),
-    });
-    const agent = createActivitySummaryAgent(language);
-    
-    const result = await run(
-        agent,
-        JSON.stringify(input)
-    );
-
-    return result.finalOutput as unknown as typeof ActivityOutput;
-    
-}
-
 /**
- * linkedData에서 멤버 데이터를 필터링하고 메시지를 첨부합니다.
- * - 총 메시지 수가 4보다 큰 멤버만 선택
- * - GitHub, Slackbot 등 봇 계정 제외
- * - 각 멤버의 메시지 ID를 실제 메시지 객체로 변환
- * 
- * @param linkedData - 링크된 활동 데이터
- * @returns 멤버 ID를 키로 하고, displayName과 messages 배열을 포함하는 객체
+ * topic clustering을 기반으로 rank highlights을 생성
+ * @param topics 
+ * @param kpi 
+ * @param opts 
+ * @returns 
  */
-function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc): Record<string, any> {
-    const memberData = linkedData.items.member;
-    const messageIndexIdArray = linkedData.index?.byId;
-    let memberDataWithMessages: Record<string, any> = {};
-
-    // Build a lookup for Slack replies (not present in index.byId)
-    const replyIndex: Record<string, any> = {};
-    const slackByChannel = linkedData.items.slack || {};
-    for (const arr of Object.values(slackByChannel)) {
-        for (const parent of arr as any[]) {
-            const replies = (parent?.meta?.replies as any[] | undefined) || [];
-            for (const r of replies) {
-                if (r?.id) replyIndex[r.id] = r;
-            }
-        }
+export function rankHighlights(
+    topics: z.infer<typeof TopicOutput>,
+    kpi: KpiSnapshot,
+    opts?: { audience?: RankedHighlight["audience"]; topK?: number }
+  ): RankedHighlight[] {
+    const k = buildKpiIndex(kpi);
+    const topK = opts?.topK ?? CFG_RANKER.thresholds.topK;
+  
+    const ranked = topics.clusters.map<RankedHighlight>((c) => {
+      // 1) 토픽 기반 점수
+      const base = baseScore(c);
+  
+      // 2) KPI 보정
+      const caseId = extractCaseId(c);
+      const repoFromCase = caseId ? k.caseRepo.get(caseId) : undefined;
+      const repoShare = repoFromCase ? (k.repoShare.get(repoFromCase) ?? 0) : 0;
+      const caseShare = caseId ? (k.caseShare.get(caseId) ?? 0) : 0;
+      const kpiF = kpiFactorOf(repoShare, caseShare);
+  
+      // 3) 작은 보너스/패널티
+      let bonuses = smallBonuses(c);
+      if (opts?.audience && (c.audience === opts.audience || c.audience === "all")) {
+        bonuses += CFG_RANKER.bonuses.audienceFit;
+      }
+      const penalties = 0; // 반복공지 감지기 넣을 때 여기에 적용(초기엔 0)
+  
+      const total = base * kpiF + bonuses - penalties;
+  
+      return {
+        clusterId: c.id,
+        title: c.summary?.slice(0, 100) || `${c.topic} update`,
+        summary: c.summary,
+        audience: c.audience,
+        score: total,
+        parts: { base, kpiFactor: kpiF, bonuses, penalties },
+        meta: { topic: c.topic, impact: c.impact, caseId, repo: repoFromCase },
+        items: c.items,
+      };
+    });
+  
+    // 4) 정렬 및 간단 다양성(같은 토픽 과점 방지)
+    ranked.sort((a, b) => b.score - a.score);
+  
+    const picked: RankedHighlight[] = [];
+    const topicCount = new Map<z.infer<typeof Cluster>["topic"], number>();
+  
+    for (const r of ranked) {
+      if (r.score < CFG_RANKER.thresholds.minScore) continue; // 컷오프
+      const t = r.meta.topic;
+      const tCount = topicCount.get(t) ?? 0;
+      if (tCount >= CFG_RANKER.thresholds.maxPerTopic) continue; // 토픽 과점 방지
+      picked.push(r);
+      topicCount.set(t, tCount + 1);
+      if (picked.length >= topK) break;
     }
-
-    // Select members with total messages > 4 and attach their LinkedItem messages from index.byId
-    if (memberData && messageIndexIdArray) {
-        for (const member of Object.values(memberData)) {
-            const total = member?.messageCount?.total ?? 0;
-            if (member.displayName === "GitHub" 
-                || member.displayName === "Slackbot"
-                || member.displayName === "GitHub"
-                || (total <= 4 || !Array.isArray(member.messageIds) || member.messageIds.length === 0)) {
-                continue;
-            } else {
-                memberDataWithMessages[member.memberId] = {
-                    displayName: member.displayName,
-                    messages: [],
-                };
-                const messages = member.messageIds
-                    .map((mid) => messageIndexIdArray[mid] || replyIndex[mid])
-                    .filter((it): it is NonNullable<typeof it> => Boolean(it));
-                (memberDataWithMessages[member.memberId] as any).messages = messages;
-            }
-        }
-    }
-
-    return memberDataWithMessages;
+  
+    return picked;
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CFG_RANKER, IMPACT_MAP, type ImpactKey } from "../lib/constants";
-import type { KpiSnapshot } from "../lib/types";
+import type { KpiSnapshot, LinkedActivityDoc, RankedHighlight } from "../lib/types";
 import { Cluster } from "../openai/models";
 
 export const CLAMP01 = (x?: number | null) => Math.max(0, Math.min(1, x ?? 0));
@@ -76,4 +76,72 @@ export function smallBonuses(c: z.infer<typeof Cluster>): number {
     if (c.topic === "Release" && c.audience === "all") b += CFG_RANKER.bonuses.orgWideRelease;
     return b;
 }
-  
+
+/** highlights를 메시지와 함께 준비 */
+export function prepareHighlightsWithMessages(linkedData: LinkedActivityDoc, highlights: RankedHighlight[]): RankedHighlight[]  {
+  const messageIndexIdArray = linkedData.index?.byId;
+  let highlightsWithMessages: RankedHighlight[] = [];
+
+  if (highlights && messageIndexIdArray) {
+      for (const highlight of highlights) {
+          const messages = highlight.items?.map((item) => messageIndexIdArray[item]);
+          highlightsWithMessages.push({
+              ...highlight,
+              messages,
+          });
+      }
+  }
+
+  return highlightsWithMessages;
+}
+
+/**
+ * linkedData에서 멤버 데이터를 필터링하고 메시지를 첨부합니다.
+ * - 총 메시지 수가 4보다 큰 멤버만 선택
+ * - GitHub, Slackbot 등 봇 계정 제외
+ * - 각 멤버의 메시지 ID를 실제 메시지 객체로 변환
+ * 
+ * @param linkedData - 링크된 활동 데이터
+ * @returns 멤버 ID를 키로 하고, displayName과 messages 배열을 포함하는 객체
+ */
+export function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc): Record<string, any> {
+  const memberData = linkedData.items.member;
+  const messageIndexIdArray = linkedData.index?.byId;
+  let memberDataWithMessages: Record<string, any> = {};
+
+  // Build a lookup for Slack replies (not present in index.byId)
+  const replyIndex: Record<string, any> = {};
+  const slackByChannel = linkedData.items.slack || {};
+  for (const arr of Object.values(slackByChannel)) {
+      for (const parent of arr as any[]) {
+          const replies = (parent?.meta?.replies as any[] | undefined) || [];
+          for (const r of replies) {
+              if (r?.id) replyIndex[r.id] = r;
+          }
+      }
+  }
+
+  // Select members with total messages > 4 and attach their LinkedItem messages from index.byId
+  if (memberData && messageIndexIdArray) {
+      for (const member of Object.values(memberData)) {
+          const total = member?.messageCount?.total ?? 0;
+          if (member.displayName === "GitHub" 
+              || member.displayName === "Slackbot"
+              || member.displayName === "GitHub"
+              || (total <= 4 || !Array.isArray(member.messageIds) || member.messageIds.length === 0)) {
+              continue;
+          } else {
+              memberDataWithMessages[member.memberId] = {
+                  displayName: member.displayName,
+                  messages: [],
+              };
+              const messages = member.messageIds
+                  .map((mid) => messageIndexIdArray[mid] || replyIndex[mid])
+                  .filter((it): it is NonNullable<typeof it> => Boolean(it));
+              (memberDataWithMessages[member.memberId] as any).messages = messages;
+          }
+      }
+  }
+
+  return memberDataWithMessages;
+}
