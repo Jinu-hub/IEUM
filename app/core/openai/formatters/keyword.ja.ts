@@ -20,3 +20,44 @@ export const KEYWORD_DETECTION_RULES_JA = `
 - Q&A: ${Q_A_CUES_JA}.
 - Announcement: ${ANNOUNCEMENT_CUES_JA}.
 `;
+
+
+// 1) Ongoing (상태)
+export const TODAYS_WORK_CUES_JA = "'Today's work', 'Daily work', 'Today's tasks', 'Daily status', '今日の作業', '本日の作業', '日次作業', '今日のタスク', '日次状況'";
+export const NEXT_TASKS_CUES_JA = "'Next tasks', 'Next steps', 'Planned tasks', '次のタスク', '次のステップ', '予定タスク', '予定しているタスク'";
+export const COMPLETED_CUES_JA = "'Completed', 'Done', 'Finished', '完了', '完了', '完了'";
+export const PENDING_CUES_JA = "'Pending', 'On hold', 'Waiting', '保留', '保留中', '待機中'";
+export const IN_REVIEW_STATUS_CUES_JA = "'In review', 'Under review', 'Reviewing', 'レビュー中', '確認中', '確認中'";
+export const KEYWORD_ONGOING_WORK_JA = `
+- Today's work: ${TODAYS_WORK_CUES_JA}.
+- Next tasks: ${NEXT_TASKS_CUES_JA}.
+- Completed: ${COMPLETED_CUES_JA}.
+- Pending: ${PENDING_CUES_JA}.
+- In review (status): ${IN_REVIEW_STATUS_CUES_JA}.
+`;
+
+// 2) Roadmap (제품/버전 마일스톤)
+export const DEPLOY_MILESTONE_CUES_JA = "'Deploy', 'Deployment', 'Rollout','デプロイ', 'デプロイメント', '展開'"; 
+export const RELEASE_MILESTONE_CUES_JA = "'Release', 'Launch', 'GA','リリース', 'ローンチ', '一般提供'";
+export const DEADLINE_PRODUCT_CUES_JA = "'Feature freeze', 'Code freeze', 'Cutoff', '中止', '凍結', '締切', '機能凍結'";
+export const KEYWORD_ROADMAP_JA = `
+- Release: ${RELEASE_MILESTONE_CUES_JA}.
+- Deploy: ${DEPLOY_MILESTONE_CUES_JA}.
+- Deadline (product/freeze): ${DEADLINE_PRODUCT_CUES_JA}.
+`;
+
+// 3) Upcoming (예약된 일정)
+export const MEETING_REGULAR_CUES_JA = "'Standup', 'Regular meeting', 'Recurring meeting', 'Monthly MTG','スタンドアップ', '定例会議', '定期会議', '月次MTG'";
+export const RETRO_CUES_JA = "'Retro', 'Retrospective', '振返り', '振返り会'";
+export const REVIEW_MEETING_CUES_JA = "'Review session', 'Design review', 'Spec review', 'Code review meeting', 'レビュー会', 'デザインレビュー', '仕様レビュー', 'コードレビュー会'"; 
+export const PLANNING_CUES_JA = "'Planning', 'Sprint Planning', '計画', 'スプリント計画'";
+export const MEETING_CUES_JA = "'Meeting', 'MTG', 'Sync', '会議', 'ミーティング', '同期'";
+export const DEADLINE_SCHEDULE_CUES_JA = "'Deadline', 'Due date', '締切', '期限'"; 
+export const KEYWORD_UPCOMING_JA = `
+- Meeting: ${MEETING_CUES_JA}.
+- Regular: ${MEETING_REGULAR_CUES_JA}.
+- Retro: ${RETRO_CUES_JA}.
+- Review (meeting): ${REVIEW_MEETING_CUES_JA}.
+- Planning: ${PLANNING_CUES_JA}.
+- Deadline (schedule): ${DEADLINE_SCHEDULE_CUES_JA}.
+`;

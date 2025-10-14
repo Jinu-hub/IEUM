@@ -1,9 +1,10 @@
 import { z } from "zod";
 import type { CreateContentsInput } from "~/core/lib/types";
+import { saveContentToFile } from "~/features/cron/api/test-api";
 import { logger } from "../lib/logger";
 import type { KpiSnapshot, LinkedActivityDoc, RankedHighlight, UnifiedActivityDoc } from "../lib/types";
 import { TopicOutput } from "../openai/models";
-import { rankHighlights, repoKpiExtractor, topicClustering } from "./analyze-data";
+import { ongoingProgressRoadmapExtracte, repoKpiExtractor } from "./analyze-data";
 import { crossLinker } from "./cross-linker";
 import { createHighlightsSummary, summarizeMemberActivity } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
@@ -45,15 +46,20 @@ export async function analyzeData(
     logger.info('📝 Kpi snapshot created');
 
     // 2-2. slack data를 기반으로 topic clustering을 생성
-    const topics = await topicClustering(linkedData, input.language, input.source);
+    //const topics = await topicClustering(linkedData, input.language, input.source);
     logger.info('📝 Topic clustering completed');
 
     // 2-3. topic clustering을 기반으로 rank highlights을 생성
-    const highlights = rankHighlights(topics as unknown as z.infer<typeof TopicOutput>, kpiInfo);
+   // const highlights = rankHighlights(topics as unknown as z.infer<typeof TopicOutput>, kpiInfo);
     logger.info('📝 Rank highlights created');
 
+    // 2-4. slack data를 기반으로 ongoing progress roadmap을 생성
+    const ongoingProgressRoadmap = await ongoingProgressRoadmapExtracte(linkedData, input.language);
+    await saveContentToFile(ongoingProgressRoadmap, 'output-test', 'ongoing_progress_roadmap_', 'json');
+    logger.info('📝 Ongoing progress roadmap created');
+
     logger.info('📝 Analyzing data completed');
-    return { kpiInfo, topics, highlights };
+    return { kpiInfo, topics : [], highlights : [], ongoingProgressRoadmap };
 
 }
 
@@ -77,10 +83,16 @@ export async function draftingData(
     // 3-1. highlights summary을 생성
     const highlightsSummary = await createHighlightsSummary(linkedData, highlights, language);
     logger.info('📝 Highlights summary created');
+    // highlights에 존재하지 않는 topics을 id 기반으로 추출
+    const otherTopics = topics.clusters.filter((topic) => !highlights.some((highlight) => highlight.clusterId === topic.id));
 
     // 3-2. slack data를 기반으로 member activity summary을 생성
     const activitySummary = await summarizeMemberActivity(linkedData, language);
     logger.info('📝 Member activity summary created');
+
+
+
+    // Fun Corner
 
     logger.info('📝 Drafting data completed');
     return { linkedData, kpiInfo, topics, highlights, highlightsSummary, activitySummary };
@@ -89,7 +101,7 @@ export async function draftingData(
 export async function generateContents(input: CreateContentsInput) {
     const linkedData = await normalizeData(input);
     const { kpiInfo, topics, highlights }  = await analyzeData(input, linkedData);
-    const highlightsSummary = await draftingData(input.language, linkedData, kpiInfo, highlights, topics);
+   // const highlightsSummary = await draftingData(input.language, linkedData, kpiInfo, highlights, topics);
     
     //await saveContentToFile(linkedData, 'output-test', 'linked_', 'json');
     //await saveContentToFile(topics, 'output-test', 'topics_', 'json');
@@ -97,5 +109,5 @@ export async function generateContents(input: CreateContentsInput) {
     //await saveContentToFile(highlights, 'output-test', 'highlights_', 'json');
     //await saveContentToFile(activitySummary, 'output-test', 'activity_summary_', 'json');
 
-    return { linkedData, kpiInfo, topics, highlights, highlightsSummary };
+    return { linkedData, kpiInfo, topics, highlights };
 }

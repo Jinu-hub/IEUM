@@ -8,9 +8,10 @@ import type { CaseKpi, KpiSnapshot, LinkedActivityDoc, RankedHighlight, RepoKpi,
 import type { SupportedLanguage } from "../openai/config/style-guide";
 import {
     Cluster,
+    OngoingProgressOutput,
     TopicInput, TopicOutput
 } from "../openai/models";
-import { createTopicClusteringAgent } from "../openai/test-agent";
+import { createOngoingProgressAgent, createTopicClusteringAgent } from "../openai/test-agent";
 import { baseScore, buildKpiIndex, extractCaseId, kpiFactorOf, smallBonuses } from "./utils";
 
 /**
@@ -305,3 +306,86 @@ export function rankHighlights(
   
     return picked;
 }
+
+
+/**
+ * slack data를 기반으로 ongoing progress roadmap을 생성
+ * @param linkedData 
+ * @param language 
+ * @returns 
+ */
+export async function ongoingProgressRoadmapExtracte(
+    linkedData: LinkedActivityDoc,
+    language: 'en' | 'ko' | 'ja' = 'en'
+): Promise<z.infer<typeof OngoingProgressOutput>> {
+    const slackData = linkedData.items.slack;
+
+    // 채널별로 데이터를 처리하기 위한 배열
+    const channelKeys = Object.keys(slackData);
+    const allOngoing: any[] = [];
+    const allRoadmap: any[] = [];
+    const allUpcoming: any[] = [];
+    const allPolicies: any[] = [];
+
+    // 각 채널별로 Ongoing Progress & Roadmap 실행
+    for (let i = 0; i < channelKeys.length; i++) {
+        const channelKey = channelKeys[i];
+        const channelData = slackData[channelKey];
+        
+        // 채널 데이터가 비어있으면 스킵
+        if (!channelData || channelData.length === 0) {
+            continue;
+        }
+        
+        logger.info(`🔍 channel processing (${i + 1}/${channelKeys.length})`, {
+            "channel": channelKey,
+            "message count": channelData.length,
+        });
+        
+        // 채널별 데이터를 객체로 감싸서 전달
+        const channelDataString = JSON.stringify({ [channelKey]: channelData });
+        const input = TopicInput.parse({
+            project: channelKey,
+            linked: channelDataString,
+        });
+        
+        const agent = createOngoingProgressAgent(language);
+        const result = await run(
+            agent,
+            JSON.stringify(input)
+        );
+        
+        const output: any = result.finalOutput;
+        
+        // 각 필드별로 채널 정보 추가 및 머지
+        if (output.ongoing && Array.isArray(output.ongoing)) {
+            allOngoing.push(...output.ongoing.map((item: any) => ({ ...item, channel: channelKey })));
+        }
+        if (output.roadmap && Array.isArray(output.roadmap)) {
+            allRoadmap.push(...output.roadmap.map((item: any) => ({ ...item, channel: channelKey })));
+        }
+        if (output.upcoming && Array.isArray(output.upcoming)) {
+            allUpcoming.push(...output.upcoming.map((item: any) => ({ ...item, channel: channelKey })));
+        }
+        if (output.governance?.policies && Array.isArray(output.governance.policies)) {
+            allPolicies.push(...output.governance.policies.map((item: any) => ({ ...item, channel: channelKey })));
+        }
+    }
+
+    logger.info("✨ Ongoing Progress & Roadmap completed", {
+        "processed channel count": channelKeys.length,
+        "ongoing": allOngoing.length,
+        "roadmap": allRoadmap.length,
+        "upcoming": allUpcoming.length,
+        "policies": allPolicies.length,
+    });
+
+    // 모든 채널의 데이터를 머지하여 반환
+    return {
+        generatedAtISO: new Date().toISOString(),
+        ongoing: allOngoing,
+        roadmap: allRoadmap,
+        upcoming: allUpcoming,
+        governance: { policies: allPolicies },
+    };
+}   

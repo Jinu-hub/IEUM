@@ -13,6 +13,7 @@ export type CreateContentsInput = {
   targetId: string;
   language: 'en' | 'ko' | 'ja';
   source: string;
+  timezone?: string;
 };
 
 /** 파이프라인 공용 루트 문서 */

@@ -20,3 +20,44 @@ export const KEYWORD_DETECTION_RULES_KO = `
 - Q&A: ${Q_A_CUES_KO}.
 - Announcement: ${ANNOUNCEMENT_CUES_KO}.
 `;
+
+
+// 1) Ongoing (상태)
+export const TODAYS_WORK_CUES_KO = "'Today's work', 'Daily work', 'Today's tasks', 'Daily status', '오늘의 작업', '금일 작업', '일일 작업', '오늘의 태스크', '일일 상황'";
+export const NEXT_TASKS_CUES_KO = "'Next tasks', 'Next steps', 'Planned tasks', '다음 태스크', '다음 단계', '예정 태스크', '예정된 태스크'";
+export const COMPLETED_CUES_KO = "'Completed', 'Done', 'Finished', '완료', '완료됨', '종료'";
+export const PENDING_CUES_KO = "'Pending', 'On hold', 'Waiting', '보류', '보류 중', '대기 중'";
+export const IN_REVIEW_STATUS_CUES_KO = "'In review', 'Under review', 'Reviewing', '리뷰 중', '확인 중', '검토 중'";
+export const KEYWORD_ONGOING_WORK_KO = `
+- Today's work: ${TODAYS_WORK_CUES_KO}.
+- Next tasks: ${NEXT_TASKS_CUES_KO}.
+- Completed: ${COMPLETED_CUES_KO}.
+- Pending: ${PENDING_CUES_KO}.
+- In review (status): ${IN_REVIEW_STATUS_CUES_KO}.
+`;
+
+// 2) Roadmap (제품/버전 마일스톤)
+export const DEPLOY_MILESTONE_CUES_KO = "'Deploy', 'Deployment', 'Rollout', '배포', '디플로이먼트', '롤아웃'"; 
+export const RELEASE_MILESTONE_CUES_KO = "'Release', 'Launch', 'GA', '릴리스', '런치', '정식 출시'";
+export const DEADLINE_PRODUCT_CUES_KO = "'Feature freeze', 'Code freeze', 'Cutoff', '중지', '동결', '마감', '기능 동결'";
+export const KEYWORD_ROADMAP_KO = `
+- Release: ${RELEASE_MILESTONE_CUES_KO}.
+- Deploy: ${DEPLOY_MILESTONE_CUES_KO}.
+- Deadline (product/freeze): ${DEADLINE_PRODUCT_CUES_KO}.
+`;
+
+// 3) Upcoming (예약된 일정)
+export const MEETING_REGULAR_CUES_KO = "'Standup', 'Regular meeting', 'Recurring meeting', 'Monthly MTG', '스탠드업', '정례 회의', '정기 회의', '월간 MTG'";
+export const RETRO_CUES_KO = "'Retro', 'Retrospective', '회고', '회고회'";
+export const REVIEW_MEETING_CUES_KO = "'Review session', 'Design review', 'Spec review', 'Code review meeting', '리뷰 회의', '디자인 리뷰', '사양 리뷰', '코드 리뷰 회의'"; 
+export const PLANNING_CUES_KO = "'Planning', 'Sprint Planning', '계획', '스프린트 계획'";
+export const MEETING_CUES_KO = "'Meeting', 'MTG', 'Sync', '회의', '미팅', '싱크'";
+export const DEADLINE_SCHEDULE_CUES_KO = "'Deadline', 'Due date', '마감', '기한'"; 
+export const KEYWORD_UPCOMING_KO = `
+- Meeting: ${MEETING_CUES_KO}.
+- Regular: ${MEETING_REGULAR_CUES_KO}.
+- Retro: ${RETRO_CUES_KO}.
+- Review (meeting): ${REVIEW_MEETING_CUES_KO}.
+- Planning: ${PLANNING_CUES_KO}.
+- Deadline (schedule): ${DEADLINE_SCHEDULE_CUES_KO}.
+`;

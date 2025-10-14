@@ -1,0 +1,194 @@
+{
+  "generatedAtISO": "2025-10-13T11:30:15.422Z",
+  "ongoing": [
+    {
+      "title": "修正依頼表対応その6",
+      "tickets": [
+        "No.167",
+        "No.447",
+        "No.456",
+        "No.353",
+        "No.448",
+        "No.412",
+        "No.425",
+        "No.434"
+      ],
+      "owner": "Jinu Son, Suchon Kou, Momoko Terada",
+      "status": "in_progress",
+      "progressPercent": 60,
+      "completed": [
+        "No.425"
+      ],
+      "pending": [
+        "No.167",
+        "No.456",
+        "No.447",
+        "No.353",
+        "No.448",
+        "No.412",
+        "No.434"
+      ],
+      "nextActions": [
+        {
+          "action": "調査とエラー原因解明",
+          "owner": "Momoko Terada",
+          "due": "2025-10-13"
+        },
+        {
+          "action": "修正・対応の進捗報告",
+          "owner": "Suchon Kou",
+          "due": null
+        },
+        {
+          "action": "レビュー依頼・コミット作業",
+          "owner": "Suchon Kou",
+          "due": "2025-10-17"
+        }
+      ],
+      "channel": "C05CSNH7XKK:dev_cs_d3"
+    },
+    {
+      "title": "音声自動再生機能対応(1スライド素材)",
+      "tickets": [
+        "https://redmine.l-edge.jp/issues/21801"
+      ],
+      "owner": "Yasuhiro Oba, Tomoaki Watanabe",
+      "status": "in_progress",
+      "progressPercent": 70,
+      "completed": [
+        "原因確認（1スライドは元から自動再生されない仕様）",
+        "既存の実装内容確認"
+      ],
+      "pending": [
+        "対応方針の確定",
+        "機能追加実装(1スライド素材の自動音声再生)",
+        "動作検証"
+      ],
+      "nextActions": [
+        {
+          "action": "原因の最終確認と機能要件の整理",
+          "owner": "Tomoaki Watanabe",
+          "due": "2025-10-12"
+        },
+        {
+          "action": "機能実装開始",
+          "owner": "開発チーム",
+          "due": "2025-10-15"
+        }
+      ],
+      "channel": "CDR68RY0L:dev_lead"
+    }
+  ],
+  "roadmap": [
+    {
+      "milestone": "10月対応分のコミット",
+      "window": {
+        "from": "2025-10-13",
+        "to": "2025-10-31"
+      },
+      "signals": [
+        "修正依頼表その6の対応継続",
+        "いくつかのチケットは未コミット状態",
+        "11月切替後にコミット予定"
+      ],
+      "importance": "high",
+      "channel": "C05CSNH7XKK:dev_cs_d3"
+    },
+    {
+      "milestone": "11月対応開始",
+      "window": {
+        "from": "2025-11-01",
+        "to": null
+      },
+      "signals": [
+        "10月保留分の順次対応開始",
+        "スキル管理進捗一覧画面の全面見直し開始"
+      ],
+      "importance": "high",
+      "channel": "C05CSNH7XKK:dev_cs_d3"
+    },
+    {
+      "milestone": "10月バージョンリリース",
+      "window": {
+        "from": "2025-10-01",
+        "to": "2025-10-31"
+      },
+      "signals": [
+        "複数の修正依頼対応 #21754シリーズ",
+        "音声自動再生関連不具合対応",
+        "各種iPhoneフォーム表示問題改善"
+      ],
+      "importance": "high",
+      "channel": "CDR68RY0L:dev_lead"
+    },
+    {
+      "milestone": "11月アップデート",
+      "window": {
+        "from": "2025-11-01",
+        "to": "2025-11-30"
+      },
+      "signals": [
+        "スキル管理画面改良 #21794対応",
+        "ユーザ配信再計算API改善 #21790など"
+      ],
+      "importance": "medium",
+      "channel": "CDR68RY0L:dev_lead"
+    }
+  ],
+  "upcoming": [
+    {
+      "title": "修正依頼表対応その6（継続）",
+      "start": "2025-10-13T09:00:00+09:00",
+      "end": null,
+      "timezone": "Asia/Tokyo",
+      "location": null,
+      "channel": "C05CSNH7XKK:dev_cs_d3"
+    },
+    {
+      "title": "レビュー＆コミット予定",
+      "start": "2025-10-17T10:00:00+09:00",
+      "end": null,
+      "timezone": "Asia/Tokyo",
+      "location": null,
+      "channel": "C05CSNH7XKK:dev_cs_d3"
+    },
+    {
+      "title": "概要書レビュー",
+      "start": "2025-10-11T15:30:00",
+      "end": "2025-10-11T16:30:00",
+      "timezone": "Asia/Tokyo",
+      "location": "オンライン",
+      "channel": "CDR68RY0L:dev_lead"
+    },
+    {
+      "title": "月次ミーティング",
+      "start": "2025-10-08T10:30:00",
+      "end": "2025-10-08T12:00:00",
+      "timezone": "Asia/Tokyo",
+      "location": null,
+      "channel": "CDR68RY0L:dev_lead"
+    }
+  ],
+  "governance": {
+    "policies": [
+      {
+        "title": "修正依頼対応管理方針",
+        "summary": "修正依頼はチケット化し工数見積もりと進捗管理を行い、重大な変更は別途チケット化すること",
+        "effectiveFrom": "2025-10-01",
+        "channel": "C05CSNH7XKK:dev_cs_d3"
+      },
+      {
+        "title": "コミットタイミングルール",
+        "summary": "10月②対応分は11月切替後までコミット保留とし、対応完了後速やかにCI環境にコミットすること",
+        "effectiveFrom": "2025-10-07",
+        "channel": "C05CSNH7XKK:dev_cs_d3"
+      },
+      {
+        "title": "10月修正依頼表対応ポリシー",
+        "summary": "10月版の修正依頼対応は影響範囲とリスクを明記し、チケットベースで管理しチーム内で共有する。リスクがないものはリバート不要とし、慎重な動作確認を行う。",
+        "effectiveFrom": "2025-10-01",
+        "channel": "CDR68RY0L:dev_lead"
+      }
+    ]
+  }
+}
