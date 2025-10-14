@@ -137,4 +137,49 @@ export const HighlightsOutput = z.object({
   })),
 });
 
+export const OngoingProgressInput = z.object({
+  project: z.string(),
+  contents: z.string(),
+});
 
+
+export const OngoingProgressOutput = z.object({
+  generatedAtISO: z.string(),
+  ongoing: z.array(z.object({
+    title: z.string(),
+    tickets: z.array(z.string()),
+    owner: z.string(),
+    status: z.enum(["in_progress", "pending", "blocked", "done"]),
+    progressPercent: z.number(),
+    completed: z.array(z.string()),
+    pending: z.array(z.string()),
+    nextActions: z.array(z.object({
+      action: z.string(),
+      owner: z.string(),
+      due: z.string().optional().nullable(),
+    })),
+  })),
+  roadmap: z.array(z.object({
+    milestone: z.string(),
+    window: z.object({
+      from: z.string().optional().nullable(),
+      to: z.string().optional().nullable(),
+    }),
+    signals: z.array(z.string()),
+    importance: z.enum(["low", "medium", "high"]),
+  })),
+  upcoming: z.array(z.object({
+    title: z.string(),
+    start: z.string(),
+    end: z.string().optional().nullable(),
+    timezone: z.string(),
+    location: z.string().optional().nullable(),
+  })),
+  governance: z.object({
+    policies: z.array(z.object({
+      title: z.string(),
+      summary: z.string(),
+      effectiveFrom: z.string(),
+    })),
+  }),
+});

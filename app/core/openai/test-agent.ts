@@ -1,6 +1,6 @@
 import { Agent } from "@openai/agents";
 import type { SupportedLanguage } from "./config/style-guide";
-import { ActivityOutput, HighlightsOutput, TopicOutput } from "./models";
+import { ActivityOutput, HighlightsOutput, OngoingProgressOutput, TopicOutput } from "./models";
 import { buildPrompt } from "./prompts";
 
 /**
@@ -31,6 +31,18 @@ export function createTopicClusteringAgent(
     instructions: instructions,
     model: 'gpt-4.1-mini',
     outputType: TopicOutput,
+  });
+}
+
+export function createOngoingProgressAgent(
+  language: SupportedLanguage = 'en',
+) {
+  const instructions = buildPrompt('ongoing_progress', language);
+  return new Agent({
+    name: 'ongoing_progress_agent',
+    instructions: instructions,
+    model: 'gpt-4.1-mini',
+    outputType: OngoingProgressOutput,
   });
 }
 
