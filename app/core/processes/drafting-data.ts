@@ -1,8 +1,9 @@
 import { run } from "@openai/agents";
-import type { LinkedActivityDoc, RankedHighlight } from "../lib/types";
-import { ActivityInput, ActivityOutput, HighlightsInput } from "../openai/models";
-import { createActivitySummaryAgent, createHighlightsSummaryAgent } from "../openai/test-agent";
-import { prepareHighlightsWithMessages, prepareMemberDataWithMessages } from "./utils";
+import { z } from "zod";
+import type { KpiSnapshot, LinkedActivityDoc, RankedHighlight } from "../lib/types";
+import { ActivityInput, ActivityOutput, FunCornerInput, HighlightsInput, OngoingProgressOutput } from "../openai/models";
+import { createActivitySummaryAgent, createFunCornerAgent, createHighlightsSummaryAgent } from "../openai/test-agent";
+import { getFunCornerLeaderboardData, prepareHighlightsWithMessages, prepareMemberDataWithMessages } from "./utils";
 
 export async function createHighlightsSummary(
     linkedData: LinkedActivityDoc, 
@@ -47,5 +48,39 @@ export async function summarizeMemberActivity(
     );
 
     return result.finalOutput as unknown as typeof ActivityOutput;
+    
+}
+
+/**
+ * slack data를 기반으로 fun corner을 생성
+ * @param linkedData 
+ * @param language 
+ * @returns 
+ */
+export async function createFunCorner(
+    linkedData: LinkedActivityDoc,
+    kpiData: KpiSnapshot,
+    ongoingData: z.infer<typeof OngoingProgressOutput>,
+    language: 'en' | 'ko' | 'ja' = 'en'
+): Promise<any> {
+
+    const leaderboardData = getFunCornerLeaderboardData(linkedData, kpiData);
+    const trimmed = {
+        ongoingProgress: ongoingData,
+        leaderboard: {
+            ...leaderboardData,
+        },
+    };
+    
+    const contentsString = JSON.stringify(trimmed, null, 2);
+    const input = FunCornerInput.parse({
+        project: 'all',
+        contents: contentsString,
+    });
+
+    const agent = createFunCornerAgent(language);
+    const result = await run(agent, JSON.stringify(input));
+
+    return result.finalOutput;
     
 }

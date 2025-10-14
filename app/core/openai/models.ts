@@ -183,3 +183,18 @@ export const OngoingProgressOutput = z.object({
     })),
   }),
 });
+
+export const FunCornerInput = z.object({
+  project: z.string(),
+  contents: z.string(),
+});
+
+export const FunCornerOutput = z.object({
+  generatedAtISO: z.string(),
+  snippets: z.array(z.object({
+    title: z.string(),
+    summary: z.string(),
+    type: z.enum(["progress_humor", "roadmap_fortune", "schedule_reminder", "slack_reaction", "thread_of_week", "night_owl", "buzzword"]),
+    primaryUrl: z.string().optional().nullable(),
+  })),
+});

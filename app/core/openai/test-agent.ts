@@ -1,6 +1,11 @@
 import { Agent } from "@openai/agents";
 import type { SupportedLanguage } from "./config/style-guide";
-import { ActivityOutput, HighlightsOutput, OngoingProgressOutput, TopicOutput } from "./models";
+import {
+  ActivityOutput,
+  HighlightsOutput,
+  OngoingProgressOutput,
+  TopicOutput
+} from "./models";
 import { buildPrompt } from "./prompts";
 
 /**
@@ -31,18 +36,6 @@ export function createTopicClusteringAgent(
     instructions: instructions,
     model: 'gpt-4.1-mini',
     outputType: TopicOutput,
-  });
-}
-
-export function createOngoingProgressAgent(
-  language: SupportedLanguage = 'en',
-) {
-  const instructions = buildPrompt('ongoing_progress', language);
-  return new Agent({
-    name: 'ongoing_progress_agent',
-    instructions: instructions,
-    model: 'gpt-4.1-mini',
-    outputType: OngoingProgressOutput,
   });
 }
 
@@ -80,5 +73,39 @@ export function createHighlightsSummaryAgent(
     instructions: instructions,
     model: 'gpt-4.1-mini',
     outputType: HighlightsOutput,
+  });
+}
+
+/**
+ * Ongoing Progress Agent を言語に応じて生成します
+ * @param language - 出力言語 ('en' | 'ko' | 'ja')
+ * @returns Agent instance
+ */
+export function createOngoingProgressAgent(
+  language: SupportedLanguage = 'en',
+) {
+  const instructions = buildPrompt('ongoing_progress', language);
+  return new Agent({
+    name: 'ongoing_progress_agent',
+    instructions: instructions,
+    model: 'gpt-4.1-mini',
+    outputType: OngoingProgressOutput,
+  });
+}
+
+/**
+ * Fun Corner Agent を言語に応じて生成します
+ * @param language - 出力言語 ('en' | 'ko' | 'ja')
+ * @returns Agent instance
+ */
+export function createFunCornerAgent(
+  language: SupportedLanguage = 'en',
+) {
+  const instructions = buildPrompt('fun_corner', language);
+  //saveContentToFile(instructions, 'output-test', 'fun_corner_instructions_', 'md');
+  return new Agent({
+    name: 'fun_corner_agent',
+    instructions: instructions,
+    model: 'gpt-4.1-mini',
   });
 }

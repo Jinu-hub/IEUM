@@ -2,7 +2,7 @@
  * GitHub Data Formatter - Multi-language Support
  */
 import type { FetchedRepoData } from "~/core/integrations/github/types";
-import type { SupportedLanguage } from "../templates";
+import type { SupportedLanguage } from "../config/style-guide";
 
 /**
  * 언어별 라벨 정의

@@ -163,7 +163,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
           workspaceId: target.workspace_id,
           targetId: target.target_id,
           language: "ja",
-          source: "slack"
+          source: "slack",
+          timezone: "Asia/Tokyo"
         });
         
         logger.info('Contents generation completed', { 

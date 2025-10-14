@@ -112,11 +112,33 @@ export function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc): Re
   // Build a lookup for Slack replies (not present in index.byId)
   const replyIndex: Record<string, any> = {};
   const slackByChannel = linkedData.items.slack || {};
+  const reactionsByUser: Record<string, number> = {};
+  
+  // Single loop to build replyIndex AND count reactions
   for (const arr of Object.values(slackByChannel)) {
       for (const parent of arr as any[]) {
+          // Build reply index
           const replies = (parent?.meta?.replies as any[] | undefined) || [];
           for (const r of replies) {
               if (r?.id) replyIndex[r.id] = r;
+              
+              // Count reactions in replies
+              const replyReactions = r?.meta?.reactions || [];
+              for (const reaction of replyReactions) {
+                  const reactedUsers = reaction.users || [];
+                  for (const userId of reactedUsers) {
+                      reactionsByUser[userId] = (reactionsByUser[userId] || 0) + 1;
+                  }
+              }
+          }
+          
+          // Count reactions in parent messages
+          const reactions = parent?.meta?.reactions || [];
+          for (const reaction of reactions) {
+              const reactedUsers = reaction.users || [];
+              for (const userId of reactedUsers) {
+                  reactionsByUser[userId] = (reactionsByUser[userId] || 0) + 1;
+              }
           }
       }
   }
@@ -134,6 +156,7 @@ export function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc): Re
               memberDataWithMessages[member.memberId] = {
                   displayName: member.displayName,
                   messages: [],
+                  reactionsGiven: reactionsByUser[member.memberId] || 0,
               };
               const messages = member.messageIds
                   .map((mid) => messageIndexIdArray[mid] || replyIndex[mid])
@@ -144,4 +167,40 @@ export function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc): Re
   }
 
   return memberDataWithMessages;
+}
+
+/**
+ * 펀코너 리더보드 데이터 추출
+ * @param linkedData 
+ * @param kpiData 
+ * @returns 
+ */
+export function getFunCornerLeaderboardData(linkedData: LinkedActivityDoc, kpiData: KpiSnapshot): Record<string, any> {
+    const memberDataWithMessages = prepareMemberDataWithMessages(linkedData);
+    
+    // 커밋수가 가장 많은 유저 찾기
+    const topCommitUserEntry = (kpiData.perUser || [])
+        .sort((a, b) => (b.commits || 0) - (a.commits || 0))[0];
+    
+    // 리액션을 가장 많이 한 유저 찾기
+    const topReactionGiverEntry = Object.entries(memberDataWithMessages)
+        .sort((a, b) => (b[1].reactionsGiven || 0) - (a[1].reactionsGiven || 0))[0];
+    
+    // 리액션을 가장 많이 받은 유저 찾기
+    const userReactionsReceived = Object.entries(memberDataWithMessages).map(([memberId, data]: [string, any]) => {
+        const messages = data.messages || [];
+        const totalReactionsReceived = messages.reduce((sum: number, m: any) => {
+            const reactions = m.meta?.reactions || [];
+            return sum + reactions.reduce((s: number, r: any) => s + (r.count || 0), 0);
+        }, 0);
+        return { memberId, displayName: data.displayName, reactionsReceived: totalReactionsReceived };
+    });
+    const topReactionsReceivedEntry = userReactionsReceived
+        .sort((a, b) => b.reactionsReceived - a.reactionsReceived)[0];
+
+    // 메시지를 가장 많이 한 유저 찾기
+    const mostMessagesUser = Object.entries(memberDataWithMessages)
+        .sort((a, b) => (b[1].messageCount || 0) - (a[1].messageCount || 0))[0];
+
+    return { topCommitUserEntry, topReactionGiverEntry, topReactionsReceivedEntry, mostMessagesUser };
 }

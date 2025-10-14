@@ -1,12 +1,11 @@
 import { z } from "zod";
 import type { CreateContentsInput } from "~/core/lib/types";
-import { saveContentToFile } from "~/features/cron/api/test-api";
 import { logger } from "../lib/logger";
 import type { KpiSnapshot, LinkedActivityDoc, RankedHighlight, UnifiedActivityDoc } from "../lib/types";
-import { TopicOutput } from "../openai/models";
+import { OngoingProgressOutput, TopicOutput } from "../openai/models";
 import { ongoingProgressRoadmapExtracte, repoKpiExtractor } from "./analyze-data";
 import { crossLinker } from "./cross-linker";
-import { createHighlightsSummary, summarizeMemberActivity } from "./drafting-data";
+import { createFunCorner, createHighlightsSummary, summarizeMemberActivity } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
 
 /**
@@ -23,7 +22,7 @@ export async function normalizeData(input: CreateContentsInput) {
     // 1-2. 중복 제거 & 연결(Deduplication & Linking)
     const linkedData = await crossLinker({ ...githubData, ...slackData } as UnifiedActivityDoc);
     //await saveContentToFile(linkedData, 'output-test', 'linked_', 'json');
-    //console.log(linkedData.items.member);
+    //console.log('👤 Members:', Object.keys(linkedData.items.member || {}));
 
     logger.info('📝 Normalizing and reducing data completed');
     return linkedData;
@@ -54,12 +53,12 @@ export async function analyzeData(
     logger.info('📝 Rank highlights created');
 
     // 2-4. slack data를 기반으로 ongoing progress roadmap을 생성
-    const ongoingProgressRoadmap = await ongoingProgressRoadmapExtracte(linkedData, input.language);
-    await saveContentToFile(ongoingProgressRoadmap, 'output-test', 'ongoing_progress_roadmap_', 'json');
+    const ongoing = await ongoingProgressRoadmapExtracte(linkedData, input.language);
+    //await saveContentToFile(ongoing, 'output-test', 'ongoing_progress_roadmap_', 'json');
     logger.info('📝 Ongoing progress roadmap created');
 
     logger.info('📝 Analyzing data completed');
-    return { kpiInfo, topics : [], highlights : [], ongoingProgressRoadmap };
+    return { kpiInfo, topics : [], highlights : [], ongoing };
 
 }
 
@@ -77,7 +76,8 @@ export async function draftingData(
     linkedData: LinkedActivityDoc, 
     kpiInfo: KpiSnapshot, 
     highlights: RankedHighlight[], 
-    topics: z.infer<typeof TopicOutput>) {
+    topics: z.infer<typeof TopicOutput>,
+    ongoing: z.infer<typeof OngoingProgressOutput>) {
     logger.info('📝 Drafting data started');
 
     // 3-1. highlights summary을 생성
@@ -90,9 +90,9 @@ export async function draftingData(
     const activitySummary = await summarizeMemberActivity(linkedData, language);
     logger.info('📝 Member activity summary created');
 
-
-
-    // Fun Corner
+    // 3-3. slack data를 기바으로 fun corner을 생성
+    const funCorner = await createFunCorner(linkedData, kpiInfo, ongoing, language);
+    logger.info('📝 Fun corner created');
 
     logger.info('📝 Drafting data completed');
     return { linkedData, kpiInfo, topics, highlights, highlightsSummary, activitySummary };

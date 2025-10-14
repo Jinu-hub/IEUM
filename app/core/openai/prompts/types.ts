@@ -3,3 +3,4 @@ export type PromptType =
     | 'activity_summary' 
     | 'highlights_summary'
     | 'ongoing_progress'
+    | 'fun_corner'
