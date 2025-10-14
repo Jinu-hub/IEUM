@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export const CommonInput = z.object({
+  project: z.string(),
+  contents: z.string(),
+  team: z.string().optional().nullable(),
+});
+
 /**
  * Topic Cluster schema optimized for Slack/GitHub activity classification.
  * Each cluster groups related items (PRs, issues, threads) into a coherent topic.
@@ -77,13 +83,6 @@ export const Cluster = z.object({
     .describe("Optional short rationale or summary for this cluster."),
 });
 
-
-export const TopicInput = z.object({
-    team: z.string().optional().nullable(),
-    project: z.string(),
-    linked: z.string(),
-});
-
 export const TopicOutput = z.object({
   clusters: z.array(Cluster),
 });
@@ -113,20 +112,9 @@ export const Member = z.object({
   }),
 });
 
-export const ActivityInput = z.object({
-  team: z.string().optional().nullable(),
-  project: z.string(),
-  contents: z.string(),
-});
-
 export const ActivityOutput = z.object({
   generatedAtISO: z.string(),
   members: z.array(Member),
-});
-
-export const HighlightsInput = z.object({ 
-  project: z.string(),
-  contents: z.string(),
 });
 
 export const HighlightsOutput = z.object({
@@ -136,12 +124,6 @@ export const HighlightsOutput = z.object({
     conversations: z.array(z.string()),
   })),
 });
-
-export const OngoingProgressInput = z.object({
-  project: z.string(),
-  contents: z.string(),
-});
-
 
 export const OngoingProgressOutput = z.object({
   generatedAtISO: z.string(),
@@ -182,11 +164,6 @@ export const OngoingProgressOutput = z.object({
       effectiveFrom: z.string(),
     })),
   }),
-});
-
-export const FunCornerInput = z.object({
-  project: z.string(),
-  contents: z.string(),
 });
 
 export const FunCornerOutput = z.object({

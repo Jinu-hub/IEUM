@@ -7,12 +7,27 @@ import { logger } from "../lib/logger";
 import type { CaseKpi, KpiSnapshot, LinkedActivityDoc, RankedHighlight, RepoKpi, UserRepoKpi } from "../lib/types";
 import type { SupportedLanguage } from "../openai/config/style-guide";
 import {
+    ActivityOutput,
     Cluster,
+    CommonInput,
     OngoingProgressOutput,
-    TopicInput, TopicOutput
+    TopicOutput
 } from "../openai/models";
-import { createOngoingProgressAgent, createTopicClusteringAgent } from "../openai/test-agent";
-import { baseScore, buildKpiIndex, extractCaseId, kpiFactorOf, smallBonuses } from "./utils";
+import {
+    createActivitySummaryAgent,
+    createHighlightsSummaryAgent,
+    createOngoingProgressAgent,
+    createTopicClusteringAgent
+} from "../openai/test-agent";
+import {
+    baseScore,
+    buildKpiIndex,
+    extractCaseId,
+    kpiFactorOf,
+    prepareHighlightsWithMessages,
+    prepareMemberDataWithMessages,
+    smallBonuses
+} from "./utils";
 
 /**
  * github data를 기반으로 kpi snapshot을 생성
@@ -196,9 +211,9 @@ export async function topicClustering(
         
         // 채널별 데이터를 객체로 감싸서 전달
         const channelDataString = JSON.stringify({ [channelKey]: channelData });
-        const input = TopicInput.parse({
+        const input = CommonInput.parse({
             project: channelKey,
-            linked: channelDataString,
+            contents: channelDataString,
         });
         
         const agent = createTopicClusteringAgent(language, source);
@@ -307,6 +322,52 @@ export function rankHighlights(
     return picked;
 }
 
+export async function createHighlightsSummary(
+    linkedData: LinkedActivityDoc, 
+    highlights: RankedHighlight[],
+    language: 'en' | 'ko' | 'ja' = 'en') {
+
+    const highlightsWithMessages = prepareHighlightsWithMessages(linkedData, highlights);
+    //await saveContentToFile(highlightsWithMessages, 'output-test', 'highlights_with_messages_', 'json');
+    
+    const input = CommonInput.parse({
+        project: "LEAD",
+        contents: JSON.stringify(highlightsWithMessages),
+    });
+
+    const agent = createHighlightsSummaryAgent(language);
+    const result = await run(
+        agent,
+        JSON.stringify(input)
+    );
+    //await saveContentToFile(result.finalOutput, 'output-test', 'highlights_summary_', 'json');
+
+    return { highlightsSummary: result.finalOutput };
+}
+
+export async function summarizeMemberActivity(
+    linkedData: LinkedActivityDoc,
+    language: 'en' | 'ko' | 'ja' = 'en'
+): Promise<typeof ActivityOutput> {
+
+    const memberDataWithMessages = prepareMemberDataWithMessages(linkedData);
+
+    //await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
+    const input = CommonInput.parse({
+        project: "LEAD",
+        contents: JSON.stringify(memberDataWithMessages),
+    });
+    const agent = createActivitySummaryAgent(language);
+    
+    const result = await run(
+        agent,
+        JSON.stringify(input)
+    );
+
+    return result.finalOutput as unknown as typeof ActivityOutput;
+    
+}
+
 
 /**
  * slack data를 기반으로 ongoing progress roadmap을 생성
@@ -344,9 +405,9 @@ export async function ongoingProgressRoadmapExtracte(
         
         // 채널별 데이터를 객체로 감싸서 전달
         const channelDataString = JSON.stringify({ [channelKey]: channelData });
-        const input = TopicInput.parse({
+        const input = CommonInput.parse({
             project: channelKey,
-            linked: channelDataString,
+            contents: channelDataString,
         });
         
         const agent = createOngoingProgressAgent(language);
