@@ -6,7 +6,12 @@
 import { HIGHLIGHTS_SUMMARY_INSTRUCTIONS } from './analyze/highlight_ins';
 import { TOPIC_CLUSTERING_INSTRUCTIONS } from './analyze/topic_clustering_ins';
 import { ACTIVITY_SUMMARY_INSTRUCTIONS } from './analyze/user_activity_ins';
-import { FUN_CORNER_INSTRUCTIONS } from './fun_corner_ins';
+import { FUN_CORNER_SECTION_INSTRUCTIONS } from './drafting/fun_corner_sec_ins';
+import { HIGHLIGHTS_SECTION_INSTRUCTIONS } from './drafting/highlights_sec_ins';
+import { KPI_SECTION_INSTRUCTIONS } from './drafting/kpi_sec_ins';
+import { MEMBER_ACTIVITY_SECTION_INSTRUCTIONS } from './drafting/member_act_sec_ins';
+import { ONGOING_SECTION_INSTRUCTIONS } from './drafting/ongoing_sec_ins';
+import { TOPICS_SECTION_INSTRUCTIONS } from './drafting/topics_sec_ins';
 import type { PromptType } from './types';
 
 export { buildPrompt } from './prompt-builder';
@@ -21,8 +26,20 @@ export function getPrompt(
       return ACTIVITY_SUMMARY_INSTRUCTIONS;
     case 'highlights_summary':
       return HIGHLIGHTS_SUMMARY_INSTRUCTIONS;
-    case 'fun_corner':
-      return FUN_CORNER_INSTRUCTIONS;
+    case 'kpi_section':
+      return KPI_SECTION_INSTRUCTIONS;
+    case 'highlights_section':
+      return HIGHLIGHTS_SECTION_INSTRUCTIONS;
+    case 'topics_section':  
+      return TOPICS_SECTION_INSTRUCTIONS;
+    case 'member_activity_section':    
+      return MEMBER_ACTIVITY_SECTION_INSTRUCTIONS;
+    case 'ongoing_section':
+      return ONGOING_SECTION_INSTRUCTIONS;
+    case 'looking_ahead_section':
+      return 'TODO: Looking Ahead Section Instructions';
+    case 'fun_corner_section':
+      return FUN_CORNER_SECTION_INSTRUCTIONS;
   }
   return '';
 }

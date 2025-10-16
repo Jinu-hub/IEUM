@@ -82,11 +82,13 @@ export async function analyzeData(
 
 /**
  * 3. 데이터 정리 & 편집(Drafting)
- * @param linkedData 
- * @param kpiInfo 
- * @param highlights 
- * @param topics 
- * @param activitySummary 
+ * @param language 
+ * @param linkedData activity doc
+ * @param kpiInfo kpi info
+ * @param highlights highlights
+ * @param topics topics
+ * @param ongoing ongoing
+ * @param userActivity user activity
  * @returns 
  */
 export async function draftingData(
@@ -99,7 +101,17 @@ export async function draftingData(
     userActivity: z.infer<typeof ActivityOutput>) {
     logger.info('📝 Drafting data started');
 
-    // 3-3. slack data를 기바으로 fun corner을 생성
+    // 3-1. KPI Summary섹션을 생성
+
+    // 3-2. Highlights섹션을 생성
+
+    // 3-3. Topics섹션을 생성
+
+    // 3-4. Member Activity섹션을 생성
+
+    // 3-5. Ongoing/Roadmap and Looking Ahead섹션을 생성
+
+    // 3-6. Fun Corner섹션을 생성
     const funCorner = await createFunCorner(linkedData, kpiInfo, ongoing, language);
     logger.info('📝 Fun corner created');
 
@@ -109,7 +121,7 @@ export async function draftingData(
 
 export async function generateContents(input: CreateContentsInput) {
     const linkedData = await normalizeData(input);
-    const { kpiInfo,highlights,  topics, ongoing, userActivity }  = await analyzeData(input, linkedData);
+    const { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData);
     await draftingData(input.language, linkedData, kpiInfo, highlights, topics, ongoing, userActivity);
     
     //await saveContentToFile(linkedData, 'output-test', 'linked_', 'json');

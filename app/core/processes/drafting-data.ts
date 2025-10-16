@@ -1,8 +1,8 @@
 import { run } from "@openai/agents";
 import { z } from "zod";
 import type { KpiSnapshot, LinkedActivityDoc } from "../lib/types";
+import { createFunCornerSectionAgent } from "../openai/agents/drafting-agents";
 import { CommonInput, OngoingProgressOutput } from "../openai/models";
-import { createFunCornerAgent } from "../openai/test-agent";
 import { getFunCornerLeaderboardData } from "./utils";
 
 /**
@@ -32,7 +32,7 @@ export async function createFunCorner(
         contents: contentsString,
     });
 
-    const agent = createFunCornerAgent(language);
+    const agent = createFunCornerSectionAgent(language);
     const result = await run(agent, JSON.stringify(input));
 
     return result.finalOutput;

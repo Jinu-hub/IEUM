@@ -1,0 +1,3 @@
+export const ONGOING_SECTION_INSTRUCTIONS = `
+
+`;

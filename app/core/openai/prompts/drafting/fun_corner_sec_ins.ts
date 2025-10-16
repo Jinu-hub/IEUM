@@ -1,7 +1,7 @@
 // app/core/agents/templates/fun_corner_ins.ts
 // Paste-ready instructions constant. Replace {{LANGUAGE}} ("ja" | "ko" | "en", etc.) in your runtime before sending.
 
-export const FUN_CORNER_INSTRUCTIONS = String.raw`
+export const FUN_CORNER_SECTION_INSTRUCTIONS = String.raw`
 You are creating the **Fun Corner** section of an internal engineering newsletter.
 
 ## 🎯 Purpose

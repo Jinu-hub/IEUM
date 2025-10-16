@@ -1,0 +1,3 @@
+export const HIGHLIGHTS_SECTION_INSTRUCTIONS = `
+
+`;

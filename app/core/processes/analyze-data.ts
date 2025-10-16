@@ -4,7 +4,20 @@ import { createGithubStats } from "~/features/cron/api/create-contents";
 import type { FetchedRepoData } from "../integrations/github/types";
 import { CFG_RANKER } from "../lib/constants";
 import { logger } from "../lib/logger";
-import type { CaseKpi, KpiSnapshot, LinkedActivityDoc, RankedHighlight, RepoKpi, UserRepoKpi } from "../lib/types";
+import type {
+    CaseKpi,
+    KpiSnapshot,
+    LinkedActivityDoc,
+    RankedHighlight,
+    RepoKpi,
+    UserRepoKpi
+} from "../lib/types";
+import {
+    createActivitySummaryAgent,
+    createHighlightsSummaryAgent,
+    createOngoingProgressAgent,
+    createTopicClusteringAgent
+} from "../openai/agents/analyze-agents";
 import type { SupportedLanguage } from "../openai/config/style-guide";
 import {
     ActivityOutput,
@@ -13,12 +26,6 @@ import {
     OngoingProgressOutput,
     TopicOutput
 } from "../openai/models";
-import {
-    createActivitySummaryAgent,
-    createHighlightsSummaryAgent,
-    createOngoingProgressAgent,
-    createTopicClusteringAgent
-} from "../openai/test-agent";
 import {
     baseScore,
     buildKpiIndex,

@@ -1,0 +1,3 @@
+export const MEMBER_ACTIVITY_SECTION_INSTRUCTIONS = `
+
+`;
