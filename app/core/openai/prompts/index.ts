@@ -3,11 +3,11 @@
  * 
  * 이 모듈은 다국어 프롬프트 생성을 위한 공개 API를 제공합니다.
  */
+import { HIGHLIGHTS_SUMMARY_INSTRUCTIONS } from './analyze/highlight_ins';
+import { TOPIC_CLUSTERING_INSTRUCTIONS } from './analyze/topic_clustering_ins';
+import { ACTIVITY_SUMMARY_INSTRUCTIONS } from './analyze/user_activity_ins';
 import { FUN_CORNER_INSTRUCTIONS } from './fun_corner_ins';
-import { HIGHLIGHTS_SUMMARY_INSTRUCTIONS } from './highlight_ins';
-import { TOPIC_CLUSTERING_INSTRUCTIONS } from './topic_clustering_ins';
 import type { PromptType } from './types';
-import { ACTIVITY_SUMMARY_INSTRUCTIONS } from './user_activity_ins';
 
 export { buildPrompt } from './prompt-builder';
 
