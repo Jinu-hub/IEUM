@@ -6,12 +6,21 @@ import type { KpiSnapshot, LinkedActivityDoc, UnifiedActivityDoc } from "../lib/
 import { ActivityOutput, HighlightsOutput, OngoingProgressOutput, TopicOutput } from "../openai/models";
 import {
     createHighlightsSummary,
+    ongoingProgressRoadmapExtracte,
     rankHighlights,
     repoKpiExtractor,
+    summarizeMemberActivity,
     topicClustering
 } from "./analyze-data";
 import { crossLinker } from "./cross-linker";
-import { createHighlightsSection, createTopicsSection } from "./drafting-data";
+import {
+    createFunCorner,
+    createHighlightsSection,
+    createKpiSection,
+    createMemberActivitySection,
+    createOngoingSection,
+    createTopicsSection,
+} from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
 
 /**
@@ -64,19 +73,17 @@ export async function analyzeData(
     // 2-4. highlights summary을 생성
     const highlights = await createHighlightsSummary(linkedData, highlightsTemp, language);
     logger.info('📝 Highlights summary created');
-/*
+
     // 2-5. slack data를 기반으로 ongoing progress roadmap을 생성
     const ongoing = await ongoingProgressRoadmapExtracte(linkedData, language);
-    //await saveContentToFile(ongoing, 'output-test', 'ongoing_progress_roadmap_', 'json');
     logger.info('📝 Ongoing progress roadmap created');
 
     // 2-6. slack data를 기반으로 member activity summary을 생성
     const userActivity = await summarizeMemberActivity(linkedData, language);
     logger.info('📝 Member activity summary created');
-    */
 
     logger.info('📝 Analyzing data completed');
-    return { kpiInfo, highlights, topics, ongoing : null, userActivity : null };
+    return { kpiInfo, highlights, topics, ongoing , userActivity };
 
 }
 
@@ -102,42 +109,52 @@ export async function draftingData(
     logger.info('📝 Drafting data started');
 
     // 3-1. KPI Section을 생성
-    //const kpiSection = await createKpiSection(kpiInfo, language);
-    //await saveContentToFile(kpiSection, 'output-test', 'kpi_section_', 'md');
+    const kpiSection = await createKpiSection(kpiInfo, language);
     logger.info('📝 Kpi section created');
 
     // 3-2. Highlights섹션을 생성
     const highlightsSection = await createHighlightsSection(highlights, language);
-    await saveContentToFile(highlightsSection, 'output-test', 'highlights_section_', 'md');
     logger.info('📝 Highlights section created');
 
     // 3-3. Topics섹션을 생성
     const topicsSection = await createTopicsSection(topics, language);
-    await saveContentToFile(topicsSection, 'output-test', 'topics_section_', 'md');
     logger.info('📝 Topics section created');
 
     // 3-4. Member Activity섹션을 생성
+    const memberSection = await createMemberActivitySection(userActivity, language);
+    logger.info('📝 Member activity section created');
 
     // 3-5. Ongoing/Roadmap and Looking Ahead섹션을 생성
+    const ongoingSection = await createOngoingSection(ongoing, language);
+    logger.info('📝 Ongoing/Roadmap section created');
 
     // 3-6. Fun Corner섹션을 생성
-    //const funCorner = await createFunCorner(linkedData, kpiInfo, ongoing, language);
+    const funCorner = await createFunCorner(linkedData, kpiInfo, ongoing, language);
     logger.info('📝 Fun corner created');
 
     logger.info('📝 Drafting data completed');
-    return { linkedData, kpiInfo, topics : null, highlights : null, ongoing : null, userActivity : null };
+    return { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, funCornerSection: funCorner };
 }
 
 export async function generateContents(input: CreateContentsInput) {
     const linkedData = await normalizeData(input);
     const { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData);
-    await draftingData(input.language, linkedData, kpiInfo, highlights, topics, ongoing, userActivity);
-    
+
     //await saveContentToFile(linkedData, 'output-test', 'linked_', 'json');
     //await saveContentToFile(topics, 'output-test', 'topics_', 'json');
     //await saveContentToFile(kpiInfo, 'output-test', 'repo_kpi_', 'json');
     //await saveContentToFile(highlights, 'output-test', 'highlights_', 'json');
     //await saveContentToFile(activitySummary, 'output-test', 'activity_summary_', 'json');
+
+    const { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, funCornerSection } = 
+        await draftingData(input.language, linkedData, kpiInfo, highlights, topics, ongoing, userActivity);
+    
+    await saveContentToFile(kpiSection, 'output-sample/kpi', 'kpi_section_', 'md');
+    await saveContentToFile(highlightsSection, 'output-sample/highlights', 'highlights_section_', 'md');
+    await saveContentToFile(topicsSection, 'output-sample/topics', 'topics_section_', 'md');
+    await saveContentToFile(memberSection, 'output-sample/member', 'member_activity_section_', 'md');
+    await saveContentToFile(ongoingSection, 'output-sample/ongoing', 'ongoing_section_', 'md');
+    await saveContentToFile(funCornerSection, 'output-sample/fun', 'fun_corner_section_', 'md');
 
     return { linkedData, kpiInfo, topics, highlights, ongoing, userActivity };
 }

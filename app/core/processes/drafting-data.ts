@@ -1,8 +1,15 @@
 import { run } from "@openai/agents";
 import { z } from "zod";
 import type { KpiSnapshot, LinkedActivityDoc } from "../lib/types";
-import { createFunCornerSectionAgent, createHighlightsSectionAgent, createKpiSectionAgent, createTopicsSectionAgent } from "../openai/agents/drafting-agents";
-import { CommonInput, HighlightsOutput, OngoingProgressOutput, TopicOutput } from "../openai/models";
+import {
+    createFunCornerSectionAgent,
+    createHighlightsSectionAgent,
+    createKpiSectionAgent,
+    createMemberActivitySectionAgent,
+    createOngoingSectionAgent,
+    createTopicsSectionAgent,
+} from "../openai/agents/drafting-agents";
+import { ActivityOutput, CommonInput, HighlightsOutput, OngoingProgressOutput, TopicOutput } from "../openai/models";
 import { getFunCornerLeaderboardData } from "./utils";
 
 export async function createKpiSection(
@@ -39,6 +46,32 @@ export async function createTopicsSection(
     const input = CommonInput.parse({
         project: 'all',
         contents: JSON.stringify(topicsData),
+    });
+    const result = await run(agent, JSON.stringify(input));
+    return result.finalOutput;
+}
+
+export async function createMemberActivitySection(
+    memberActivityData: z.infer<typeof ActivityOutput>,
+    language: 'en' | 'ko' | 'ja' = 'en'
+): Promise<any> {
+    const agent = createMemberActivitySectionAgent(language);
+    const input = CommonInput.parse({
+        project: 'all',
+        contents: JSON.stringify(memberActivityData),
+    });
+    const result = await run(agent, JSON.stringify(input));
+    return result.finalOutput;
+}
+
+export async function createOngoingSection(
+    ongoingData: z.infer<typeof OngoingProgressOutput>,
+    language: 'en' | 'ko' | 'ja' = 'en'
+): Promise<any> {
+    const agent = createOngoingSectionAgent(language);
+    const input = CommonInput.parse({
+        project: 'all',
+        contents: JSON.stringify(ongoingData),
     });
     const result = await run(agent, JSON.stringify(input));
     return result.finalOutput;
