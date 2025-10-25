@@ -9,4 +9,4 @@ export type PromptType =
     | 'member_activity_section'
     | 'ongoing_section'
     | 'looking_ahead_section'
-    | 'fun_corner_section'
+    | 'closing_section'

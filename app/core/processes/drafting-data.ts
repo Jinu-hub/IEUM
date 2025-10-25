@@ -2,7 +2,7 @@ import { run } from "@openai/agents";
 import { z } from "zod";
 import type { KpiSnapshot, LinkedActivityDoc } from "../lib/types";
 import {
-    createFunCornerSectionAgent,
+    createClosingSectionAgent,
     createHighlightsSectionAgent,
     createKpiSectionAgent,
     createMemberActivitySectionAgent,
@@ -78,12 +78,12 @@ export async function createOngoingSection(
 }
 
 /**
- * slack data를 기반으로 fun corner을 생성
+ * slack data를 기반으로 closing section을 생성
  * @param linkedData 
  * @param language 
  * @returns 
  */
-export async function createFunCorner(
+export async function createClosingSection(
     linkedData: LinkedActivityDoc,
     kpiData: KpiSnapshot,
     ongoingData: z.infer<typeof OngoingProgressOutput>,
@@ -104,7 +104,7 @@ export async function createFunCorner(
         contents: contentsString,
     });
 
-    const agent = createFunCornerSectionAgent(language);
+    const agent = createClosingSectionAgent(language);
     const result = await run(agent, JSON.stringify(input));
 
     return result.finalOutput;

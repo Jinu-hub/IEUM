@@ -4,6 +4,7 @@ import { saveContentToFile } from "~/features/cron/api/test-api";
 import { logger } from "../lib/logger";
 import type { KpiSnapshot, LinkedActivityDoc, UnifiedActivityDoc } from "../lib/types";
 import { ActivityOutput, HighlightsOutput, OngoingProgressOutput, TopicOutput } from "../openai/models";
+import { getBaseTemplate, getMainTemplate } from "../openai/templates";
 import {
     createHighlightsSummary,
     ongoingProgressRoadmapExtracte,
@@ -14,7 +15,7 @@ import {
 } from "./analyze-data";
 import { crossLinker } from "./cross-linker";
 import {
-    createFunCorner,
+    createClosingSection,
     createHighlightsSection,
     createKpiSection,
     createMemberActivitySection,
@@ -128,33 +129,81 @@ export async function draftingData(
     const ongoingSection = await createOngoingSection(ongoing, language);
     logger.info('📝 Ongoing/Roadmap section created');
 
-    // 3-6. Fun Corner섹션을 생성
-    const funCorner = await createFunCorner(linkedData, kpiInfo, ongoing, language);
-    logger.info('📝 Fun corner created');
+    // 3-6. Closing Section을 생성
+    const closingSection = await createClosingSection(linkedData, kpiInfo, ongoing, language);
+    logger.info('📝 Closing section created');
 
     logger.info('📝 Drafting data completed');
-    return { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, funCornerSection: funCorner };
+    return { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection };
+}
+
+/**
+ * 4. 콘텐츠 병합(Merge Contents)
+ * @param input input
+ * @param kpiSection kpi section
+ * @param highlightsSection highlights section
+ * @param topicsSection topics section
+ * @param memberSection member section
+ * @param ongoingSection ongoing section
+ * @param closingSection closing section
+ * @returns 
+ */
+export async function mergeContents(input: CreateContentsInput, 
+    kpiSection: string, highlightsSection: string, 
+    topicsSection: string, memberSection: string, 
+    ongoingSection: string, closingSection: string) {
+        
+    const isOnlyKpi = kpiSection && !highlightsSection && !topicsSection && !memberSection && !ongoingSection && !closingSection;
+
+    if (isOnlyKpi) {
+        return kpiSection;
+    } else {
+
+        let baseTemplate = getBaseTemplate(input.language);
+        let mainTemplate = getMainTemplate(input.language);
+
+        mainTemplate = mainTemplate.replace('{{HIGHLIGHTS_SECTION}}', highlightsSection);
+        mainTemplate = mainTemplate.replace('{{TOPICS_SECTION}}', topicsSection);
+        mainTemplate = mainTemplate.replace('{{MEMBER_ACTIVITY_SECTION}}', memberSection);
+        mainTemplate = mainTemplate.replace('{{ONGOING_SECTION}}', ongoingSection);
+
+        baseTemplate = baseTemplate.replace('{{PERIOD}}', input.period);
+        baseTemplate = baseTemplate.replace('{{KPI_SECTION}}', kpiSection);
+        baseTemplate = baseTemplate.replace('{{MAIN_SECTION}}', mainTemplate);
+        baseTemplate = baseTemplate.replace('{{CLOSING_SECTION}}', closingSection);
+
+        return baseTemplate;
+    }
 }
 
 export async function generateContents(input: CreateContentsInput) {
-    const linkedData = await normalizeData(input);
-    const { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData);
 
+    // 1. 데이터 정규화 & 중복 제거(Normalize & Deduplicate)
+    const linkedData = await normalizeData(input);
+
+    // 2. 데이터 분석 & 개선 & 요약(Analyze & Improve & Summarize)
+    const { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData);
+ 
     //await saveContentToFile(linkedData, 'output-test', 'linked_', 'json');
     //await saveContentToFile(topics, 'output-test', 'topics_', 'json');
     //await saveContentToFile(kpiInfo, 'output-test', 'repo_kpi_', 'json');
     //await saveContentToFile(highlights, 'output-test', 'highlights_', 'json');
     //await saveContentToFile(activitySummary, 'output-test', 'activity_summary_', 'json');
 
-    const { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, funCornerSection } = 
+    // 3. 각 섹션 초안 생성(Drafting Sections)
+    const { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } = 
         await draftingData(input.language, linkedData, kpiInfo, highlights, topics, ongoing, userActivity);
     
-    await saveContentToFile(kpiSection, 'output-sample/kpi', 'kpi_section_', 'md');
-    await saveContentToFile(highlightsSection, 'output-sample/highlights', 'highlights_section_', 'md');
-    await saveContentToFile(topicsSection, 'output-sample/topics', 'topics_section_', 'md');
-    await saveContentToFile(memberSection, 'output-sample/member', 'member_activity_section_', 'md');
-    await saveContentToFile(ongoingSection, 'output-sample/ongoing', 'ongoing_section_', 'md');
-    await saveContentToFile(funCornerSection, 'output-sample/fun', 'fun_corner_section_', 'md');
+    // await saveContentToFile(kpiSection, 'output-sample/kpi', 'kpi_section_', 'md');
+    // await saveContentToFile(highlightsSection, 'output-sample/highlights', 'highlights_section_', 'md');
+    // await saveContentToFile(topicsSection, 'output-sample/topics', 'topics_section_', 'md');
+    // await saveContentToFile(memberSection, 'output-sample/member', 'member_activity_section_', 'md');
+    // await saveContentToFile(ongoingSection, 'output-sample/ongoing', 'ongoing_section_', 'md');
+    // await saveContentToFile(funCornerSection, 'output-sample/fun', 'fun_corner_section_', 'md');
 
-    return { linkedData, kpiInfo, topics, highlights, ongoing, userActivity };
+    // 4. 병합 
+    const mergedContents = await mergeContents(input, kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection);
+    await saveContentToFile(mergedContents, 'output-sample', 'merged_contents_', 'md');
+
+    return mergedContents;
 }

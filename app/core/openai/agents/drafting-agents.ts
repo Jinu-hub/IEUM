@@ -58,12 +58,12 @@ export function createOngoingSectionAgent(
     });
 }
 
-export function createFunCornerSectionAgent(
+export function createClosingSectionAgent(
     language: SupportedLanguage = 'en',
 ) {
-    const instructions = buildPrompt('fun_corner_section', language);
+    const instructions = buildPrompt('closing_section', language);
     return new Agent({
-        name: 'fun_corner_section_agent',
+        name: 'closing_section_agent',
         instructions: instructions,
         model: 'gpt-4.1-mini',
     });

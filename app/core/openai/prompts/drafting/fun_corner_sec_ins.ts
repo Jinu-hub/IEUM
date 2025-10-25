@@ -2,7 +2,7 @@
 // Paste-ready instructions constant. Replace {{LANGUAGE}} ("ja" | "ko" | "en", etc.) in your runtime before sending.
 
 export const FUN_CORNER_SECTION_INSTRUCTIONS = String.raw`
-You are creating the **Fun Corner** section of an internal engineering newsletter.
+You are creating the **Closing Section** of an internal engineering newsletter.
 
 ## 🎯 Purpose
 - End the newsletter with a **light, human, slightly witty** close.

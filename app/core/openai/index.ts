@@ -9,14 +9,10 @@ export { summarizerAgent } from './test-agent';
 
 // Prompt Builders
 export {
-    buildGithubPrompt,
-    buildPromptFromGithubData,
-    type SupportedLanguage
+    getPrompt
 } from './prompts';
 
-// Templates (advanced usage)
-export { getGithubTemplate } from './templates';
-
-// Formatters (advanced usage)
-export { formatGithubData } from './formatters/github-formatter';
+// Templates
+export { BASE_TEMPLATE_EN } from './templates/0_base-template.en';
+export { MAIN_TEMPLATE_EN } from './templates/2_main-template.en';
 
