@@ -1,6 +1,7 @@
 import { run } from "@openai/agents";
 import { z } from "zod";
 import { createGithubStats } from "~/features/cron/api/create-contents";
+import { saveContentToFile } from "~/features/cron/api/test-api";
 import type { FetchedRepoData } from "../integrations/github/types";
 import { CFG_RANKER } from "../lib/constants";
 import { logger } from "../lib/logger";
@@ -197,21 +198,20 @@ export async function topicClustering(
         "channel list": channelKeys,
     });
     
-    // 각 채널별로 TopicClustering 실행
-    for (let i = 0; i < channelKeys.length; i++) {
-        const channelKey = channelKeys[i];
+    // 각 채널별로 TopicClustering을 병렬로 실행
+    const channelProcessingPromises = channelKeys.map(async (channelKey, index) => {
         const channelData = slackData[channelKey];
         
         // 채널 데이터가 비어있으면 스킵
         if (!channelData || channelData.length === 0) {
-            logger.info(`⏭️  channel skip (${i + 1}/${channelKeys.length})`, {
+            logger.info(`⏭️  channel skip (${index + 1}/${channelKeys.length})`, {
                 "channel": channelKey,
                 "reason": "no data"
             });
-            continue;
+            return null;
         }
         
-        logger.info(`🔍 channel processing (${i + 1}/${channelKeys.length})`, {
+        logger.info(`🔍 channel processing (${index + 1}/${channelKeys.length})`, {
             "channel": channelKey,
             "message count": channelData.length,
         });
@@ -231,7 +231,7 @@ export async function topicClustering(
         
         const output: any = result.finalOutput;
         
-        // 각 클러스터에 채널 정보 추가 및 수집
+        // 각 클러스터에 채널 정보 추가
         if (output.clusters && Array.isArray(output.clusters)) {
             const clustersWithChannel = output.clusters.map((cluster: any) => ({
                 ...cluster,
@@ -239,18 +239,29 @@ export async function topicClustering(
                 channel: channelKey,
             }));
             
-            logger.info(`✅ channel processing completed (${i + 1}/${channelKeys.length})`, {
+            logger.info(`✅ channel processing completed (${index + 1}/${channelKeys.length})`, {
                 "channel": channelKey,
                 "created cluster count": clustersWithChannel.length,
             });
             
-            allClusters.push(...clustersWithChannel);
+            return clustersWithChannel;
         } else {
-            logger.warn(`⚠️ channel processing result empty (${i + 1}/${channelKeys.length})`, {
+            logger.warn(`⚠️ channel processing result empty (${index + 1}/${channelKeys.length})`, {
                 "channel": channelKey,
             });
+            return null;
         }
-    }
+    });
+    
+    // 모든 채널 처리가 완료될 때까지 대기
+    const results = await Promise.all(channelProcessingPromises);
+    
+    // null이 아닌 결과만 allClusters에 추가
+    results.forEach(result => {
+        if (result && Array.isArray(result)) {
+            allClusters.push(...result);
+        }
+    });
     
     logger.info("✨ TopicClustering completed", {
         "processed channel count": channelKeys.length,
@@ -359,7 +370,7 @@ export async function summarizeMemberActivity(
 
     const memberDataWithMessages = prepareMemberDataWithMessages(linkedData);
 
-    //await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
+    await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
     const input = CommonInput.parse({
         project: "LEAD",
         contents: JSON.stringify(memberDataWithMessages),
@@ -395,17 +406,16 @@ export async function ongoingProgressRoadmapExtracte(
     const allUpcoming: any[] = [];
     const allPolicies: any[] = [];
 
-    // 각 채널별로 Ongoing Progress & Roadmap 실행
-    for (let i = 0; i < channelKeys.length; i++) {
-        const channelKey = channelKeys[i];
+    // 각 채널별로 Ongoing Progress & Roadmap을 병렬로 실행
+    const ongoingProcessingPromises = channelKeys.map(async (channelKey, index) => {
         const channelData = slackData[channelKey];
         
         // 채널 데이터가 비어있으면 스킵
         if (!channelData || channelData.length === 0) {
-            continue;
+            return null;
         }
         
-        logger.info(`🔍 channel processing (${i + 1}/${channelKeys.length})`, {
+        logger.info(`🔍 channel processing (${index + 1}/${channelKeys.length})`, {
             "channel": channelKey,
             "message count": channelData.length,
         });
@@ -425,20 +435,36 @@ export async function ongoingProgressRoadmapExtracte(
         
         const output: any = result.finalOutput;
         
-        // 각 필드별로 채널 정보 추가 및 머지
-        if (output.ongoing && Array.isArray(output.ongoing)) {
-            allOngoing.push(...output.ongoing.map((item: any) => ({ ...item, channel: channelKey })));
+        // 각 필드별로 채널 정보 추가하여 반환
+        return {
+            channel: channelKey,
+            ongoing: output.ongoing && Array.isArray(output.ongoing) 
+                ? output.ongoing.map((item: any) => ({ ...item, channel: channelKey }))
+                : [],
+            roadmap: output.roadmap && Array.isArray(output.roadmap)
+                ? output.roadmap.map((item: any) => ({ ...item, channel: channelKey }))
+                : [],
+            upcoming: output.upcoming && Array.isArray(output.upcoming)
+                ? output.upcoming.map((item: any) => ({ ...item, channel: channelKey }))
+                : [],
+            policies: output.governance?.policies && Array.isArray(output.governance.policies)
+                ? output.governance.policies.map((item: any) => ({ ...item, channel: channelKey }))
+                : [],
+        };
+    });
+
+    // 모든 채널 처리가 완료될 때까지 대기
+    const ongoingResults = await Promise.all(ongoingProcessingPromises);
+    
+    // null이 아닌 결과만 각 배열에 추가
+    ongoingResults.forEach(result => {
+        if (result) {
+            allOngoing.push(...result.ongoing);
+            allRoadmap.push(...result.roadmap);
+            allUpcoming.push(...result.upcoming);
+            allPolicies.push(...result.policies);
         }
-        if (output.roadmap && Array.isArray(output.roadmap)) {
-            allRoadmap.push(...output.roadmap.map((item: any) => ({ ...item, channel: channelKey })));
-        }
-        if (output.upcoming && Array.isArray(output.upcoming)) {
-            allUpcoming.push(...output.upcoming.map((item: any) => ({ ...item, channel: channelKey })));
-        }
-        if (output.governance?.policies && Array.isArray(output.governance.policies)) {
-            allPolicies.push(...output.governance.policies.map((item: any) => ({ ...item, channel: channelKey })));
-        }
-    }
+    });
 
     logger.info("✨ Ongoing Progress & Roadmap completed", {
         "processed channel count": channelKeys.length,
