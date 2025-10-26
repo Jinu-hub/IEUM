@@ -12,6 +12,7 @@ import { KPI_SECTION_INSTRUCTIONS } from './drafting/kpi_sec_ins';
 import { MEMBER_ACTIVITY_SECTION_INSTRUCTIONS } from './drafting/member_act_sec_ins';
 import { ONGOING_SECTION_INSTRUCTIONS } from './drafting/ongoing_sec_ins';
 import { TOPICS_SECTION_INSTRUCTIONS } from './drafting/topics_sec_ins';
+import { FINAL_RESULT_INSTRUCTIONS } from './final_res_ins';
 import type { PromptType } from './types';
 
 export { buildPrompt } from './prompt-builder';
@@ -38,8 +39,10 @@ export function getPrompt(
       return ONGOING_SECTION_INSTRUCTIONS;
     case 'looking_ahead_section':
       return 'TODO: Looking Ahead Section Instructions';
-    case 'fun_corner_section':
+    case 'closing_section':
       return FUN_CORNER_SECTION_INSTRUCTIONS;
+    case 'create_final_contents':
+      return FINAL_RESULT_INSTRUCTIONS;
   }
   return '';
 }

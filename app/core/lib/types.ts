@@ -11,6 +11,7 @@ export type CreateContentsInput = {
   slackResult?: Record<string, FetchedMessage[]> | null;
   workspaceId: string;
   targetId: string;
+  period: string;
   language: 'en' | 'ko' | 'ja';
   source: string;
   timezone?: string;

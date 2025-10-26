@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { CreateContentsInput } from "~/core/lib/types";
-import { saveContentToFile } from "~/features/cron/api/test-api";
+//import { saveContentToFile } from "~/features/cron/api/test-api";
 import { logger } from "../lib/logger";
 import type { KpiSnapshot, LinkedActivityDoc, UnifiedActivityDoc } from "../lib/types";
 import { ActivityOutput, HighlightsOutput, OngoingProgressOutput, TopicOutput } from "../openai/models";
@@ -23,6 +23,7 @@ import {
     createTopicsSection,
 } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
+import { createFinalContents } from "./reporting-data";
 
 /**
  * 1. 데이터 정규화 & 중복 제거(Normalize & Deduplicate)
@@ -176,6 +177,17 @@ export async function mergeContents(input: CreateContentsInput,
     }
 }
 
+/**
+ * 5. 콘텐츠 생성(Generate Contents)
+ * @param input input
+ * @param mergedContents merged contents
+ * @returns 
+ */
+export async function generateFinalContents(input: CreateContentsInput, mergedContents: string) {
+    const finalContents = await createFinalContents(input, mergedContents);
+    return finalContents;
+}
+
 export async function generateContents(input: CreateContentsInput) {
 
     // 1. 데이터 정규화 & 중복 제거(Normalize & Deduplicate)
@@ -203,7 +215,11 @@ export async function generateContents(input: CreateContentsInput) {
 
     // 4. 병합 
     const mergedContents = await mergeContents(input, kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection);
-    await saveContentToFile(mergedContents, 'output-sample', 'merged_contents_', 'md');
+    // await saveContentToFile(mergedContents, 'output-sample', 'merged_contents_', 'md');
 
-    return mergedContents;
+    // 5. 콘텐츠 생성(Generate Contents)
+    const finalContents = await generateFinalContents(input, mergedContents);
+    //await saveContentToFile(finalContents, 'output-sample', 'final_contents_', 'md');
+    logger.info('📝 Final contents created');
+    return finalContents;
 }

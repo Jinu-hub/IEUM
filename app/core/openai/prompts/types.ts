@@ -10,3 +10,4 @@ export type PromptType =
     | 'ongoing_section'
     | 'looking_ahead_section'
     | 'closing_section'
+    | 'create_final_contents'
