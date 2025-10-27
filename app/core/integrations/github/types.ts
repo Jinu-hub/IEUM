@@ -27,6 +27,7 @@ export type PRInfo = {
   merged_at: string;
   userInfo?: UserInfo;
   closes?: string[];
+  closed_at?: string | null;
   merge_commit_sha?: string;
 };
 
@@ -44,7 +45,7 @@ export type IssueInfo = {
 export type FetchedRepoData = {
   repo: Repo;
   commits: CommitInfo[];
-  mergedPRs: PRInfo[];
+  closedPRs: PRInfo[];
   openedIssues: IssueInfo[];
   closedIssues: IssueInfo[];
 };

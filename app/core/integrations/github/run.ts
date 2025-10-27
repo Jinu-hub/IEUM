@@ -4,7 +4,7 @@ import pLimit from "p-limit";
 import { logger } from "../../lib/logger";
 import { createOctokit } from "./client";
 import { getGithubConfig } from "./config";
-import { fetchClosedIssues, fetchCommits, fetchMergedPullRequests, fetchOpenedIssues } from "./fetchers";
+import { fetchClosedIssues, fetchClosedPullRequests, fetchCommits, fetchOpenedIssues } from "./fetchers";
 import type { FetchedRepoData, Repo } from "./types";
 
 export async function runGithubFetch(overrides?: {
@@ -26,13 +26,13 @@ export async function runGithubFetch(overrides?: {
   async function fetchRepoData(repo: Repo): Promise<FetchedRepoData> {
     const since = dayjs.unix(Number(oldestTs)).toISOString();
     const until = now.toISOString();
-    const [commits, mergedPRs, openedIssues, closedIssues] = await Promise.all([
+    const [commits, closedPRs, openedIssues, closedIssues] = await Promise.all([
       fetchCommits(octokit, repo, since, until),
-      fetchMergedPullRequests(octokit, repo, since, until),
+      fetchClosedPullRequests(octokit, repo, since, until),
       fetchOpenedIssues(octokit, repo, since, until),
-      fetchClosedIssues(octokit, repo, since, until),
+      fetchClosedIssues(octokit, repo, since, until)
     ]);
-    return { repo, commits, mergedPRs, openedIssues, closedIssues };
+    return { repo, commits, closedPRs, openedIssues, closedIssues };
   }
 
   const result: Record<string, FetchedRepoData> = {};

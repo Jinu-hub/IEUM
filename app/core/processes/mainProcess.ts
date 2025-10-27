@@ -61,6 +61,7 @@ export async function analyzeData(
     // 2-1. github data를 기반으로 kpi snapshot을 생성
     const kpiInfo = await repoKpiExtractor(input.githubResult || {});
     logger.info('📝 Kpi snapshot created');
+    //await saveContentToFile(kpiInfo, 'output-test', 'kpi_info_', 'json');
 
     // 2-2. slack data를 기반으로 topic clustering을 생성
     const topicsTemp = await topicClustering(linkedData, language, input.source);

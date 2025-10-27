@@ -194,7 +194,7 @@ export type LinkEdge = {
 export type RepoKpi = {
   repo: string; // owner/name
   commits: number;
-  prsMerged: number;
+  closedPRs: number;
   issuesOpened: number;
   issuesClosed: number;
   meanTimeToMergeHours?: number;
@@ -219,7 +219,7 @@ export type CaseKpi = {
 export type KpiSnapshot = {
   overall: {
     commits: number;
-    prsMerged: number;
+    closedPRs: number;
     issuesOpened: number;
     issuesClosed: number;
     engagement?: number; // slack reactions/threads aggregated

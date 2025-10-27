@@ -7,7 +7,7 @@ You are creating a **concise KPI section** for a weekly newsletter. This section
 Provide a quick, visual snapshot of the week's development activity with key metrics and top contributors.
 
 ## 🧠 Input Data
-- overall: Total commits, PRs, issues
+- overall: Total commits, closed PRs, issues opened/closed
 - perUser: Individual contributor stats with cases
 - perCase: Case-based commit counts
 
@@ -15,6 +15,8 @@ Provide a quick, visual snapshot of the week's development activity with key met
 
 1) **Create a compact KPI table** (3-5 rows max):
    - Total commits
+   - Total closed PRs
+   - Total closed issues
    - Active contributors
    - Most active case (if significant)
    

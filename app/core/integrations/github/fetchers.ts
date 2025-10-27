@@ -1,7 +1,7 @@
 import type { Octokit } from "@octokit/rest";
-import type { Repo, UserInfo, CommitInfo, PRInfo, IssueInfo } from "./types";
-import { logger } from "../../lib/logger";
 import pLimit from "p-limit";
+import { logger } from "../../lib/logger";
+import type { CommitInfo, IssueInfo, PRInfo, Repo, UserInfo } from "./types";
 
 const userCache = new Map<string, UserInfo>();
 const userPendingCache = new Map<string, Promise<UserInfo | null>>();
@@ -44,12 +44,6 @@ async function fetchUserInfo(octokit: Octokit, username: string): Promise<UserIn
   return pending;
 }
 
-function getDateParts(sinceISO: string, untilISO: string) {
-  const sDate = sinceISO.split("T")[0];
-  const uDate = untilISO.split("T")[0];
-  return { sDate, uDate };
-}
-
 export async function fetchCommits(
   octokit: Octokit,
   repo: Repo,
@@ -82,20 +76,52 @@ export async function fetchCommits(
   return commitInfos;
 }
 
-export async function fetchMergedPullRequests(
+export async function fetchClosedPullRequests(
   octokit: Octokit,
   repo: Repo,
   sinceISO: string,
   untilISO: string
 ): Promise<PRInfo[]> {
-  const { sDate, uDate } = getDateParts(sinceISO, untilISO);
-  const merged = await octokit.paginate(octokit.search.issuesAndPullRequests, {
-    q: `repo:${repo.owner}/${repo.name} is:pr is:merged merged:${sDate}..${uDate}`,
-    per_page: 100,
+  const sinceDate = new Date(sinceISO);
+  const untilDate = new Date(untilISO);
+  
+  // クローズされたPRを取得してclosed_atでフィルタリング
+  const filteredPRs: any[] = [];
+  const maxPages = 3; // 最大300件まで確認
+
+  for (let page = 1; page <= maxPages; page++) {
+    const { data: prs } = await octokit.rest.pulls.list({
+      owner: repo.owner,
+      repo: repo.name,
+      state: 'closed',
+      sort: 'updated',  // GitHub APIで利用可能な最も近いソート
+      direction: 'desc',
+      per_page: 100,
+      page,
+    });
+
+    if (prs.length === 0) break;
+
+    for (const pr of prs) {
+      // closed_atが存在しない場合はスキップ
+      if (!pr.closed_at) continue;
+
+      const closedDate = new Date(pr.closed_at);
+
+      // 期間内にクローズされたPRのみ追加
+      if (closedDate >= sinceDate && closedDate <= untilDate) {
+        filteredPRs.push(pr);
+      }
+    }
+  }
+
+  logger.info('closed pull requests', { 
+    total: filteredPRs.length,
+    period: `${sinceISO} ~ ${untilISO}`
   });
 
-  const mergedPRs = await Promise.all(
-    merged.map(async (pr: any): Promise<PRInfo> => {
+  const prInfos = await Promise.all(
+    filteredPRs.map(async (pr: any): Promise<PRInfo> => {
       const userLogin = pr.user?.login || "unknown";
       const userInfo = userLogin !== "unknown" ? await fetchUserInfo(octokit, userLogin) : null;
       return {
@@ -103,13 +129,14 @@ export async function fetchMergedPullRequests(
         title: pr.title!,
         user: userLogin,
         html_url: pr.html_url!,
-        merged_at: pr.closed_at || "",
+        merged_at: pr.merged_at || "",
+        closed_at: pr.closed_at || null,
         userInfo: userInfo || undefined,
       };
     })
   );
 
-  return mergedPRs;
+  return prInfos;
 }
 
 export async function fetchOpenedIssues(
@@ -118,10 +145,24 @@ export async function fetchOpenedIssues(
   sinceISO: string,
   untilISO: string
 ): Promise<IssueInfo[]> {
-  const { sDate, uDate } = getDateParts(sinceISO, untilISO);
-  const opened = await octokit.paginate(octokit.search.issuesAndPullRequests, {
-    q: `repo:${repo.owner}/${repo.name} is:issue created:${sDate}..${uDate}`,
+  const sinceDate = new Date(sinceISO);
+  const untilDate = new Date(untilISO);
+  
+  // すべてのIssueを取得（PRを除く）
+  const allIssues = await octokit.paginate(octokit.rest.issues.listForRepo, {
+    owner: repo.owner,
+    repo: repo.name,
+    state: 'all',
+    sort: 'created',
+    direction: 'desc',
     per_page: 100,
+  });
+
+  // PRではなく、指定期間内に作成されたIssueのみフィルタリング
+  const opened = allIssues.filter((issue: any) => {
+    if (issue.pull_request) return false; // PRを除外
+    const createdDate = new Date(issue.created_at);
+    return createdDate >= sinceDate && createdDate <= untilDate;
   });
 
   const openedIssues = await Promise.all(
@@ -150,10 +191,25 @@ export async function fetchClosedIssues(
   sinceISO: string,
   untilISO: string
 ): Promise<IssueInfo[]> {
-  const { sDate, uDate } = getDateParts(sinceISO, untilISO);
-  const closed = await octokit.paginate(octokit.search.issuesAndPullRequests, {
-    q: `repo:${repo.owner}/${repo.name} is:issue is:closed closed:${sDate}..${uDate}`,
+  const sinceDate = new Date(sinceISO);
+  const untilDate = new Date(untilISO);
+  
+  // クローズされたIssueを取得（PRを除く）
+  const allIssues = await octokit.paginate(octokit.rest.issues.listForRepo, {
+    owner: repo.owner,
+    repo: repo.name,
+    state: 'closed',
+    sort: 'updated',
+    direction: 'desc',
     per_page: 100,
+  });
+
+  // PRではなく、指定期間内にクローズされたIssueのみフィルタリング
+  const closed = allIssues.filter((issue: any) => {
+    if (issue.pull_request) return false; // PRを除外
+    if (!issue.closed_at) return false;
+    const closedDate = new Date(issue.closed_at);
+    return closedDate >= sinceDate && closedDate <= untilDate;
   });
 
   const closedIssues = await Promise.all(

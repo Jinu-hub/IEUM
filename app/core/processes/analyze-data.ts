@@ -51,7 +51,7 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
         repoMap.set(repoName, {
             repo: repoName,
             commits: repo.commits.length,
-            prsMerged: repo.mergedPRs.length,
+            closedPRs: repo.closedPRs.length,
             issuesOpened: repo.openedIssues.length,
             issuesClosed: repo.closedIssues.length,
         });
@@ -93,7 +93,7 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
                 });
             }
         }
-        for (const pr of repo.mergedPRs) {
+        for (const pr of repo.closedPRs) {
             const user = pr.userInfo?.login || pr.user;
             const caseName = pr.title.split("\n")[0].slice(0, 20);
             const existingUser = userMap.get(user);
@@ -161,13 +161,13 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
     // 통합 통계
     const githubStats = createGithubStats(githubData);
     const commits = githubStats?.totalCommits || 0;
-    const prs = githubStats?.totalPRs || 0;
+    const prs = githubStats?.totalClosedPRs || 0;
     const opened = githubStats?.totalOpenedIssues || 0;
     const closed = githubStats?.totalClosedIssues || 0;
     const engagement = undefined;
   
     return {
-      overall: { commits, prsMerged: prs, issuesOpened: opened, issuesClosed: closed, engagement: engagement },
+      overall: { commits, closedPRs: prs, issuesOpened: opened, issuesClosed: closed, engagement: engagement },
       perRepo: Array.from(repoMap.values()) || [],
       perUser: Array.from(userMap.values()) || [],
       perCase: Array.from(caseMap.values()) || [],
