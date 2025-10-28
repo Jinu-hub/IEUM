@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>週次Newsletter 2025-10-21 ~ 2025-10-28</title>
+    <style>
+        /* General reset for email-friendly rendering */
+        body { margin:0; padding:0; background-color:#f8f9fa; -webkit-text-size-adjust:none; -ms-text-size-adjust:none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif; color:#2c3e50; line-height:1.8; }
+        .wrapper { width:100%; padding:20px 12px; box-sizing:border-box; }
+        .container { max-width:700px; margin:0 auto; background-color: #ffffff; border:1px solid #dee2e6; border-radius:10px; overflow:hidden; }
+        .inner { padding:30px 36px; box-sizing:border-box; }
+
+        /* Header */
+        .header { text-align:center; color:#ffffff; padding:36px 20px; background: linear-gradient(135deg, #5E6AD2 0%, #4C5BC7 100%); }
+        .header h1 { margin:0; font-size:32px; font-weight:700; line-height:1.2; letter-spacing:0.2px; }
+        .header .date { margin:8px 0 0; font-size:16px; color: rgba(255,255,255,0.9); font-weight:600; opacity:0.95; }
+
+        /* Summary */
+        .summary { background: linear-gradient(180deg, rgba(94,106,210,0.06) 0%, rgba(76,91,199,0.03) 100%); border-left:5px solid #5E6AD2; padding:35px 40px; margin:20px 36px 32px; border-radius:8px; color:#2c3e50; }
+        .summary h2 { margin:0 0 8px; font-size:20px; color:#2c3e50; font-weight:700; }
+        .summary p { margin:8px 0; color:#495057; font-size:15px; }
+
+        .content { padding:0 36px 30px; box-sizing:border-box; }
+
+        /* Section titles */
+        .section { margin-bottom:50px; }
+        .section-title { font-size:18px; margin:0 0 14px; padding-bottom:10px; border-bottom:1px solid #e9ecef; color:#2c3e50; font-weight:700; }
+
+        /* KPI Table */
+        .kpi-table { width:100%; border-collapse:collapse; font-size:15px; margin-top:14px; }
+        .kpi-table th, .kpi-table td { padding:10px 12px; border:1px solid #e9ecef; text-align:left; vertical-align:middle; }
+        .kpi-table th { background:#f8f9fa; color:#2c3e50; font-weight:700; }
+        .kpi-table td.value { font-weight:700; color:#2c3e50; width:140px; }
+        .kpi-desc { margin-top:12px; color:#6c757d; font-size:14px; }
+
+        /* Highlights */
+        .highlight-card { background:#f8f9fa; border-left:5px solid #5E6AD2; border-radius:10px; padding:16px 18px; margin:14px 0; }
+        .highlight-title { font-size:16px; font-weight:700; margin:0 0 8px; color:#2c3e50; }
+        .highlight-desc { margin:0; color:#495057; font-size:14px; }
+        .highlight-quotes { background:#ffffff; border-left:4px solid rgba(94,106,210,0.12); padding:12px 14px; margin:12px 0 0; border-radius:6px; color:#495057; font-size:14px; }
+
+        /* Topic cards */
+        .topic-grid { display:block; }
+        .topic-card { background:#ffffff; border:1px solid #e9ecef; border-radius:8px; padding:12px 14px; margin:10px 0; }
+        .topic-title { font-weight:700; font-size:15px; margin:0 0 6px; color:#2c3e50; }
+        .topic-desc { margin:0; color:#495057; font-size:14px; }
+
+        /* Roadmap/Ongoing */
+        .roadmap-card { background:#f8f9fa; border-radius:8px; padding:12px 14px; margin:12px 0; }
+        .roadmap-item { margin-bottom:14px; }
+        .roadmap-meta { font-size:13px; color:#6c757d; margin-top:8px; }
+        .progress-bar { background:#e9ecef; height:8px; border-radius:8px; width:100%; overflow:hidden; }
+        .progress-fill { height:8px; border-radius:8px; background: linear-gradient(90deg, #5E6AD2 0%, #4C5BC7 100%); width:0%; transition: width 1s ease; }
+
+        /* Members */
+        .member-row { width:100%; border-bottom:1px dashed #e9ecef; padding:12px 0; display:block; }
+        .member-table { width:100%; border-collapse:collapse; }
+        .member-emoji { width:48px; vertical-align:top; font-size:28px; text-align:center; padding-right:10px; }
+        .member-content { vertical-align:top; }
+        .member-name { font-weight:700; color:#2c3e50; margin:0 0 6px; font-size:15px; }
+        .member-desc { margin:0; color:#6c757d; font-size:14px; }
+
+        /* Closing */
+        .closing { background: linear-gradient(180deg, rgba(76,91,199,0.03) 0%, rgba(94,106,210,0.05) 100%); border-left:5px solid #5E6AD2; padding:24px 28px; border-radius:8px; color:#2c3e50; }
+        .closing h2 { margin-top:0; font-size:18px; }
+        .quote-box { background:#ffffff; border-left:4px solid #5E6AD2; padding:12px 14px; margin-top:12px; border-radius:6px; color:#495057; font-size:15px; }
+
+        /* Footer */
+        .footer { background:#2c3e50; color:#adb5bd; text-align:center; padding:18px 20px; font-size:13px; }
+        .footer a { color:#5E6AD2; text-decoration:none; font-weight:600; }
+
+        /* Responsive */
+        @media screen and (max-width:520px) {
+            .inner { padding:18px 20px; }
+            .summary { padding:20px; margin:16px 20px 24px; }
+            .content { padding:0 20px 20px; }
+            .header { padding:28px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container" role="article" aria-label="週次Newsletter">
+            <div class="header" role="banner">
+                <h1>週次Newsletter</h1>
+                <div class="date">2025-10-21 ~ 2025-10-28</div>
+            </div>
+
+            <div class="inner">
+                <!-- Opening Summary -->
+                <div class="summary" role="region" aria-labelledby="summary-title">
+                    <h2 id="summary-title">👋 週次サマリー</h2>
+                    <p>先週は、#20038案件を中心にチーム全体で着実な開発進捗を遂げた一週間となりました。合計で<strong>66コミット</strong>と<strong>7件のプルリクエストがクローズ</strong>され、特にWatanabeTomoakiさんの17コミット、ManseonJeonさんの12コミットといった主要メンバーがリードしながら、多方面で成果を積み上げています。</p>
+
+                    <p>テーマは「堅実な進捗と品質の向上」。修正依頼表を中心に複数のバグ修正が完了し、Anto/Fumitakaさんチームによるアンケート・コース申請画面のパフォーマンス改善も着実に前進しました。さらに、11月のLEADバージョンモジュール作成開始が全社に正式に告知され、新機能リリースに向けた重要なフェーズに入っています。</p>
+
+                    <p>本ニュースレターでは、活発にクローズしたPRやバグ修正の詳細、進行中のタスク状況、メンバーの貢献活動、そして11月リリースに向けたロードマップをまとめました。チーム全員の協力があってこその成果です。今週の内容をじっくりご覧いただき、今後の連携にお役立てください。</p>
+                </div>
+
+                <div class="content">
+                    <!-- KPI Section -->
+                    <div class="section" role="region" aria-labelledby="kpi-title">
+                        <h2 id="kpi-title" class="section-title">📊 KPIサマリー</h2>
+
+                        <table class="kpi-table" role="table" aria-label="KPI サマリー">
+                            <thead>
+                                <tr>
+                                    <th>指標</th>
+                                    <th>数値</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>コミット数</td>
+                                    <td class="value">66</td>
+                                </tr>
+                                <tr>
+                                    <td>クローズ済みPR数</td>
+                                    <td class="value">7</td>
+                                </tr>
+                                <tr>
+                                    <td>クローズ済み課題数</td>
+                                    <td class="value">0</td>
+                                </tr>
+                                <tr>
+                                    <td>アクティブコントリビューター数</td>
+                                    <td class="value">10</td>
+                                </tr>
+                                <tr>
+                                    <td>最多コミット案件</td>
+                                    <td class="value">#20038 (31件)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p class="kpi-desc">今週は66コミット、7件のPRがクローズされました。主要貢献者として、jinuSon(9コミット)、WatanabeTomoaki(17コミット)、ManseonJeon(12コミット)が多方面で案件に対応しています。特に#20038案件に集中した取り組みが進み、全体として安定した進捗が継続されています。🚀</p>
+                    </div>
+
+                    <div style="height:1px;background:#f1f3f5;margin:0 0 22px;border-radius:1px;"></div>
+
+                    <!-- Highlights Section -->
+                    <div class="section" role="region" aria-labelledby="highlights-title">
+                        <h2 id="highlights-title" class="section-title">✨ ハイライト</h2>
+
+                        <div class="highlight-card" role="article" aria-label="修正依頼表ハイライト">
+                            <div class="highlight-title">🐛 修正依頼表を軸とした複数バグ修正完了とレビュー進行</div>
+                            <p class="highlight-desc">修正依頼表#21805の対応が完了し、#21826の抽出条件デフォルト設定変更はレビュー依頼中です。EJBプライベート変数改修やルームHTMLエディタ画像URLのセキュリティ強化も着実に進展しています。</p>
+
+                            <div class="highlight-quotes" role="group" aria-label="修正依頼表 詳細">
+                                <p><strong>#21805</strong> V5.2.21 修正依頼表対応 No.14,15,18 → 対応完了</p>
+                                <p><strong>#21826</strong> エクスポートセンター抽出条件（アイテム）未選択状態デフォルト設定 → レビュー依頼中</p>
+                                <p><strong>#21818</strong> EJB側プライベート/プロテクト変数改修 → コミット完了</p>
+                                <p><strong>#21840</strong> ルームHTMLエディタ画像URLセキュリティ強化 → レビュー依頼中</p>
+                            </div>
+                        </div>
+
+                        <div class="highlight-card" role="article" aria-label="アンケート改善">
+                            <div class="highlight-title">⚡ アンケート/コース申請画面パフォーマンス改善タスクの進捗</div>
+                            <p class="highlight-desc">画面遷移遅延問題(#21816)の修正が完了し、レビュー依頼されています。動作確認後に単体テスト仕様書も作成済みで、テスト実施を控えています。</p>
+
+                            <div class="highlight-quotes" role="group" aria-label="アンケート改善 詳細">
+                                <p><strong>#21816</strong> 画面遷移遅延問題対応 → レビュー依頼中</p>
+                                <p>影響調査資料と単体テスト仕様書完成、単体テスト予定</p>
+                                <p>動作確認で発見したバグ修正完了、再確認中</p>
+                            </div>
+                        </div>
+
+                        <div class="highlight-card" role="article" aria-label="LEAD告知">
+                            <div class="highlight-title">🚀 LEAD11月バージョンモジュール作成開始の告知</div>
+                            <p class="highlight-desc">11月リリースに向けたLEADのバージョンモジュール作成が始動し、全社へ重要なリリース情報として周知されました。今後の開発フェーズに期待が高まっています。</p>
+
+                            <div class="highlight-quotes" role="group" aria-label="LEAD告知 詳細">
+                                <p>LEAD 11月バージョンモジュール作成開始の案内を複数回実施</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="height:1px;background:#f1f3f5;margin:0 0 22px;border-radius:1px;"></div>
+
+                    <!-- Topics Section -->
+                    <div class="section" role="region" aria-labelledby="topics-title">
+                        <h2 id="topics-title" class="section-title">🧭 トピック</h2>
+
+                        <div class="topic-card" role="article" aria-label="バグフィックス">
+                            <div class="topic-title">🐛 バグフィックス</div>
+                            <p class="topic-desc">人事連携ファイルアップロード問題など計8件のバグ調査・修正対応中。SQLエラーやメッセージ管理の不具合も含む中規模修正が多数進行中（合計約25件、最大5名参加）。</p>
+                        </div>
+
+                        <div class="topic-card" role="article" aria-label="新機能改修">
+                            <div class="topic-title">🚀 新機能・機能改修</div>
+                            <p class="topic-desc">タスク種別制御や証明書チェックスキップ、新レコメンドや動画利用開始など中規模機能改修が15件以上、3名前後で対応中。</p>
+                        </div>
+
+                        <div class="topic-card" role="article" aria-label="意思決定">
+                            <div class="topic-title">📋 意思決定・要件定義</div>
+                            <p class="topic-desc">メールHTMLエディタ形式追加や管理者機能仕様の調整など9件の意思決定および承認関連作業が実施されました。</p>
+                        </div>
+
+                        <div class="topic-card" role="article" aria-label="リファクタリング">
+                            <div class="topic-title">♻️ リファクタリング</div>
+                            <p class="topic-desc">EJBのプライベート/プロテクト変数改修など6件以上の内部最適化・レビューが進行中。安定運用に向けた内部整理が順調です。</p>
+                        </div>
+
+                        <div class="topic-card" role="article" aria-label="定例活動">
+                            <div class="topic-title">⚙️ 定例活動・進捗共有</div>
+                            <p class="topic-desc">タイムライン通知機能統合や日常の作業実績共有など、約10件の定例活動レポートや進捗調整が行われています。</p>
+                        </div>
+                    </div>
+
+                    <div style="height:1px;background:#f1f3f5;margin:0 0 22px;border-radius:1px;"></div>
+
+                    <!-- Roadmap / Ongoing Section -->
+                    <div class="section" role="region" aria-labelledby="ongoing-title">
+                        <h2 id="ongoing-title" class="section-title">⚙ 進行中 / ロードマップ / 予定</h2>
+
+                        <div class="roadmap-card" role="article" aria-label="現在進行中の主なタスク">
+                            <div class="roadmap-item">
+                                <strong>タスク処理管理のタスク種別制御 (#21625)</strong>
+                                <p style="margin:6px 0 0;color:#495057;font-size:14px;">進捗70%。基本制御実装とSlack連携が完了。Yoko Nishimuraさんが10月30日までに詳細仕様調整、Shohei Tadaさんが11月2日にレビュー・マージ担当。</p>
+                                <div style="margin-top:10px;">
+                                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" style="width:70%;"></div></div>
+                                    <div class="roadmap-meta">進捗率: 70%</div>
+                                </div>
+                            </div>
+
+                            <div class="roadmap-item">
+                                <strong>#20878 LEAD管理者機能対応6</strong>
+                                <p style="margin:6px 0 0;color:#495057;font-size:14px;">進捗60%。チケット482、483完了。現在No.487対応中。Suchon Kouさんが次にNo.488を開始予定。</p>
+                                <div style="margin-top:10px;">
+                                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" style="width:60%;"></div></div>
+                                    <div class="roadmap-meta">進捗率: 60%</div>
+                                </div>
+                            </div>
+
+                            <div class="roadmap-item">
+                                <strong>#20038 修正依頼表その5の4</strong>
+                                <p style="margin:6px 0 0;color:#495057;font-size:14px;">進捗70%。複数チケット対応済みで、引き続き未対応分の進捗と回答待ちフォローアップをMomoko Teradaさんが担当。</p>
+                                <div style="margin-top:10px;">
+                                    <div class="progress-bar" aria-hidden="true"><div class="progress-fill" style="width:70%;"></div></div>
+                                    <div class="roadmap-meta">進捗率: 70%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:12px;">
+                            <h3 style="margin:12px 0 6px;color:#2c3e50;font-size:16px;">🗓️ ロードマップ</h3>
+
+                            <div class="topic-card" role="article" aria-label="LEAD 11月">
+                                <div class="topic-title">LEAD 11月バージョンモジュール作成 (2025-10-23〜2025-11-01)</div>
+                                <p class="topic-desc">開発フェーズに入り、Slackで開始案内を複数回配信。</p>
+                            </div>
+
+                            <div class="topic-card" role="article" aria-label="概要書完了">
+                                <div class="topic-title">概要書完成とレビュー完了 (2025-10-23〜2025-10-31)</div>
+                                <p class="topic-desc">概要書の更新・レビュー調整が活発に行われ、10月末完了予定。</p>
+                            </div>
+
+                            <div class="topic-card" role="article" aria-label="#20878完了">
+                                <div class="topic-title">#20878 LEAD管理者機能対応6 完了 (2025-10-20〜2025-11-05)</div>
+                                <p class="topic-desc">複数タスク進行中、11月初旬までに作業終了・コミット予定。</p>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:12px;">
+                            <h3 style="margin:12px 0 6px;color:#2c3e50;font-size:16px;">📅 今後の予定</h3>
+                            <ul style="margin:6px 0 0 18px;color:#495057;font-size:14px;">
+                                <li><strong>2025-10-28</strong> - #20878 LEAD管理者機能対応6 継続作業 / #20038 修正依頼表対応その5の4 継続作業</li>
+                                <li><strong>2025-10-29</strong> - 概要書レビュー会議（オンライン）</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div style="height:1px;background:#f1f3f5;margin:0 0 22px;border-radius:1px;"></div>
+
+                    <!-- Member Activity -->
+                    <div class="section" role="region" aria-labelledby="members-title">
+                        <h2 id="members-title" class="section-title">💬 メンバー活動</h2>
+
+                        <div class="member-row" role="article">
+                            <table class="member-table" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                                <tr>
+                                    <td class="member-emoji">✨</td>
+                                    <td class="member-content">
+                                        <p class="member-name">Suchon Kou</p>
+                                        <p class="member-desc">LEAD管理者機能対応で複数タスクを完了し、修正依頼表進捗共有と詳細調査をリード。大庭さん、寺田さんと技術連携強化に努めています。</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="member-row" role="article">
+                            <table class="member-table" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                                <tr>
+                                    <td class="member-emoji">🔍</td>
+                                    <td class="member-content">
+                                        <p class="member-name">全萬先</p>
+                                        <p class="member-desc">修正依頼表タスクのレビュー完了とコード不具合リバート対応を実施。複数メンバーと仕様調整や進捗共有を積極的に推進。</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="member-row" role="article">
+                            <table class="member-table" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                                <tr>
+                                    <td class="member-emoji">🚀</td>
+                                    <td class="member-content">
+                                        <p class="member-name">Mitsuru Ikeshita</p>
+                                        <p class="member-desc">不具合コミットのリバート指示と11月版対応ミーティングを主導。AIレビュー権限問題調査を進め、関係者間の連携促進に注力。</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="member-row" role="article">
+                            <table class="member-table" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                                <tr>
+                                    <td class="member-emoji">🛠</td>
+                                    <td class="member-content">
+                                        <p class="member-name">Yoko Nishimura</p>
+                                        <p class="member-desc">不具合調査支援や仕様説明、パスワードポリシー関連資料提供などで技術課題の解決に貢献。</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="member-row" role="article">
+                            <table class="member-table" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                                <tr>
+                                    <td class="member-emoji">⚙️</td>
+                                    <td class="member-content">
+                                        <p class="member-name">Jinu Son</p>
+                                        <p class="member-desc">修正依頼表タスクの進捗管理と完了報告を担当。不具合コミット対応も実施し、Mitsuru Ikeshitaさんらと連携を強化。</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="member-row" style="border-bottom:0;margin-bottom:0;" role="article">
+                            <table class="member-table" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                                <tr>
+                                    <td class="member-emoji">🧩</td>
+                                    <td class="member-content">
+                                        <p class="member-name">Fumitaka Furuta</p>
+                                        <p class="member-desc">アンケート画面パフォーマンス改善完了。不具合修正も迅速に行い、チーム内での情報共有やミーティング参加に積極的。</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="height:1px;background:#f1f3f5;margin:0 0 22px;border-radius:1px;"></div>
+
+                    <!-- Closing Section -->
+                    <div class="closing" role="region" aria-labelledby="closing-title">
+                        <h2 id="closing-title">🎉 おわりに</h2>
+                        <p>🍵 いよいよ10月23日から11月1日にかけて、LEADの11月バージョンモジュール作成が本格始動しました。高橋さんは17回のコミットを重ね、着実に仕上げを進めています。池下さんは最多リアクションを獲得し、チーム間で活発にリアクションを交わす連帯感が見られます。また、高宗さんもメッセージ数トップを維持し、多忙な中でもチームの結束を支えています。新モジュール公開が待ち遠しいですね！🚀</p>
+
+                        <div class="quote-box" role="note" aria-label="今週の言葉">
+                            <strong>今週の言葉</strong>
+                            <p style="margin:8px 0 0;">「コードは書き直して初めて進化する。」</p>
+                        </div>
+
+                        <p style="margin-top:12px;color:#495057;font-size:14px;">チーム一丸となって、さらなる品質向上と成長を目指していきましょう。来週もどうぞよろしくお願いいたします。</p>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="footer" role="contentinfo">
+                    <p>このメールは自動生成されています。</p>
+                    <p>
+                        <a href="#">設定</a> |
+                        <a href="#">配信停止</a> |
+                        <a href="#">フィードバック</a>
+                    </p>
+                    <p style="margin-top:8px;">&copy; 2025 Your Company. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

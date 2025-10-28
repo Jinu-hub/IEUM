@@ -11,3 +11,4 @@ export type PromptType =
     | 'looking_ahead_section'
     | 'closing_section'
     | 'create_final_contents'
+    | 'convert_to_html'

@@ -6,6 +6,7 @@
 import { HIGHLIGHTS_SUMMARY_INSTRUCTIONS } from './analyze/highlight_ins';
 import { TOPIC_CLUSTERING_INSTRUCTIONS } from './analyze/topic_clustering_ins';
 import { ACTIVITY_SUMMARY_INSTRUCTIONS } from './analyze/user_activity_ins';
+import { CONVERT_TO_HTML_INSTRUCTIONS } from './convert_to_html';
 import { FUN_CORNER_SECTION_INSTRUCTIONS } from './drafting/fun_corner_sec_ins';
 import { HIGHLIGHTS_SECTION_INSTRUCTIONS } from './drafting/highlights_sec_ins';
 import { KPI_SECTION_INSTRUCTIONS } from './drafting/kpi_sec_ins';
@@ -43,6 +44,8 @@ export function getPrompt(
       return FUN_CORNER_SECTION_INSTRUCTIONS;
     case 'create_final_contents':
       return FINAL_RESULT_INSTRUCTIONS;
+    case 'convert_to_html':
+      return CONVERT_TO_HTML_INSTRUCTIONS;
   }
   return '';
 }
