@@ -31,7 +31,7 @@ export function createGithubStats(githubResult : Record<string, FetchedRepoData>
     repoCount: Object.keys(githubResult).length,
     repos: Object.keys(githubResult),
     totalCommits: Object.values(githubResult).reduce((acc, repo) => acc + (repo.commits?.length || 0), 0),
-    totalPRs: Object.values(githubResult).reduce((acc, repo) => acc + (repo.mergedPRs?.length || 0), 0),
+    totalClosedPRs: Object.values(githubResult).reduce((acc, repo) => acc + (repo.closedPRs?.length || 0), 0),
     totalOpenedIssues: Object.values(githubResult).reduce((acc, repo) => acc + (repo.openedIssues?.length || 0), 0),
     totalClosedIssues: Object.values(githubResult).reduce((acc, repo) => acc + (repo.closedIssues?.length || 0), 0)
   }

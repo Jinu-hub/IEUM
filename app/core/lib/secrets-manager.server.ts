@@ -278,6 +278,16 @@ export async function getSlackBotToken(credentialRef?: string): Promise<string |
 }
 
 /**
+ * Slack 사용자 토큰 조회
+ */
+export async function getSlackUserToken(integrationId: string): Promise<string | null> {
+  if (integrationId && integrationId !== 'undefined') {
+    return await secretsManager.getSecret(integrationId).then(secret => secret?.value || null);
+  }
+  return null;
+}
+
+/**
  * Slack 토큰 조회
  */
 export async function getSlackBotTokenFromEnv(): Promise<string | null> {

@@ -200,4 +200,45 @@ export async function fetchChannelMessages(
   return collected;
 }
 
+/**
+ * チャンネルのメンバーリストとメール情報を取得
+ */
+export async function fetchChannelMembers(
+  slack: WebClient,
+  channelId: string
+): Promise<UserInfo[]> {
+  const members: UserInfo[] = [];
+  let cursor: string | undefined;
+  
+  try {
+    // conversations.membersでチャンネルのメンバーIDリストを取得
+    do {
+      const res = await slack.conversations.members({
+        channel: channelId,
+        limit: 200,
+        cursor,
+      });
+      
+      const memberIds = res.members || [];
+      
+      // 各メンバーの詳細情報を取得（並列処理）
+      const memberInfos = await Promise.all(
+        memberIds.map(async (userId) => {
+          return await fetchUserInfo(slack, userId as string);
+        })
+      );
+      
+      // null以外の結果のみ追加
+      members.push(...memberInfos.filter((info): info is UserInfo => info !== null));
+      
+      cursor = res.response_metadata?.next_cursor || undefined;
+      if (cursor) await new Promise((r) => setTimeout(r, 350));
+    } while (cursor);
+    
+    return members;
+  } catch (error: any) {
+    logger.error('Error fetching channel members', { channelId, error: error.message });
+    return [];
+  }
+}
 

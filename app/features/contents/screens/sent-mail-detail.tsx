@@ -1,32 +1,33 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router';
-import { 
-  LinearCard, 
-  LinearCardContent,
-  LinearButton,
-  LinearBadge,
-} from '~/core/components/linear';
-import { 
+import {
   ArrowLeft,
-  Mail, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Copy,
-  ExternalLink,
-  RotateCcw,
-  Eye,
   Calendar,
-  User,
-  FileText,
+  CheckCircle,
+  Clock,
+  Copy,
   Download,
-  X
+  ExternalLink,
+  Eye,
+  FileText,
+  Mail,
+  RotateCcw,
+  User,
+  X,
+  XCircle
 } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import {
+  LinearBadge,
+  LinearButton,
+  LinearCard,
+  LinearCardContent,
+} from '~/core/components/linear';
 import { cn } from '~/core/lib/utils';
-import type { SentEmailData, EmailStatus } from '../lib/types';
-import { formatTime, formatDetailedTime } from '../lib/common';
-import { sampleSentEmails } from '../lib/mackData';
 import { sampleEmailHTML } from '~/features/settings/lib/mockdata';
+import { testOutputHTML } from '../../../../output-sample/test_output';
+import { formatDetailedTime } from '../lib/common';
+import { sampleSentEmails } from '../lib/mackData';
+import type { EmailStatus } from '../lib/types';
 
 export const meta = () => {
   return [{ title: `메일 상세 | ${import.meta.env.VITE_APP_NAME}` }];
@@ -144,7 +145,7 @@ export default function SentMailDetailScreen() {
     }
     
     // 기본 HTML
-    return sampleEmailHTML.techNewsletter;
+    return testOutputHTML.newsletterHTML;
   };
 
   // 아카이브 링크 열기 핸들러

@@ -24,4 +24,16 @@ export type FetchedMessage = {
   };
 };
 
+export type ChannelData = {
+  messages: FetchedMessage[];
+  emailList?: string[];
+  channelInfo?: {
+    id: string;
+    name: string;
+    description?: string;
+    topic?: string;
+    numMembers?: number;
+  };
+};
+
 

@@ -11,8 +11,9 @@ import { runSlackFetch } from "~/core/integrations/slack/run";
 import { isScheduledWithinHour } from "~/core/lib/cron-utils";
 import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
-import { createContents } from "~/features/cron/api/create-contents";
-import { getIntegrationsInfo, getTargetSources } from "~/features/settings/db/queries";
+import { getIntegrationsInfo, getMailingListMembers, getTargetSources } from "~/features/settings/db/queries";
+import { createContents } from "./create-contents";
+
 
 /**
  * 타겟 정보 타입 (데이터베이스 타입 기반)
@@ -78,10 +79,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
     for (const target of allTargets) {
       logger.info(`--- target: ${target.display_name} ---`);
+      let emailList: string[] = [];
       const integrationsInfo = await getIntegrationsInfo(adminClient, { workspaceId: target.workspace_id });
       const githubData = integrationsInfo?.find((integration: any) => integration.type === 'github')?.resource_cache_json as any;
       const slackData = integrationsInfo?.find((integration: any) => integration.type === 'slack')?.resource_cache_json as any;
-      
       const sources = await getTargetSources(adminClient, { workspaceId: target.workspace_id, targetId: target.target_id });
       if (sources.length > 0) {
         let githubRepos = null;
@@ -118,7 +119,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
           githubRepos = matchedRepos.join(',');
           logger.info('[github]');
           logger.info(` credentialRef: ${githubCredentialRef}`);
-          logger.info(` token: ${githubToken}`);
+          //logger.info(` token: ${githubToken}`);
           logger.info(` repos: ${githubRepos}`);
           
           githubResult = await runGithubFetch({
@@ -132,6 +133,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         } else {
           logger.info('CredentialRef가 유효하지 않거나, 매칭된 Repository가 없습니다.');
         }
+
         if (slackCredentialRef && matchedChannels.length > 0) {
           slackToken = await getSlackBotToken(slackCredentialRef as string) || undefined;
           slackChannels = matchedChannels.join(',');
@@ -155,13 +157,30 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         if (!githubResult && !slackResult) {
           return new Response("Failed to fetch GitHub and Slack data", { status: 500 });
         }
+        
+        if (slackResult) {
+          const slackEmails = Object.values(slackResult)
+            .map((channel: any) => channel.emailList || [])
+            .flat()
+            .filter((email: string) => email && email.trim() !== ''); 
+          logger.info('Slack emails', { slackEmails });
+          emailList.push(...slackEmails);
+        }
+
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 7);
+        const period = `${startDate.getFullYear()}-${startDate.getMonth() + 1}-${startDate.getDate()} ~ ${endDate.getFullYear()}-${endDate.getMonth() + 1}-${endDate.getDate()}`;
 
         // コンテンツを生成
         const contentsResult = await createContents({
           githubResult : githubResult || null,
-          slackResult : slackResult || null,
+          slackResult : slackResult ? Object.fromEntries(
+            Object.entries(slackResult).map(([key, value]) => [key, value.messages])
+          ) : null,
           workspaceId: target.workspace_id,
           targetId: target.target_id,
+          period: period,
           language: "ja",
           source: "slack",
           timezone: "Asia/Tokyo"
@@ -171,15 +190,28 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
           targetId: target.target_id,
           result: contentsResult.status
         });
-
-        // ファイルに保存
-        //const savedFilePath = await saveContentToFile(contentsResult.data.finalOutput, 'output-test');
-        logger.info('Content saved to file', { 
-          targetId: target.target_id,
-          //filePath: savedFilePath
-        });
-        
       }
+
+      const mailingListId = target.mailing_list_id;
+      if (mailingListId) {
+        const members = await getMailingListMembers(adminClient, { mailingListId: mailingListId });
+        console.log('members', members);
+        if (members.length > 0) {
+          logger.info('Mailing list members found', { mailingListId, members: members.length });
+          emailList.push(...members.map((member: any) => member.email));
+        } else {
+          logger.info('Mailing list members not found', { mailingListId });
+        }
+      }
+
+      // 중복 제거 및 최종 이메일 목록
+      const uniqueEmails = [...new Set(emailList)].filter(email => email && email.trim() !== '');
+      logger.info('Final email list', { 
+        totalEmails: emailList.length, 
+        uniqueEmails: uniqueEmails.length,
+        emails: uniqueEmails 
+      });
+
     }
 
     return data({ 
