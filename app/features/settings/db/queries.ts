@@ -16,6 +16,43 @@ export const getWorkspace = async (
   return data;
 };
 
+export const getWorkspaceOwner = async (
+  client: SupabaseClient<Database>,
+  { workspaceId }: { workspaceId: string },
+) => {
+  const { data, error } = await client
+    .from('workspace_member')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .eq('role', 'owner')
+    .single();
+  if (error) {
+    console.log('getWorkspaceOwner error', error);
+    throw error;
+  }
+  return data;
+};
+
+export const getUserEmail = async (
+  client: SupabaseClient<Database>,
+  { userId }: { userId: string },
+) => {
+  try {
+    // Use auth.admin.getUserById to access auth.users table
+    // This requires admin client with service role key
+    // Response structure: { data: { user }, error }
+    const { data, error } = await (client as any).auth.admin.getUserById(userId);
+    if (error) {
+      console.log('getUserEmail error', error);
+      return null;
+    }
+    return { email: data?.user?.email };
+  } catch (error) {
+    console.log('getUserEmail error', error);
+    return null;
+  }
+};
+
 export const getLoginUserWorkspace = async (
   client: SupabaseClient<Database>,
   { userId , role}: { userId: string, role: string },

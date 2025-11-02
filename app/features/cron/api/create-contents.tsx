@@ -59,17 +59,7 @@ export async function createContents(input: CreateContentsInput) {
     workspaceId: input.workspaceId, targetId: input.targetId, github: githubStats, slack: slackStats
   });
 
-  const handledData = await generateContents(input);
-
-  /*
-  const summaryPrompt = buildGithubPrompt(
-    Object.values(input.githubResult || {}),
-    'ja' // 또는 input.language 같은 동적 값
-  );
-  
-  const content = await run(summarizerAgent, summaryPrompt);
-  */
- const content = {}
+  const content = await generateContents(input);
 
   logger.info('✅ Contents created successfully', {
     targetId: input.targetId,
