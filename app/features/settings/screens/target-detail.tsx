@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Clock, Plus, Settings, Target as TargetIcon, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { redirect, useActionData, useNavigate, useNavigation, useParams, useSubmit, type LoaderFunctionArgs } from 'react-router';
 import { toast } from "sonner";
-import { useNavigate, useParams, useSubmit, useActionData, useNavigation, type LoaderFunctionArgs } from 'react-router';
-import { 
-  LinearCard, 
-  LinearCardContent,
-  LinearButton,
+import {
   LinearBadge,
+  LinearButton,
+  LinearCard,
+  LinearCardContent,
   LinearInput,
   LinearToggle,
 } from '~/core/components/linear';
@@ -16,22 +17,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/core/components/ui/select";
-import { ArrowLeft, Plus, X, Clock, Target as TargetIcon, Settings } from 'lucide-react';
-import { scheduleTypes, weekdays, hours, minutes, monthDays } from '../lib/types';
-import type { TargetData } from '../lib/types';
-import {
-  getSourceTypeLabel,
-  getNonMemberSlackChannels,  
-} from '../lib/common';
-import { useIntegrationSources } from '../hooks/useIntegrationSources';
-import { 
-  parseCronExpression,
-  generateCronExpression
-} from '../lib/scheduleUtils';
-import { getIntegrationsInfo, getMailingList, getTarget, getTargetSources, getWorkspace } from '../db/queries';
-import { createTargetWithSources } from '../db/mutations';
 import makeServerClient from '~/core/lib/supa-client.server';
-import { redirect } from 'react-router';
+import { createTargetWithSources } from '../db/mutations';
+import { getIntegrationsInfo, getMailingList, getTarget, getTargetSources, getWorkspace } from '../db/queries';
+import { useIntegrationSources } from '../hooks/useIntegrationSources';
+import {
+  getNonMemberSlackChannels,
+  getSourceTypeLabel,
+} from '../lib/common';
+import {
+  generateCronExpression,
+  parseCronExpression
+} from '../lib/scheduleUtils';
+import type { TargetData } from '../lib/types';
+import { hours, scheduleTypes, weekdays } from '../lib/types';
 import type { Route } from "./+types/target-detail";
 
 export const meta = ({ params }: { params: { targetId: string } }) => {
@@ -192,12 +191,24 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
       // 스케줄 정보가 있으면 UI 상태도 초기화
       if (target.schedule_cron) {
         const parsedSchedule = parseCronExpression(target.schedule_cron);
-        setScheduleType(parsedSchedule.scheduleType);
-        setSelectedHour(parsedSchedule.hour);
-        setSelectedMinute(parsedSchedule.minute);
-        setSelectedWeekday(parsedSchedule.weekday || '1');
-        setSelectedMonthDay(parsedSchedule.monthDay || '1');
-        setCustomCron(parsedSchedule.customCron || '');
+        
+        // MVP: weekly 외의 타입은 weekly로 변환
+        if (parsedSchedule.scheduleType === 'weekly') {
+          setScheduleType('weekly');
+          setSelectedHour(parsedSchedule.hour);
+          setSelectedMinute(parsedSchedule.minute);
+          setSelectedWeekday(parsedSchedule.weekday || '1');
+        } else if (parsedSchedule.scheduleType === 'daily' || parsedSchedule.scheduleType === 'monthly' || parsedSchedule.scheduleType === 'custom') {
+          // 향후 지원 예정인 타입들은 weekly로 폴백
+          console.warn(`MVP 버전에서는 ${parsedSchedule.scheduleType} 타입이 지원되지 않습니다. weekly로 변환합니다.`);
+          setScheduleType('weekly');
+          setSelectedHour(parsedSchedule.hour);
+          setSelectedMinute(parsedSchedule.minute);
+          setSelectedWeekday('1'); // 월요일로 기본 설정
+        } else {
+          // manual이거나 알 수 없는 타입
+          setScheduleType('manual');
+        }
       }
 
       // 타겟 소스 정보로 UI 상태 초기화 (빈 배열이어도 초기화)
@@ -307,7 +318,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     const cronString = generateCronExpression({
       scheduleType: value as 'daily' | 'weekly' | 'monthly' | 'custom',
       hour: selectedHour,
-      minute: selectedMinute,
+      minute: '0', // MVP: 분은 항상 0으로 고정
       weekday: selectedWeekday,
       monthDay: selectedMonthDay,
       customCron
@@ -315,13 +326,13 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     handleInputChange('scheduleCron', cronString);
   };
 
-  // 시간/분/요일/일자 변경 핸들러
+  // 시간/요일/일자 변경 핸들러
   const handleScheduleDetailChange = () => {
     if (scheduleType !== 'custom' && scheduleType !== 'manual') {
       const cronString = generateCronExpression({
         scheduleType: scheduleType as 'daily' | 'weekly' | 'monthly' | 'custom',
         hour: selectedHour,
-        minute: selectedMinute,
+        minute: '0', 
         weekday: selectedWeekday,
         monthDay: selectedMonthDay,
         customCron
@@ -341,7 +352,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   // Effect to update cron when schedule details change
   useEffect(() => {
     handleScheduleDetailChange();
-  }, [selectedHour, selectedMinute, selectedWeekday, selectedMonthDay, scheduleType]);
+  }, [selectedHour, selectedWeekday, selectedMonthDay, scheduleType]); 
 
   // 인테그레이션 선택 시 소스 로드
   useEffect(() => {
@@ -510,7 +521,12 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Clock className="h-5 w-5 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-foreground">발송 스케줄</h2>
+                <div className="flex-1">
+                  <h2 className="text-xl font-semibold text-foreground">발송 스케줄</h2>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    현재는 주간 발송만 지원합니다. 향후 일간, 월간, 커스텀 추가 예정입니다.
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-6">
@@ -531,137 +547,79 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                   </Select>
                 </div>
 
-                {/* 시간 설정 (수동 발송이 아닌 경우) */}
-                {scheduleType !== 'manual' && scheduleType !== 'custom' && (
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-foreground">발송 시각</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium text-muted-foreground">시</label>
-                        <Select 
-                          value={selectedHour} 
-                          onValueChange={setSelectedHour}
-                          disabled={isSaving}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {hours.map((hour) => (
-                              <SelectItem key={hour.value} value={hour.value}>
-                                {hour.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium text-muted-foreground">분</label>
-                        <Select 
-                          value={selectedMinute} 
-                          onValueChange={setSelectedMinute}
-                          disabled={isSaving}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {minutes.map((minute) => (
-                              <SelectItem key={minute.value} value={minute.value}>
-                                {minute.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 요일 설정 (주간 스케줄인 경우) */}
+                {/* Weekly 스케줄 설정 */}
                 {scheduleType === 'weekly' && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">요일</label>
-                    <Select 
-                      value={selectedWeekday} 
-                      onValueChange={setSelectedWeekday}
-                      disabled={isSaving}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {weekdays.map((day) => (
-                          <SelectItem key={day.value} value={day.value}>
-                            {day.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* 일자 설정 (월간 스케줄인 경우) */}
-                {scheduleType === 'monthly' && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">날짜</label>
-                    <Select 
-                      value={selectedMonthDay} 
-                      onValueChange={setSelectedMonthDay}
-                      disabled={isSaving}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {monthDays.map((day) => (
-                          <SelectItem key={day.value} value={day.value}>
-                            {day.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      * 월말 (29일, 30일, 31일)이 없는 달에는 해당 월의 마지막 날에 발송됩니다.
-                    </p>
-                  </div>
-                )}
-
-                {/* 커스텀 Cron 입력 */}
-                {scheduleType === 'custom' && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Cron 표현식</label>
-                    <LinearInput
-                      placeholder="예: 0 9 * * 1 (매주 월요일 9시)"
-                      value={customCron}
-                      onChange={(e) => handleCustomCronChange(e.target.value)}
-                      disabled={isSaving}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Cron 형식: 분 시간 일 월 요일 (예: 0 9 * * 1)
-                    </p>
-                  </div>
-                )}
-
-                {/* 스케줄 미리보기 */}
-                {scheduleType !== 'manual' && (
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-foreground mb-2">스케줄 미리보기</h4>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        {scheduleType === 'daily' && `매일 ${selectedHour.padStart(2, '0')}:${selectedMinute.padStart(2, '0')}`}
-                        {scheduleType === 'weekly' && `매주 ${weekdays.find(d => d.value === selectedWeekday)?.label} ${selectedHour.padStart(2, '0')}:${selectedMinute.padStart(2, '0')}`}
-                        {scheduleType === 'monthly' && `매월 ${selectedMonthDay}일 ${selectedHour.padStart(2, '0')}:${selectedMinute.padStart(2, '0')}`}
-                        {scheduleType === 'custom' && (customCron || '유효한 Cron 표현식을 입력하세요')}
-                      </span>
+                  <div className="space-y-6 p-4 bg-muted/30 rounded-lg border border-muted">
+                    {/* 요일 설정 */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">발송 요일</label>
+                      <Select 
+                        value={selectedWeekday} 
+                        onValueChange={setSelectedWeekday}
+                        disabled={isSaving}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {weekdays.map((day) => (
+                            <SelectItem key={day.value} value={day.value}>
+                              {day.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    {formData.scheduleCron && (
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        Cron: <code className="bg-background px-1 py-0.5 rounded">{formData.scheduleCron}</code>
+
+                    {/* 시간 설정 */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">발송 시각</label>
+                      <Select 
+                        value={selectedHour} 
+                        onValueChange={setSelectedHour}
+                        disabled={isSaving}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {hours.map((hour) => {
+                            const currentHour = parseInt(hour.value);
+                            const nextHour = (currentHour + 1) % 24;
+                            return (
+                              <SelectItem key={hour.value} value={hour.value}>
+                                {currentHour}시~{nextHour}시
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* 스케줄 미리보기 */}
+                    <div className="bg-background rounded-lg p-4 border border-muted">
+                      <h4 className="text-sm font-medium text-foreground mb-2">스케줄 미리보기</h4>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium text-foreground">
+                          매주 {weekdays.find(d => d.value === selectedWeekday)?.label} {parseInt(selectedHour)}시~{(parseInt(selectedHour) + 1) % 24}시
+                        </span>
                       </div>
-                    )}
+                      {formData.scheduleCron && (
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          Cron: <code className="bg-muted px-1 py-0.5 rounded">{formData.scheduleCron}</code>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 수동 발송 안내 */}
+                {scheduleType === 'manual' && (
+                  <div className="p-4 bg-muted/30 rounded-lg border border-muted">
+                    <p className="text-sm text-muted-foreground">
+                      수동 발송 모드입니다. 타겟 목록에서 직접 발송 버튼을 클릭하여 뉴스레터를 보낼 수 있습니다.
+                    </p>
                   </div>
                 )}
               </div>

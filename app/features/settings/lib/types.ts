@@ -75,12 +75,14 @@ export interface MailListMemberData {
 }
   
 // 스케줄 타입
+// MVP 버전: weekly만 지원, 향후 daily, monthly, custom 추가 예정
 export const scheduleTypes = [
     { value: 'manual', label: '수동 발송' },
-    { value: 'daily', label: '매일' },
     { value: 'weekly', label: '매주' },
-    { value: 'monthly', label: '매월' },
-    { value: 'custom', label: '직접 입력 (Cron)' },
+    // 🚀 향후 지원 예정
+    // { value: 'daily', label: '매일' },
+    // { value: 'monthly', label: '매월' },
+    // { value: 'custom', label: '직접 입력 (Cron)' },
   ];
   
   // 요일 옵션

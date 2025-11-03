@@ -200,7 +200,7 @@ export function formatLastSent(lastSentAt?: string): string {
   });
 };
 
-// 스케줄 표시용 포맷 함수
+// 스케줄 표시용 포맷 함수 (MVP: weekly만 지원)
 export function formatSchedule(cron?: string): string {
   if (!cron) return "수동 발송";
   
@@ -209,18 +209,29 @@ export function formatSchedule(cron?: string): string {
   if (parts.length !== 5) return cron;
   
   const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+  const hourNum = parseInt(hour);
+  const nextHour = (hourNum + 1) % 24;
   
+  // MVP: weekly 스케줄
   if (dayOfWeek !== '*' && dayOfMonth === '*') {
     const days = ['일', '월', '화', '수', '목', '금', '토'];
     const dayIndex = parseInt(dayOfWeek);
-    return `매주 ${days[dayIndex]}요일 ${hour}:${minute.padStart(2, '0')}`;
+    return `매주 ${days[dayIndex]}요일 ${hourNum}시~${nextHour}시`;
   }
   
+  // 🚀 향후 지원 예정
+  // daily 스케줄
+  if (dayOfMonth === '*' && dayOfWeek === '*') {
+    return `매일 ${hourNum}시~${nextHour}시 (향후 지원)`;
+  }
+  
+  // monthly 스케줄
   if (dayOfMonth !== '*' && dayOfWeek === '*') {
-    return `매월 ${dayOfMonth}일 ${hour}:${minute.padStart(2, '0')}`;
+    return `매월 ${dayOfMonth}일 ${hourNum}시~${nextHour}시 (향후 지원)`;
   }
   
-  return `매일 ${hour}:${minute.padStart(2, '0')}`;
+  // custom이나 알 수 없는 형식
+  return `${cron} (향후 지원)`;
 };
 
 
