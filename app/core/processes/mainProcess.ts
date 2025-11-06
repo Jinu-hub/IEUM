@@ -1,7 +1,9 @@
 import { z } from "zod";
 import type { CreateContentsInput } from "~/core/lib/types";
+import { updateNewsletterRunStep } from "~/features/contents/db/mutations";
 import { saveContentToFile } from "~/features/cron/api/test-api";
 import { logger } from "../lib/logger";
+import adminClient from "../lib/supa-admin-client.server";
 import type { KpiSnapshot, LinkedActivityDoc, UnifiedActivityDoc } from "../lib/types";
 import { ActivityOutput, HighlightsOutput, OngoingProgressOutput, TopicOutput } from "../openai/models";
 import { getBaseTemplate, getMainTemplate } from "../openai/templates";
@@ -216,7 +218,14 @@ export async function generateFinalContents(input: CreateContentsInput, mergedCo
     return htmlContents;
 }
 
-export async function generateContents(input: CreateContentsInput) {
+export async function generateContents(input: CreateContentsInput, runStepId: string) {
+
+    if (runStepId) {
+        await updateNewsletterRunStep(adminClient, { 
+            runStepId: runStepId,
+            step: 'summarize_data',
+        });
+    }
 
     // 1. 데이터 정규화 & 중복 제거(Normalize & Deduplicate)
     const linkedData = await normalizeData(input);
@@ -244,6 +253,13 @@ export async function generateContents(input: CreateContentsInput) {
     // 4. 병합 
     const mergedContents = await mergeContents(input, kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection);
     // await saveContentToFile(mergedContents, 'output-sample', 'merged_contents_', 'md');
+
+    if (runStepId) {
+        await updateNewsletterRunStep(adminClient, { 
+            runStepId: runStepId,
+            step: 'assemble_data',
+        });
+    }
 
     // 5. 콘텐츠 생성(Generate Contents)
     const finalContents = await generateFinalContents(input, mergedContents);

@@ -970,6 +970,7 @@ export type Database = {
           mailing_list_id: string | null
           preview_thumb_url: string | null
           schedule_cron: string | null
+          schedule_hour: number
           target_id: string
           timezone: string
           updated_at: string
@@ -985,6 +986,7 @@ export type Database = {
           mailing_list_id?: string | null
           preview_thumb_url?: string | null
           schedule_cron?: string | null
+          schedule_hour?: number
           target_id?: string
           timezone?: string
           updated_at?: string
@@ -1000,6 +1002,7 @@ export type Database = {
           mailing_list_id?: string | null
           preview_thumb_url?: string | null
           schedule_cron?: string | null
+          schedule_hour?: number
           target_id?: string
           timezone?: string
           updated_at?: string
@@ -1150,10 +1153,7 @@ export type Database = {
       }
     }
     Functions: {
-      secret_delete: {
-        Args: { p_name: string }
-        Returns: undefined
-      }
+      secret_delete: { Args: { p_name: string }; Returns: undefined }
       secret_delete_by_ref: {
         Args: { p_credential_ref: string }
         Returns: undefined
@@ -1162,10 +1162,7 @@ export type Database = {
         Args: { p_desc?: string; p_name: string; p_value: string }
         Returns: string
       }
-      secret_read: {
-        Args: { p_name: string }
-        Returns: string
-      }
+      secret_read: { Args: { p_name: string }; Returns: string }
       secret_read_by_ref: {
         Args: { p_credential_ref: string }
         Returns: string
@@ -1219,12 +1216,12 @@ export type Database = {
       rule_type: "agents" | "tasks"
       run_status: "queued" | "running" | "success" | "failed" | "canceled"
       step_name:
-        | "collector_slack"
-        | "collector_github"
-        | "summarizer"
-        | "assembler"
-        | "sender_email"
-      step_status: "queued" | "running" | "success" | "failed" | "skipped"
+        | "queued"
+        | "collect_data"
+        | "summarize_data"
+        | "assemble_data"
+        | "send_email"
+      step_status: "queued" | "running" | "success" | "failed" | "canceled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1386,13 +1383,13 @@ export const Constants = {
       rule_type: ["agents", "tasks"],
       run_status: ["queued", "running", "success", "failed", "canceled"],
       step_name: [
-        "collector_slack",
-        "collector_github",
-        "summarizer",
-        "assembler",
-        "sender_email",
+        "queued",
+        "collect_data",
+        "summarize_data",
+        "assemble_data",
+        "send_email",
       ],
-      step_status: ["queued", "running", "success", "failed", "skipped"],
+      step_status: ["queued", "running", "success", "failed", "canceled"],
     },
   },
 } as const

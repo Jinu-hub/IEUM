@@ -10,11 +10,11 @@ export const RUN_STATUS = [
 ] as const;
 
 export const STEP_NAME = [
-  "collector_slack", "collector_github", "summarizer", "assembler", "sender_email"
+  "queued", "collect_data", "summarize_data", "assemble_data", "send_email"
 ] as const;
 
 export const STEP_STATUS = [
-  "queued", "running", "success", "failed", "skipped",
+  "queued", "running", "success", "failed", "canceled",
 ] as const;
 
 export const INTEGRATION_TYPE = [

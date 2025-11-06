@@ -1,4 +1,42 @@
 import { getNextScheduledTime } from "~/features/settings/lib/scheduleUtils";
+import { logger } from "./logger";
+
+function formatDateWithTimeZone(date: Date, timeZone: string): string {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+      timeZoneName: 'short',
+    });
+
+    const parts = formatter.formatToParts(date);
+    const partMap: Record<string, string> = {};
+
+    for (const part of parts) {
+      if (part.type !== 'literal') {
+        partMap[part.type] = part.value;
+      }
+    }
+
+    const tzName = partMap.timeZoneName ? ` ${partMap.timeZoneName}` : '';
+    const year = partMap.year ?? '--';
+    const month = partMap.month ?? '--';
+    const day = partMap.day ?? '--';
+    const hour = partMap.hour ?? '--';
+    const minute = partMap.minute ?? '--';
+    const second = partMap.second ?? '--';
+
+    return `${year}-${month}-${day}T${hour}:${minute}:${second}${tzName}`;
+  } catch (error) {
+    return `${date.toISOString()} (${timeZone})`;
+  }
+}
 
 /**
  * cron 표현식이 유효한지 확인합니다 (간단한 검증)
@@ -126,14 +164,29 @@ function matchesField(value: number, field: string): boolean {
  */
 export function isCronScheduledWithinMinutes(
   cronExpression: string, 
-  withinMinutes: number = 60
+  withinMinutes: number = 60,
+  timeZone: string = 'Asia/Seoul'
 ): boolean {
   try {
     const now = new Date();
     const futureTime = new Date(now.getTime() + withinMinutes * 60 * 1000);
-    
+    // logger.info('cronExpression', { cronExpression });
+    // logger.info('timeZone', { timeZone });
+    // logger.info('futureTime', {
+    //   iso: futureTime.toISOString(),
+    //   localized: formatDateWithTimeZone(futureTime, timeZone),
+    // });
+    // logger.info('now', {
+    //   iso: now.toISOString(),
+    //   localized: formatDateWithTimeZone(now, timeZone),
+    // });
+
     const nextRun = getNextCronRun(cronExpression);
     if (!nextRun) return false;
+    // logger.info('nextRun', {
+    //   iso: nextRun.toISOString(),
+    //   localized: formatDateWithTimeZone(nextRun, timeZone),
+    // });
     
     // 다음 실행 시간이 현재 시간과 지정된 시간 사이에 있는지 확인
     return nextRun >= now && nextRun <= futureTime;
@@ -144,32 +197,40 @@ export function isCronScheduledWithinMinutes(
 }
 
 /**
- * 현재 시간부터 1시간 이내에 실행될 cron 스케줄인지 확인합니다
+ * 현재 시간부터 60분 이내에 실행될 cron 스케줄인지 확인합니다
  * @param cronExpression cron 표현식
  * @returns boolean
  */
-export function isScheduledWithinHour(cronExpression: string): boolean {
-  return isCronScheduledWithinMinutes(cronExpression, 60);
+export function isScheduledWithinHour(cronExpression: string, timeZone: string): boolean {
+  return isCronScheduledWithinMinutes(cronExpression, 60, timeZone);
 }
 
 /**
  * 테스트용: 현재 시간과 다음 실행 시간을 출력합니다
  * @param cronExpression cron 표현식
  */
-export function debugCronSchedule(cronExpression: string): void {
+export function debugCronSchedule(cronExpression: string, timeZone: string = 'Asia/Seoul'): void {
   const now = new Date();
   const nextRun = getNextCronRun(cronExpression);
-  const isWithinHour = isScheduledWithinHour(cronExpression);
-  
-  console.log(`Cron: ${cronExpression}`);
-  console.log(`현재 시간: ${now.toISOString()}`);
+  const isWithinHour = isScheduledWithinHour(cronExpression, timeZone);
+
+  logger.info(`Cron: ${cronExpression}`);
+  logger.info('현재 시간', {
+    iso: now.toISOString(),
+    localized: formatDateWithTimeZone(now, timeZone),
+    timeZone,
+  });
   
   if (nextRun && nextRun instanceof Date && !isNaN(nextRun.getTime())) {
-    console.log(`다음 실행: ${nextRun.toISOString()}`);
+    logger.info('다음 실행', {
+      iso: nextRun.toISOString(),
+      localized: formatDateWithTimeZone(nextRun, timeZone),
+      timeZone,
+    });
   } else {
-    console.log(`다음 실행: Invalid (기존 함수에서 처리 불가)`);
+    logger.info(`다음 실행: Invalid (기존 함수에서 처리 불가)`);
   }
   
-  console.log(`1시간 이내 실행: ${isWithinHour}`);
-  console.log('---');
+  logger.info(`1시간 이내 실행: ${isWithinHour}`);
+  logger.info('---');
 }
