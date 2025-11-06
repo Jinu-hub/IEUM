@@ -81,14 +81,16 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     const actionType = formData.get('actionType') as string;
 
     if (actionType === 'save') {
+      const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       // Form 데이터 파싱
       const targetData = {
         targetId: formData.get('targetId') as string,
         displayName: formData.get('displayName') as string,
         isActive: formData.get('isActive') === 'true',
         scheduleCron: formData.get('scheduleCron') as string || '',
+        scheduleHour: formData.get('scheduleHour') as string || '0',
         mailingListId: formData.get('mailingListId') as string || '',
-        timezone: formData.get('timezone') as string || 'Asia/Seoul',
+        timezone: formData.get('timezone') as string || systemTimezone,
       };
 
       // Integration Sources 파싱
@@ -165,13 +167,14 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   // 에러 처리 상태 (중복 alert 방지)
   const [processedActionData, setProcessedActionData] = useState(null);
 
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   // 폼 상태
   const [formData, setFormData] = useState<Partial<TargetData>>({
     displayName: '',
     isActive: true,
     scheduleCron: '',
     mailingListName: '',
-    timezone: 'Asia/Seoul',
+    timezone: systemTimezone,
   });
 
   // 타겟 편집 시 기존 데이터로 폼 초기화
@@ -400,6 +403,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     submitFormData.append('targetId', formData.targetId || '');
     submitFormData.append('displayName', formData.displayName);
     submitFormData.append('isActive', formData.isActive ? 'true' : 'false');
+    submitFormData.append('scheduleHour', selectedHour || '0');
     submitFormData.append('scheduleCron', formData.scheduleCron || '');
     submitFormData.append('mailingListId', formData.mailingListId || '');
     submitFormData.append('timezone', formData.timezone || 'Asia/Seoul');

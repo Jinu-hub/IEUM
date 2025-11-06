@@ -280,8 +280,8 @@ export const createOrUpdateIntegration = async (
 
 export const insertTarget = async (
     client: SupabaseClient<Database>,
-    { workspaceId, displayName, mailingListId, scheduleCron, timezone, isActive}:
-    { workspaceId: string, displayName: string, mailingListId: string, scheduleCron: string, timezone: string, isActive: boolean},
+    { workspaceId, displayName, mailingListId, scheduleCron, scheduleHour, timezone, isActive}:
+    { workspaceId: string, displayName: string, mailingListId: string, scheduleCron: string, scheduleHour: number, timezone: string, isActive: boolean},
 ) => {
     const { data, error } = await client
         .from('targets')
@@ -290,6 +290,7 @@ export const insertTarget = async (
             display_name: displayName,
             mailing_list_id: mailingListId || null,
             schedule_cron: scheduleCron,
+            schedule_hour: scheduleHour,
             timezone: timezone,
             is_active: isActive
         })
@@ -303,8 +304,8 @@ export const insertTarget = async (
 
 export const updateTarget = async (
     client: SupabaseClient<Database>,
-    { targetId, displayName, mailingListId, scheduleCron, timezone, isActive}:
-    { targetId: string, displayName: string, mailingListId: string, scheduleCron: string, timezone: string, isActive: boolean},
+    { targetId, displayName, mailingListId, scheduleCron, scheduleHour, timezone, isActive}:
+    { targetId: string, displayName: string, mailingListId: string, scheduleCron: string, scheduleHour: number, timezone: string, isActive: boolean},
 ) => {
     const { data, error } = await client
         .from('targets')
@@ -312,6 +313,7 @@ export const updateTarget = async (
             display_name: displayName,
             mailing_list_id: mailingListId || null,
             schedule_cron: scheduleCron,
+            schedule_hour: scheduleHour,
             timezone: timezone,
             is_active: isActive
         })
@@ -335,6 +337,7 @@ export const createTarget = async (
             displayName: targets.displayName, 
             mailingListId: targets.mailingListId || '' , 
             scheduleCron: targets.scheduleCron || '', 
+            scheduleHour: targets.scheduleHour ? parseInt(targets.scheduleHour) : 0,
             timezone: targets.timezone, 
             isActive: targets.isActive });
     } else {
@@ -343,6 +346,7 @@ export const createTarget = async (
             displayName: targets.displayName, 
             mailingListId: targets.mailingListId || '', 
             scheduleCron: targets.scheduleCron || '', 
+            scheduleHour: targets.scheduleHour ? parseInt(targets.scheduleHour) : 0,
             timezone: targets.timezone, 
             isActive: targets.isActive });
     }

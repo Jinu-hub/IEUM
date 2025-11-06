@@ -254,6 +254,7 @@ import {
        mailingListId: uuid("mailing_list_id").references(() => mailList.mailingListId, { onDelete: "set null" }),
        scheduleCron: text("schedule_cron"),
        timezone: text("timezone").notNull().default("Asia/Tokyo"),
+       scheduleHour: integer("schedule_hour").notNull().default(0),
        defaultRuleSetId: uuid("default_rule_set_id").references(() => ruleSets.ruleSetId, { onDelete: "set null" }),
        isActive: boolean("is_active").notNull().default(true),
        lastSentAt: timestamp("last_sent_at", { withTimezone: true }),

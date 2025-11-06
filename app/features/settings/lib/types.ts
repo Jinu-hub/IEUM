@@ -40,6 +40,7 @@ export interface TargetData {
     displayName: string;
     isActive: boolean;
     scheduleCron?: string;
+    scheduleHour?: string;
     lastSentAt?: string;
     mailingListName?: string;
     mailingListId?: string;
