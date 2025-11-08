@@ -214,11 +214,6 @@ Each section should have:
         <!-- Footer -->
         <div class="footer">
             <p>[Auto-generated message]</p>
-            <p>
-                <a href="#">[Settings]</a> | 
-                <a href="#">[Unsubscribe]</a> | 
-                <a href="#">[Feedback]</a>
-            </p>
             <p>[Copyright notice]</p>
         </div>
     </div>

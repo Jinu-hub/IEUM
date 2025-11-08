@@ -25,7 +25,7 @@ import {
     createTopicsSection,
 } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
-import { convertToHTML, createFinalContents } from "./reporting-data";
+import { convertToHTML, createFinalContents, divideContents } from "./reporting-data";
 
 /**
  * 1. 데이터 정규화 & 중복 제거(Normalize & Deduplicate)
@@ -213,7 +213,8 @@ export async function mergeContents(input: CreateContentsInput,
 export async function generateFinalContents(input: CreateContentsInput, mergedContents: string) {
     logger.info('📝 Generating final contents started');
     const finalContents = await createFinalContents(input, mergedContents);
-    const htmlContents = await convertToHTML(input.language, finalContents as string);
+    const sections = await divideContents(finalContents as string);
+    const htmlContents = await convertToHTML(input.language, sections);
     logger.info('📝 Generating final contents completed');
     return htmlContents;
 }

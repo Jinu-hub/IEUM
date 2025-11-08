@@ -1,7 +1,6 @@
 import { run } from "@openai/agents";
 import { z } from "zod";
 import { createGithubStats } from "~/features/cron/api/create-contents";
-import { saveContentToFile } from "~/features/cron/api/test-api";
 import type { FetchedRepoData } from "../integrations/github/types";
 import { CFG_RANKER } from "../lib/constants";
 import { logger } from "../lib/logger";
@@ -370,7 +369,7 @@ export async function summarizeMemberActivity(
 
     const memberDataWithMessages = prepareMemberDataWithMessages(linkedData);
 
-    await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
+    //await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
     const input = CommonInput.parse({
         project: "LEAD",
         contents: JSON.stringify(memberDataWithMessages),
