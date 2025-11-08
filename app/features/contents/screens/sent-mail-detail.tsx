@@ -1,8 +1,6 @@
 import {
   ArrowLeft,
   Calendar,
-  CheckCircle,
-  Clock,
   Copy,
   Download,
   ExternalLink,
@@ -15,63 +13,45 @@ import {
   XCircle
 } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { redirect, useNavigate } from 'react-router';
 import {
   LinearBadge,
   LinearButton,
   LinearCard,
   LinearCardContent,
 } from '~/core/components/linear';
+import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
-import { sampleEmailHTML } from '~/features/settings/lib/mockdata';
-import { testOutputHTML } from '../../../../output-sample/test_output';
-import { formatDetailedTime } from '../lib/common';
-import { sampleSentEmails } from '../lib/mackData';
-import type { EmailStatus } from '../lib/types';
+import { getWorkspace } from '~/features/settings/db/queries';
+import { getSentEmail } from '../db/queries';
+import { formatDetailedTime, getStatusConfig } from '../lib/common';
+import type { Route } from './+types/sent-mail-detail';
 
 export const meta = () => {
   return [{ title: `메일 상세 | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
-// 메일 상태별 설정 (MVP용 단순화)
-const getStatusConfig = (status: EmailStatus) => {
-  switch (status) {
-    case 'sent':
-      return {
-        icon: Clock,
-        label: '발송됨',
-        variant: 'info' as const,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50 dark:bg-blue-950',
-      };
-    case 'delivered':
-      return {
-        icon: CheckCircle,
-        label: '송신 완료',
-        variant: 'success' as const,
-        color: 'text-green-600',
-        bgColor: 'bg-green-50 dark:bg-green-950',
-      };
-    case 'failed':
-      return {
-        icon: XCircle,
-        label: '송신 실패',
-        variant: 'error' as const,
-        color: 'text-red-600',
-        bgColor: 'bg-red-50 dark:bg-red-950',
-      };
+
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return redirect('/login');
   }
+
+  const workspace = await getWorkspace(client, { userId: user.id });
+  const workspaceId = workspace[0].workspace_id;
+  const editionId = params.emailId as string;
+  const email = await getSentEmail(client, { workspaceId: workspaceId, editionId: editionId });
+  return { email };
 };
 
-export default function SentMailDetailScreen() {
-  const { emailId } = useParams();
+export default function SentMailDetailScreen( { loaderData }: Route.ComponentProps ) {
+  const { email } = loaderData;
   const navigate = useNavigate();
   
   // HTML 미리보기 상태
-  const [previewMode, setPreviewMode] = useState<'none' | 'preview' | 'html'>('none');
-  
-  // 실제로는 API에서 가져올 데이터
-  const email = sampleSentEmails.find(e => e.id === emailId);
+  const [previewMode, setPreviewMode] = useState<'none' | 'preview' | 'html' | 'markdown'>('none');
   
   if (!email) {
     return (
@@ -116,9 +96,14 @@ export default function SentMailDetailScreen() {
     setPreviewMode('html');
   };
 
+  // MARKDOWN 코드 보기 핸들러
+  const handleViewMarkdown = () => {
+    setPreviewMode('markdown');
+  };
+
   // HTML 다운로드 핸들러
   const handleDownloadHTML = () => {
-    const htmlContent = getEmailHTML();
+    const htmlContent = email.htmlBody;
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -128,24 +113,6 @@ export default function SentMailDetailScreen() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  };
-
-  // 이메일 HTML 내용 가져오기
-  const getEmailHTML = () => {
-    // 실제로는 이메일 데이터에서 HTML을 가져와야 함
-    // 여기서는 샘플 데이터를 사용
-    const mailingListName = email.targetTitle || '';
-    
-    if (mailingListName.includes('기술 뉴스')) {
-      return sampleEmailHTML.techNewsletter;
-    } else if (mailingListName.includes('제품 업데이트')) {
-      return sampleEmailHTML.productUpdate;
-    } else if (mailingListName.includes('긴급 공지사항')) {
-      return sampleEmailHTML.emergencyAlert;
-    }
-    
-    // 기본 HTML
-    return testOutputHTML.newsletterHTML;
   };
 
   // 아카이브 링크 열기 핸들러
@@ -246,7 +213,7 @@ export default function SentMailDetailScreen() {
                     <span className="text-sm font-medium text-muted-foreground">FROM</span>
                   </div>
                   <p className="text-sm text-foreground">
-                    LinkVerse &lt;hello@mail.linkverse.app&gt;
+                    Nexletter &lt;info@mail.nexletter.app&gt;
                   </p>
                 </div>
 
@@ -349,6 +316,10 @@ export default function SentMailDetailScreen() {
                   <Download className="h-4 w-4 mr-1" />
                   다운로드
                 </LinearButton>
+                <LinearButton variant="ghost" size="sm" onClick={handleViewMarkdown}>
+                  <FileText className="h-4 w-4 mr-1" />
+                  MARKDOWN
+                </LinearButton>
               </div>
             </div>
             
@@ -376,13 +347,13 @@ export default function SentMailDetailScreen() {
                 </div>
                 <div className="max-h-[600px] overflow-y-auto">
                   <iframe
-                    srcDoc={getEmailHTML()}
+                    srcDoc={email.htmlBody}
                     className="w-full h-[600px] border-0"
                     title="이메일 미리보기"
                   />
                 </div>
               </div>
-            ) : (
+            ) : previewMode === 'html' ? (
               <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg bg-white dark:bg-[#1A1B1E] overflow-hidden">
                 <div className="p-4 border-b border-[#E1E4E8] dark:border-[#2C2D30] bg-[#F8F9FA] dark:bg-[#2C2D30]">
                   <div className="flex items-center justify-between">
@@ -394,11 +365,27 @@ export default function SentMailDetailScreen() {
                 </div>
                 <div className="max-h-[600px] overflow-y-auto">
                   <pre className="text-sm text-foreground p-4 bg-[#F8F9FA] dark:bg-[#2C2D30] overflow-x-auto whitespace-pre-wrap">
-                    <code>{getEmailHTML()}</code>
+                    <code>{email.htmlBody}</code>
                   </pre>
                 </div>
               </div>
-            )}
+            ) : previewMode === 'markdown' ? (
+              <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg bg-white dark:bg-[#1A1B1E] overflow-hidden">
+                <div className="p-4 border-b border-[#E1E4E8] dark:border-[#2C2D30] bg-[#F8F9FA] dark:bg-[#2C2D30]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">MARKDOWN 코드</span>
+                    <LinearButton variant="ghost" size="sm" onClick={() => setPreviewMode('none')}>
+                      <X className="h-4 w-4" />
+                    </LinearButton>
+                  </div>
+                  <div className="max-h-[600px] overflow-y-auto">
+                    <pre className="text-sm text-foreground p-4 bg-[#F8F9FA] dark:bg-[#2C2D30] overflow-x-auto whitespace-pre-wrap">
+                      <code>{email.textBody}</code>
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </LinearCardContent>
         </LinearCard>
       </div>

@@ -1,72 +1,47 @@
+import {
+  Clock,
+  Mail,
+  Search
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { 
-  LinearCard, 
-  LinearCardContent,
-  LinearButton,
-  LinearBadge,
-  LinearInput,
-} from '~/core/components/linear';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/core/components/ui/dropdown-menu";
-import { 
-  Mail, 
-  Search, 
-  MoreVertical, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Copy,
-  ExternalLink,
-  RotateCcw
-} from 'lucide-react';
+  LinearBadge,
+  LinearButton,
+  LinearInput
+} from '~/core/components/linear';
 import { cn } from '~/core/lib/utils';
 // Route 타입은 React Router에서 자동 생성됩니다
-import type { SentEmailData, EmailStatus } from '../lib/types';
-import { formatTime } from '../lib/common';
-import { sampleSentEmails, createStatusFilters } from '../lib/mackData';
+import { redirect } from 'react-router';
+import makeServerClient from '~/core/lib/supa-client.server';
+import { getWorkspace } from '~/features/settings/db/queries';
+import { getSentEmailList } from '../db/queries';
+import { createStatusFilters, formatTime, getStatusConfig } from '../lib/common';
+import type { SentEmailData } from '../lib/types';
+import type { Route } from './+types/sent-mail';
 
 export const meta = () => {
   return [{ title: `보낸 메일 | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
-// 메일 상태별 설정 (MVP용 단순화)
-const getStatusConfig = (status: EmailStatus) => {
-  switch (status) {
-    case 'sent':
-      return {
-        icon: Clock,
-        label: '발송됨',
-        variant: 'info' as const,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50 dark:bg-blue-950',
-      };
-    case 'delivered':
-      return {
-        icon: CheckCircle,
-        label: '배송 완료',
-        variant: 'success' as const,
-        color: 'text-green-600',
-        bgColor: 'bg-green-50 dark:bg-green-950',
-      };
-    case 'failed':
-      return {
-        icon: XCircle,
-        label: '배송 실패',
-        variant: 'error' as const,
-        color: 'text-red-600',
-        bgColor: 'bg-red-50 dark:bg-red-950',
-      };
+export const loader = async ({ request }: Route.LoaderArgs) => {
+
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return redirect('/login');
   }
+
+  const workspace = await getWorkspace(client, { userId: user.id });
+  const workspaceId = workspace[0].workspace_id;
+  const sentEmailList = await getSentEmailList(client, { workspaceId: workspaceId });
+  return { sentEmailList };
 };
 
-export default function SentMailScreen() {
+export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
+  const { sentEmailList } = loaderData;
   const navigate = useNavigate();
-  const [sentEmails, setSentEmails] = useState<SentEmailData[]>(sampleSentEmails);
+  const [sentEmails, setSentEmails] = useState<SentEmailData[]>(sentEmailList);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   
@@ -103,11 +78,6 @@ export default function SentMailScreen() {
     console.log('메시지 ID 복사됨:', messageId);
   };
 
-  // 아카이브 링크 열기 핸들러
-  const handleViewArchive = (archiveUrl: string, event?: React.MouseEvent) => {
-    if (event) event.stopPropagation(); // 행 클릭 이벤트 버블링 방지
-    window.open(archiveUrl, '_blank');
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
@@ -170,10 +140,10 @@ export default function SentMailScreen() {
           <div className="px-6 py-4 border-b border-[#E1E4E8] dark:border-[#2C2D30] bg-[#F8F9FA] dark:bg-[#1A1B1E]">
             <div className="grid grid-cols-12 gap-4 text-sm font-medium text-[#6C6F7E] dark:text-[#B4B5B9]">
               <div className="col-span-1">상태</div>
-              <div className="col-span-3">대상</div>
-              <div className="col-span-4">제목</div>
+              <div className="col-span-4">대상</div>
+              <div className="col-span-5">제목</div>
               <div className="col-span-2">발송 시간</div>
-              <div className="col-span-2 text-right">액션</div>
+              {/*<div className="col-span-2 text-right">액션</div>*/}
             </div>
           </div>
 
@@ -238,7 +208,7 @@ export default function SentMailScreen() {
                     </div>
 
                     {/* 대상 */}
-                    <div className="col-span-3">
+                    <div className="col-span-4">
                       <div className="flex items-center space-x-2">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                           <Mail className="h-4 w-4 text-primary" />
@@ -250,7 +220,7 @@ export default function SentMailScreen() {
                     </div>
 
                     {/* 제목 */}
-                    <div className="col-span-4">
+                    <div className="col-span-5">
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-foreground truncate">
                           {email.subject}
@@ -277,6 +247,7 @@ export default function SentMailScreen() {
                     </div>
 
                     {/* 액션 */}
+                    {/*
                     <div className="col-span-2 flex justify-end" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -313,6 +284,7 @@ export default function SentMailScreen() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
+                    */}
                   </div>
                 </div>
               );

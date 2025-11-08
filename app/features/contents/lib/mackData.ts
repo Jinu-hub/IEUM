@@ -25,7 +25,7 @@ export const sampleSentEmails: SentEmailData[] = [
     targetTitle: '신규 사용자 온보딩',
     targetId: 'target_003',
     subject: 'LinkVerse에 오신 것을 환영합니다!',
-    status: 'sent',
+    status: 'sending',
     sentAt: '2024-01-18T10:00:00Z',
     providerMessageId: 'msg_123458',
   },
@@ -52,7 +52,7 @@ export const sampleSentEmails: SentEmailData[] = [
     targetTitle: '고객 지원팀 공지사항',
     targetId: 'target_006',
     subject: '고객 지원 시간 변경 안내',
-    status: 'sent',
+    status: 'sending',
     sentAt: '2024-01-14T20:00:00Z',
     providerMessageId: 'msg_123461',
   },
@@ -66,12 +66,4 @@ export const sampleSentEmails: SentEmailData[] = [
     providerMessageId: 'msg_123462',
     failureReason: '메일 서버 연결 실패',
   },
-];
-
-// 상태별 필터 옵션 생성 함수 (MVP용 단순화)
-export const createStatusFilters = (emails: SentEmailData[]) => [
-  { value: 'all', label: '모든 상태', count: emails.length },
-  { value: 'sent', label: '발송됨', count: emails.filter(e => e.status === 'sent').length },
-  { value: 'delivered', label: '송신 완료', count: emails.filter(e => e.status === 'delivered').length },
-  { value: 'failed', label: '송신 실패', count: emails.filter(e => e.status === 'failed').length },
 ];

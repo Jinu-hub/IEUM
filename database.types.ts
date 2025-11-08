@@ -415,12 +415,14 @@ export type Database = {
           archive_url: string | null
           archived_at: string | null
           edition_id: string
+          failure_reason: string | null
           html_body: string
           is_archived: boolean
           provider_message_id: string | null
           run_id: string | null
           sent_at: string | null
           stats_json: Json
+          status: Database["public"]["Enums"]["mail_status"]
           subject: string | null
           target_id: string
           text_body: string | null
@@ -430,12 +432,14 @@ export type Database = {
           archive_url?: string | null
           archived_at?: string | null
           edition_id?: string
+          failure_reason?: string | null
           html_body: string
           is_archived?: boolean
           provider_message_id?: string | null
           run_id?: string | null
           sent_at?: string | null
           stats_json?: Json
+          status?: Database["public"]["Enums"]["mail_status"]
           subject?: string | null
           target_id: string
           text_body?: string | null
@@ -445,12 +449,14 @@ export type Database = {
           archive_url?: string | null
           archived_at?: string | null
           edition_id?: string
+          failure_reason?: string | null
           html_body?: string
           is_archived?: boolean
           provider_message_id?: string | null
           run_id?: string | null
           sent_at?: string | null
           stats_json?: Json
+          status?: Database["public"]["Enums"]["mail_status"]
           subject?: string | null
           target_id?: string
           text_body?: string | null
@@ -1213,6 +1219,7 @@ export type Database = {
         | "discord"
         | "lineworks"
         | "slack_user"
+      mail_status: "sending" | "delivered" | "failed"
       rule_type: "agents" | "tasks"
       run_status: "queued" | "running" | "success" | "failed" | "canceled"
       step_name:
@@ -1380,6 +1387,7 @@ export const Constants = {
         "lineworks",
         "slack_user",
       ],
+      mail_status: ["sending", "delivered", "failed"],
       rule_type: ["agents", "tasks"],
       run_status: ["queued", "running", "success", "failed", "canceled"],
       step_name: [

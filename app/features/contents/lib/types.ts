@@ -1,5 +1,4 @@
-// 메일 상태 타입 정의 (MVP용 단순화)
-export type EmailStatus = 'sent' | 'delivered' | 'failed';
+import type { MAIL_STATUS } from "~/core/lib/constants";
 
 // 메일 데이터 타입 (MVP용 단순화)
 export interface SentEmailData {
@@ -7,7 +6,7 @@ export interface SentEmailData {
   targetTitle: string; // Target의 타이틀 (예: "개발팀 주간 뉴스레터")
   targetId?: string; // Target ID (선택사항)
   subject: string;
-  status: EmailStatus;
+  status: typeof MAIL_STATUS[number];
   sentAt: string;
   providerMessageId?: string;
   failureReason?: string; // 실패 시 이유

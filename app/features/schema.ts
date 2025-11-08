@@ -28,6 +28,7 @@ import {
   CONNECTION_STATUS,
   DELIVERY_EVENT_TYPE_EMAIL,
   INTEGRATION_TYPE,
+  MAIL_STATUS,
   RULE_TYPE,
   RUN_STATUS,
   STEP_NAME,
@@ -40,6 +41,7 @@ import {
   export const runStatus = pgEnum("run_status", RUN_STATUS);
   export const stepName = pgEnum("step_name", STEP_NAME);
   export const stepStatus = pgEnum("step_status", STEP_STATUS);
+  export const mailStatus = pgEnum("mail_status", MAIL_STATUS);
   export const integrationType = pgEnum("integration_type", INTEGRATION_TYPE);
   export const ruleType = pgEnum("rule_type", RULE_TYPE);
   export const deliveryEventTypeEmail = pgEnum("delivery_event_type_email", DELIVERY_EVENT_TYPE_EMAIL);
@@ -484,12 +486,14 @@ import {
       runId: uuid("run_id").references(() => newsletterRuns.runId, { onDelete: "set null" }),
       targetId: uuid("target_id").notNull().references(() => targets.targetId, { onDelete: "cascade" }),
       sentAt: timestamp("sent_at", { withTimezone: true }),
+      status: mailStatus("status").notNull().default("sending"),
       subject: text("subject"),
       htmlBody: text("html_body").notNull(),
       textBody: text("text_body"),
       statsJson: jsonb("stats_json").notNull().default(sql`'{}'::jsonb`),
       providerMessageId: text("provider_message_id"),
       archiveUrl: text("archive_url"),
+      failureReason: text("failure_reason"),
       isArchived: boolean("is_archived").notNull().default(false),
       archivedAt: timestamp("archived_at", { withTimezone: true }),
     },

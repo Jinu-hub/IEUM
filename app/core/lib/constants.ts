@@ -17,6 +17,10 @@ export const STEP_STATUS = [
   "queued", "running", "success", "failed", "canceled",
 ] as const;
 
+export const MAIL_STATUS = [
+  "sending", "delivered", "failed",
+] as const;
+
 export const INTEGRATION_TYPE = [
   "slack", "github", "discord", "lineworks", "slack_user",
 ] as const;

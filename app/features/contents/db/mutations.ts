@@ -169,3 +169,37 @@ export const updateNewsletterRunStep = async (client: SupabaseClient<Database>,
         throw error
     }
 }
+
+
+export const saveNewsletterEditions = async (client: SupabaseClient<Database>, 
+    { workspaceId, runId, targetId, subject, htmlBody, textBody, status, providerMessageId }: 
+    { workspaceId: string, runId: string, targetId: string, subject: string
+        , htmlBody: string, textBody: string, status: string, providerMessageId: string }) => {
+    try {
+        const now = new Date().toISOString();
+        const { data: newsletterEditions, error } = await client
+            .from('newsletter_editions')
+            .insert({
+                workspace_id: workspaceId,
+                target_id: targetId,
+                run_id: runId,
+                subject: subject,
+                html_body: htmlBody,
+                text_body: textBody,
+                stats_json: {},
+                sent_at: now,
+                status: status as Database["public"]["Enums"]["mail_status"],
+                provider_message_id: providerMessageId,
+            })
+            .select()
+            .single();
+        if (error) {
+            console.error('saveNewsletterEditions error', error);
+            throw error
+        }
+        return newsletterEditions;
+    } catch (error) {
+        console.error('saveNewsletterEditions error', error);
+        throw error
+    }
+}
