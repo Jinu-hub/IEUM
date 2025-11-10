@@ -14,6 +14,7 @@ import adminClient from "~/core/lib/supa-admin-client.server";
 import { createNewsletterRun, updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
 import { getIntegrationsInfo, getTargetSources } from "~/features/settings/db/queries";
 import { createContents } from "./create-contents";
+import { sendMails } from "./send-mails";
 
 /**
  * 타겟 정보 타입 (데이터베이스 타입 기반)
@@ -192,11 +193,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
             workspaceId: target.workspace_id,
             targetId: target.target_id,
             period: period,
+            runId: runMapping[target.target_id].runId,
+            runStepId: runMapping[target.target_id].runStepId,
             language: "ja",
             source: "slack",
             timezone: target.timezone
-          }, runMapping[target.target_id].runStepId
-          );
+          });
           
           logger.info('Contents generation completed', { 
             targetId: target.target_id,
@@ -209,7 +211,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
             step: 'send_email',
             metricsJson: {} 
           });
-          //await sendMails(target.workspace_id, target.mailing_list_id || '', null);
+
+          await sendMails(target.workspace_id, 
+            runMapping[target.target_id].runId,
+            target.target_id, target.display_name, target.mailing_list_id || '', 
+            slackResult, content.data as { finalContents: string, htmlContents: string });
 
         }
       } catch (error: any) {
@@ -391,9 +397,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
             period: period,
             language: "ja",
             source: "slack",
-            timezone: target.timezone
-          }, runMapping[target.target_id].runStepId
-          );
+            timezone: target.timezone,
+            runId: runMapping[target.target_id].runId,
+            runStepId: runMapping[target.target_id].runStepId,
+          });
           
           logger.info('Contents generation completed', { 
             targetId: target.target_id,
@@ -406,7 +413,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
             step: 'send_email',
             metricsJson: {} 
           });
-          //await sendMails(target.workspace_id, target.mailing_list_id || '', null);
+
+          await sendMails(target.workspace_id, 
+            runMapping[target.target_id].runId,
+            target.target_id, target.display_name, target.mailing_list_id || '', 
+            slackResult, content.data as { finalContents: string, htmlContents: string });
 
         }
       } catch (error: any) {

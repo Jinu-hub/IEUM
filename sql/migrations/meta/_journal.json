@@ -71,6 +71,13 @@
       "when": 1762589653395,
       "tag": "0009_dizzy_the_professor",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1762678385652,
+      "tag": "0010_mighty_ulik",
+      "breakpoints": true
     }
   ]
 }

@@ -59,7 +59,7 @@ export async function createContents(input: CreateContentsInput, runStepId?: str
     workspaceId: input.workspaceId, targetId: input.targetId, github: githubStats, slack: slackStats
   });
 
-  const content = await generateContents(input, runStepId || '');
+  const content = await generateContents(input);
 
   logger.info('✅ Contents created successfully', {
     targetId: input.targetId,

@@ -41,6 +41,10 @@ export const CONNECTION_STATUS = [
   "connected", "expired", "revoked", "unauthorized", "error", "never", "disconnected",
 ] as const;
 
+export const PERIOD = [
+  "daily", "weekly", "monthly", "yearly",
+] as const;
+
 /* =========================================================
    Type Definitions
    ========================================================= */

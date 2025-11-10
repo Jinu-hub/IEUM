@@ -162,10 +162,13 @@ export type Database = {
       highlights: {
         Row: {
           archived_at: string | null
+          created_at: string
           dedup_key: string | null
           highlight_id: string
           is_archived: boolean
           meta_json: Json
+          period: Database["public"]["Enums"]["period"]
+          period_key: string
           run_id: string
           source: string
           tags: string[] | null
@@ -176,10 +179,13 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          created_at?: string
           dedup_key?: string | null
           highlight_id?: string
           is_archived?: boolean
           meta_json?: Json
+          period?: Database["public"]["Enums"]["period"]
+          period_key?: string
           run_id: string
           source: string
           tags?: string[] | null
@@ -190,10 +196,13 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          created_at?: string
           dedup_key?: string | null
           highlight_id?: string
           is_archived?: boolean
           meta_json?: Json
+          period?: Database["public"]["Enums"]["period"]
+          period_key?: string
           run_id?: string
           source?: string
           tags?: string[] | null
@@ -1220,6 +1229,7 @@ export type Database = {
         | "lineworks"
         | "slack_user"
       mail_status: "sending" | "delivered" | "failed"
+      period: "daily" | "weekly" | "monthly" | "yearly"
       rule_type: "agents" | "tasks"
       run_status: "queued" | "running" | "success" | "failed" | "canceled"
       step_name:
@@ -1388,6 +1398,7 @@ export const Constants = {
         "slack_user",
       ],
       mail_status: ["sending", "delivered", "failed"],
+      period: ["daily", "weekly", "monthly", "yearly"],
       rule_type: ["agents", "tasks"],
       run_status: ["queued", "running", "success", "failed", "canceled"],
       step_name: [

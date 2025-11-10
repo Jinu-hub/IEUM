@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CFG_RANKER, IMPACT_MAP, type ImpactKey } from "../lib/constants";
-import type { KpiSnapshot, LinkedActivityDoc, RankedHighlight } from "../lib/types";
+import type { ChatroomHighlightMetaJson, GithubHighlightMetaJson, KpiSnapshot, LinkedActivityDoc, LinkedItem, RankedHighlight } from "../lib/types";
 import { Cluster } from "../openai/models";
 
 export const CLAMP01 = (x?: number | null) => Math.max(0, Math.min(1, x ?? 0));
@@ -203,4 +203,126 @@ export function getFunCornerLeaderboardData(linkedData: LinkedActivityDoc, kpiDa
         .sort((a, b) => (b[1].messageCount || 0) - (a[1].messageCount || 0))[0];
 
     return { topCommitUserEntry, topReactionGiverEntry, topReactionsReceivedEntry, mostMessagesUser };
+}
+
+/**
+ * github data를 기반으로 highlight meta json을 생성
+ * @param kpiData 
+ * @param period 
+ * @returns 
+ */
+export function createGithubHighlightMetaJson(kpiData: KpiSnapshot, period: string): GithubHighlightMetaJson {
+    const totalCommits = kpiData?.overall?.commits ?? 0;
+
+    const perUser = [...(kpiData?.perUser ?? [])].sort(
+        (a, b) => (b.commits ?? 0) - (a.commits ?? 0),
+    );
+    const topUsers = perUser.slice(0, 5).map((user) => ({
+        developer: user.user,
+        commits: user.commits ?? 0,
+    }));
+    const otherUserCommits = perUser.slice(5).reduce((sum, user) => sum + (user.commits ?? 0), 0);
+    if (otherUserCommits > 0) {
+        topUsers.push({
+            developer: "Others",
+            commits: otherUserCommits,
+        });
+    }
+
+    const perCase = [...(kpiData?.perCase ?? [])].sort(
+        (a, b) => (b.commits ?? 0) - (a.commits ?? 0),
+    );
+    const topCases = perCase.slice(0, 5).map((item) => ({
+        case: item.case,
+        commits: item.commits ?? 0,
+    }));
+    const otherCaseCommits = perCase.slice(5).reduce((sum, item) => sum + (item.commits ?? 0), 0);
+    if (otherCaseCommits > 0) {
+        topCases.push({
+            case: "Others",
+            commits: otherCaseCommits,
+        });
+    }
+
+    const meta = {
+        period: period,
+        totalCommits,
+        commitsByDeveloper: topUsers,
+        commitsByCase: topCases,
+    };
+
+    return meta;
+}
+
+export function createChatroomHighlightMetaJson(highlight: RankedHighlight, period: string): ChatroomHighlightMetaJson {
+    const meta = {
+        period: period,
+        clusterId: highlight.clusterId,
+        summary: highlight.summary ?? '',
+        audience: highlight.audience,
+        score: highlight.score,
+        meta: {
+            topic: highlight.meta.topic,
+            impact: highlight.meta.impact,
+            caseId: highlight.meta.caseId,
+            repo: highlight.meta.repo,
+        },
+        items: highlight.items,
+        messages: highlight.messages,
+    };
+    return meta;
+}
+
+export function generatePeriodKey(period: string): string {
+    const now = new Date();
+    const pad = (value: number, length = 2) => value.toString().padStart(length, '0');
+    const year = now.getUTCFullYear();
+
+    switch (period) {
+        case 'daily': {
+            return `${year}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}`;
+        }
+        case 'weekly':
+        {
+            const jan4 = new Date(Date.UTC(year, 0, 4));
+            const dayOfYear =
+                Math.floor(
+                    (Date.UTC(year, now.getUTCMonth(), now.getUTCDate()) -
+                        Date.UTC(year, 0, 1)) /
+                        86400000,
+                ) + 1;
+            const jan4DayOfWeek = jan4.getUTCDay() || 7;
+            const weekNumber = Math.ceil((dayOfYear + jan4DayOfWeek - 1) / 7);
+            return `${year}-W${pad(weekNumber)}`;
+        }
+        case 'monthly': {
+            return `${year}-${pad(now.getUTCMonth() + 1)}`;
+        }
+        case 'yearly': {
+            return `${year}`;
+        }
+        default: {
+            return now.toISOString();
+        }
+    }
+}
+
+export function countMessagesIncludingReplies(items: LinkedItem[]): number {
+    const countFromItem = (item: LinkedItem): number => {
+        const replies = Array.isArray(item.meta?.replies) ? (item.meta?.replies as LinkedItem[]) : [];
+        return 1 + replies.reduce((sum, reply) => sum + countFromItem(reply), 0);
+    };
+    return items.reduce((sum, item) => sum + countFromItem(item), 0);
+}
+
+export function countReactionsIncludingReplies(items: LinkedItem[]): number {
+    const countFromItem = (item: LinkedItem): number => {
+        const reactions = Array.isArray(item.meta?.reactions)
+            ? (item.meta?.reactions as Array<{ count?: number }>)
+            : [];
+        const replies = Array.isArray(item.meta?.replies) ? (item.meta?.replies as LinkedItem[]) : [];
+        const reactionTotal = reactions.reduce((total, reaction) => total + (reaction.count ?? 0), 0);
+        return reactionTotal + replies.reduce((sum, reply) => sum + countFromItem(reply), 0);
+    };
+    return items.reduce((sum, item) => sum + countFromItem(item), 0);
 }

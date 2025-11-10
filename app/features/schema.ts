@@ -29,6 +29,7 @@ import {
   DELIVERY_EVENT_TYPE_EMAIL,
   INTEGRATION_TYPE,
   MAIL_STATUS,
+  PERIOD,
   RULE_TYPE,
   RUN_STATUS,
   STEP_NAME,
@@ -47,6 +48,7 @@ import {
   export const deliveryEventTypeEmail = pgEnum("delivery_event_type_email", DELIVERY_EVENT_TYPE_EMAIL);
   export const auditAction = pgEnum("audit_action", AUDIT_ACTION);
   export const connectionStatusEnum = pgEnum("connection_status", CONNECTION_STATUS);
+  export const period = pgEnum("period", PERIOD);
   
   // GitHub App 설치 요청 상태
   export const installationRequestStatus = pgEnum("installation_request_status", [
@@ -525,8 +527,11 @@ import {
       metaJson: jsonb("meta_json").notNull().default(sql`'{}'::jsonb`),
       dedupKey: text("dedup_key"),
       tags: text("tags").array(),
+      period: period("period").notNull().default("weekly"),
+      periodKey: text("period_key").notNull().default("current"),
       isArchived: boolean("is_archived").notNull().default(false),
       archivedAt: timestamp("archived_at", { withTimezone: true }),
+      createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     }, 
     (table) => [
       index("idx_highlights_ws_run_source").on(table.workspaceId, table.runId, table.source),

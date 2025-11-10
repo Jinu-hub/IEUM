@@ -6,8 +6,10 @@ import { CFG_RANKER } from "../lib/constants";
 import { logger } from "../lib/logger";
 import type {
     CaseKpi,
+    ChatroomActivityMetaJson,
     KpiSnapshot,
     LinkedActivityDoc,
+    LinkedItem,
     RankedHighlight,
     RepoKpi,
     UserRepoKpi
@@ -29,6 +31,8 @@ import {
 import {
     baseScore,
     buildKpiIndex,
+    countMessagesIncludingReplies,
+    countReactionsIncludingReplies,
     extractCaseId,
     kpiFactorOf,
     prepareHighlightsWithMessages,
@@ -184,13 +188,15 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
 export async function topicClustering(
     linkedData: LinkedActivityDoc, 
     language: SupportedLanguage = 'en',
-    source: string = 'slack'
-): Promise<z.infer<typeof TopicOutput>> {
+    source: string = 'slack',
+    period?: string,
+): Promise<z.infer<typeof TopicOutput> & { activityMeta: ChatroomActivityMetaJson[] }> {
     const slackData = linkedData.items.slack;
     
     // 채널별로 데이터를 처리하기 위한 배열
     const channelKeys = Object.keys(slackData);
     const allClusters: any[] = [];
+    const activityDetails: ChatroomActivityMetaJson["activities"] = [];
     
     logger.info("🔄 TopicClustering started", {
         "total channels": channelKeys.length,
@@ -199,7 +205,7 @@ export async function topicClustering(
     
     // 각 채널별로 TopicClustering을 병렬로 실행
     const channelProcessingPromises = channelKeys.map(async (channelKey, index) => {
-        const channelData = slackData[channelKey];
+        const channelData = slackData[channelKey] as LinkedItem[];
         
         // 채널 데이터가 비어있으면 스킵
         if (!channelData || channelData.length === 0) {
@@ -209,7 +215,9 @@ export async function topicClustering(
             });
             return null;
         }
-        
+        const messageCount = countMessagesIncludingReplies(channelData);
+        const reactionCount = countReactionsIncludingReplies(channelData);
+
         logger.info(`🔍 channel processing (${index + 1}/${channelKeys.length})`, {
             "channel": channelKey,
             "message count": channelData.length,
@@ -231,25 +239,26 @@ export async function topicClustering(
         const output: any = result.finalOutput;
         
         // 각 클러스터에 채널 정보 추가
-        if (output.clusters && Array.isArray(output.clusters)) {
-            const clustersWithChannel = output.clusters.map((cluster: any) => ({
-                ...cluster,
-                // 채널 정보를 메타데이터에 추가
-                channel: channelKey,
-            }));
-            
-            logger.info(`✅ channel processing completed (${index + 1}/${channelKeys.length})`, {
-                "channel": channelKey,
-                "created cluster count": clustersWithChannel.length,
-            });
-            
-            return clustersWithChannel;
-        } else {
-            logger.warn(`⚠️ channel processing result empty (${index + 1}/${channelKeys.length})`, {
-                "channel": channelKey,
-            });
-            return null;
-        }
+        const clustersArray = output.clusters && Array.isArray(output.clusters) ? output.clusters : [];
+        const clustersWithChannel = clustersArray.map((cluster: any) => ({
+            ...cluster,
+            // 채널 정보를 메타데이터에 추가
+            channel: channelKey,
+        }));
+        
+        logger.info(`✅ channel processing completed (${index + 1}/${channelKeys.length})`, {
+            "channel": channelKey,
+            "created cluster count": clustersWithChannel.length,
+        });
+
+        const activityEntry = {
+            channelName: channelKey,
+            messageCount,
+            reactionCount,
+            topicCount: clustersWithChannel.length,
+        };
+        
+        return { clusters: clustersWithChannel, activity: activityEntry };
     });
     
     // 모든 채널 처리가 완료될 때까지 대기
@@ -257,8 +266,12 @@ export async function topicClustering(
     
     // null이 아닌 결과만 allClusters에 추가
     results.forEach(result => {
-        if (result && Array.isArray(result)) {
-            allClusters.push(...result);
+        if (!result) return;
+        if (Array.isArray(result.clusters)) {
+            allClusters.push(...result.clusters);
+        }
+        if (result.activity) {
+            activityDetails.push(result.activity);
         }
     });
     
@@ -268,8 +281,19 @@ export async function topicClustering(
     });
     
     // 모든 채널의 클러스터를 머지하여 반환
+    const activityMetaArray: ChatroomActivityMetaJson[] =
+        activityDetails.length > 0
+            ? [
+                  {
+                      period: period ?? '',
+                      activities: activityDetails,
+                  },
+              ]
+            : [];
+
     return {
         clusters: allClusters,
+        activityMeta: activityMetaArray,
     };
 }
 

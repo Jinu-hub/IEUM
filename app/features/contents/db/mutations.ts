@@ -172,11 +172,11 @@ export const updateNewsletterRunStep = async (client: SupabaseClient<Database>,
 
 
 export const saveNewsletterEditions = async (client: SupabaseClient<Database>, 
-    { workspaceId, runId, targetId, subject, htmlBody, textBody, status, providerMessageId }: 
-    { workspaceId: string, runId: string, targetId: string, subject: string
-        , htmlBody: string, textBody: string, status: string, providerMessageId: string }) => {
+    { workspaceId, runId, targetId, subject, htmlBody, textBody, statsJson, sentAt, status, providerMessageId, failureReason }: 
+    { workspaceId: string, runId: string, targetId: string, subject: string, htmlBody: string, textBody: string
+        , statsJson: any, sentAt: string, status: string, providerMessageId: string, failureReason: string | null }) => {
     try {
-        const now = new Date().toISOString();
+        const sentAtValue = sentAt ?? new Date().toISOString();
         const { data: newsletterEditions, error } = await client
             .from('newsletter_editions')
             .insert({
@@ -186,10 +186,11 @@ export const saveNewsletterEditions = async (client: SupabaseClient<Database>,
                 subject: subject,
                 html_body: htmlBody,
                 text_body: textBody,
-                stats_json: {},
-                sent_at: now,
+                stats_json: statsJson,
+                sent_at: sentAtValue,
                 status: status as Database["public"]["Enums"]["mail_status"],
                 provider_message_id: providerMessageId,
+                failure_reason: failureReason,
             })
             .select()
             .single();
@@ -200,6 +201,41 @@ export const saveNewsletterEditions = async (client: SupabaseClient<Database>,
         return newsletterEditions;
     } catch (error) {
         console.error('saveNewsletterEditions error', error);
+        throw error
+    }
+}
+
+export const saveHighlight = async (client: SupabaseClient<Database>, 
+    { workspaceId, runId, source, title, url, weight, metaJson, dedupKey, tags, period, periodKey }: 
+    { workspaceId: string, runId: string, source: string, title: string
+        , url: string | null, weight: number, metaJson: any, dedupKey: string, tags: string[]
+        , period: string, periodKey: string }) => {
+    try {
+        const { data: highlights, error } = await client
+            .from('highlights')
+            .insert({
+                workspace_id: workspaceId,
+                run_id: runId,
+                source: source,
+                title: title,
+                url: url,
+                weight: weight,
+                meta_json: metaJson,
+                dedup_key: dedupKey,
+                tags: tags,
+                period: period as Database["public"]["Enums"]["period"],
+                period_key: periodKey,
+                created_at: new Date().toISOString(),
+            })
+            .select()
+            .single();
+        if (error) {
+            console.error('saveHighlight error', error);
+            throw error
+        }
+        return highlights;
+    } catch (error) {
+        console.error('saveHighlight error', error);
         throw error
     }
 }

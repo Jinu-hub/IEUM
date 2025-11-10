@@ -11,6 +11,8 @@ export type CreateContentsInput = {
   slackResult?: Record<string, FetchedMessage[]> | null;
   workspaceId: string;
   targetId: string;
+  runId: string;
+  runStepId: string;
   period: string;
   language: 'en' | 'ko' | 'ja';
   source: string;
@@ -249,6 +251,39 @@ export type RankedHighlight = {
   };
   items: z.infer<typeof Cluster>["items"];
   messages?: LinkedItem[];
+  url?: string;
 };
 
+export type GithubHighlightMetaJson = {
+  period: string;
+  totalCommits: number;
+  commitsByDeveloper: { developer: string; commits: number }[];
+  commitsByCase: { case: string; commits: number }[];
+};
+
+export type ChatroomActivityMetaJson = {
+  period: string;
+  activities: {
+    channelName: string;
+    messageCount: number;
+    reactionCount: number;
+    topicCount: number;
+  }[];
+};
+
+export type ChatroomHighlightMetaJson = {
+  period: string;
+  clusterId: string;
+  summary: string;
+  audience: "internal" | "engineering" | "product" | "leadership" | "all";
+  score: number;
+  meta: {
+    topic: z.infer<typeof Cluster>["topic"];
+    impact: z.infer<typeof Cluster>["impact"];
+    caseId?: string; 
+    repo?: string;
+  };
+  items: z.infer<typeof Cluster>["items"];
+  messages?: LinkedItem[];
+};
 

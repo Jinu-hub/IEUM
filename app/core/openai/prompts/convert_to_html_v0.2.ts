@@ -223,19 +223,20 @@ body {
     font-size: 13px;
     margin-top: 8px;
 }
-.progress-bar {
+/* Progress bar - Yahoo Mail compatible */
+.nl-progress-bar {
     background-color: #e9ecef;
     height: 8px;
     border-radius: 8px;
-    overflow: hidden;
     margin-top: 10px;
+    max-width: 100%;
 }
-.progress-fill {
+.nl-progress-fill {
     background: linear-gradient(90deg, #5E6AD2 0%, #4C5BC7 100%);
-    height: 100%;
-    width: 0%;
+    height: 8px;
     border-radius: 8px;
-    transition: width 1s ease;
+    max-width: 100%;
+    display: block;
 }
 .roadmap-table {
     width: 100%;
@@ -361,7 +362,7 @@ Use the markdown content from the input \`sections\` object to generate the foll
         <div class="inner">
             <!-- Use sections.header → Convert to: 
                  <div class="header">
-                   <h1>[Title with emoji]</h1>
+                   <h1>[Title with emoji only — strip any date range or timeframe text]</h1>
                    <h3 class="date">[Date range]</h3>
                  </div>
             -->
@@ -411,9 +412,14 @@ Use the markdown content from the input \`sections\` object to generate the foll
                        <div class="road-card">
                          <h3>[Item title]</h3>
                          <p>[Description]</p>
-                         <div class="progress-bar">
-                           <div class="progress-fill" style="width: XX%;"></div>
+                         
+                         <!-- If progress percentage exists in markdown -->
+                         <div class="nl-progress-bar">
+                           <div class="nl-progress-fill" style="width: XX%;"></div>
                          </div>
+                         <div class="road-meta">[Progress text]: XX% — [Date/status]</div>
+                         
+                         <!-- If no progress, only date -->
                          <div class="road-meta">[Date/status]</div>
                        </div>
                      </div>
@@ -486,7 +492,21 @@ Use the markdown content from the input \`sections\` object to generate the foll
 - Keep all emojis as Unicode characters
 
 **Progress Bars:**
-- "Progress: 65%" → \`<div class="progress-fill" style="width: 65%;"></div>\`
+- When markdown contains progress percentage (e.g., "進捗率: 65%", "Progress: 65%", "진행률: 65%"):
+\`\`\`html
+<div class="nl-progress-bar">
+    <div class="nl-progress-fill" style="width: 65%;"></div>
+</div>
+<div class="road-meta">[Progress label]: 65% — [Date label]: [Date]</div>
+\`\`\`
+- If no progress percentage in markdown, omit progress bar and show only date:
+\`\`\`html
+<div class="road-meta">[Date label]: [Date]</div>
+\`\`\`
+- Use \`nl-progress-bar\` for container, \`nl-progress-fill\` for fill
+- Always include progress percentage text in \`road-meta\` when progress bar exists
+- Keep original language labels from markdown (進捗率/Progress/진행률, 完了予定/Due Date/완료예정, etc.)
+- Set width as inline style for email client compatibility
 
 ## 🌐 Language Support
 - Set HTML \`lang\` attribute based on the input content language (ja/ko/en)

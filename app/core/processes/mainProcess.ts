@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { CreateContentsInput } from "~/core/lib/types";
-import { updateNewsletterRunStep } from "~/features/contents/db/mutations";
-import { saveContentToFile } from "~/features/cron/api/test-api";
+import { saveHighlight, updateNewsletterRunStep } from "~/features/contents/db/mutations";
 import { logger } from "../lib/logger";
 import adminClient from "../lib/supa-admin-client.server";
 import type { KpiSnapshot, LinkedActivityDoc, UnifiedActivityDoc } from "../lib/types";
@@ -26,6 +25,7 @@ import {
 } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
 import { convertToHTML, createFinalContents, divideContents } from "./reporting-data";
+import { createChatroomHighlightMetaJson, createGithubHighlightMetaJson, generatePeriodKey } from "./utils";
 
 /**
  * 1. 데이터 정규화 & 중복 제거(Normalize & Deduplicate)
@@ -55,22 +55,70 @@ export async function normalizeData(input: CreateContentsInput) {
  */
 export async function analyzeData(
     input: CreateContentsInput, 
-    linkedData: LinkedActivityDoc
+    linkedData: LinkedActivityDoc,
 ): Promise<any> {
     logger.info('📝 Analyzing data started');
     const language = input.language;
+    const period = 'weekly';
+    const periodKey = generatePeriodKey(period);
 
     // 2-1. github data를 기반으로 kpi snapshot을 생성
     const kpiInfo = await repoKpiExtractor(input.githubResult || {});
+    const metaJson = createGithubHighlightMetaJson(kpiInfo, input.period);
+    await saveHighlight(adminClient, {
+        workspaceId: input.workspaceId,
+        runId: input.runId,
+        source: 'github',
+        title: 'Github Kpi snapshot',
+        url: null,
+        weight: 1,
+        metaJson: metaJson,
+        dedupKey: 'github_kpi_snapshot' + input.runId,
+        tags: ['github', 'kpi', 'snapshot'],
+        period: period,
+        periodKey: periodKey,
+    });
     logger.info('📝 Kpi snapshot created');
     //await saveContentToFile(kpiInfo, 'output-test', 'kpi_info_', 'json');
 
     // 2-2. slack data를 기반으로 topic clustering을 생성
-    const topicsTemp = await topicClustering(linkedData, language, input.source);
+    const topicsTemp = await topicClustering(linkedData, language, input.source, input.period);
+    await saveHighlight(adminClient, {
+        workspaceId: input.workspaceId,
+        runId: input.runId,
+        source: 'slack',
+        title: 'Slack channel activity',
+        url: null,
+        weight: 1,
+        metaJson: topicsTemp.activityMeta,
+        dedupKey: 'slack_channel_activity' + input.runId,
+        tags: ['slack', 'channel', 'activity'],
+        period: period,
+        periodKey: periodKey,
+    });
     logger.info('📝 Topic clustering completed');
 
     // 2-3. topic clustering을 기반으로 rank highlights을 추출
     const highlightsTemp = rankHighlights(topicsTemp as unknown as z.infer<typeof TopicOutput>, kpiInfo);
+    let count = 0;
+    for (const highlight of highlightsTemp) {
+        count++;
+        const metaJson = createChatroomHighlightMetaJson(highlight, period);
+        await saveHighlight(adminClient, {
+            workspaceId: input.workspaceId,
+            runId: input.runId,
+            source: input.source,
+            title: highlight.title,
+            url: null,
+            weight: highlight.score,
+            metaJson: metaJson,
+            dedupKey: 'github_highlights' + count + '_' + input.runId,
+            tags: [input.source, 'highlights'],
+            period: period,
+            periodKey: periodKey,
+        });
+    }
+    
     logger.info('📝 Rank highlights created');
     // highlights에 존재하지 않는 topics을 id 기반으로 추출
     const topics = topicsTemp.clusters.filter((topic) => !highlightsTemp.some((highlight) => highlight.clusterId === topic.id));
@@ -216,14 +264,14 @@ export async function generateFinalContents(input: CreateContentsInput, mergedCo
     const sections = await divideContents(finalContents as string);
     const htmlContents = await convertToHTML(input.language, sections);
     logger.info('📝 Generating final contents completed');
-    return htmlContents;
+    return { finalContents, htmlContents };
 }
 
-export async function generateContents(input: CreateContentsInput, runStepId: string) {
+export async function generateContents(input: CreateContentsInput) {
 
-    if (runStepId) {
+    if (input.runStepId) {
         await updateNewsletterRunStep(adminClient, { 
-            runStepId: runStepId,
+            runStepId: input.runStepId,
             step: 'summarize_data',
         });
     }
@@ -255,16 +303,16 @@ export async function generateContents(input: CreateContentsInput, runStepId: st
     const mergedContents = await mergeContents(input, kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection);
     // await saveContentToFile(mergedContents, 'output-sample', 'merged_contents_', 'md');
 
-    if (runStepId) {
+    if (input.runStepId) {
         await updateNewsletterRunStep(adminClient, { 
-            runStepId: runStepId,
+            runStepId: input.runStepId,
             step: 'assemble_data',
         });
     }
 
     // 5. 콘텐츠 생성(Generate Contents)
     const finalContents = await generateFinalContents(input, mergedContents);
-    await saveContentToFile(finalContents, 'output-sample', 'final_contents_html_', 'html');
+    //await saveContentToFile(finalContents, 'output-sample', 'final_contents_html_', 'html');
     
     return finalContents;
 }
