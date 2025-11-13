@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '~/core/lib/utils';
 
-export interface LinearProgressProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NexProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   value?: number;
   max?: number;
   variant?: 'default' | 'success' | 'warning' | 'error' | 'gradient';
@@ -32,7 +32,7 @@ const getProgressStyles = (variant: string, size: string) => {
   };
 };
 
-export const LinearProgress: React.FC<LinearProgressProps> = ({
+export const NexProgress: React.FC<NexProgressProps> = ({
   value = 0,
   max = 100,
   variant = 'default',
@@ -69,7 +69,7 @@ export const LinearProgress: React.FC<LinearProgressProps> = ({
           )}
           style={{
             width: indeterminate ? '100%' : `${percentage}%`,
-            animation: indeterminate ? 'linear-progress-indeterminate 2s ease-in-out infinite' : undefined
+            animation: indeterminate ? 'nex-progress-indeterminate 2s ease-in-out infinite' : undefined
           }}
         />
       </div>
@@ -77,7 +77,7 @@ export const LinearProgress: React.FC<LinearProgressProps> = ({
   );
 };
 
-export interface LinearCircularProgressProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NexCircularProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   value?: number;
   max?: number;
   variant?: 'default' | 'success' | 'warning' | 'error' | 'gradient';
@@ -87,7 +87,7 @@ export interface LinearCircularProgressProps extends React.HTMLAttributes<HTMLDi
   indeterminate?: boolean;
 }
 
-export const LinearCircularProgress: React.FC<LinearCircularProgressProps> = ({
+export const NexCircularProgress: React.FC<NexCircularProgressProps> = ({
   value = 0,
   max = 100,
   variant = 'default',
@@ -118,7 +118,7 @@ export const LinearCircularProgress: React.FC<LinearCircularProgressProps> = ({
     success: "#10B981",
     warning: "#F59E0B",
     error: "#EF4444",
-    gradient: "url(#linear-gradient)"
+    gradient: "url(#nex-gradient)"
   };
   
   return (
@@ -134,7 +134,7 @@ export const LinearCircularProgress: React.FC<LinearCircularProgressProps> = ({
       >
         {variant === 'gradient' && (
           <defs>
-            <linearGradient id="linear-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id="nex-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#4facfe" />
               <stop offset="100%" stopColor="#00f2fe" />
             </linearGradient>

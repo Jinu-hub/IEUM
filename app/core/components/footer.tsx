@@ -6,26 +6,25 @@
  * and newsletter subscription functionality.
  *
  * Features:
- * - Modern Linear Design System footer
+ * - Modern Nex Design System footer
  * - Newsletter subscription form
  * - Social media links
  * - Comprehensive navigation
  * - Company branding and information
  * - Legal compliance links
  */
-import { Link } from "react-router";
-import { 
-  Github, 
-  Slack, 
-  Mail, 
+import {
+  Github,
+  Mail,
   MessageSquare,
+  Slack,
 } from "lucide-react";
-import { LinearFooter } from "~/core/components/linear";
+import { NexFooter } from "~/core/components/nex";
 
 /**
  * Newsletter System Footer Component
  * 
- * A comprehensive footer using Linear Design System that provides:
+ * A comprehensive footer using Nex Design System that provides:
  * - Company branding and information
  * - Navigation links for all major sections
  * - Social media and communication links
@@ -114,7 +113,7 @@ export default function Footer() {
   ];
 
   return (
-    <LinearFooter
+    <NexFooter
       variant="default"
       brand={{
         name: "Nexletter",

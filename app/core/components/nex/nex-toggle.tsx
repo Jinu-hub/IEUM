@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '~/core/lib/utils';
 
-export interface LinearToggleProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> {
+export interface NexToggleProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> {
   checked?: boolean;
   onChange?: (checked: boolean) => void;
   size?: 'sm' | 'md' | 'lg';
@@ -55,7 +55,7 @@ const variantClasses = {
   }
 };
 
-export const LinearToggle: React.FC<LinearToggleProps> = ({
+export const NexToggle: React.FC<NexToggleProps> = ({
   checked = false,
   onChange,
   size = 'md',
@@ -141,6 +141,6 @@ export const LinearToggle: React.FC<LinearToggleProps> = ({
 };
 
 // 컴포넌트 표시명 설정 (개발 도구에서 표시됨)
-LinearToggle.displayName = 'LinearToggle';
+NexToggle.displayName = 'NexToggle';
 
-export default LinearToggle;
+export default NexToggle;

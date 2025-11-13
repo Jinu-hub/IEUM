@@ -1,16 +1,16 @@
 import { CalendarRange, GitCommit, MailCheck, MessageSquareDot, Sparkles } from 'lucide-react';
 import { data, redirect } from 'react-router';
 import {
-  LinearAreaChart,
-  LinearBadge,
-  LinearBarChart,
-  LinearCard,
-  LinearCardContent,
-  LinearCardHeader,
-  LinearCardTitle,
-  LinearLineChart,
-  LinearPieChartLabelList
-} from '~/core/components/linear';
+  NexAreaChart,
+  NexBadge,
+  NexBarChart,
+  NexCard,
+  NexCardContent,
+  NexCardHeader,
+  NexCardTitle,
+  NexLineChart,
+  NexPieChartLabelList
+} from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { getHighlightsCount, getHighlightsMetadata, getSentEmailMetadata } from '~/features/contents/db/queries';
 import { getWorkspace } from '~/features/settings/db/queries';
@@ -32,7 +32,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const workspaceId = workspace[0].workspace_id;
   const emailMetadata = await getSentEmailMetadata(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 4 });
   const slackActivity = await getHighlightsMetadata(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 4, source: 'slack-activity' });
-  const githubKpi = await getHighlightsMetadata(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 4, source: 'github-kpi' });
+  const githubKpi = await getHighlightsMetadata(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 8, source: 'github-kpi' });
   const highlightsCount = await getHighlightsCount(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 1, source: 'slack' });
   return data({ emailMetadata: emailMetadata || null, slackActivity, githubKpi, highlightsCount });
 };
@@ -47,6 +47,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
   const { emailSentCount, emailSentMemberCount, emailSentRange } = emailSummary;
   const hasEmailMetadata = emailSentCount > 0;
   const commitCount = githubSummary.latest?.meta.totalCommits ?? 0;
+  console.log(githubSummary);
   const slackActivities = slackSummary.latest?.activities ?? [];
   const slackRange = slackSummary.latest?.range ?? "";
   const totalMessageCount = slackActivities.reduce<number>((sum, activity) => {
@@ -72,7 +73,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
       </div>
 
       {!hasEmailMetadata ? (
-        <LinearCard variant="outlined" className="p-10 text-center space-y-4">
+        <NexCard variant="outlined" className="p-10 text-center space-y-4">
           <div className="flex flex-col items-center space-y-3">
             <CalendarRange className="h-10 w-10 text-primary" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -83,7 +84,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
               뉴스레터를 발송하면 이곳에서 실시간 통계를 확인할 수 있습니다.
             </p>
           </div>
-        </LinearCard>
+        </NexCard>
       ) : (
       <>
       {/* 이번 주 통계 */}
@@ -148,7 +149,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
             },
             */
           ].map(({ label, value, subLabel, icon: Icon, iconBg, iconColor }) => (
-            <LinearCard key={label} variant="outlined" className="p-4 sm:p-5 space-y-3">
+            <NexCard key={label} variant="outlined" className="p-4 sm:p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{label}</p>
@@ -165,7 +166,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
                   {subLabel}
                 </p>
               )}
-            </LinearCard>
+            </NexCard>
           ))}
         </div>
       </section>
@@ -179,36 +180,36 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
             GitHub 개발 활동
           </h2>
-          <LinearBadge variant="secondary" size="sm">실시간</LinearBadge>
+          <NexBadge variant="secondary" size="sm">실시간</NexBadge>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 주간 커밋 현황 */}
-          <LinearCard variant="elevated" className="p-6">
-            <LinearCardHeader>
-              <LinearCardTitle>주간 커밋 현황</LinearCardTitle>
+          <NexCard variant="elevated" className="p-6">
+            <NexCardHeader>
+              <NexCardTitle>주간 커밋 현황</NexCardTitle>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                최근 8주간 커밋 현황
+                최근 4주간 커밋 현황
               </p>
-            </LinearCardHeader>
-            <LinearCardContent className="mt-6">
-              <LinearPieChartLabelList 
+            </NexCardHeader>
+            <NexCardContent className="mt-6">
+              <NexPieChartLabelList 
                 data={gitHubCommitsByRepo}
                 className="h-64"
               />
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
 
           {/* 개발자별 커밋수 */}
-          <LinearCard variant="elevated" className="p-6">
-            <LinearCardHeader>
-              <LinearCardTitle>개발자별 커밋수</LinearCardTitle>
+          <NexCard variant="elevated" className="p-6">
+            <NexCardHeader>
+              <NexCardTitle>개발자별 커밋수</NexCardTitle>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 이번 달 기준 커밋 활동
               </p>
-            </LinearCardHeader>
-            <LinearCardContent className="mt-6">
-              <LinearBarChart 
+            </NexCardHeader>
+            <NexCardContent className="mt-6">
+              <NexBarChart 
                 data={gitHubCommitsByDeveloper.map(dev => ({ 
                   name: dev.name, 
                   desktop: dev.commits,
@@ -216,20 +217,20 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
                 }))}
                 className="h-64"
               />
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
 
           {/* 케이스별 개발 현황 */}
-          <LinearCard variant="elevated" className="p-6 lg:col-span-2">
-            <LinearCardHeader>
-              <LinearCardTitle>케이스별 개발 현황</LinearCardTitle>
+          <NexCard variant="elevated" className="p-6 lg:col-span-2">
+            <NexCardHeader>
+              <NexCardTitle>케이스별 개발 현황</NexCardTitle>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 이번주 케이스별 개발 현황
               </p>
-            </LinearCardHeader>
-            <LinearCardContent className="mt-6">
+            </NexCardHeader>
+            <NexCardContent className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <LinearPieChartLabelList 
+                <NexPieChartLabelList 
                   data={gitHubIssuesByLabel}
                   className="h-64"
                 />
@@ -245,28 +246,28 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
                           {item.name}
                         </span>
                       </div>
-                      <LinearBadge variant="outline" size="sm">
+                      <NexBadge variant="outline" size="sm">
                         {item.value}건
-                      </LinearBadge>
+                      </NexBadge>
                     </div>
                   ))}
                 </div>
               </div>
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
 
           {/* 라벨별 이슈 분포 */}
           {/*
-          <LinearCard variant="elevated" className="p-6 lg:col-span-2">
-            <LinearCardHeader>
-              <LinearCardTitle>이슈 라벨별 분포</LinearCardTitle>
+          <NexCard variant="elevated" className="p-6 lg:col-span-2">
+            <NexCardHeader>
+              <NexCardTitle>이슈 라벨별 분포</NexCardTitle>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 현재 열린 이슈들의 카테고리별 현황
               </p>
-            </LinearCardHeader>
-            <LinearCardContent className="mt-6">
+            </NexCardHeader>
+            <NexCardContent className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <LinearPieChartLabelList 
+                <NexPieChartLabelList 
                   data={gitHubIssuesByLabel}
                   className="h-64"
                 />
@@ -282,15 +283,15 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
                           {item.name}
                         </span>
                       </div>
-                      <LinearBadge variant="outline" size="sm">
+                      <NexBadge variant="outline" size="sm">
                         {item.value}개
-                      </LinearBadge>
+                      </NexBadge>
                     </div>
                   ))}
                 </div>
               </div>
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
           */}
         </div>
       </section>
@@ -304,18 +305,18 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
             Slack 소통 현황
           </h2>
-          <LinearBadge variant="success" size="sm">활성</LinearBadge>
+          <NexBadge variant="success" size="sm">활성</NexBadge>
         </div>
 
-        <LinearCard variant="elevated" className="p-6">
-          <LinearCardHeader>
-            <LinearCardTitle>채널별 메시지 활동</LinearCardTitle>
+        <NexCard variant="elevated" className="p-6">
+          <NexCardHeader>
+            <NexCardTitle>채널별 메시지 활동</NexCardTitle>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               최근 7일간 채널별 메시지 수 추이
             </p>
-          </LinearCardHeader>
-          <LinearCardContent className="mt-6">
-            <LinearAreaChart 
+          </NexCardHeader>
+          <NexCardContent className="mt-6">
+            <NexAreaChart 
               data={slackChannelActivity.map(day => ({
                 name: day.date,
                 value: day.general + day.development,
@@ -323,8 +324,8 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
               }))}
               className="h-80"
             />
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* 채널별 통계 요약 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -334,15 +335,15 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
             { channel: '#design', messages: 178, reactions: 67, color: 'warning' },
             { channel: '#random', messages: 170, reactions: 45, color: 'info' }
           ].map((stat, index) => (
-            <LinearCard key={index} variant="outlined" className="p-4">
+            <NexCard key={index} variant="outlined" className="p-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     {stat.channel}
                   </span>
-                  <LinearBadge variant={stat.color as any} size="sm">
+                  <NexBadge variant={stat.color as any} size="sm">
                     활성
-                  </LinearBadge>
+                  </NexBadge>
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
@@ -359,7 +360,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
                   </div>
                 </div>
               </div>
-            </LinearCard>
+            </NexCard>
           ))}
         </div>
       </section>
@@ -373,20 +374,20 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
             뉴스레터 성과
           </h2>
-          <LinearBadge variant="success" size="sm">성장 중</LinearBadge>
+          <NexBadge variant="success" size="sm">성장 중</NexBadge>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 발송/열람 추이 */}
-          <LinearCard variant="elevated" className="p-6 lg:col-span-2">
-            <LinearCardHeader>
-              <LinearCardTitle>발송 및 열람률 추이</LinearCardTitle>
+          <NexCard variant="elevated" className="p-6 lg:col-span-2">
+            <NexCardHeader>
+              <NexCardTitle>발송 및 열람률 추이</NexCardTitle>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 최근 4주간 뉴스레터 성과 변화
               </p>
-            </LinearCardHeader>
-            <LinearCardContent className="mt-6">
-              <LinearLineChart 
+            </NexCardHeader>
+            <NexCardContent className="mt-6">
+              <NexLineChart 
                 data={newsletterMetrics.map(metric => ({
                   name: metric.week,
                   users: metric.sent,
@@ -394,18 +395,18 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
                 }))}
                 className="h-64"
               />
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
 
           {/* 핵심 지표 요약 */}
           <div className="space-y-4">
-            <LinearCard variant="outlined" className="p-4">
+            <NexCard variant="outlined" className="p-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     평균 발송 수
                   </span>
-                  <LinearBadge variant="info" size="sm">주간</LinearBadge>
+                  <NexBadge variant="info" size="sm">주간</NexBadge>
                 </div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   1,210
@@ -414,15 +415,15 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
                   +5.2% 성장
                 </div>
               </div>
-            </LinearCard>
+            </NexCard>
 
-            <LinearCard variant="outlined" className="p-4">
+            <NexCard variant="outlined" className="p-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     평균 열람률
                   </span>
-                  <LinearBadge variant="success" size="sm">우수</LinearBadge>
+                  <NexBadge variant="success" size="sm">우수</NexBadge>
                 </div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   66.2%
@@ -431,15 +432,15 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
                   +2.1% 향상
                 </div>
               </div>
-            </LinearCard>
+            </NexCard>
 
-            <LinearCard variant="outlined" className="p-4">
+            <NexCard variant="outlined" className="p-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     평균 클릭률
                   </span>
-                  <LinearBadge variant="warning" size="sm">개선 필요</LinearBadge>
+                  <NexBadge variant="warning" size="sm">개선 필요</NexBadge>
                 </div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   66.2%
@@ -448,7 +449,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
                   -1.3% 감소
                 </div>
               </div>
-            </LinearCard>
+            </NexCard>
           </div>
         </div>
       </section>

@@ -1,56 +1,56 @@
-import React, { useState, useEffect } from 'react';
-import { redirect, useNavigate, useSubmit, useFetcher, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
-import { 
-  LinearCard, 
-  LinearCardTitle,
-  LinearCardDescription,
-  LinearCardContent,
-  LinearButton,
-  LinearBadge,
-  LinearInput,
-  LinearTextarea,
-  PlusIcon,
-} from '~/core/components/linear';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/core/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/core/components/ui/dialog";
-import { 
-  ArrowLeft, 
-  Mail, 
-  Users, 
-  Search, 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  Download,
-  Calendar,
-  Tag,
-  User,
-  X,
-  Save,
-  Upload,
+    ArrowLeft,
+    Calendar,
+    Download,
+    Edit,
+    Mail,
+    MoreVertical,
+    Save,
+    Search,
+    Tag,
+    Trash2,
+    Upload,
+    User,
+    Users,
+    X,
 } from 'lucide-react';
-import { cn } from '~/core/lib/utils';
-import type { Route } from "./+types/mail-list-members";
-import type { MailListData, MailListMemberData } from '../lib/types';
-import { formatDate, getSourceLabel, getSourceVariant } from '../lib/common';
-import makeServerClient from '~/core/lib/supa-client.server';
-import { getMailingList, getMailingListMembers, getWorkspace } from '../db/queries';
-import { deleteMailingListMember, upsertMailingList, upsertMailingListMember } from '../db/mutations';
+import { useEffect, useState } from 'react';
+import { redirect, useFetcher, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
+import {
+    NexBadge,
+    NexButton,
+    NexCard,
+    NexCardContent,
+    NexCardDescription,
+    NexCardTitle,
+    NexInput,
+    NexTextarea,
+    PlusIcon,
+} from '~/core/components/nex';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "~/core/components/ui/dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "~/core/components/ui/dropdown-menu";
+import makeServerClient from '~/core/lib/supa-client.server';
+import { cn } from '~/core/lib/utils';
+import { deleteMailingListMember, upsertMailingList, upsertMailingListMember } from '../db/mutations';
+import { getMailingList, getMailingListMembers, getWorkspace } from '../db/queries';
+import { formatDate, getSourceLabel, getSourceVariant } from '../lib/common';
 import { mailListUserSchema } from '../lib/constants';
 import { parseMetaJson } from '../lib/JsonUtils';
+import type { MailListData, MailListMemberData } from '../lib/types';
+import type { Route } from "./+types/mail-list-members";
 
 export const meta = ({ params }: { params: { mailListId: string } }) => {
   return [{ title: `메일 리스트 멤버 | ${import.meta.env.VITE_APP_NAME}` }];
@@ -415,22 +415,22 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
         <div className="max-w-4xl mx-auto">
-          <LinearCard variant="outlined" className="text-center py-12">
-            <LinearCardContent>
+          <NexCard variant="outlined" className="text-center py-12">
+            <NexCardContent>
               <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <LinearCardTitle className="mb-2">메일 리스트를 찾을 수 없습니다</LinearCardTitle>
-              <LinearCardDescription className="mb-6">
+              <NexCardTitle className="mb-2">메일 리스트를 찾을 수 없습니다</NexCardTitle>
+              <NexCardDescription className="mb-6">
                 요청하신 메일 리스트가 존재하지 않습니다.
-              </LinearCardDescription>
-              <LinearButton 
+              </NexCardDescription>
+              <NexButton 
                 variant="primary" 
                 leftIcon={<ArrowLeft />}
                 onClick={handleGoBack}
               >
                 메일 리스트로 돌아가기
-              </LinearButton>
-            </LinearCardContent>
-          </LinearCard>
+              </NexButton>
+            </NexCardContent>
+          </NexCard>
         </div>
       </div>
     );
@@ -443,14 +443,14 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <LinearButton
+              <NexButton
                 variant="ghost"
                 size="sm"
                 leftIcon={<ArrowLeft />}
                 onClick={handleGoBack}
               >
                 뒤로
-              </LinearButton>
+              </NexButton>
               <div className="space-y-1">
                 <h1 className="text-2xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
                   {isNew ? '새 메일 리스트' : '메일 리스트 관리'}
@@ -465,15 +465,15 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
             </div>
 
             <div className="flex items-center space-x-3">
-              <LinearBadge variant="info" size="md">
+              <NexBadge variant="info" size="md">
                 {members.length}명의 멤버
-              </LinearBadge>
+              </NexBadge>
             </div>
           </div>
 
           {/* 메일 리스트 정보 편집 섹션 */}
-          <LinearCard variant={isEditing ? "elevated" : "outlined"}>
-            <LinearCardContent className="p-6">
+          <NexCard variant={isEditing ? "elevated" : "outlined"}>
+            <NexCardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1 space-y-4">
                   {isEditing ? (
@@ -482,7 +482,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                         <label className="text-sm font-medium text-foreground">
                           메일 리스트 이름 *
                         </label>
-                        <LinearInput
+                        <NexInput
                           placeholder="예: 기술 뉴스레터"
                           value={editingName}
                           onChange={(e) => setEditingName(e.target.value)}
@@ -492,7 +492,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                         <label className="text-sm font-medium text-foreground">
                           설명 (선택사항)
                         </label>
-                        <LinearTextarea
+                        <NexTextarea
                           placeholder="메일 리스트에 대한 간단한 설명을 입력하세요"
                           value={editingDescription}
                           onChange={(e) => setEditingDescription(e.target.value)}
@@ -517,14 +517,14 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                 <div className="flex items-center space-x-2 ml-4">
                   {isEditing ? (
                     <>
-                      <LinearButton
+                      <NexButton
                         variant="secondary"
                         size="sm"
                         onClick={handleToggleEdit}
                       >
                         취소
-                      </LinearButton>
-                      <LinearButton
+                      </NexButton>
+                      <NexButton
                         variant="primary"
                         size="sm"
                         leftIcon={<Save />}
@@ -532,22 +532,22 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                         disabled={!editingName.trim()}
                       >
                         저장
-                      </LinearButton>
+                      </NexButton>
                     </>
                   ) : (
-                    <LinearButton
+                    <NexButton
                       variant="secondary"
                       size="sm"
                       leftIcon={<Edit />}
                       onClick={handleToggleEdit}
                     >
                       편집
-                    </LinearButton>
+                    </NexButton>
                   )}
                 </div>
               </div>
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
         </div>
 
         {/* 액션 바 */}
@@ -555,7 +555,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
           {/* 좌측: 검색 */}
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <LinearInput
+            <NexInput
               placeholder="멤버 검색 (이메일 또는 이름)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -565,7 +565,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
 
           {/* 우측: 액션 버튼들 */}
           <div className="flex items-center space-x-2">
-            <LinearButton
+            <NexButton
               variant="secondary"
               size="sm"
               leftIcon={<Upload />}
@@ -573,26 +573,26 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
               disabled
             >
               CSV 업로드 (준비중)
-            </LinearButton>
-            <LinearButton
+            </NexButton>
+            <NexButton
               variant="secondary"
               size="sm"
               leftIcon={<Download />}
               onClick={handleExportCSV}
             >
               CSV 다운로드
-            </LinearButton>
+            </NexButton>
 
             <Dialog open={isMemberDialogOpen} onOpenChange={setIsMemberDialogOpen}>
               <DialogTrigger asChild>
-                <LinearButton
+                <NexButton
                   variant="primary"
                   size="sm"
                   leftIcon={<PlusIcon />}
                   disabled={isNew && !mailList?.name}
                 >
                   멤버 추가
-                </LinearButton>
+                </NexButton>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
@@ -611,18 +611,18 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     <p className="text-sm text-muted-foreground mb-4">
                       멤버를 추가하기 전에 메일 리스트 이름을 입력하고 저장해주세요.
                     </p>
-                    <LinearButton
+                    <NexButton
                       variant="primary"
                       onClick={() => setIsMemberDialogOpen(false)}
                     >
                       확인
-                    </LinearButton>
+                    </NexButton>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">이메일 *</label>
-                      <LinearInput
+                      <NexInput
                         type="email"
                         placeholder="member@example.com"
                         value={memberEmail}
@@ -635,14 +635,14 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">이름 (선택사항)</label>
-                      <LinearInput
+                      <NexInput
                         placeholder="홍길동"
                         value={memberName}
                         onChange={(e) => setMemberName(e.target.value)}
                       />
                     </div>
                     <div className="flex justify-end space-x-2">
-                      <LinearButton
+                      <NexButton
                         variant="secondary"
                         className="cursor-pointer"
                         onClick={() => {
@@ -654,15 +654,15 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                         }}
                       >
                         취소
-                      </LinearButton>
-                      <LinearButton
+                      </NexButton>
+                      <NexButton
                         variant="primary"
                         className="cursor-pointer"
                         onClick={handleRegisterMember}
                         disabled={!memberEmail}
                       >
                         {editingMember ? '저장' : '추가'}
-                      </LinearButton>
+                      </NexButton>
                     </div>
                   </div>
                 )}
@@ -675,40 +675,40 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
         <div className="space-y-4">
           {filteredMembers.length === 0 ? (
             /* 빈 상태 */
-            <LinearCard variant="outlined" className="text-center py-12">
-              <LinearCardContent>
+            <NexCard variant="outlined" className="text-center py-12">
+              <NexCardContent>
                 {searchTerm ? (
                   <>
                     <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <LinearCardTitle className="mb-2">검색 결과가 없습니다</LinearCardTitle>
-                    <LinearCardDescription className="mb-6">
+                    <NexCardTitle className="mb-2">검색 결과가 없습니다</NexCardTitle>
+                    <NexCardDescription className="mb-6">
                       '{searchTerm}'에 대한 멤버를 찾을 수 없습니다.
-                    </LinearCardDescription>
-                    <LinearButton 
+                    </NexCardDescription>
+                    <NexButton 
                       variant="secondary" 
                       onClick={() => setSearchTerm('')}
                     >
                       검색 초기화
-                    </LinearButton>
+                    </NexButton>
                   </>
                 ) : (
                   <>
                     <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <LinearCardTitle className="mb-2">멤버가 없습니다</LinearCardTitle>
-                    <LinearCardDescription className="mb-6">
+                    <NexCardTitle className="mb-2">멤버가 없습니다</NexCardTitle>
+                    <NexCardDescription className="mb-6">
                       첫 번째 멤버를 추가해주세요
-                    </LinearCardDescription>
-                    <LinearButton 
+                    </NexCardDescription>
+                    <NexButton 
                       variant="primary" 
                       leftIcon={<PlusIcon />}
                       onClick={() => setIsMemberDialogOpen(true)}
                     >
                       멤버 추가
-                    </LinearButton>
+                    </NexButton>
                   </>
                 )}
-              </LinearCardContent>
-            </LinearCard>
+              </NexCardContent>
+            </NexCard>
           ) : (
             <>
               {/* 헤더 (선택 등) */}
@@ -730,7 +730,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     }
                   </span>
                   {selectedMembers.length > 0 && (
-                    <LinearButton
+                    <NexButton
                       variant="secondary"
                       size="sm"
                       leftIcon={<Trash2 />}
@@ -738,23 +738,23 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                       className="cursor-pointer"
                     >
                       {selectedMembers.length}명 삭제
-                    </LinearButton>
+                    </NexButton>
                   )}
                 </div>
                 {selectedMembers.length > 0 && (
-                  <LinearButton
+                  <NexButton
                     variant="ghost"
                     size="sm"
                     onClick={() => setSelectedMembers([])}
                   >
                     <X className="h-4 w-4" />
-                  </LinearButton>
+                  </NexButton>
                 )}
               </div>
 
               {/* 멤버 카드 목록 */}
               {filteredMembers.map((member) => (
-                <LinearCard 
+                <NexCard 
                   key={member.email} 
                   variant={selectedMembers.includes(member.email) ? "outlined" : "default"}
                   className={cn(
@@ -762,7 +762,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     selectedMembers.includes(member.email) && "ring-2 ring-primary/20"
                   )}
                 >
-                  <LinearCardContent className="p-1 px-2">
+                  <NexCardContent className="p-1 px-2">
                     <div className="flex items-center justify-between">
                       {/* 좌측: 선택박스 + 멤버 정보 */}
                       <div className="flex items-center space-x-1 flex-1">
@@ -787,12 +787,12 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                                 <h4 className="text-xs font-medium text-foreground">
                                   {member.displayName || member.email.split('@')[0]}
                                 </h4>
-                                <LinearBadge 
+                                <NexBadge 
                                   variant={getSourceVariant(parseMetaJson(member.metaJson).source)}
                                   size="sm"
                                 >
                                   {getSourceLabel(parseMetaJson(member.metaJson).source)}
-                                </LinearBadge>
+                                </NexBadge>
                               </div>
                             </div>
                           </div>
@@ -808,12 +808,12 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                               </div>
                             </div>
                             
-                            <LinearBadge 
+                            <NexBadge 
                               variant={getSourceVariant(parseMetaJson(member.metaJson).source)}
                               size="sm"
                             >
                               {getSourceLabel(parseMetaJson(member.metaJson).source)}
-                            </LinearBadge>
+                            </NexBadge>
                             
                             <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                               <Calendar className="h-2.5 w-2.5" />
@@ -854,12 +854,12 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                       {/* 우측: 액션 메뉴 */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <LinearButton
+                          <NexButton
                             variant="ghost"
                             size="sm"
                           >
                             <MoreVertical className="h-4 w-4" />
-                          </LinearButton>
+                          </NexButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
                           <DropdownMenuItem 
@@ -879,8 +879,8 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                  </LinearCardContent>
-                </LinearCard>
+                  </NexCardContent>
+                </NexCard>
               ))}
             </>
           )}

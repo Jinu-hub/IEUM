@@ -4,14 +4,14 @@ import {
   CheckCircleIcon,
   DiscordIcon,
   GitHubIcon,
-  LinearBadge,
-  LinearButton,
-  LinearCard,
-  LinearCardContent,
+  NexBadge,
+  NexButton,
+  NexCard,
+  NexCardContent,
   LockIcon,
   SlackIcon,
   XCircleIcon,
-} from '~/core/components/linear';
+} from '~/core/components/nex';
 import type { MAIL_STATUS } from '~/core/lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
@@ -94,7 +94,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               <p className="text-sm text-muted-foreground">외부 서비스 연결 상태</p>
             </div>
           </div>
-          <LinearButton 
+          <NexButton 
             variant="secondary" 
             size="sm" 
             onClick={() => window.location.href = '/settings/integrations'}
@@ -104,12 +104,12 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
             <span>설정 페이지로 이동</span>
-          </LinearButton>
+          </NexButton>
         </div>
         <div className="grid auto-rows-min gap-4 md:grid-cols-3">
         {/* GitHub 연결 상태 카드 */}
-        <LinearCard variant="default" className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0D1117] dark:to-[#161B22] border border-slate-200 dark:border-slate-700">
-          <LinearCardContent className="p-6">
+        <NexCard variant="default" className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0D1117] dark:to-[#161B22] border border-slate-200 dark:border-slate-700">
+          <NexCardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-slate-100 dark:bg-[#0D1117] rounded-xl flex items-center justify-center ring-2 ring-slate-200 dark:ring-white/10 group-hover:ring-slate-300 dark:group-hover:ring-white/20 transition-all duration-300">
@@ -118,13 +118,13 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                 <span className="font-semibold text-slate-900 dark:text-white text-lg">GitHub</span>
               </div>
               {isConnectedGitHub ? (
-                <LinearBadge variant="success" size="sm" icon={<CheckCircleIcon className="w-3 h-3" />}>
+                <NexBadge variant="success" size="sm" icon={<CheckCircleIcon className="w-3 h-3" />}>
                   연결됨
-                </LinearBadge>
+                </NexBadge>
               ) : (
-                <LinearBadge variant="secondary" size="sm" icon={<XCircleIcon className="w-3 h-3" />}>
+                <NexBadge variant="secondary" size="sm" icon={<XCircleIcon className="w-3 h-3" />}>
                   연결 안됨
-                </LinearBadge>
+                </NexBadge>
               )}
             </div>
             
@@ -172,12 +172,12 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                 </p>
               </div>
             )}
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* Slack 연결 상태 카드 */}
-        <LinearCard variant="default" className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0D1117] dark:to-[#161B22] border border-slate-200 dark:border-slate-700">
-          <LinearCardContent className="p-6">
+        <NexCard variant="default" className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0D1117] dark:to-[#161B22] border border-slate-200 dark:border-slate-700">
+          <NexCardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-slate-100 dark:bg-[#0D1117] rounded-xl flex items-center justify-center ring-2 ring-slate-200 dark:ring-white/10 group-hover:ring-slate-300 dark:group-hover:ring-white/20 transition-all duration-300">
@@ -186,13 +186,13 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                 <span className="font-semibold text-slate-900 dark:text-white text-lg">Slack</span>
               </div>
               {isConnectedSlack ? (
-                <LinearBadge variant="success" size="sm" icon={<CheckCircleIcon className="w-3 h-3" />}>
+                <NexBadge variant="success" size="sm" icon={<CheckCircleIcon className="w-3 h-3" />}>
                   연결됨
-                </LinearBadge>
+                </NexBadge>
               ) : (
-                <LinearBadge variant="secondary" size="sm" icon={<XCircleIcon className="w-3 h-3" />}>
+                <NexBadge variant="secondary" size="sm" icon={<XCircleIcon className="w-3 h-3" />}>
                   연결 안됨
-                </LinearBadge>
+                </NexBadge>
               )}
             </div>
             
@@ -243,12 +243,12 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                 </p>
               </div>
             )}
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* Discord 연결 상태 카드 */}
-        <LinearCard variant="default" className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 relative overflow-hidden opacity-75">
-          <LinearCardContent className="p-6">
+        <NexCard variant="default" className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 relative overflow-hidden opacity-75">
+          <NexCardContent className="p-6">
             {/* 출시 예정 라벨 */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
@@ -270,8 +270,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                 </span>
               </div>
             </div>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
         </div>
       </div>
 
@@ -289,7 +289,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               <p className="text-sm text-muted-foreground">발송 타겟 현황 및 다음 발송 예정</p>
             </div>
           </div>
-          <LinearButton 
+          <NexButton 
             variant="secondary" 
             size="sm" 
             onClick={() => window.location.href = '/settings/targets'}
@@ -299,13 +299,13 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
             <span>타겟 관리</span>
-          </LinearButton>
+          </NexButton>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {targets.length === 0 ? (
-            <LinearCard variant="outlined" className="col-span-full text-center py-8">
-              <LinearCardContent>
+            <NexCard variant="outlined" className="col-span-full text-center py-8">
+              <NexCardContent>
                 <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -315,22 +315,22 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                   설정된 타겟이 없습니다<br />
                   첫 번째 발송 타겟을 추가해보세요
                 </p>
-              </LinearCardContent>
-            </LinearCard>
+              </NexCardContent>
+            </NexCard>
           ) : (
             targets.map((target) => {
               const nextSchedule = getNextScheduledTime(target.scheduleCron);
               const isActive = target.isActive;
               
               return (
-                <LinearCard 
+                <NexCard 
                   key={target.targetId} 
                   variant="default" 
                   hoverable
                   className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0D1117] dark:to-[#161B22] border border-slate-200 dark:border-slate-700 cursor-pointer"
                   onClick={() => window.location.href = `/settings/target/${target.targetId}`}
                 >
-                  <LinearCardContent className="p-4">
+                  <NexCardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-3">
                         <div className={cn(
@@ -344,12 +344,12 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                           </svg>
                         </div>
                       </div>
-                      <LinearBadge 
+                      <NexBadge 
                         variant={isActive ? "success" : "secondary"}
                         size="sm"
                       >
                         {isActive ? "활성" : "비활성"}
-                      </LinearBadge>
+                      </NexBadge>
                     </div>
                     
                     <h3 className="font-semibold text-foreground text-sm mb-2 truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
@@ -401,8 +401,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                         </div>
                       )}
                     </div>
-                  </LinearCardContent>
-                </LinearCard>
+                  </NexCardContent>
+                </NexCard>
               );
             })
           )}
@@ -423,7 +423,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               <p className="text-sm text-muted-foreground">보낸 이메일 발송 현황</p>
             </div>
           </div>
-          <LinearButton 
+          <NexButton 
             variant="secondary" 
             size="sm" 
             onClick={() => window.location.href = '/contents/sent-mail'}
@@ -433,7 +433,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
             <span>발송된 메일 보기</span>
-          </LinearButton>
+          </NexButton>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
@@ -445,8 +445,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
             const StatusIcon = statusConfig.icon;
             
             return (
-              <LinearCard key={status} variant="outlined" hoverable>
-                <LinearCardContent className="p-4">
+              <NexCard key={status} variant="outlined" hoverable>
+                <NexCardContent className="p-4">
                   <div className="flex items-center space-x-3">
                     <div className={cn("p-2 rounded-full flex items-center justify-center", statusConfig.bgColor)}>
                       <StatusIcon className={cn("h-5 w-5", statusConfig.color)} />
@@ -460,8 +460,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                       </p>
                     </div>
                   </div>
-                </LinearCardContent>
-              </LinearCard>
+                </NexCardContent>
+              </NexCard>
             );
           })}
         </div>

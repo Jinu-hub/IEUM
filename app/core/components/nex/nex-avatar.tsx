@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '~/core/lib/utils';
 
-export interface LinearAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NexAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   src?: string;
   alt?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -59,7 +59,7 @@ const getStatusColor = (status: string) => {
   return statusColors[status as keyof typeof statusColors];
 };
 
-export const LinearAvatar: React.FC<LinearAvatarProps> = ({
+export const NexAvatar: React.FC<NexAvatarProps> = ({
   src,
   alt,
   size = 'md',
@@ -93,13 +93,13 @@ export const LinearAvatar: React.FC<LinearAvatarProps> = ({
   );
 };
 
-export interface LinearAvatarGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NexAvatarGroupProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   max?: number;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
-export const LinearAvatarGroup: React.FC<LinearAvatarGroupProps> = ({
+export const NexAvatarGroup: React.FC<NexAvatarGroupProps> = ({
   children,
   max = 5,
   size = 'md',
@@ -114,13 +114,13 @@ export const LinearAvatarGroup: React.FC<LinearAvatarGroupProps> = ({
     <div className={cn("flex -space-x-2", className)} {...props}>
       {visibleChildren.map((child, index) => (
         <div key={index} className="ring-2 ring-white dark:ring-[#1A1B1E] rounded-full">
-          {React.cloneElement(child as React.ReactElement<LinearAvatarProps>, { size })}
+          {React.cloneElement(child as React.ReactElement<NexAvatarProps>, { size })}
         </div>
       ))}
       
       {remainingCount > 0 && (
         <div className="ring-2 ring-white dark:ring-[#1A1B1E] rounded-full">
-          <LinearAvatar
+          <NexAvatar
             size={size}
             fallback={`+${remainingCount}`}
             className="bg-[#8B92B5] text-white dark:bg-[#6C6F7E]"

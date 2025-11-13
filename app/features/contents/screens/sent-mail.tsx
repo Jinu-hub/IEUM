@@ -1,15 +1,15 @@
 import {
-  Clock,
-  Mail,
-  Search
+    Clock,
+    Mail,
+    Search
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  LinearBadge,
-  LinearButton,
-  LinearInput
-} from '~/core/components/linear';
+    NexBadge,
+    NexButton,
+    NexInput
+} from '~/core/components/nex';
 import { cn } from '~/core/lib/utils';
 // Route 타입은 React Router에서 자동 생성됩니다
 import { redirect } from 'react-router';
@@ -93,9 +93,9 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
             </p>
           </div>
           
-          <LinearBadge variant="info" size="md">
+          <NexBadge variant="info" size="md">
             {filteredEmails.length}개의 이메일
-          </LinearBadge>
+          </NexBadge>
         </div>
 
         {/* 검색 및 필터 섹션 */}
@@ -103,7 +103,7 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
           {/* 검색창 */}
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <LinearInput
+            <NexInput
               placeholder="대상 또는 제목으로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -114,7 +114,7 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
           {/* 상태 필터 */}
           <div className="flex gap-2 flex-wrap">
             {statusFilters.map((filter) => (
-              <LinearButton
+              <NexButton
                 key={filter.value}
                 variant={selectedStatus === filter.value ? "primary" : "ghost"}
                 size="sm"
@@ -122,14 +122,14 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
                 className="whitespace-nowrap"
               >
                 {filter.label}
-                <LinearBadge
+                <NexBadge
                   variant={selectedStatus === filter.value ? "secondary" : "outline"}
                   size="sm"
                   className="ml-2"
                 >
                   {filter.count}
-                </LinearBadge>
-              </LinearButton>
+                </NexBadge>
+              </NexButton>
             ))}
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
                     <p className="text-muted-foreground mb-4">
                       검색 조건을 확인하고 다시 시도해주세요.
                     </p>
-                    <LinearButton 
+                    <NexButton 
                       variant="secondary" 
                       onClick={() => {
                         setSearchTerm('');
@@ -168,7 +168,7 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
                       }}
                     >
                       필터 초기화
-                    </LinearButton>
+                    </NexButton>
                   </div>
                 </div>
               ) : (
@@ -226,9 +226,9 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
                           {email.subject}
                         </p>
                         <div className="flex items-center space-x-3 text-xs text-muted-foreground">
-                          <LinearBadge variant={statusConfig.variant} size="sm">
+                          <NexBadge variant={statusConfig.variant} size="sm">
                             {statusConfig.label}
-                          </LinearBadge>
+                          </NexBadge>
                           {email.failureReason && (
                             <span className="text-red-600 text-xs">
                               {email.failureReason}
@@ -251,9 +251,9 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
                     <div className="col-span-2 flex justify-end" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <LinearButton variant="ghost" size="sm">
+                          <NexButton variant="ghost" size="sm">
                             <MoreVertical className="h-4 w-4" />
-                          </LinearButton>
+                          </NexButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem 

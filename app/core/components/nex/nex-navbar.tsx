@@ -1,11 +1,10 @@
+import { Bell, ChevronDown, Menu, Search, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { Menu, X, ChevronDown, Search, Bell, User } from 'lucide-react';
 import { cn } from '~/core/lib/utils';
-import { LinearButton } from './linear-button';
-import { LinearAvatar } from './linear-avatar';
-import { LinearBadge } from './linear-badge';
+import { NexAvatar } from './nex-avatar';
+import { NexButton } from './nex-button';
 
-export interface LinearNavbarProps extends React.HTMLAttributes<HTMLElement> {
+export interface NexNavbarProps extends React.HTMLAttributes<HTMLElement> {
   brand?: {
     logo?: React.ReactNode;
     name?: string;
@@ -48,7 +47,7 @@ export interface LinearNavbarProps extends React.HTMLAttributes<HTMLElement> {
   sticky?: boolean;
 }
 
-export const LinearNavbar: React.FC<LinearNavbarProps> = ({
+export const NexNavbar: React.FC<NexNavbarProps> = ({
   brand,
   navigation = [],
   actions,
@@ -175,7 +174,7 @@ export const LinearNavbar: React.FC<LinearNavbarProps> = ({
                   onClick={() => setActiveDropdown(activeDropdown === 'user' ? null : 'user')}
                   className="flex items-center space-x-2 p-1 rounded-full hover:bg-[#F8F9FA] dark:hover:bg-[#1A1B1E] transition-colors"
                 >
-                  <LinearAvatar
+                  <NexAvatar
                     src={actions.user.avatar}
                     fallback={actions.user.name}
                     size="sm"
@@ -209,13 +208,13 @@ export const LinearNavbar: React.FC<LinearNavbarProps> = ({
               </div>
             ) : (
               actions?.cta && (
-                <LinearButton
+                <NexButton
                   variant={actions.cta.variant || 'primary'}
                   onClick={actions.cta.onClick}
                   size="sm"
                 >
                   {actions.cta.label}
-                </LinearButton>
+                </NexButton>
               )
             )}
 
@@ -272,13 +271,13 @@ export const LinearNavbar: React.FC<LinearNavbarProps> = ({
                 ) : (
                   actions.cta && (
                     <div className="px-3">
-                      <LinearButton
+                      <NexButton
                         variant={actions.cta.variant || 'primary'}
                         onClick={actions.cta.onClick}
                         className="w-full"
                       >
                         {actions.cta.label}
-                      </LinearButton>
+                      </NexButton>
                     </div>
                   )
                 )}

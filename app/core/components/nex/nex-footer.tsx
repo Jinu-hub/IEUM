@@ -1,10 +1,10 @@
+import { ExternalLink, Github, Linkedin, Mail, Twitter } from 'lucide-react';
 import React from 'react';
-import { Github, Twitter, Linkedin, Mail, ExternalLink } from 'lucide-react';
 import { cn } from '~/core/lib/utils';
-import { LinearButton } from './linear-button';
-import { LinearInput } from './linear-input';
+import { NexButton } from './nex-button';
+import { NexInput } from './nex-input';
 
-export interface LinearFooterProps extends React.HTMLAttributes<HTMLElement> {
+export interface NexFooterProps extends React.HTMLAttributes<HTMLElement> {
   brand?: {
     logo?: React.ReactNode;
     name?: string;
@@ -60,7 +60,7 @@ const getSocialIcon = (platform: string, customIcon?: React.ReactNode) => {
   }
 };
 
-export const LinearFooter: React.FC<LinearFooterProps> = ({
+export const NexFooter: React.FC<NexFooterProps> = ({
   brand,
   links = [],
   social = [],
@@ -211,21 +211,21 @@ export const LinearFooter: React.FC<LinearFooterProps> = ({
                   {newsletter.description}
                 </p>
                 <form onSubmit={handleNewsletterSubmit} className="space-y-3">
-                  <LinearInput
+                  <NexInput
                     type="email"
                     placeholder={newsletter.placeholder || "Enter your email"}
                     value={newsletterEmail}
                     onChange={(e) => setNewsletterEmail(e.target.value)}
                     required
                   />
-                  <LinearButton
+                  <NexButton
                     type="submit"
                     variant="primary"
                     size="sm"
                     className="w-full"
                   >
                     {newsletter.buttonText || "Subscribe"}
-                  </LinearButton>
+                  </NexButton>
                 </form>
               </div>
             )}

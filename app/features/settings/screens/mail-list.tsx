@@ -1,30 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import { Calendar, Copy, Edit, Mail, MoreVertical, Search, Trash2, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { redirect, useFetcher, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
-import { 
-  LinearCard, 
-  LinearCardTitle, 
-  LinearCardDescription, 
-  LinearCardContent,
-  LinearButton,
-  LinearBadge,
-  PlusIcon,
-  LinearInput,
-} from '~/core/components/linear';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/core/components/ui/dropdown-menu";
-import { Mail, Users, Search, MoreVertical, Edit, Trash2, Copy, Calendar } from 'lucide-react';
-import { cn } from '~/core/lib/utils';
-import type { Route } from "./+types/mail-list";
-import type { MailListData } from '../lib/types';
-import { formatDate, formatMemberCount } from '../lib/common';
-import makeServerClient from '~/core/lib/supa-client.server';
-import { getMailingList, getMailingListMemberCount, getWorkspace } from '../db/queries';
-import { deleteMailingList } from '../db/mutations';
 import { toast } from 'sonner';
+import {
+    NexBadge,
+    NexButton,
+    NexCard,
+    NexCardContent,
+    NexCardDescription,
+    NexCardTitle,
+    NexInput,
+    PlusIcon,
+} from '~/core/components/nex';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "~/core/components/ui/dropdown-menu";
+import makeServerClient from '~/core/lib/supa-client.server';
+import { cn } from '~/core/lib/utils';
+import { deleteMailingList } from '../db/mutations';
+import { getMailingList, getMailingListMemberCount, getWorkspace } from '../db/queries';
+import { formatDate } from '../lib/common';
+import type { MailListData } from '../lib/types';
+import type { Route } from "./+types/mail-list";
 
 export const meta: Route.MetaFunction = () => {
   return [{ title: `메일 리스트 | ${import.meta.env.VITE_APP_NAME}` }];
@@ -154,80 +154,80 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
             </p>
           </div>
           
-          <LinearBadge variant="info" size="md">
+          <NexBadge variant="info" size="md">
             {mailLists.length}개의 리스트
-          </LinearBadge>
+          </NexBadge>
         </div>
 
         {/* 검색 및 필터 섹션 */}
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <LinearInput
+            <NexInput
               placeholder="메일 리스트 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
-          <LinearButton
+          <NexButton
             variant="primary"
             leftIcon={<PlusIcon />}
             onClick={handleAddMailList}
           >
             새 리스트 추가
-          </LinearButton>
+          </NexButton>
         </div>
 
         {/* 메일 리스트 그리드 */}
         <div className="grid gap-4">
           {filteredMailLists.length === 0 ? (
             /* 빈 상태 또는 검색 결과 없음 */
-            <LinearCard variant="outlined" className="text-center py-12">
-              <LinearCardContent>
+            <NexCard variant="outlined" className="text-center py-12">
+              <NexCardContent>
                 {searchTerm ? (
                   <>
                     <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <LinearCardTitle className="mb-2">검색 결과가 없습니다</LinearCardTitle>
-                    <LinearCardDescription className="mb-6">
+                    <NexCardTitle className="mb-2">검색 결과가 없습니다</NexCardTitle>
+                    <NexCardDescription className="mb-6">
                       '{searchTerm}'에 대한 메일 리스트를 찾을 수 없습니다.
-                    </LinearCardDescription>
-                    <LinearButton 
+                    </NexCardDescription>
+                    <NexButton 
                       variant="secondary" 
                       onClick={() => setSearchTerm('')}
                     >
                       검색 초기화
-                    </LinearButton>
+                    </NexButton>
                   </>
                 ) : (
                   <>
                     <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <LinearCardTitle className="mb-2">메일 리스트가 없습니다</LinearCardTitle>
-                    <LinearCardDescription className="mb-6">
+                    <NexCardTitle className="mb-2">메일 리스트가 없습니다</NexCardTitle>
+                    <NexCardDescription className="mb-6">
                       첫 번째 메일 리스트를 추가해주세요
-                    </LinearCardDescription>
-                    <LinearButton 
+                    </NexCardDescription>
+                    <NexButton 
                       variant="primary" 
                       leftIcon={<PlusIcon />}
                       onClick={handleAddMailList}
                     >
                       메일 리스트 추가
-                    </LinearButton>
+                    </NexButton>
                   </>
                 )}
-              </LinearCardContent>
-            </LinearCard>
+              </NexCardContent>
+            </NexCard>
           ) : (
             /* 메일 리스트 카드 목록 */
             filteredMailLists.map((mailList) => (
-              <LinearCard 
+              <NexCard 
                 key={mailList.mailingListId} 
                 variant="elevated" 
                 hoverable
                 className="transition-all duration-200 cursor-pointer"
                 onClick={() => handleMailListCardClick(mailList.mailingListId)}
               >
-                <LinearCardContent className="p-3">
+                <NexCardContent className="p-3">
                   <div className="flex items-center justify-between">
                     {/* 좌측: 메일 리스트 정보 */}
                     <div className="flex items-start space-x-2 flex-1">
@@ -284,12 +284,12 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
                     <div className="flex items-center space-x-2 ml-4" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <LinearButton
+                          <NexButton
                             variant="ghost"
                             size="sm"
                           >
                             <MoreVertical className="h-4 w-4" />
-                          </LinearButton>
+                          </NexButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem 
@@ -317,8 +317,8 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
                       </DropdownMenu>
                     </div>
                   </div>
-                </LinearCardContent>
-              </LinearCard>
+                </NexCardContent>
+              </NexCard>
             ))
           )}
         </div>

@@ -1,29 +1,29 @@
-import React, { useState } from 'react';
+import { Clock, Copy, Edit, Mail, MoreVertical, Power, PowerOff, Target, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { redirect, useNavigate, useSubmit } from 'react-router';
-import { 
-  LinearCard, 
-  LinearCardTitle, 
-  LinearCardDescription, 
-  LinearCardContent,
-  LinearButton,
-  LinearBadge,
-  PlusIcon,
-} from '~/core/components/linear';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/core/components/ui/dropdown-menu";
-import { Target, Clock, Mail, MoreVertical, Power, PowerOff, Trash2, Edit, Copy } from 'lucide-react';
-import { cn } from '~/core/lib/utils';
-import type { Route } from "./+types/targets";
-import type { TargetData } from '../lib/types';
-import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
-import makeServerClient from '~/core/lib/supa-client.server';
-import { getWorkspace, getTargets, getMailingList } from '../db/queries';
-import { switchTargetActive } from '../db/mutations';
 import { toast } from 'sonner';
+import {
+    NexBadge,
+    NexButton,
+    NexCard,
+    NexCardContent,
+    NexCardDescription,
+    NexCardTitle,
+    PlusIcon,
+} from '~/core/components/nex';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "~/core/components/ui/dropdown-menu";
+import makeServerClient from '~/core/lib/supa-client.server';
+import { cn } from '~/core/lib/utils';
+import { switchTargetActive } from '../db/mutations';
+import { getMailingList, getTargets, getWorkspace } from '../db/queries';
+import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
+import type { TargetData } from '../lib/types';
+import type { Route } from "./+types/targets";
 
 export const meta: Route.MetaFunction = () => {
   return [{ title: `타겟 | ${import.meta.env.VITE_APP_NAME}` }];
@@ -152,42 +152,42 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
             </p>
           </div>
           
-          <LinearBadge variant="info" size="md">
+          <NexBadge variant="info" size="md">
             {targets.length}개의 타겟
-          </LinearBadge>
+          </NexBadge>
         </div>
 
         {/* 타겟 리스트 */}
         <div className="grid gap-4">
           {targets.length === 0 ? (
             /* 빈 상태 */
-            <LinearCard variant="outlined" className="text-center py-12">
-              <LinearCardContent>
+            <NexCard variant="outlined" className="text-center py-12">
+              <NexCardContent>
                 <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <LinearCardTitle className="mb-2">타겟이 없습니다</LinearCardTitle>
-                <LinearCardDescription className="mb-6">
+                <NexCardTitle className="mb-2">타겟이 없습니다</NexCardTitle>
+                <NexCardDescription className="mb-6">
                   첫 번째 뉴스레터 타겟을 추가해주세요
-                </LinearCardDescription>
-                <LinearButton 
+                </NexCardDescription>
+                <NexButton 
                   variant="primary" 
                   leftIcon={<PlusIcon />}
                   onClick={handleAddTarget}
                 >
                   타겟 추가
-                </LinearButton>
-              </LinearCardContent>
-            </LinearCard>
+                </NexButton>
+              </NexCardContent>
+            </NexCard>
           ) : (
             /* 타겟 카드 리스트 */
             targets.map((target) => (
-              <LinearCard 
+              <NexCard 
                 key={target.targetId} 
                 variant="elevated" 
                 hoverable
                 className="transition-all duration-200 cursor-pointer"
                 onClick={() => handleEditTarget(target.targetId)}
               >
-                <LinearCardContent className="p-6">
+                <NexCardContent className="p-6">
                   <div className="flex items-center justify-between">
                     {/* 좌측: 타겟 정보 */}
                     <div className="flex items-start space-x-4 flex-1">
@@ -225,12 +225,12 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                           <h3 className="text-lg font-semibold text-foreground truncate">
                             {target.displayName}
                           </h3>
-                          <LinearBadge 
+                          <NexBadge 
                             variant={target.isActive ? "success" : "secondary"}
                             size="sm"
                           >
                             {target.isActive ? "활성" : "비활성"}
-                          </LinearBadge>
+                          </NexBadge>
                         </div>
 
                         {/* 타겟 정보 그리드 */}
@@ -275,12 +275,12 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                     <div className="flex items-center space-x-2 ml-4" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <LinearButton
+                            <NexButton
                               variant="ghost"
                               size="sm"
                             >
                               <MoreVertical className="h-4 w-4" />
-                            </LinearButton>
+                            </NexButton>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuItem 
@@ -308,8 +308,8 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                         </DropdownMenu>
                     </div>
                   </div>
-                </LinearCardContent>
-              </LinearCard>
+                </NexCardContent>
+              </NexCard>
             ))
           )}
         </div>

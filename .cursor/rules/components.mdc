@@ -2,39 +2,39 @@
 alwaysApply: true
 ---
 
-# Linear Design System - Cursor Rules
+# Nex Design System - Cursor Rules
 
-이 프로젝트는 Linear.app의 디자인 시스템을 기반으로 한 React 컴포넌트 라이브러리를 사용합니다.
+이 프로젝트는 Nex.app의 디자인 시스템을 기반으로 한 React 컴포넌트 라이브러리를 사용합니다.
 
 ## 📋 Available Components
 
 ### 🧩 Basic Components
-- **LinearButton**: 4가지 변형 (primary, secondary, ghost, gradient), 3가지 크기, 로딩/아이콘 지원
-- **LinearInput & LinearTextarea**: 3가지 변형 (default, outlined, filled), 에러 처리, 아이콘 지원
-- **LinearBadge**: 7가지 변형, 3가지 크기, 아이콘 및 제거 기능
-- **LinearAvatar & LinearAvatarGroup**: 5가지 크기, 상태 표시기, 그룹 기능
-- **LinearProgress & LinearCircularProgress**: 선형/원형 진행률, 5가지 변형
+- **NexButton**: 4가지 변형 (primary, secondary, ghost, gradient), 3가지 크기, 로딩/아이콘 지원
+- **NexInput & NexTextarea**: 3가지 변형 (default, outlined, filled), 에러 처리, 아이콘 지원
+- **NexBadge**: 7가지 변형, 3가지 크기, 아이콘 및 제거 기능
+- **NexAvatar & NexAvatarGroup**: 5가지 크기, 상태 표시기, 그룹 기능
+- **NexProgress & NexCircularProgress**: 선형/원형 진행률, 5가지 변형
 
 ### 🎴 Card Components
-- **LinearCard**: 기본 카드 (4가지 변형, 다양한 패딩)
-- **LinearImageCard**: 이미지가 포함된 카드 (배지, 오버레이, 다양한 애스펙트 비율)
-- **LinearProductCard**: 상품용 카드 (가격, 별점, 액션 버튼)
+- **NexCard**: 기본 카드 (4가지 변형, 다양한 패딩)
+- **NexImageCard**: 이미지가 포함된 카드 (배지, 오버레이, 다양한 애스펙트 비율)
+- **NexProductCard**: 상품용 카드 (가격, 별점, 액션 버튼)
 
 ### 🎠 Layout Components
-- **LinearCarousel**: 자동재생, 무한루프, 반응형 카루셀
-- **LinearNavbar**: 3가지 변형, 드롭다운, 사용자 메뉴, 모바일 지원
-- **LinearFooter**: 2가지 변형 (default, minimal), 뉴스레터, 소셜 링크
-- **LinearHero**: 4가지 변형, 미디어 지원, 소셜 프루프
+- **NexCarousel**: 자동재생, 무한루프, 반응형 카루셀
+- **NexNavbar**: 3가지 변형, 드롭다운, 사용자 메뉴, 모바일 지원
+- **NexFooter**: 2가지 변형 (default, minimal), 뉴스레터, 소셜 링크
+- **NexHero**: 4가지 변형, 미디어 지원, 소셜 프루프
 
 ## 🎨 Design System Rules
 
 ### Import Guidelines
 ```typescript
 // ✅ 올바른 import 방법
-import { LinearButton, LinearCard, LinearInput } from '~/core/components/linear';
+import { NexButton, NexCard, NexInput } from '~/core/components/nex';
 
 // ❌ 개별 파일에서 직접 import 금지
-import { LinearButton } from '~/core/components/linear/linear-button';
+import { NexButton } from '~/core/components/nex/nex-button';
 ```
 
 ### Color Usage
@@ -48,18 +48,18 @@ import { LinearButton } from '~/core/components/linear/linear-button';
 #### 1. Button Components
 ```typescript
 // ✅ 올바른 사용법
-<LinearButton variant="primary" size="md">Click me</LinearButton>
-<LinearButton variant="gradient" loading={isLoading}>Submit</LinearButton>
-<LinearButton variant="secondary" leftIcon={<Icon />}>With Icon</LinearButton>
+<NexButton variant="primary" size="md">Click me</NexButton>
+<NexButton variant="gradient" loading={isLoading}>Submit</NexButton>
+<NexButton variant="secondary" leftIcon={<Icon />}>With Icon</NexButton>
 
-// ❌ 기본 HTML button 대신 LinearButton 사용
+// ❌ 기본 HTML button 대신 NexButton 사용
 <button className="bg-blue-500...">Click me</button>
 ```
 
 #### 2. Form Components
 ```typescript
 // ✅ 올바른 사용법
-<LinearInput
+<NexInput
   label="Email"
   placeholder="Enter your email"
   error={error}
@@ -67,29 +67,29 @@ import { LinearButton } from '~/core/components/linear/linear-button';
 />
 
 // ✅ Textarea 사용법
-<LinearTextarea
+<NexTextarea
   label="Message"
   rows={4}
   variant="outlined"
 />
 
-// ❌ 기본 HTML input 대신 Linear 컴포넌트 사용
+// ❌ 기본 HTML input 대신 Nex 컴포넌트 사용
 <input className="border rounded..." />
 ```
 
 #### 3. Card Components
 ```typescript
 // ✅ 기본 카드
-<LinearCard variant="elevated" hoverable>
-  <LinearCardHeader>
-    <LinearCardTitle>Title</LinearCardTitle>
-    <LinearCardDescription>Description</LinearCardDescription>
-  </LinearCardHeader>
-  <LinearCardContent>Content</LinearCardContent>
-</LinearCard>
+<NexCard variant="elevated" hoverable>
+  <NexCardHeader>
+    <NexCardTitle>Title</NexCardTitle>
+    <NexCardDescription>Description</NexCardDescription>
+  </NexCardHeader>
+  <NexCardContent>Content</NexCardContent>
+</NexCard>
 
 // ✅ 이미지 카드
-<LinearImageCard
+<NexImageCard
   image={{ src: "/image.jpg", aspectRatio: "video" }}
   title="Title"
   badge={{ text: "New", variant: "success" }}
@@ -97,7 +97,7 @@ import { LinearButton } from '~/core/components/linear/linear-button';
 />
 
 // ✅ 상품 카드
-<LinearProductCard
+<NexProductCard
   image={{ src: "/product.jpg", aspectRatio: "square" }}
   title="Product Name"
   price={{ current: "99.99", currency: "$" }}
@@ -109,7 +109,7 @@ import { LinearButton } from '~/core/components/linear/linear-button';
 #### 4. Layout Components
 ```typescript
 // ✅ Navbar 사용법
-<LinearNavbar
+<NexNavbar
   brand={{ name: "AppName", href: "/" }}
   navigation={navigationItems}
   actions={{
@@ -119,7 +119,7 @@ import { LinearButton } from '~/core/components/linear/linear-button';
 />
 
 // ✅ Hero 섹션
-<LinearHero
+<NexHero
   variant="split"
   title="Welcome"
   description="Description"
@@ -131,7 +131,7 @@ import { LinearButton } from '~/core/components/linear/linear-button';
 />
 
 // ✅ Footer 사용법
-<LinearFooter
+<NexFooter
   brand={{ name: "AppName", description: "Description" }}
   links={footerLinks}
   social={socialLinks}
@@ -142,13 +142,13 @@ import { LinearButton } from '~/core/components/linear/linear-button';
 #### 5. Carousel Components
 ```typescript
 // ✅ 기본 카루셀
-<LinearCarousel autoPlay showDots slidesToShow={3}>
-  <LinearCarouselItem>Content 1</LinearCarouselItem>
-  <LinearCarouselItem>Content 2</LinearCarouselItem>
-</LinearCarousel>
+<NexCarousel autoPlay showDots slidesToShow={3}>
+  <NexCarouselItem>Content 1</NexCarouselItem>
+  <NexCarouselItem>Content 2</NexCarouselItem>
+</NexCarousel>
 
 // ✅ 반응형 카루셀
-<LinearCarousel
+<NexCarousel
   slidesToShow={3}
   responsive={[
     { breakpoint: 768, settings: { slidesToShow: 2 } },
@@ -156,15 +156,15 @@ import { LinearButton } from '~/core/components/linear/linear-button';
   ]}
 >
   {items.map(item => (
-    <LinearCarouselItem key={item.id}>{item.content}</LinearCarouselItem>
+    <NexCarouselItem key={item.id}>{item.content}</NexCarouselItem>
   ))}
-</LinearCarousel>
+</NexCarousel>
 ```
 
 ## 🎯 Best Practices
 
 ### 1. Dark Mode Support
-- 모든 Linear 컴포넌트는 자동으로 다크 모드를 지원합니다
+- 모든 Nex 컴포넌트는 자동으로 다크 모드를 지원합니다
 - 커스텀 스타일링 시 `dark:` prefix 사용
 - 색상은 테마에서 정의된 값 사용
 
@@ -173,12 +173,12 @@ import { LinearButton } from '~/core/components/linear/linear-button';
 // ✅ 반응형 그리드
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
   {items.map(item => (
-    <LinearCard key={item.id}>...</LinearCard>
+    <NexCard key={item.id}>...</NexCard>
   ))}
 </div>
 
 // ✅ 반응형 카루셀
-<LinearCarousel
+<NexCarousel
   responsive={[
     { breakpoint: 768, settings: { slidesToShow: 2 } }
   ]}
@@ -193,7 +193,7 @@ import { LinearButton } from '~/core/components/linear/linear-button';
 ### 4. Performance
 ```typescript
 // ✅ 이미지 최적화
-<LinearImageCard
+<NexImageCard
   image={{
     src: "https://images.unsplash.com/photo-id?w=400&h=300&fit=crop",
     alt: "Descriptive alt text"
@@ -201,17 +201,17 @@ import { LinearButton } from '~/core/components/linear/linear-button';
 />
 
 // ✅ 지연 로딩
-<LinearCarousel autoPlay={false} infinite={false}>
+<NexCarousel autoPlay={false} infinite={false}>
 ```
 
 ## 🚫 Common Mistakes to Avoid
 
 1. **❌ 기본 HTML 요소 사용하지 않기**
    ```typescript
-   // 대신 Linear 컴포넌트 사용
-   <button> → <LinearButton>
-   <input> → <LinearInput>
-   <div className="card"> → <LinearCard>
+   // 대신 Nex 컴포넌트 사용
+   <button> → <NexButton>
+   <input> → <NexInput>
+   <div className="card"> → <NexCard>
    ```
 
 2. **❌ 하드코딩된 색상 사용 금지**
@@ -219,306 +219,45 @@ import { LinearButton } from '~/core/components/linear/linear-button';
    // ❌ 금지
    className="bg-blue-500 text-white"
    
-   // ✅ Linear 컴포넌트 variant 사용
-   <LinearButton variant="primary">
+   // ✅ Nex 컴포넌트 variant 사용
+   <NexButton variant="primary">
    ```
 
 3. **❌ 인라인 스타일 대신 variant 사용**
    ```typescript
    // ❌ 금지
-   <LinearButton style={{ backgroundColor: '#blue' }}>
+   <NexButton style={{ backgroundColor: '#blue' }}>
    
    // ✅ 권장
-   <LinearButton variant="primary">
+   <NexButton variant="primary">
    ```
 
 4. **❌ 불필요한 커스텀 CSS 작성**
    ```typescript
-   // ❌ 금지 - 이미 Linear 컴포넌트에 내장됨
+   // ❌ 금지 - 이미 Nex 컴포넌트에 내장됨
    .custom-button { padding: 12px; border-radius: 8px; }
    
    // ✅ 권장
-   <LinearButton size="lg">
+   <NexButton size="lg">
    ```
 
 ## 📖 Additional Resources
 
 - **Theme Configuration**: `app/core/lib/theme.ts`
-- **Component Library**: `app/core/components/linear/`
+- **Component Library**: `app/core/components/nex/`
 - **Sample Usage**: `/samples` 페이지 방문
 - **Type Definitions**: 모든 컴포넌트는 완전한 TypeScript 지원
 
 ## 🔧 Development Guidelines
 
-1. **새로운 컴포넌트 필요 시**: Linear 스타일 가이드라인 준수
+1. **새로운 컴포넌트 필요 시**: Nex 스타일 가이드라인 준수
 2. **커스터마이징**: props를 통한 설정 우선, 필요시 className으로 확장
 3. **테스트**: `/samples` 페이지에서 라이트/다크 모드 모두 테스트
 4. **성능**: 불필요한 리렌더링 방지, useMemo/useCallback 적절히 사용
 
 ## 📝 Code Review Checklist
 
-- [ ] Linear 컴포넌트 우선 사용
-- [ ] 다크 모드 호환성 확인
-- [ ] 반응형 디자인 적용
-- [ ] 접근성 고려사항 확인
-- [ ] 타입 안전성 보장
-- [ ] 성능 최적화 적용
-# Linear Design System - Cursor Rules
-
-이 프로젝트는 Linear.app의 디자인 시스템을 기반으로 한 React 컴포넌트 라이브러리를 사용합니다.
-
-## 📋 Available Components
-
-### 🧩 Basic Components
-- **LinearButton**: 4가지 변형 (primary, secondary, ghost, gradient), 3가지 크기, 로딩/아이콘 지원
-- **LinearInput & LinearTextarea**: 3가지 변형 (default, outlined, filled), 에러 처리, 아이콘 지원
-- **LinearBadge**: 7가지 변형, 3가지 크기, 아이콘 및 제거 기능
-- **LinearAvatar & LinearAvatarGroup**: 5가지 크기, 상태 표시기, 그룹 기능
-- **LinearProgress & LinearCircularProgress**: 선형/원형 진행률, 5가지 변형
-
-### 🎴 Card Components
-- **LinearCard**: 기본 카드 (4가지 변형, 다양한 패딩)
-- **LinearImageCard**: 이미지가 포함된 카드 (배지, 오버레이, 다양한 애스펙트 비율)
-- **LinearProductCard**: 상품용 카드 (가격, 별점, 액션 버튼)
-
-### 🎠 Layout Components
-- **LinearCarousel**: 자동재생, 무한루프, 반응형 카루셀
-- **LinearNavbar**: 3가지 변형, 드롭다운, 사용자 메뉴, 모바일 지원
-- **LinearFooter**: 2가지 변형 (default, minimal), 뉴스레터, 소셜 링크
-- **LinearHero**: 4가지 변형, 미디어 지원, 소셜 프루프
-
-## 🎨 Design System Rules
-
-### Import Guidelines
-```typescript
-// ✅ 올바른 import 방법
-import { LinearButton, LinearCard, LinearInput } from '~/core/components/linear';
-
-// ❌ 개별 파일에서 직접 import 금지
-import { LinearButton } from '~/core/components/linear/linear-button';
-```
-
-### Color Usage
-- **Primary**: `#5E6AD2` (라이트), `#7C89F9` (다크)
-- **Background**: `#FFFFFF` (라이트), `#0D0E10` → `#1A1B1E` → `#2C2D30` (다크)
-- **Text**: `#0D0E10` (라이트), `#FFFFFF` → `#B4B5B9` → `#6C6F7E` (다크)
-- **Border**: `#E1E4E8` (라이트), `#2C2D30` → `#404040` (다크)
-
-### Component Usage Rules
-
-#### 1. Button Components
-```typescript
-// ✅ 올바른 사용법
-<LinearButton variant="primary" size="md">Click me</LinearButton>
-<LinearButton variant="gradient" loading={isLoading}>Submit</LinearButton>
-<LinearButton variant="secondary" leftIcon={<Icon />}>With Icon</LinearButton>
-
-// ❌ 기본 HTML button 대신 LinearButton 사용
-<button className="bg-blue-500...">Click me</button>
-```
-
-#### 2. Form Components
-```typescript
-// ✅ 올바른 사용법
-<LinearInput
-  label="Email"
-  placeholder="Enter your email"
-  error={error}
-  leftIcon={<MailIcon />}
-/>
-
-// ✅ Textarea 사용법
-<LinearTextarea
-  label="Message"
-  rows={4}
-  variant="outlined"
-/>
-
-// ❌ 기본 HTML input 대신 Linear 컴포넌트 사용
-<input className="border rounded..." />
-```
-
-#### 3. Card Components
-```typescript
-// ✅ 기본 카드
-<LinearCard variant="elevated" hoverable>
-  <LinearCardHeader>
-    <LinearCardTitle>Title</LinearCardTitle>
-    <LinearCardDescription>Description</LinearCardDescription>
-  </LinearCardHeader>
-  <LinearCardContent>Content</LinearCardContent>
-</LinearCard>
-
-// ✅ 이미지 카드
-<LinearImageCard
-  image={{ src: "/image.jpg", aspectRatio: "video" }}
-  title="Title"
-  badge={{ text: "New", variant: "success" }}
-  hoverable
-/>
-
-// ✅ 상품 카드
-<LinearProductCard
-  image={{ src: "/product.jpg", aspectRatio: "square" }}
-  title="Product Name"
-  price={{ current: "99.99", currency: "$" }}
-  rating={{ value: 4.5, count: 128 }}
-  actionButton={{ text: "Add to Cart", onClick: handleClick }}
-/>
-```
-
-#### 4. Layout Components
-```typescript
-// ✅ Navbar 사용법
-<LinearNavbar
-  brand={{ name: "AppName", href: "/" }}
-  navigation={navigationItems}
-  actions={{
-    user: { name: "User", menu: userMenuItems },
-    notifications: { count: 3 }
-  }}
-/>
-
-// ✅ Hero 섹션
-<LinearHero
-  variant="split"
-  title="Welcome"
-  description="Description"
-  actions={{
-    primary: { label: "Get Started", variant: "primary" },
-    secondary: { label: "Learn More", variant: "secondary" }
-  }}
-  media={{ type: "image", src: "/hero.jpg" }}
-/>
-
-// ✅ Footer 사용법
-<LinearFooter
-  brand={{ name: "AppName", description: "Description" }}
-  links={footerLinks}
-  social={socialLinks}
-  newsletter={{ title: "Subscribe", onSubmit: handleSubscribe }}
-/>
-```
-
-#### 5. Carousel Components
-```typescript
-// ✅ 기본 카루셀
-<LinearCarousel autoPlay showDots slidesToShow={3}>
-  <LinearCarouselItem>Content 1</LinearCarouselItem>
-  <LinearCarouselItem>Content 2</LinearCarouselItem>
-</LinearCarousel>
-
-// ✅ 반응형 카루셀
-<LinearCarousel
-  slidesToShow={3}
-  responsive={[
-    { breakpoint: 768, settings: { slidesToShow: 2 } },
-    { breakpoint: 480, settings: { slidesToShow: 1 } }
-  ]}
->
-  {items.map(item => (
-    <LinearCarouselItem key={item.id}>{item.content}</LinearCarouselItem>
-  ))}
-</LinearCarousel>
-```
-
-## 🎯 Best Practices
-
-### 1. Dark Mode Support
-- 모든 Linear 컴포넌트는 자동으로 다크 모드를 지원합니다
-- 커스텀 스타일링 시 `dark:` prefix 사용
-- 색상은 테마에서 정의된 값 사용
-
-### 2. Responsive Design
-```typescript
-// ✅ 반응형 그리드
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {items.map(item => (
-    <LinearCard key={item.id}>...</LinearCard>
-  ))}
-</div>
-
-// ✅ 반응형 카루셀
-<LinearCarousel
-  responsive={[
-    { breakpoint: 768, settings: { slidesToShow: 2 } }
-  ]}
->
-```
-
-### 3. Accessibility
-- 모든 Interactive 요소에 적절한 `aria-label` 제공
-- 이미지에 `alt` 텍스트 필수
-- 키보드 내비게이션 지원
-
-### 4. Performance
-```typescript
-// ✅ 이미지 최적화
-<LinearImageCard
-  image={{
-    src: "https://images.unsplash.com/photo-id?w=400&h=300&fit=crop",
-    alt: "Descriptive alt text"
-  }}
-/>
-
-// ✅ 지연 로딩
-<LinearCarousel autoPlay={false} infinite={false}>
-```
-
-## 🚫 Common Mistakes to Avoid
-
-1. **❌ 기본 HTML 요소 사용하지 않기**
-   ```typescript
-   // 대신 Linear 컴포넌트 사용
-   <button> → <LinearButton>
-   <input> → <LinearInput>
-   <div className="card"> → <LinearCard>
-   ```
-
-2. **❌ 하드코딩된 색상 사용 금지**
-   ```typescript
-   // ❌ 금지
-   className="bg-blue-500 text-white"
-   
-   // ✅ Linear 컴포넌트 variant 사용
-   <LinearButton variant="primary">
-   ```
-
-3. **❌ 인라인 스타일 대신 variant 사용**
-   ```typescript
-   // ❌ 금지
-   <LinearButton style={{ backgroundColor: '#blue' }}>
-   
-   // ✅ 권장
-   <LinearButton variant="primary">
-   ```
-
-4. **❌ 불필요한 커스텀 CSS 작성**
-   ```typescript
-   // ❌ 금지 - 이미 Linear 컴포넌트에 내장됨
-   .custom-button { padding: 12px; border-radius: 8px; }
-   
-   // ✅ 권장
-   <LinearButton size="lg">
-   ```
-
-## 📖 Additional Resources
-
-- **Theme Configuration**: `app/core/lib/theme.ts`
-- **Component Library**: `app/core/components/linear/`
-- **Sample Usage**: `/samples` 페이지 방문
-- **Type Definitions**: 모든 컴포넌트는 완전한 TypeScript 지원
-
-## 🔧 Development Guidelines
-
-1. **새로운 컴포넌트 필요 시**: Linear 스타일 가이드라인 준수
-2. **커스터마이징**: props를 통한 설정 우선, 필요시 className으로 확장
-3. **테스트**: `/samples` 페이지에서 라이트/다크 모드 모두 테스트
-4. **성능**: 불필요한 리렌더링 방지, useMemo/useCallback 적절히 사용
-
-## 📝 Code Review Checklist
-
-- [ ] Linear 컴포넌트 우선 사용
+- [ ] Nex 컴포넌트 우선 사용
 - [ ] 다크 모드 호환성 확인
 - [ ] 반응형 디자인 적용
 - [ ] 접근성 고려사항 확인

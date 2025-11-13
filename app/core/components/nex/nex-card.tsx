@@ -1,8 +1,7 @@
 import React from 'react';
 import { cn } from '~/core/lib/utils';
-import { linearTheme } from '~/core/lib/theme';
 
-export interface LinearCardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NexCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'elevated' | 'outlined' | 'gradient';
   padding?: 'sm' | 'md' | 'lg' | 'xl';
   children: React.ReactNode;
@@ -36,7 +35,7 @@ const getCardStyles = (variant: string, padding: string, hoverable: boolean) => 
   );
 };
 
-export const LinearCard: React.FC<LinearCardProps> = ({
+export const NexCard: React.FC<NexCardProps> = ({
   variant = 'default',
   padding = 'lg',
   children,
@@ -54,11 +53,11 @@ export const LinearCard: React.FC<LinearCardProps> = ({
   );
 };
 
-export interface LinearCardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NexCardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
-export const LinearCardHeader: React.FC<LinearCardHeaderProps> = ({
+export const NexCardHeader: React.FC<NexCardHeaderProps> = ({
   children,
   className,
   ...props
@@ -70,12 +69,12 @@ export const LinearCardHeader: React.FC<LinearCardHeaderProps> = ({
   );
 };
 
-export interface LinearCardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
+export interface NexCardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
   children: React.ReactNode;
   as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 }
 
-export const LinearCardTitle: React.FC<LinearCardTitleProps> = ({
+export const NexCardTitle: React.FC<NexCardTitleProps> = ({
   children,
   className,
   as: Component = 'h3',
@@ -91,11 +90,11 @@ export const LinearCardTitle: React.FC<LinearCardTitleProps> = ({
   );
 };
 
-export interface LinearCardDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {
+export interface NexCardDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {
   children: React.ReactNode;
 }
 
-export const LinearCardDescription: React.FC<LinearCardDescriptionProps> = ({
+export const NexCardDescription: React.FC<NexCardDescriptionProps> = ({
   children,
   className,
   ...props
@@ -107,11 +106,11 @@ export const LinearCardDescription: React.FC<LinearCardDescriptionProps> = ({
   );
 };
 
-export interface LinearCardContentProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NexCardContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
-export const LinearCardContent: React.FC<LinearCardContentProps> = ({
+export const NexCardContent: React.FC<NexCardContentProps> = ({
   children,
   className,
   ...props
@@ -123,11 +122,11 @@ export const LinearCardContent: React.FC<LinearCardContentProps> = ({
   );
 };
 
-export interface LinearCardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NexCardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
-export const LinearCardFooter: React.FC<LinearCardFooterProps> = ({
+export const NexCardFooter: React.FC<NexCardFooterProps> = ({
   children,
   className,
   ...props

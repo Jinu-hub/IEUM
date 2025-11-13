@@ -1,8 +1,7 @@
 import React from 'react';
 import { cn } from '~/core/lib/utils';
-import { linearTheme } from '~/core/lib/theme';
 
-export interface LinearInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface NexInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -40,7 +39,7 @@ const getInputStyles = (variant: string, inputSize: string, hasError: boolean) =
   );
 };
 
-export const LinearInput: React.FC<LinearInputProps> = ({
+export const NexInput: React.FC<NexInputProps> = ({
   label,
   error,
   helperText,
@@ -103,7 +102,7 @@ export const LinearInput: React.FC<LinearInputProps> = ({
   );
 };
 
-export interface LinearTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface NexTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -111,7 +110,7 @@ export interface LinearTextareaProps extends React.TextareaHTMLAttributes<HTMLTe
   resize?: 'none' | 'vertical' | 'horizontal' | 'both';
 }
 
-export const LinearTextarea: React.FC<LinearTextareaProps> = ({
+export const NexTextarea: React.FC<NexTextareaProps> = ({
   label,
   error,
   helperText,

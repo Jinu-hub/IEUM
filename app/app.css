@@ -161,8 +161,8 @@ body {
   }
 }
 
-/* Linear Design System Animations */
-@keyframes linear-progress-indeterminate {
+/* Nex Design System Animations */
+@keyframes nex-progress-indeterminate {
   0% {
     transform: translateX(-100%);
   }
@@ -174,7 +174,7 @@ body {
   }
 }
 
-@keyframes linear-fadeIn {
+@keyframes nex-fadeIn {
   0% {
     opacity: 0;
     transform: translateY(10px);
@@ -185,7 +185,7 @@ body {
   }
 }
 
-@keyframes linear-slideIn {
+@keyframes nex-slideIn {
   0% {
     transform: translateX(-100%);
   }
@@ -194,7 +194,7 @@ body {
   }
 }
 
-@keyframes linear-float {
+@keyframes nex-float {
   0%, 100% {
     transform: translateY(0px);
   }
@@ -203,18 +203,18 @@ body {
   }
 }
 
-/* Linear Button Hover Effects */
-.linear-button-primary:hover {
+/* Nex Button Hover Effects */
+.nex-button-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(94, 106, 210, 0.4);
 }
 
-.linear-card-hover:hover {
+.nex-card-hover:hover {
   transform: translateY(-2px);
 }
 
-/* Focus Ring for Linear Components */
-.linear-focus-ring:focus-visible {
+/* Focus Ring for Nex Components */
+.nex-focus-ring:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(94, 106, 210, 0.2);
 }

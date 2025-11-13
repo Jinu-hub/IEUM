@@ -1,11 +1,11 @@
+import { ArrowRight, Play } from 'lucide-react';
 import React from 'react';
-import { ArrowRight, Play, Star, Users, Zap, Award } from 'lucide-react';
 import { cn } from '~/core/lib/utils';
-import { LinearButton } from './linear-button';
-import { LinearBadge } from './linear-badge';
-import { LinearAvatar, LinearAvatarGroup } from './linear-avatar';
+import { NexAvatar, NexAvatarGroup } from './nex-avatar';
+import { NexBadge } from './nex-badge';
+import { NexButton } from './nex-button';
 
-export interface LinearHeroProps extends React.HTMLAttributes<HTMLElement> {
+export interface NexHeroProps extends React.HTMLAttributes<HTMLElement> {
   variant?: 'default' | 'centered' | 'split' | 'minimal' | 'video';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   badge?: {
@@ -64,7 +64,7 @@ const backgroundClasses = {
   custom: ''
 };
 
-export const LinearHero: React.FC<LinearHeroProps> = ({
+export const NexHero: React.FC<NexHeroProps> = ({
   variant = 'default',
   size = 'lg',
   badge,
@@ -93,9 +93,9 @@ export const LinearHero: React.FC<LinearHeroProps> = ({
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {badge && (
             <div className="mb-6">
-              <LinearBadge variant={badge.variant}>
+              <NexBadge variant={badge.variant}>
                 {badge.text}
-              </LinearBadge>
+              </NexBadge>
             </div>
           )}
           
@@ -112,24 +112,24 @@ export const LinearHero: React.FC<LinearHeroProps> = ({
           {actions && (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {actions.primary && (
-                <LinearButton
+                <NexButton
                   variant={actions.primary.variant || 'primary'}
                   size="lg"
                   onClick={actions.primary.onClick}
                   rightIcon={actions.primary.icon}
                 >
                   {actions.primary.label}
-                </LinearButton>
+                </NexButton>
               )}
               {actions.secondary && (
-                <LinearButton
+                <NexButton
                   variant={actions.secondary.variant || 'secondary'}
                   size="lg"
                   onClick={actions.secondary.onClick}
                   leftIcon={actions.secondary.icon}
                 >
                   {actions.secondary.label}
-                </LinearButton>
+                </NexButton>
               )}
             </div>
           )}
@@ -149,14 +149,14 @@ export const LinearHero: React.FC<LinearHeroProps> = ({
                 <div className="mb-6">
                   {badge.href ? (
                     <a href={badge.href}>
-                      <LinearBadge variant={badge.variant}>
+                      <NexBadge variant={badge.variant}>
                         {badge.text}
-                      </LinearBadge>
+                      </NexBadge>
                     </a>
                   ) : (
-                    <LinearBadge variant={badge.variant}>
+                    <NexBadge variant={badge.variant}>
                       {badge.text}
-                    </LinearBadge>
+                    </NexBadge>
                   )}
                 </div>
               )}
@@ -180,24 +180,24 @@ export const LinearHero: React.FC<LinearHeroProps> = ({
               {actions && (
                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
                   {actions.primary && (
-                    <LinearButton
+                    <NexButton
                       variant={actions.primary.variant || 'primary'}
                       size="lg"
                       onClick={actions.primary.onClick}
                       rightIcon={actions.primary.icon || <ArrowRight className="w-4 h-4" />}
                     >
                       {actions.primary.label}
-                    </LinearButton>
+                    </NexButton>
                   )}
                   {actions.secondary && (
-                    <LinearButton
+                    <NexButton
                       variant={actions.secondary.variant || 'secondary'}
                       size="lg"
                       onClick={actions.secondary.onClick}
                       leftIcon={actions.secondary.icon || <Play className="w-4 h-4" />}
                     >
                       {actions.secondary.label}
-                    </LinearButton>
+                    </NexButton>
                   )}
                 </div>
               )}
@@ -222,11 +222,11 @@ export const LinearHero: React.FC<LinearHeroProps> = ({
               {social && (
                 <div className="flex items-center space-x-4">
                   {social.avatars && (
-                    <LinearAvatarGroup max={3} size="sm">
+                    <NexAvatarGroup max={3} size="sm">
                       {social.avatars.map((avatar, index) => (
-                        <LinearAvatar key={index} src={avatar} fallback={`U${index + 1}`} />
+                        <NexAvatar key={index} src={avatar} fallback={`U${index + 1}`} />
                       ))}
-                    </LinearAvatarGroup>
+                    </NexAvatarGroup>
                   )}
                   <div>
                     {social.count && (
@@ -279,14 +279,14 @@ export const LinearHero: React.FC<LinearHeroProps> = ({
           <div className="mb-6">
             {badge.href ? (
               <a href={badge.href}>
-                <LinearBadge variant={badge.variant}>
+                <NexBadge variant={badge.variant}>
                   {badge.text}
-                </LinearBadge>
+                </NexBadge>
               </a>
             ) : (
-              <LinearBadge variant={badge.variant}>
+              <NexBadge variant={badge.variant}>
                 {badge.text}
-              </LinearBadge>
+              </NexBadge>
             )}
           </div>
         )}
@@ -310,24 +310,24 @@ export const LinearHero: React.FC<LinearHeroProps> = ({
         {actions && (
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             {actions.primary && (
-              <LinearButton
+              <NexButton
                 variant={actions.primary.variant || 'primary'}
                 size="lg"
                 onClick={actions.primary.onClick}
                 rightIcon={actions.primary.icon || <ArrowRight className="w-4 h-4" />}
               >
                 {actions.primary.label}
-              </LinearButton>
+              </NexButton>
             )}
             {actions.secondary && (
-              <LinearButton
+              <NexButton
                 variant={actions.secondary.variant || 'secondary'}
                 size="lg"
                 onClick={actions.secondary.onClick}
                 leftIcon={actions.secondary.icon || <Play className="w-4 h-4" />}
               >
                 {actions.secondary.label}
-              </LinearButton>
+              </NexButton>
             )}
           </div>
         )}
@@ -374,11 +374,11 @@ export const LinearHero: React.FC<LinearHeroProps> = ({
         {social && (
           <div className="flex flex-col items-center space-y-4">
             {social.avatars && (
-              <LinearAvatarGroup max={5} size="md">
+              <NexAvatarGroup max={5} size="md">
                 {social.avatars.map((avatar, index) => (
-                  <LinearAvatar key={index} src={avatar} fallback={`U${index + 1}`} />
+                  <NexAvatar key={index} src={avatar} fallback={`U${index + 1}`} />
                 ))}
-              </LinearAvatarGroup>
+              </NexAvatarGroup>
             )}
             <div className="text-center">
               {social.count && (

@@ -6,14 +6,14 @@
  */
 
 import {
-  CheckCircleIcon,
-  GitHubIcon,
-  LinearBadge,
-  LinearButton,
-  PlusIcon,
-  SettingsIcon,
-  SlackIcon
-} from '~/core/components/linear';
+    CheckCircleIcon,
+    GitHubIcon,
+    NexBadge,
+    NexButton,
+    PlusIcon,
+    SettingsIcon,
+    SlackIcon
+} from '~/core/components/nex';
 import type { IntegrationService } from '../lib/constants';
 import type { ConnectionStatus } from '../lib/types';
 
@@ -62,50 +62,50 @@ export function useIntegrationUI({
     switch (status) {
       case 'connected':
         return (
-          <LinearBadge 
+          <NexBadge 
             variant="success" 
             icon={<CheckCircleIcon className="w-3 h-3" />}
             className="ml-3"
           >
             연결됨
-          </LinearBadge>
+          </NexBadge>
         );
       case 'connecting':
         return (
-          <LinearBadge 
+          <NexBadge 
             variant="warning" 
             className="ml-3"
           >
             연결 중...
-          </LinearBadge>
+          </NexBadge>
         );
       case 'disconnecting':
         return (
-          <LinearBadge 
+          <NexBadge 
             variant="warning" 
             className="ml-3"
           >
             해제 중...
-          </LinearBadge>
+          </NexBadge>
         );
       case 'unauthorized':
         return (
-          <LinearBadge 
+          <NexBadge 
             variant="warning" 
             className="ml-3"
           >
             승인 대기
-          </LinearBadge>
+          </NexBadge>
         );
       case 'disconnected':
       default:
         return (
-          <LinearBadge 
+          <NexBadge 
             variant="secondary" 
             className="ml-3"
           >
             연결 안됨
-          </LinearBadge>
+          </NexBadge>
         );
     }
   };
@@ -118,40 +118,40 @@ export function useIntegrationUI({
     
     if (status === 'connecting') {
       return (
-        <LinearButton
+        <NexButton
           variant="secondary"
           size="sm"
           loading={true}
           disabled
         >
           연결 중...
-        </LinearButton>
+        </NexButton>
       );
     }
 
     if (status === 'disconnecting') {
       return (
-        <LinearButton
+        <NexButton
           variant="secondary"
           size="sm"
           loading={true}
           disabled
         >
           해제 중...
-        </LinearButton>
+        </NexButton>
       );
     }
 
     if (status === 'unauthorized') {
       return (
-        <LinearButton
+        <NexButton
           variant="secondary"
           size="sm"
           onClick={onConnect}
           className="flex items-center space-x-2 cursor-pointer"
         >
           확인하기
-        </LinearButton>
+        </NexButton>
       );
     }
 
@@ -159,29 +159,29 @@ export function useIntegrationUI({
       return (
         <div className="flex gap-2">
           {onConfigure && (
-            <LinearButton
+            <NexButton
               variant="ghost"
               size="sm"
               leftIcon={<SettingsIcon className="w-4 h-4" />}
               onClick={onConfigure}
             >
               설정
-            </LinearButton>
+            </NexButton>
           )}
-          <LinearButton
+          <NexButton
             variant="secondary"
             size="sm"
             onClick={onDisconnect}
             className="flex items-center space-x-2 cursor-pointer"
           >
             연결 해제
-          </LinearButton>
+          </NexButton>
         </div>
       );
     }
 
     return (
-      <LinearButton
+      <NexButton
         variant="primary"
         size="sm"
         leftIcon={<PlusIcon className="w-4 h-4" />}
@@ -189,7 +189,7 @@ export function useIntegrationUI({
         className="flex items-center space-x-2 cursor-pointer"
       >
         연결하기
-      </LinearButton>
+      </NexButton>
     );
   };
 

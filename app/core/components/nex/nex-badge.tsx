@@ -1,8 +1,7 @@
 import React from 'react';
 import { cn } from '~/core/lib/utils';
-import { linearTheme } from '~/core/lib/theme';
 
-export interface LinearBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface NexBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: 'default' | 'success' | 'warning' | 'error' | 'info' | 'secondary' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
@@ -37,7 +36,7 @@ const getBadgeStyles = (variant: string, size: string) => {
   );
 };
 
-export const LinearBadge: React.FC<LinearBadgeProps> = ({
+export const NexBadge: React.FC<NexBadgeProps> = ({
   variant = 'default',
   size = 'md',
   children,

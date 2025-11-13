@@ -14,38 +14,33 @@
 
 import type { Route } from "./+types/home";
 
-import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
-import { 
-  MessageCircle, 
-  GitBranch, 
-  Mail, 
-  Calendar,
-  TrendingUp,
-  Users,
-  Bot,
-  FileText,
-  Clock,
-  CheckCircle,
-  Zap,
-  Globe
+import {
+    Calendar,
+    CheckCircle,
+    FileText,
+    GitBranch,
+    Mail,
+    MessageCircle,
+    TrendingUp,
+    Users,
+    Zap
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
+import {
+    NexBadge,
+    NexButton,
+    NexCard,
+    NexCardContent,
+    NexCardDescription,
+    NexCardHeader,
+    NexCardTitle,
+    NexCarousel,
+    NexCarouselItem,
+    NexHero,
+    NexProgress
+} from "~/core/components/nex";
 import i18next from "~/core/lib/i18next.server";
-import { 
-  LinearButton, 
-  LinearCard,
-  LinearCardHeader,
-  LinearCardTitle,
-  LinearCardDescription,
-  LinearCardContent,
-  LinearHero,
-  LinearBadge,
-  LinearImageCard,
-  LinearProgress,
-  LinearCarousel,
-  LinearCarouselItem
-} from "~/core/components/linear";
 
 /**
  * Meta function for setting page metadata
@@ -155,7 +150,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <div className="space-y-16">
       {/* Hero Section */}
-      <LinearHero
+      <NexHero
         variant="split"
         title="Nexletter"
         subtitle="개발팀을 위한 스마트한 주간 뉴스레터"
@@ -180,33 +175,33 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
       {/* Statistics Section */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <LinearCard variant="elevated" className="text-center">
-          <LinearCardContent className="pt-6">
+        <NexCard variant="elevated" className="text-center">
+          <NexCardContent className="pt-6">
             <div className="text-3xl font-bold text-primary">{stats.totalNewsletters}</div>
             <p className="text-sm text-muted-foreground">발송된 뉴스레터</p>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
         
-        <LinearCard variant="elevated" className="text-center">
-          <LinearCardContent className="pt-6">
+        <NexCard variant="elevated" className="text-center">
+          <NexCardContent className="pt-6">
             <div className="text-3xl font-bold text-primary">{stats.slackMessages.toLocaleString()}</div>
             <p className="text-sm text-muted-foreground">분석된 Slack 메시지</p>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
         
-        <LinearCard variant="elevated" className="text-center">
-          <LinearCardContent className="pt-6">
+        <NexCard variant="elevated" className="text-center">
+          <NexCardContent className="pt-6">
             <div className="text-3xl font-bold text-primary">{stats.githubCommits}</div>
             <p className="text-sm text-muted-foreground">이번 주 커밋</p>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
         
-        <LinearCard variant="elevated" className="text-center">
-          <LinearCardContent className="pt-6">
+        <NexCard variant="elevated" className="text-center">
+          <NexCardContent className="pt-6">
             <div className="text-3xl font-bold text-primary">{stats.teamMembers}</div>
             <p className="text-sm text-muted-foreground">팀 멤버</p>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
       </section>
 
       {/* Integrations Section */}
@@ -222,8 +217,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           {integrations.map((integration, index) => {
             const Icon = integration.icon;
             return (
-              <LinearCard key={index} variant="outlined" hoverable>
-                <LinearCardContent className="p-6">
+              <NexCard key={index} variant="outlined" hoverable>
+                <NexCardContent className="p-6">
                   <div className="flex items-start space-x-4">
                     <div className="p-3 rounded-lg bg-primary/10">
                       <Icon className="h-6 w-6 text-primary" />
@@ -231,18 +226,18 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="text-lg font-semibold">{integration.name}</h3>
-                        <LinearBadge 
+                        <NexBadge 
                           variant={integration.status === "active" ? "success" : "warning"}
                           size="sm"
                         >
                           {integration.status === "active" ? "연결됨" : "곧 출시"}
-                        </LinearBadge>
+                        </NexBadge>
                       </div>
                       <p className="text-muted-foreground">{integration.description}</p>
                     </div>
                   </div>
-                </LinearCardContent>
-              </LinearCard>
+                </NexCardContent>
+              </NexCard>
             );
           })}
         </div>
@@ -252,8 +247,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <h3 className="text-2xl font-bold mb-6">실시간 활동</h3>
-          <LinearCard variant="outlined">
-            <LinearCardContent className="p-0">
+          <NexCard variant="outlined">
+            <NexCardContent className="p-0">
               <div className="space-y-0">
                 {recentActivities.map((activity, index) => (
                   <div key={index} className="flex items-center space-x-4 p-4 border-b last:border-b-0">
@@ -271,22 +266,22 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                   </div>
                 ))}
               </div>
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
         </div>
 
         {/* Newsletter Preview */}
         <div>
           <h3 className="text-2xl font-bold mb-6">뉴스레터 미리보기</h3>
-          <LinearCard variant="elevated">
-            <LinearCardHeader>
+          <NexCard variant="elevated">
+            <NexCardHeader>
               <div className="flex items-center justify-between">
-                <LinearCardTitle>Week #47 - Dev Team Digest</LinearCardTitle>
-                <LinearBadge variant="info">새로운</LinearBadge>
+                <NexCardTitle>Week #47 - Dev Team Digest</NexCardTitle>
+                <NexBadge variant="info">새로운</NexBadge>
               </div>
-              <LinearCardDescription>2024년 11월 18일 - 11월 24일</LinearCardDescription>
-            </LinearCardHeader>
-            <LinearCardContent>
+              <NexCardDescription>2024년 11월 18일 - 11월 24일</NexCardDescription>
+            </NexCardHeader>
+            <NexCardContent>
               <div className="space-y-4">
                 <div>
                   <h4 className="font-semibold text-sm mb-2">📈 이번 주 하이라이트</h4>
@@ -304,11 +299,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                   </p>
                 </div>
 
-                <LinearProgress value={75} variant="default" className="mt-4" />
+                <NexProgress value={75} variant="default" className="mt-4" />
                 <p className="text-xs text-muted-foreground">뉴스레터 생성 진행률: 75%</p>
               </div>
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
         </div>
       </section>
 
@@ -321,7 +316,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           </p>
         </div>
 
-        <LinearCarousel
+        <NexCarousel
           autoPlay
           showDots
           slidesToShow={3}
@@ -344,9 +339,9 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           ]}
         >
           {/* Weekly Achievement */}
-          <LinearCarouselItem>
-            <LinearCard variant="elevated" className="mx-2 h-full">
-              <LinearCardContent className="p-6">
+          <NexCarouselItem>
+            <NexCard variant="elevated" className="mx-2 h-full">
+              <NexCardContent className="p-6">
                 <div className="flex items-center mb-4">
                   <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/20 mr-4">
                     <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -359,25 +354,25 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">완료된 이슈</span>
-                    <LinearBadge variant="success">24개</LinearBadge>
+                    <NexBadge variant="success">24개</NexBadge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">배포 횟수</span>
-                    <LinearBadge variant="info">12회</LinearBadge>
+                    <NexBadge variant="info">12회</NexBadge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">코드 리뷰</span>
-                    <LinearBadge variant="secondary">89개</LinearBadge>
+                    <NexBadge variant="secondary">89개</NexBadge>
                   </div>
                 </div>
-              </LinearCardContent>
-            </LinearCard>
-          </LinearCarouselItem>
+              </NexCardContent>
+            </NexCard>
+          </NexCarouselItem>
 
           {/* Team Communication */}
-          <LinearCarouselItem>
-            <LinearCard variant="elevated" className="mx-2 h-full">
-              <LinearCardContent className="p-6">
+          <NexCarouselItem>
+            <NexCard variant="elevated" className="mx-2 h-full">
+              <NexCardContent className="p-6">
                 <div className="flex items-center mb-4">
                   <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/20 mr-4">
                     <MessageCircle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -401,14 +396,14 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                     <p className="text-xs text-muted-foreground">API 성능 최적화 결과 공유</p>
                   </div>
                 </div>
-              </LinearCardContent>
-            </LinearCard>
-          </LinearCarouselItem>
+              </NexCardContent>
+            </NexCard>
+          </NexCarouselItem>
 
           {/* Latest Newsletter */}
-          <LinearCarouselItem>
-            <LinearCard variant="elevated" className="mx-2 h-full">
-              <LinearCardContent className="p-6">
+          <NexCarouselItem>
+            <NexCard variant="elevated" className="mx-2 h-full">
+              <NexCardContent className="p-6">
                 <div className="flex items-center mb-4">
                   <div className="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/20 mr-4">
                     <Mail className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -431,18 +426,18 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                     <span className="font-medium">읽기 시간:</span>
                     <span className="ml-1 text-muted-foreground">3분</span>
                   </div>
-                  <LinearButton variant="secondary" size="sm" className="w-full mt-3">
+                  <NexButton variant="secondary" size="sm" className="w-full mt-3">
                     뉴스레터 읽기
-                  </LinearButton>
+                  </NexButton>
                 </div>
-              </LinearCardContent>
-            </LinearCard>
-          </LinearCarouselItem>
+              </NexCardContent>
+            </NexCard>
+          </NexCarouselItem>
 
           {/* Code Quality */}
-          <LinearCarouselItem>
-            <LinearCard variant="elevated" className="mx-2 h-full">
-              <LinearCardContent className="p-6">
+          <NexCarouselItem>
+            <NexCard variant="elevated" className="mx-2 h-full">
+              <NexCardContent className="p-6">
                 <div className="flex items-center mb-4">
                   <div className="p-3 rounded-lg bg-orange-100 dark:bg-orange-900/20 mr-4">
                     <CheckCircle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
@@ -458,28 +453,28 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                       <span className="text-sm">테스트 커버리지</span>
                       <span className="text-sm font-medium">94%</span>
                     </div>
-                    <LinearProgress value={94} variant="success" />
+                    <NexProgress value={94} variant="success" />
                   </div>
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm">코드 품질 점수</span>
                       <span className="text-sm font-medium">A+</span>
                     </div>
-                    <LinearProgress value={98} variant="default" />
+                    <NexProgress value={98} variant="default" />
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">버그 수정</span>
-                    <LinearBadge variant="success">15개</LinearBadge>
+                    <NexBadge variant="success">15개</NexBadge>
                   </div>
                 </div>
-              </LinearCardContent>
-            </LinearCard>
-          </LinearCarouselItem>
+              </NexCardContent>
+            </NexCard>
+          </NexCarouselItem>
 
           {/* Team Productivity */}
-          <LinearCarouselItem>
-            <LinearCard variant="elevated" className="mx-2 h-full">
-              <LinearCardContent className="p-6">
+          <NexCarouselItem>
+            <NexCard variant="elevated" className="mx-2 h-full">
+              <NexCardContent className="p-6">
                 <div className="flex items-center mb-4">
                   <div className="p-3 rounded-lg bg-indigo-100 dark:bg-indigo-900/20 mr-4">
                     <Users className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
@@ -505,17 +500,17 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                     </div>
                   </div>
                   <div className="text-center">
-                    <LinearBadge variant="success">+15% vs 지난주</LinearBadge>
+                    <NexBadge variant="success">+15% vs 지난주</NexBadge>
                   </div>
                 </div>
-              </LinearCardContent>
-            </LinearCard>
-          </LinearCarouselItem>
+              </NexCardContent>
+            </NexCard>
+          </NexCarouselItem>
 
           {/* Innovation Highlights */}
-          <LinearCarouselItem>
-            <LinearCard variant="elevated" className="mx-2 h-full">
-              <LinearCardContent className="p-6">
+          <NexCarouselItem>
+            <NexCard variant="elevated" className="mx-2 h-full">
+              <NexCardContent className="p-6">
                 <div className="flex items-center mb-4">
                   <div className="p-3 rounded-lg bg-cyan-100 dark:bg-cyan-900/20 mr-4">
                     <Zap className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
@@ -539,15 +534,15 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                     <p className="text-xs text-muted-foreground">팀 내 TypeScript 워크샵 진행</p>
                   </div>
                 </div>
-              </LinearCardContent>
-            </LinearCard>
-          </LinearCarouselItem>
-        </LinearCarousel>
+              </NexCardContent>
+            </NexCard>
+          </NexCarouselItem>
+        </NexCarousel>
       </section>
 
       {/* CTA Section */}
       <section className="text-center py-16">
-        <LinearCard variant="gradient" className="p-12">
+        <NexCard variant="gradient" className="p-12">
           <div className="space-y-6">
             <div>
               <h2 className="text-3xl font-bold text-white mb-4">
@@ -560,17 +555,17 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <LinearButton variant="secondary" size="lg">
+              <NexButton variant="secondary" size="lg">
                 <Calendar className="h-5 w-5 mr-2" />
                 데모 예약하기
-              </LinearButton>
-              <LinearButton variant="ghost" size="lg" className="text-white border-white hover:bg-white/10">
+              </NexButton>
+              <NexButton variant="ghost" size="lg" className="text-white border-white hover:bg-white/10">
                 <Mail className="h-5 w-5 mr-2" />
                 무료로 시작하기
-              </LinearButton>
+              </NexButton>
             </div>
           </div>
-        </LinearCard>
+        </NexCard>
       </section>
     </div>
   );

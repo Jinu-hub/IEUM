@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { LinearButton } from '~/core/components/linear';
+import { NexButton } from '~/core/components/nex';
 
 export default function TestScreen() {
   const [isLoading, setIsLoading] = useState(false);
@@ -105,14 +105,14 @@ export default function TestScreen() {
                   /api/cron/actions 엔드포인트를 호출하여 1시간 이내 실행 예정인 타겟들을 조회합니다
                 </p>
               </div>
-              <LinearButton
+              <NexButton
                 variant="primary"
                 onClick={handleTestCronAPI}
                 loading={isLoading}
                 disabled={isLoading}
               >
                 {isLoading ? '테스트 중...' : 'API 테스트'}
-              </LinearButton>
+              </NexButton>
             </div>
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div>
@@ -123,14 +123,14 @@ export default function TestScreen() {
                   /api/cron/test 엔드포인트를 호출하여 GitHub App installations 테스트합니다
                 </p>
               </div>
-              <LinearButton
+              <NexButton
                 variant="primary"
                 onClick={() => handleTestGithubApp('installations')}
                 loading={isLoading}
                 disabled={isLoading}
               >
                 {isLoading ? '테스트 중...' : 'API 테스트'}
-              </LinearButton>
+              </NexButton>
             </div>
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div>
@@ -141,14 +141,14 @@ export default function TestScreen() {
                   /api/cron/test 엔드포인트를 호출하여 GitHub App App-Info 테스트합니다
                 </p>
               </div>
-              <LinearButton
+              <NexButton
                 variant="primary"
                 onClick={() => handleTestGithubApp('app-info')}
                 loading={isLoading}
                 disabled={isLoading}
               >
                 {isLoading ? '테스트 중...' : 'API 테스트'}
-              </LinearButton>
+              </NexButton>
             </div>
           </div>
         </div>

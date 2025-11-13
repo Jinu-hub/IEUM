@@ -1,48 +1,47 @@
-import React, { useState } from 'react';
-import { 
-  LinearButton, 
-  LinearCard, 
-  LinearCardHeader, 
-  LinearCardTitle, 
-  LinearCardDescription, 
-  LinearCardContent,
-  LinearCardFooter,
-  LinearInput,
-  LinearTextarea,
-  LinearBadge,
-  LinearAvatar,
-  LinearAvatarGroup,
-  LinearProgress,
-  LinearCircularProgress,
-  LinearCarousel,
-  LinearCarouselItem,
-  LinearImageCard,
-  LinearProductCard,
-  LinearNavbar,
-  LinearFooter,
-  LinearHero,
-  LinearToggle,
+import { Award, Play, Star, Users, Zap } from 'lucide-react';
+import { useState } from 'react';
+import {
   // 차트 컴포넌트들
-  LinearAreaChart,
-  LinearAreaChartGradient,
-  LinearAreaChartStacked,
-  LinearBarChart,
-  LinearBarChartMultiple,
-  LinearBarChartStackedLegend,
-  LinearBarChartCustomLabel,
-  LinearLineChart,
-  LinearLineChartSmooth,
-  LinearLineChartArea,
-  LinearPieChartLabelList,
-  LinearPieChartDonutText,
-  LinearRadarChart,
-  LinearRadarChartDots,
-  LinearRadarChartFilled,
-  LinearRadialChartLabel,
-  LinearRadialChartText,
+  NexAreaChart,
+  NexAreaChartGradient,
+  NexAreaChartStacked,
+  NexAvatar,
+  NexAvatarGroup,
+  NexBadge,
+  NexBarChart,
+  NexBarChartCustomLabel,
+  NexBarChartMultiple,
+  NexBarChartStackedLegend,
+  NexButton,
+  NexCard,
+  NexCardContent,
+  NexCardDescription,
+  NexCardHeader,
+  NexCardTitle,
+  NexCarousel,
+  NexCarouselItem,
+  NexCircularProgress,
+  NexFooter,
+  NexHero,
+  NexImageCard,
+  NexInput,
+  NexLineChart,
+  NexLineChartArea,
+  NexLineChartSmooth,
+  NexNavbar,
+  NexPieChartDonutText,
+  NexPieChartLabelList,
+  NexProductCard,
+  NexProgress,
+  NexRadarChart,
+  NexRadarChartDots,
+  NexRadarChartFilled,
+  NexRadialChartLabel,
+  NexRadialChartText,
+  NexTextarea,
+  NexToggle,
   sampleChartData
-} from '~/core/components/linear';
-import { Search, Bell, Home, User, Settings, Github, Twitter, Mail, Play, Star, Zap, Users, Award } from 'lucide-react';
+} from '~/core/components/nex';
 
 export default function SamplesPage() {
   const [inputValue, setInputValue] = useState('');
@@ -63,31 +62,31 @@ export default function SamplesPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-[#0D0E10] dark:text-[#FFFFFF] mb-4">
-            Linear Design System
+            Nex Design System
           </h1>
           <p className="text-lg text-[#8B92B5] dark:text-[#6C6F7E] max-w-2xl mx-auto">
-            Linear.app의 디자인 시스템을 기반으로 한 재사용 가능한 컴포넌트들을 확인해보세요.
+            Nex.app의 디자인 시스템을 기반으로 한 재사용 가능한 컴포넌트들을 확인해보세요.
           </p>
         </div>
 
         {/* Buttons Section */}
-        <LinearCard className="mb-8">
-          <LinearCardHeader>
-            <LinearCardTitle>버튼 컴포넌트</LinearCardTitle>
-            <LinearCardDescription>
+        <NexCard className="mb-8">
+          <NexCardHeader>
+            <NexCardTitle>버튼 컴포넌트</NexCardTitle>
+            <NexCardDescription>
               다양한 스타일과 크기의 버튼들입니다.
-            </LinearCardDescription>
-          </LinearCardHeader>
-          <LinearCardContent>
+            </NexCardDescription>
+          </NexCardHeader>
+          <NexCardContent>
             <div className="space-y-6">
               {/* Button Variants */}
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-3">버튼 변형</h4>
                 <div className="flex flex-wrap gap-3">
-                  <LinearButton variant="primary">Primary</LinearButton>
-                  <LinearButton variant="secondary">Secondary</LinearButton>
-                  <LinearButton variant="ghost">Ghost</LinearButton>
-                  <LinearButton variant="gradient">Gradient</LinearButton>
+                  <NexButton variant="primary">Primary</NexButton>
+                  <NexButton variant="secondary">Secondary</NexButton>
+                  <NexButton variant="ghost">Ghost</NexButton>
+                  <NexButton variant="gradient">Gradient</NexButton>
                 </div>
               </div>
               
@@ -95,9 +94,9 @@ export default function SamplesPage() {
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-3">버튼 크기</h4>
                 <div className="flex flex-wrap items-center gap-3">
-                  <LinearButton size="sm">Small</LinearButton>
-                  <LinearButton size="md">Medium</LinearButton>
-                  <LinearButton size="lg">Large</LinearButton>
+                  <NexButton size="sm">Small</NexButton>
+                  <NexButton size="md">Medium</NexButton>
+                  <NexButton size="lg">Large</NexButton>
                 </div>
               </div>
               
@@ -105,93 +104,93 @@ export default function SamplesPage() {
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-3">버튼 상태</h4>
                 <div className="flex flex-wrap gap-3">
-                  <LinearButton 
+                  <NexButton 
                     leftIcon={<span>🔥</span>}
                   >
                     With Left Icon
-                  </LinearButton>
-                  <LinearButton 
+                  </NexButton>
+                  <NexButton 
                     rightIcon={<span>→</span>}
                   >
                     With Right Icon
-                  </LinearButton>
-                  <LinearButton loading>
+                  </NexButton>
+                  <NexButton loading>
                     Loading
-                  </LinearButton>
-                  <LinearButton disabled>
+                  </NexButton>
+                  <NexButton disabled>
                     Disabled
-                  </LinearButton>
+                  </NexButton>
                 </div>
               </div>
             </div>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* Cards Section */}
-        <LinearCard className="mb-8">
-          <LinearCardHeader>
-            <LinearCardTitle>카드 컴포넌트</LinearCardTitle>
-            <LinearCardDescription>
+        <NexCard className="mb-8">
+          <NexCardHeader>
+            <NexCardTitle>카드 컴포넌트</NexCardTitle>
+            <NexCardDescription>
               다양한 스타일의 카드 컴포넌트들입니다.
-            </LinearCardDescription>
-          </LinearCardHeader>
-          <LinearCardContent>
+            </NexCardDescription>
+          </NexCardHeader>
+          <NexCardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <LinearCard variant="default" padding="md" hoverable>
-                <LinearCardHeader>
-                  <LinearCardTitle as="h4">기본 카드</LinearCardTitle>
-                  <LinearCardDescription>기본 스타일의 카드입니다.</LinearCardDescription>
-                </LinearCardHeader>
-                <LinearCardContent>
+              <NexCard variant="default" padding="md" hoverable>
+                <NexCardHeader>
+                  <NexCardTitle as="h4">기본 카드</NexCardTitle>
+                  <NexCardDescription>기본 스타일의 카드입니다.</NexCardDescription>
+                </NexCardHeader>
+                <NexCardContent>
                   <p className="text-sm text-[#8B92B5]">카드 내용이 여기에 들어갑니다.</p>
-                </LinearCardContent>
-              </LinearCard>
+                </NexCardContent>
+              </NexCard>
               
-              <LinearCard variant="elevated" padding="md" hoverable>
-                <LinearCardHeader>
-                  <LinearCardTitle as="h4">엘리베이티드</LinearCardTitle>
-                  <LinearCardDescription>그림자가 강조된 카드입니다.</LinearCardDescription>
-                </LinearCardHeader>
-                <LinearCardContent>
+              <NexCard variant="elevated" padding="md" hoverable>
+                <NexCardHeader>
+                  <NexCardTitle as="h4">엘리베이티드</NexCardTitle>
+                  <NexCardDescription>그림자가 강조된 카드입니다.</NexCardDescription>
+                </NexCardHeader>
+                <NexCardContent>
                   <p className="text-sm text-[#8B92B5]">카드 내용이 여기에 들어갑니다.</p>
-                </LinearCardContent>
-              </LinearCard>
+                </NexCardContent>
+              </NexCard>
               
-              <LinearCard variant="outlined" padding="md" hoverable>
-                <LinearCardHeader>
-                  <LinearCardTitle as="h4">아웃라인</LinearCardTitle>
-                  <LinearCardDescription>테두리가 강조된 카드입니다.</LinearCardDescription>
-                </LinearCardHeader>
-                <LinearCardContent>
+              <NexCard variant="outlined" padding="md" hoverable>
+                <NexCardHeader>
+                  <NexCardTitle as="h4">아웃라인</NexCardTitle>
+                  <NexCardDescription>테두리가 강조된 카드입니다.</NexCardDescription>
+                </NexCardHeader>
+                <NexCardContent>
                   <p className="text-sm text-[#8B92B5]">카드 내용이 여기에 들어갑니다.</p>
-                </LinearCardContent>
-              </LinearCard>
+                </NexCardContent>
+              </NexCard>
               
-              <LinearCard variant="gradient" padding="md" hoverable>
-                <LinearCardHeader>
-                  <LinearCardTitle as="h4" className="text-white">그라디언트</LinearCardTitle>
-                  <LinearCardDescription className="text-white/80">그라디언트 배경의 카드입니다.</LinearCardDescription>
-                </LinearCardHeader>
-                <LinearCardContent>
+              <NexCard variant="gradient" padding="md" hoverable>
+                <NexCardHeader>
+                  <NexCardTitle as="h4" className="text-white">그라디언트</NexCardTitle>
+                  <NexCardDescription className="text-white/80">그라디언트 배경의 카드입니다.</NexCardDescription>
+                </NexCardHeader>
+                <NexCardContent>
                   <p className="text-sm text-white/70">카드 내용이 여기에 들어갑니다.</p>
-                </LinearCardContent>
-              </LinearCard>
+                </NexCardContent>
+              </NexCard>
             </div>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* Form Inputs Section */}
-        <LinearCard className="mb-8">
-          <LinearCardHeader>
-            <LinearCardTitle>입력 컴포넌트</LinearCardTitle>
-            <LinearCardDescription>
+        <NexCard className="mb-8">
+          <NexCardHeader>
+            <NexCardTitle>입력 컴포넌트</NexCardTitle>
+            <NexCardDescription>
               폼 입력을 위한 다양한 컴포넌트들입니다.
-            </LinearCardDescription>
-          </LinearCardHeader>
-          <LinearCardContent>
+            </NexCardDescription>
+          </NexCardHeader>
+          <NexCardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <LinearInput
+                <NexInput
                   label="기본 입력"
                   placeholder="이름을 입력하세요"
                   value={inputValue}
@@ -199,21 +198,21 @@ export default function SamplesPage() {
                   helperText="도움말 텍스트입니다."
                 />
                 
-                <LinearInput
+                <NexInput
                   label="아이콘이 있는 입력"
                   placeholder="이메일을 입력하세요"
                   leftIcon={<span>📧</span>}
                   variant="outlined"
                 />
                 
-                <LinearInput
+                <NexInput
                   label="에러 상태"
                   placeholder="잘못된 입력"
                   error="이 필드는 필수입니다."
                   variant="filled"
                 />
                 
-                <LinearInput
+                <NexInput
                   label="비밀번호"
                   type="password"
                   placeholder="비밀번호를 입력하세요"
@@ -222,7 +221,7 @@ export default function SamplesPage() {
               </div>
               
               <div className="space-y-4">
-                <LinearTextarea
+                <NexTextarea
                   label="텍스트 영역"
                   placeholder="메시지를 입력하세요..."
                   value={textareaValue}
@@ -231,7 +230,7 @@ export default function SamplesPage() {
                   rows={4}
                 />
                 
-                <LinearTextarea
+                <NexTextarea
                   label="아웃라인 텍스트 영역"
                   placeholder="피드백을 입력하세요..."
                   variant="outlined"
@@ -240,126 +239,126 @@ export default function SamplesPage() {
                 />
               </div>
             </div>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* Badges and Avatars Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Badges */}
-          <LinearCard>
-            <LinearCardHeader>
-              <LinearCardTitle>배지 컴포넌트</LinearCardTitle>
-              <LinearCardDescription>상태나 라벨을 표시하는 배지들입니다.</LinearCardDescription>
-            </LinearCardHeader>
-            <LinearCardContent>
+          <NexCard>
+            <NexCardHeader>
+              <NexCardTitle>배지 컴포넌트</NexCardTitle>
+              <NexCardDescription>상태나 라벨을 표시하는 배지들입니다.</NexCardDescription>
+            </NexCardHeader>
+            <NexCardContent>
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-3">기본 배지</h4>
                   <div className="flex flex-wrap gap-2">
-                    <LinearBadge variant="default">Default</LinearBadge>
-                    <LinearBadge variant="success">Success</LinearBadge>
-                    <LinearBadge variant="warning">Warning</LinearBadge>
-                    <LinearBadge variant="error">Error</LinearBadge>
-                    <LinearBadge variant="info">Info</LinearBadge>
-                    <LinearBadge variant="secondary">Secondary</LinearBadge>
+                    <NexBadge variant="default">Default</NexBadge>
+                    <NexBadge variant="success">Success</NexBadge>
+                    <NexBadge variant="warning">Warning</NexBadge>
+                    <NexBadge variant="error">Error</NexBadge>
+                    <NexBadge variant="info">Info</NexBadge>
+                    <NexBadge variant="secondary">Secondary</NexBadge>
                   </div>
                 </div>
                 
                 <div>
                   <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-3">특수 배지</h4>
                   <div className="flex flex-wrap gap-2">
-                    <LinearBadge variant="success" icon={<span>✓</span>}>
+                    <NexBadge variant="success" icon={<span>✓</span>}>
                       완료됨
-                    </LinearBadge>
-                    <LinearBadge 
+                    </NexBadge>
+                    <NexBadge 
                       variant="error" 
                       removable 
                       onRemove={() => console.log('Removed!')}
                     >
                       제거 가능
-                    </LinearBadge>
-                    <LinearBadge variant="outline" size="lg">
+                    </NexBadge>
+                    <NexBadge variant="outline" size="lg">
                       큰 배지
-                    </LinearBadge>
+                    </NexBadge>
                   </div>
                 </div>
               </div>
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
 
           {/* Avatars */}
-          <LinearCard>
-            <LinearCardHeader>
-              <LinearCardTitle>아바타 컴포넌트</LinearCardTitle>
-              <LinearCardDescription>사용자 프로필을 표시하는 아바타들입니다.</LinearCardDescription>
-            </LinearCardHeader>
-            <LinearCardContent>
+          <NexCard>
+            <NexCardHeader>
+              <NexCardTitle>아바타 컴포넌트</NexCardTitle>
+              <NexCardDescription>사용자 프로필을 표시하는 아바타들입니다.</NexCardDescription>
+            </NexCardHeader>
+            <NexCardContent>
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-medium text-[#0D0E10] mb-3">크기별 아바타</h4>
                   <div className="flex items-center gap-3">
-                    <LinearAvatar size="xs" fallback="XS" />
-                    <LinearAvatar size="sm" fallback="SM" />
-                    <LinearAvatar size="md" fallback="MD" />
-                    <LinearAvatar size="lg" fallback="LG" />
-                    <LinearAvatar size="xl" fallback="XL" />
+                    <NexAvatar size="xs" fallback="XS" />
+                    <NexAvatar size="sm" fallback="SM" />
+                    <NexAvatar size="md" fallback="MD" />
+                    <NexAvatar size="lg" fallback="LG" />
+                    <NexAvatar size="xl" fallback="XL" />
                   </div>
                 </div>
                 
                 <div>
                   <h4 className="text-sm font-medium text-[#0D0E10] mb-3">상태가 있는 아바타</h4>
                   <div className="flex items-center gap-3">
-                    <LinearAvatar fallback="ON" status="online" />
-                    <LinearAvatar fallback="OFF" status="offline" />
-                    <LinearAvatar fallback="AW" status="away" />
-                    <LinearAvatar fallback="BS" status="busy" />
+                    <NexAvatar fallback="ON" status="online" />
+                    <NexAvatar fallback="OFF" status="offline" />
+                    <NexAvatar fallback="AW" status="away" />
+                    <NexAvatar fallback="BS" status="busy" />
                   </div>
                 </div>
                 
                 <div>
                   <h4 className="text-sm font-medium text-[#0D0E10] mb-3">아바타 그룹</h4>
-                  <LinearAvatarGroup max={4}>
-                    <LinearAvatar fallback="A" />
-                    <LinearAvatar fallback="B" />
-                    <LinearAvatar fallback="C" />
-                    <LinearAvatar fallback="D" />
-                    <LinearAvatar fallback="E" />
-                    <LinearAvatar fallback="F" />
-                  </LinearAvatarGroup>
+                  <NexAvatarGroup max={4}>
+                    <NexAvatar fallback="A" />
+                    <NexAvatar fallback="B" />
+                    <NexAvatar fallback="C" />
+                    <NexAvatar fallback="D" />
+                    <NexAvatar fallback="E" />
+                    <NexAvatar fallback="F" />
+                  </NexAvatarGroup>
                 </div>
               </div>
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
         </div>
 
         {/* Toggle Section */}
-        <LinearCard className="mb-8">
-          <LinearCardHeader>
-            <LinearCardTitle>토글 컴포넌트</LinearCardTitle>
-            <LinearCardDescription>
+        <NexCard className="mb-8">
+          <NexCardHeader>
+            <NexCardTitle>토글 컴포넌트</NexCardTitle>
+            <NexCardDescription>
               설정이나 상태를 온/오프로 전환하는 토글 스위치입니다.
-            </LinearCardDescription>
-          </LinearCardHeader>
-          <LinearCardContent>
+            </NexCardDescription>
+          </NexCardHeader>
+          <NexCardContent>
             <div className="space-y-8">
               {/* Basic Toggles */}
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">기본 토글</h4>
                 <div className="space-y-4">
-                  <LinearToggle
+                  <NexToggle
                     checked={basicToggle}
                     onChange={setBasicToggle}
                     label="기본 토글"
                   />
                   
-                  <LinearToggle
+                  <NexToggle
                     checked={notificationToggle}
                     onChange={setNotificationToggle}
                     label="알림 받기"
                     labelPosition="left"
                   />
                   
-                  <LinearToggle
+                  <NexToggle
                     checked={false}
                     disabled
                     label="비활성화됨"
@@ -371,21 +370,21 @@ export default function SamplesPage() {
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">크기별 토글</h4>
                 <div className="flex items-center gap-6">
-                  <LinearToggle
+                  <NexToggle
                     size="sm"
                     checked={basicToggle}
                     onChange={setBasicToggle}
                     label="Small"
                   />
                   
-                  <LinearToggle
+                  <NexToggle
                     size="md"
                     checked={notificationToggle}
                     onChange={setNotificationToggle}
                     label="Medium"
                   />
                   
-                  <LinearToggle
+                  <NexToggle
                     size="lg"
                     checked={darkModeToggle}
                     onChange={setDarkModeToggle}
@@ -398,28 +397,28 @@ export default function SamplesPage() {
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">변형별 토글</h4>
                 <div className="space-y-4">
-                  <LinearToggle
+                  <NexToggle
                     variant="default"
                     checked={basicToggle}
                     onChange={setBasicToggle}
                     label="기본 (Default)"
                   />
                   
-                  <LinearToggle
+                  <NexToggle
                     variant="success"
                     checked={notificationToggle}
                     onChange={setNotificationToggle}
                     label="성공 (Success)"
                   />
                   
-                  <LinearToggle
+                  <NexToggle
                     variant="warning"
                     checked={darkModeToggle}
                     onChange={setDarkModeToggle}
                     label="경고 (Warning)"
                   />
                   
-                  <LinearToggle
+                  <NexToggle
                     variant="error"
                     checked={maintenanceToggle}
                     onChange={setMaintenanceToggle}
@@ -441,7 +440,7 @@ export default function SamplesPage() {
                           <p className="text-sm text-[#0D0E10] dark:text-[#FFFFFF]">프로필 공개</p>
                           <p className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">다른 사용자가 내 프로필을 볼 수 있습니다</p>
                         </div>
-                        <LinearToggle
+                        <NexToggle
                           checked={privacyToggle}
                           onChange={setPrivacyToggle}
                           variant="success"
@@ -453,7 +452,7 @@ export default function SamplesPage() {
                           <p className="text-sm text-[#0D0E10] dark:text-[#FFFFFF]">이메일 알림</p>
                           <p className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">중요한 업데이트를 이메일로 받습니다</p>
                         </div>
-                        <LinearToggle
+                        <NexToggle
                           checked={notificationToggle}
                           onChange={setNotificationToggle}
                           variant="default"
@@ -465,7 +464,7 @@ export default function SamplesPage() {
                           <p className="text-sm text-[#0D0E10] dark:text-[#FFFFFF]">다크 모드</p>
                           <p className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">어두운 테마를 사용합니다</p>
                         </div>
-                        <LinearToggle
+                        <NexToggle
                           checked={darkModeToggle}
                           onChange={setDarkModeToggle}
                           variant="default"
@@ -483,7 +482,7 @@ export default function SamplesPage() {
                           <p className="text-sm text-[#0D0E10] dark:text-[#FFFFFF]">유지보수 모드</p>
                           <p className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">사이트를 유지보수 모드로 전환합니다</p>
                         </div>
-                        <LinearToggle
+                        <NexToggle
                           checked={maintenanceToggle}
                           onChange={setMaintenanceToggle}
                           variant="warning"
@@ -495,7 +494,7 @@ export default function SamplesPage() {
                           <p className="text-sm text-[#0D0E10] dark:text-[#FFFFFF]">자동 백업</p>
                           <p className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">일일 자동 백업을 활성화합니다</p>
                         </div>
-                        <LinearToggle
+                        <NexToggle
                           checked={true}
                           disabled
                           variant="success"
@@ -506,39 +505,39 @@ export default function SamplesPage() {
                 </div>
               </div>
             </div>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* Progress Section */}
-        <LinearCard className="mb-8">
-          <LinearCardHeader>
-            <LinearCardTitle>프로그레스 컴포넌트</LinearCardTitle>
-            <LinearCardDescription>
+        <NexCard className="mb-8">
+          <NexCardHeader>
+            <NexCardTitle>프로그레스 컴포넌트</NexCardTitle>
+            <NexCardDescription>
               진행률을 표시하는 프로그레스 바와 원형 프로그레스입니다.
-            </LinearCardDescription>
-          </LinearCardHeader>
-          <LinearCardContent>
+            </NexCardDescription>
+          </NexCardHeader>
+          <NexCardContent>
             <div className="space-y-8">
-              {/* Linear Progress */}
+              {/* Nex Progress */}
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">선형 프로그레스</h4>
                 <div className="space-y-4">
-                  <LinearProgress value={progress} showLabel label="기본 프로그레스" />
-                  <LinearProgress value={85} variant="success" showLabel label="성공" />
-                  <LinearProgress value={60} variant="warning" showLabel label="경고" />
-                  <LinearProgress value={30} variant="error" showLabel label="에러" />
-                  <LinearProgress value={75} variant="gradient" showLabel label="그라디언트" />
-                  <LinearProgress indeterminate label="로딩 중..." />
+                  <NexProgress value={progress} showLabel label="기본 프로그레스" />
+                  <NexProgress value={85} variant="success" showLabel label="성공" />
+                  <NexProgress value={60} variant="warning" showLabel label="경고" />
+                  <NexProgress value={30} variant="error" showLabel label="에러" />
+                  <NexProgress value={75} variant="gradient" showLabel label="그라디언트" />
+                  <NexProgress indeterminate label="로딩 중..." />
                 </div>
                 
                 <div className="mt-4">
-                  <LinearButton 
+                  <NexButton 
                     size="sm" 
                     variant="secondary"
                     onClick={() => setProgress(Math.random() * 100)}
                   >
                     진행률 변경
-                  </LinearButton>
+                  </NexButton>
                 </div>
               </div>
               
@@ -546,75 +545,75 @@ export default function SamplesPage() {
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">원형 프로그레스</h4>
                 <div className="flex items-center gap-6">
-                  <LinearCircularProgress value={progress} showLabel size="sm" />
-                  <LinearCircularProgress value={80} showLabel size="md" variant="success" />
-                  <LinearCircularProgress value={45} showLabel size="lg" variant="warning" />
-                  <LinearCircularProgress indeterminate size="md" variant="gradient" />
+                  <NexCircularProgress value={progress} showLabel size="sm" />
+                  <NexCircularProgress value={80} showLabel size="md" variant="success" />
+                  <NexCircularProgress value={45} showLabel size="lg" variant="warning" />
+                  <NexCircularProgress indeterminate size="md" variant="gradient" />
                 </div>
               </div>
             </div>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* Carousel Section */}
-        <LinearCard className="mb-8">
-          <LinearCardHeader>
-            <LinearCardTitle>카루셀 컴포넌트</LinearCardTitle>
-            <LinearCardDescription>
+        <NexCard className="mb-8">
+          <NexCardHeader>
+            <NexCardTitle>카루셀 컴포넌트</NexCardTitle>
+            <NexCardDescription>
               자동 재생, 무한 루프, 반응형을 지원하는 카루셀 컴포넌트입니다.
-            </LinearCardDescription>
-          </LinearCardHeader>
-          <LinearCardContent>
+            </NexCardDescription>
+          </NexCardHeader>
+          <NexCardContent>
             <div className="space-y-8">
               {/* Basic Carousel */}
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">기본 카루셀</h4>
-                <LinearCarousel
+                <NexCarousel
                   autoPlay
                   autoPlayInterval={4000}
                   showDots
                   showArrows
                   className="max-w-2xl"
                 >
-                  <LinearCarouselItem>
+                  <NexCarouselItem>
                     <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-64 rounded-lg flex items-center justify-center text-white">
                       <div className="text-center">
                         <h3 className="text-2xl font-bold mb-2">슬라이드 1</h3>
                         <p>첫 번째 슬라이드 내용</p>
                       </div>
                     </div>
-                  </LinearCarouselItem>
-                  <LinearCarouselItem>
+                  </NexCarouselItem>
+                  <NexCarouselItem>
                     <div className="bg-gradient-to-r from-green-500 to-teal-600 h-64 rounded-lg flex items-center justify-center text-white">
                       <div className="text-center">
                         <h3 className="text-2xl font-bold mb-2">슬라이드 2</h3>
                         <p>두 번째 슬라이드 내용</p>
                       </div>
                     </div>
-                  </LinearCarouselItem>
-                  <LinearCarouselItem>
+                  </NexCarouselItem>
+                  <NexCarouselItem>
                     <div className="bg-gradient-to-r from-orange-500 to-red-600 h-64 rounded-lg flex items-center justify-center text-white">
                       <div className="text-center">
                         <h3 className="text-2xl font-bold mb-2">슬라이드 3</h3>
                         <p>세 번째 슬라이드 내용</p>
                       </div>
                     </div>
-                  </LinearCarouselItem>
-                  <LinearCarouselItem>
+                  </NexCarouselItem>
+                  <NexCarouselItem>
                     <div className="bg-gradient-to-r from-pink-500 to-violet-600 h-64 rounded-lg flex items-center justify-center text-white">
                       <div className="text-center">
                         <h3 className="text-2xl font-bold mb-2">슬라이드 4</h3>
                         <p>네 번째 슬라이드 내용</p>
                       </div>
                     </div>
-                  </LinearCarouselItem>
-                </LinearCarousel>
+                  </NexCarouselItem>
+                </NexCarousel>
               </div>
 
               {/* Multi-slide Carousel */}
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">멀티 슬라이드 카루셀</h4>
-                <LinearCarousel
+                <NexCarousel
                   slidesToShow={3}
                   slidesToScroll={1}
                   spaceBetween={16}
@@ -625,9 +624,9 @@ export default function SamplesPage() {
                   ]}
                 >
                   {Array.from({ length: 8 }, (_, index) => (
-                    <LinearCarouselItem key={index}>
-                      <LinearCard className="h-32">
-                        <LinearCardContent className="flex items-center justify-center h-full">
+                    <NexCarouselItem key={index}>
+                      <NexCard className="h-32">
+                        <NexCardContent className="flex items-center justify-center h-full">
                           <div className="text-center">
                             <div className="w-12 h-12 bg-[#5E6AD2] dark:bg-[#7C89F9] rounded-full flex items-center justify-center text-white text-lg font-bold mx-auto mb-2">
                               {index + 1}
@@ -636,31 +635,31 @@ export default function SamplesPage() {
                               카드 {index + 1}
                             </p>
                           </div>
-                        </LinearCardContent>
-                      </LinearCard>
-                    </LinearCarouselItem>
+                        </NexCardContent>
+                      </NexCard>
+                    </NexCarouselItem>
                   ))}
-                </LinearCarousel>
+                </NexCarousel>
               </div>
             </div>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* Image Cards Section */}
-        <LinearCard className="mb-8">
-          <LinearCardHeader>
-            <LinearCardTitle>이미지 카드 컴포넌트</LinearCardTitle>
-            <LinearCardDescription>
+        <NexCard className="mb-8">
+          <NexCardHeader>
+            <NexCardTitle>이미지 카드 컴포넌트</NexCardTitle>
+            <NexCardDescription>
               이미지와 함께 사용할 수 있는 다양한 스타일의 카드 컴포넌트들입니다.
-            </LinearCardDescription>
-          </LinearCardHeader>
-          <LinearCardContent>
+            </NexCardDescription>
+          </NexCardHeader>
+          <NexCardContent>
             <div className="space-y-8">
               {/* Basic Image Cards */}
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">기본 이미지 카드</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <LinearImageCard
+                  <NexImageCard
                     image={{
                       src: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
                       alt: "Mountain landscape",
@@ -671,7 +670,7 @@ export default function SamplesPage() {
                     hoverable
                   />
                   
-                  <LinearImageCard
+                  <NexImageCard
                     image={{
                       src: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop",
                       alt: "Lake view",
@@ -683,7 +682,7 @@ export default function SamplesPage() {
                     hoverable
                   />
                   
-                  <LinearImageCard
+                  <NexImageCard
                     image={{
                       src: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
                       alt: "Forest path",
@@ -701,7 +700,7 @@ export default function SamplesPage() {
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">상품 카드</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <LinearProductCard
+                  <NexProductCard
                     image={{
                       src: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop",
                       alt: "Running shoes",
@@ -727,7 +726,7 @@ export default function SamplesPage() {
                     hoverable
                   />
 
-                  <LinearProductCard
+                  <NexProductCard
                     image={{
                       src: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop",
                       alt: "Watch",
@@ -752,7 +751,7 @@ export default function SamplesPage() {
                     hoverable
                   />
 
-                  <LinearProductCard
+                  <NexProductCard
                     image={{
                       src: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop",
                       alt: "Headphones",
@@ -784,7 +783,7 @@ export default function SamplesPage() {
               <div>
                 <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-4">오버레이 카드</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <LinearImageCard
+                  <NexImageCard
                     image={{
                       src: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
                       alt: "Travel destination",
@@ -794,14 +793,14 @@ export default function SamplesPage() {
                     description="최고의 여행 경험을 선사하는 특별한 장소"
                     overlay
                     overlayContent={
-                      <LinearButton variant="secondary" className="bg-white/90 text-black hover:bg-white">
+                      <NexButton variant="secondary" className="bg-white/90 text-black hover:bg-white">
                         자세히 보기
-                      </LinearButton>
+                      </NexButton>
                     }
                     hoverable
                   />
 
-                  <LinearImageCard
+                  <NexImageCard
                     image={{
                       src: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&h=400&fit=crop",
                       alt: "Adventure",
@@ -812,9 +811,9 @@ export default function SamplesPage() {
                     overlay
                     overlayContent={
                       <div className="text-center">
-                        <LinearButton variant="primary" className="mb-2">
+                        <NexButton variant="primary" className="mb-2">
                           지금 시작하기
-                        </LinearButton>
+                        </NexButton>
                         <p className="text-white/80 text-sm">특별 혜택 제공</p>
                       </div>
                     }
@@ -824,18 +823,18 @@ export default function SamplesPage() {
                 </div>
               </div>
             </div>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* Layout Components Section */}
-        <LinearCard className="mb-8">
-          <LinearCardHeader>
-            <LinearCardTitle>레이아웃 컴포넌트</LinearCardTitle>
-            <LinearCardDescription>
+        <NexCard className="mb-8">
+          <NexCardHeader>
+            <NexCardTitle>레이아웃 컴포넌트</NexCardTitle>
+            <NexCardDescription>
               웹사이트의 주요 레이아웃을 구성하는 Navbar, Hero, Footer 컴포넌트들입니다.
-            </LinearCardDescription>
-          </LinearCardHeader>
-          <LinearCardContent>
+            </NexCardDescription>
+          </NexCardHeader>
+          <NexCardContent>
             <div className="space-y-12">
               {/* Navbar Section */}
               <div>
@@ -843,9 +842,9 @@ export default function SamplesPage() {
                 <div className="space-y-6">
                   {/* Default Navbar */}
                   <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg overflow-hidden">
-                    <LinearNavbar
+                    <NexNavbar
                       brand={{
-                        name: "Linear",
+                        name: "Nex",
                         href: "/"
                       }}
                       navigation={[
@@ -881,10 +880,10 @@ export default function SamplesPage() {
 
                   {/* Transparent Navbar */}
                   <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg overflow-hidden">
-                    <LinearNavbar
+                    <NexNavbar
                       variant="transparent"
                       brand={{
-                        name: "Linear",
+                        name: "Nex",
                         href: "/"
                       }}
                       navigation={[
@@ -911,16 +910,16 @@ export default function SamplesPage() {
                 <div className="space-y-8">
                   {/* Centered Hero */}
                   <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg overflow-hidden">
-                    <LinearHero
+                    <NexHero
                       variant="centered"
                       size="md"
                       badge={{
                         text: "✨ 새로운 기능 출시",
                         variant: "info"
                       }}
-                      title="Linear Design System으로 더 빠르게 개발하세요"
+                      title="Nex Design System으로 더 빠르게 개발하세요"
                       subtitle="최고의 사용자 경험을 위한 컴포넌트"
-                      description="Linear.app의 디자인 시스템을 기반으로 한 재사용 가능한 React 컴포넌트들로 프로젝트를 빠르게 구축해보세요."
+                      description="Nex.app의 디자인 시스템을 기반으로 한 재사용 가능한 React 컴포넌트들로 프로젝트를 빠르게 구축해보세요."
                       actions={{
                         primary: {
                           label: "지금 시작하기",
@@ -951,7 +950,7 @@ export default function SamplesPage() {
 
                   {/* Split Hero */}
                   <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg overflow-hidden">
-                    <LinearHero
+                    <NexHero
                       variant="split"
                       size="lg"
                       badge={{
@@ -959,7 +958,7 @@ export default function SamplesPage() {
                         variant: "warning"
                       }}
                       title="개발자를 위한 완벽한 도구"
-                      subtitle="Linear Design System"
+                      subtitle="Nex Design System"
                       description="모던하고 아름다운 웹 애플리케이션을 빠르게 구축할 수 있는 포괄적인 컴포넌트 라이브러리입니다."
                       actions={{
                         primary: {
@@ -987,7 +986,7 @@ export default function SamplesPage() {
 
                   {/* Minimal Hero */}
                   <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg overflow-hidden">
-                    <LinearHero
+                    <NexHero
                       variant="minimal"
                       size="sm"
                       badge={{
@@ -1013,10 +1012,10 @@ export default function SamplesPage() {
                 <div className="space-y-6">
                   {/* Rich Footer */}
                   <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg overflow-hidden">
-                    <LinearFooter
+                    <NexFooter
                       brand={{
-                        name: "Linear",
-                        description: "Linear.app의 디자인 시스템을 기반으로 한 React 컴포넌트 라이브러리입니다. 빠르고 아름다운 웹 애플리케이션을 구축해보세요."
+                        name: "Nex",
+                        description: "Nex.app의 디자인 시스템을 기반으로 한 React 컴포넌트 라이브러리입니다. 빠르고 아름다운 웹 애플리케이션을 구축해보세요."
                       }}
                       links={[
                         {
@@ -1050,7 +1049,7 @@ export default function SamplesPage() {
                       social={[
                         { platform: "github", href: "https://github.com", label: "GitHub" },
                         { platform: "twitter", href: "https://twitter.com", label: "Twitter" },
-                        { platform: "email", href: "mailto:hello@linear.com", label: "Email" }
+                        { platform: "email", href: "mailto:hello@Nex.com", label: "Email" }
                       ]}
                       newsletter={{
                         title: "뉴스레터",
@@ -1060,7 +1059,7 @@ export default function SamplesPage() {
                         onSubmit: (email) => console.log("Newsletter signup:", email)
                       }}
                       legal={{
-                        copyright: "© 2024 Linear. All rights reserved.",
+                        copyright: "© 2024 Nex. All rights reserved.",
                         links: [
                           { label: "개인정보처리방침", href: "/privacy" },
                           { label: "이용약관", href: "/terms" },
@@ -1072,36 +1071,36 @@ export default function SamplesPage() {
 
                   {/* Minimal Footer */}
                   <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg overflow-hidden">
-                    <LinearFooter
+                    <NexFooter
                       variant="minimal"
                       brand={{
-                        name: "Linear"
+                        name: "Nex"
                       }}
                       social={[
                         { platform: "github", href: "https://github.com" },
                         { platform: "twitter", href: "https://twitter.com" },
-                        { platform: "email", href: "mailto:hello@linear.com" }
+                        { platform: "email", href: "mailto:hello@Nex.com" }
                       ]}
                       legal={{
-                        copyright: "© 2024 Linear. All rights reserved."
+                        copyright: "© 2024 Nex. All rights reserved."
                       }}
                     />
                   </div>
                 </div>
               </div>
             </div>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* Charts Section */}
-        <LinearCard className="mb-8">
-          <LinearCardHeader>
-            <LinearCardTitle>차트 컴포넌트</LinearCardTitle>
-            <LinearCardDescription>
-              Linear 디자인 시스템과 일관성 있는 다양한 차트 컴포넌트들입니다.
-            </LinearCardDescription>
-          </LinearCardHeader>
-          <LinearCardContent>
+        <NexCard className="mb-8">
+          <NexCardHeader>
+            <NexCardTitle>차트 컴포넌트</NexCardTitle>
+            <NexCardDescription>
+              Nex 디자인 시스템과 일관성 있는 다양한 차트 컴포넌트들입니다.
+            </NexCardDescription>
+          </NexCardHeader>
+          <NexCardContent>
             <div className="space-y-14">
               {/* Bar Charts (shadcn) */}
               <div>
@@ -1109,21 +1108,21 @@ export default function SamplesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">기본 Bar Chart</h5>
-                    <LinearBarChart data={sampleChartData.bar} className={chartBox} />
+                    <NexBarChart data={sampleChartData.bar} className={chartBox} />
                   </div>
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Multiple Bar Chart</h5>
-                    <LinearBarChartMultiple data={sampleChartData.bar} className={chartBox} />
+                    <NexBarChartMultiple data={sampleChartData.bar} className={chartBox} />
                   </div>
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Stacked + Legend</h5>
-                    <LinearBarChartStackedLegend data={sampleChartData.bar} className={chartBox} />
+                    <NexBarChartStackedLegend data={sampleChartData.bar} className={chartBox} />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Custom Label</h5>
-                    <LinearBarChartCustomLabel data={sampleChartData.bar} className={chartBox} />
+                    <NexBarChartCustomLabel data={sampleChartData.bar} className={chartBox} />
                   </div>
                 </div>
               </div>
@@ -1134,15 +1133,15 @@ export default function SamplesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">기본</h5>
-                    <LinearLineChart data={sampleChartData.line} className={chartBox} />
+                    <NexLineChart data={sampleChartData.line} className={chartBox} />
                   </div>
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">스무스</h5>
-                    <LinearLineChartSmooth data={sampleChartData.line} className={chartBox} />
+                    <NexLineChartSmooth data={sampleChartData.line} className={chartBox} />
                   </div>
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Area + Line</h5>
-                    <LinearLineChartArea data={sampleChartData.line} className={chartBox} />
+                    <NexLineChartArea data={sampleChartData.line} className={chartBox} />
                   </div>
                 </div>
               </div>
@@ -1153,15 +1152,15 @@ export default function SamplesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">기본</h5>
-                    <LinearAreaChart data={sampleChartData.area} className={chartBox} />
+                    <NexAreaChart data={sampleChartData.area} className={chartBox} />
                   </div>
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">그라데이션</h5>
-                    <LinearAreaChartGradient data={sampleChartData.area} className={chartBox} />
+                    <NexAreaChartGradient data={sampleChartData.area} className={chartBox} />
                   </div>
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">스택</h5>
-                    <LinearAreaChartStacked data={sampleChartData.area} className={chartBox} />
+                    <NexAreaChartStacked data={sampleChartData.area} className={chartBox} />
                   </div>
                 </div>
               </div>
@@ -1172,11 +1171,11 @@ export default function SamplesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Label List</h5>
-                    <LinearPieChartLabelList data={sampleChartData.pie} className={chartBox} />
+                    <NexPieChartLabelList data={sampleChartData.pie} className={chartBox} />
                   </div>
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Donut + Text</h5>
-                    <LinearPieChartDonutText data={sampleChartData.pie} className={chartBox} />
+                    <NexPieChartDonutText data={sampleChartData.pie} className={chartBox} />
                   </div>
                 </div>
               </div>
@@ -1187,11 +1186,11 @@ export default function SamplesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Label</h5>
-                    <LinearRadialChartLabel data={sampleChartData.radial} className={chartBox} />
+                    <NexRadialChartLabel data={sampleChartData.radial} className={chartBox} />
                   </div>
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Text</h5>
-                    <LinearRadialChartText data={sampleChartData.radial} className={chartBox} />
+                    <NexRadialChartText data={sampleChartData.radial} className={chartBox} />
                   </div>
                 </div>
               </div>
@@ -1202,48 +1201,48 @@ export default function SamplesPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">기본</h5>
-                    <LinearRadarChart data={sampleChartData.radar} className={chartBox} />
+                    <NexRadarChart data={sampleChartData.radar} className={chartBox} />
                   </div>
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Dots</h5>
-                    <LinearRadarChartDots data={sampleChartData.radar} className={chartBox} />
+                    <NexRadarChartDots data={sampleChartData.radar} className={chartBox} />
                   </div>
                   <div>
                     <h5 className="text-xs font-medium text-[#8B92B5] dark:text-[#6C6F7E] mb-2">Filled</h5>
-                    <LinearRadarChartFilled data={sampleChartData.radar} className={chartBox} />
+                    <NexRadarChartFilled data={sampleChartData.radar} className={chartBox} />
                   </div>
                 </div>
               </div>
 
             </div>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
 
         {/* Interactive Demo */}
-        <LinearCard variant="gradient" className="text-white">
-          <LinearCardHeader>
-            <LinearCardTitle className="text-white">인터랙티브 데모</LinearCardTitle>
-            <LinearCardDescription className="text-white/80">
+        <NexCard variant="gradient" className="text-white">
+          <NexCardHeader>
+            <NexCardTitle className="text-white">인터랙티브 데모</NexCardTitle>
+            <NexCardDescription className="text-white/80">
               컴포넌트들이 실제로 어떻게 작동하는지 확인해보세요.
-            </LinearCardDescription>
-          </LinearCardHeader>
-          <LinearCardContent>
+            </NexCardDescription>
+          </NexCardHeader>
+          <NexCardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h4 className="text-sm font-medium mb-3 text-white">폼 예제</h4>
                 <div className="space-y-3">
-                  <LinearInput
+                  <NexInput
                     placeholder="프로젝트 이름"
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
                   />
-                  <LinearTextarea
+                  <NexTextarea
                     placeholder="프로젝트 설명"
                     rows={3}
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
                   />
-                  <LinearButton variant="secondary" className="bg-white text-[#5E6AD2]">
+                  <NexButton variant="secondary" className="bg-white text-[#5E6AD2]">
                     프로젝트 생성
-                  </LinearButton>
+                  </NexButton>
                 </div>
               </div>
               
@@ -1252,12 +1251,12 @@ export default function SamplesPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">팀 멤버</span>
-                    <LinearAvatarGroup max={3} size="sm">
-                      <LinearAvatar fallback="김" />
-                      <LinearAvatar fallback="이" />
-                      <LinearAvatar fallback="박" />
-                      <LinearAvatar fallback="최" />
-                    </LinearAvatarGroup>
+                    <NexAvatarGroup max={3} size="sm">
+                      <NexAvatar fallback="김" />
+                      <NexAvatar fallback="이" />
+                      <NexAvatar fallback="박" />
+                      <NexAvatar fallback="최" />
+                    </NexAvatarGroup>
                   </div>
                   
                   <div className="space-y-2">
@@ -1265,22 +1264,22 @@ export default function SamplesPage() {
                       <span>프로젝트 진행률</span>
                       <span>78%</span>
                     </div>
-                    <LinearProgress value={78} variant="default" className="bg-white/20" />
+                    <NexProgress value={78} variant="default" className="bg-white/20" />
                   </div>
                   
                   <div className="flex gap-2">
-                    <LinearBadge variant="success" className="bg-green-500/20 text-green-100 border-green-400/30">
+                    <NexBadge variant="success" className="bg-green-500/20 text-green-100 border-green-400/30">
                       활성
-                    </LinearBadge>
-                    <LinearBadge variant="info" className="bg-blue-500/20 text-blue-100 border-blue-400/30">
+                    </NexBadge>
+                    <NexBadge variant="info" className="bg-blue-500/20 text-blue-100 border-blue-400/30">
                       우선순위
-                    </LinearBadge>
+                    </NexBadge>
                   </div>
                 </div>
               </div>
             </div>
-          </LinearCardContent>
-        </LinearCard>
+          </NexCardContent>
+        </NexCard>
       </div>
     </div>
   );

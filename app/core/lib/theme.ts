@@ -1,15 +1,15 @@
 /**
- * Linear Design System Theme Configuration
+ * Nex Design System Theme Configuration
  * 
- * This file contains the complete theme configuration based on Linear.app's design system.
+ * This file contains the complete theme configuration based on Nex design system.
  * It provides centralized access to colors, typography, spacing, animations, and component styles.
  */
 
-export const linearTheme = {
+export const nexTheme = {
   theme: {
-    name: "Linear Design System",
+    name: "Nex Design System",
     version: "1.0",
-    description: "Linear.app의 디자인 시스템을 기반으로 한 테마 데이터"
+    description: "Nex 디자인 시스템을 기반으로 한 테마 데이터"
   },
   colors: {
     brand: {
@@ -266,10 +266,10 @@ export const linearTheme = {
   }
 } as const;
 
-export type LinearTheme = typeof linearTheme;
+export type NexTheme = typeof nexTheme;
 
 // CSS Custom Properties Generator
-export const generateCSSVariables = (theme: LinearTheme) => {
+export const generateCSSVariables = (theme: NexTheme) => {
   const cssVars: Record<string, string> = {};
   
   // Colors

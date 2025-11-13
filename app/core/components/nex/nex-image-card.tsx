@@ -1,16 +1,16 @@
 import React from 'react';
 import { cn } from '~/core/lib/utils';
-import { 
-  LinearCard, 
-  LinearCardHeader, 
-  LinearCardTitle, 
-  LinearCardDescription, 
-  LinearCardContent, 
-  LinearCardFooter,
-  type LinearCardProps 
-} from './linear-card';
+import {
+  NexCard,
+  NexCardContent,
+  NexCardDescription,
+  NexCardFooter,
+  NexCardHeader,
+  NexCardTitle,
+  type NexCardProps
+} from './nex-card';
 
-export interface LinearImageCardProps extends Omit<LinearCardProps, 'children'> {
+export interface NexImageCardProps extends Omit<NexCardProps, 'children'> {
   image: {
     src: string;
     alt: string;
@@ -43,7 +43,7 @@ const objectFitClasses = {
   fill: 'object-fill'
 };
 
-export const LinearImageCard: React.FC<LinearImageCardProps> = ({
+export const NexImageCard: React.FC<NexImageCardProps> = ({
   image,
   title,
   description,
@@ -60,7 +60,7 @@ export const LinearImageCard: React.FC<LinearImageCardProps> = ({
   const { src, alt, aspectRatio = 'video', objectFit = 'cover' } = image;
 
   return (
-    <LinearCard 
+    <NexCard 
       className={cn("overflow-hidden", className)} 
       padding={undefined}
       {...props}
@@ -121,7 +121,7 @@ export const LinearImageCard: React.FC<LinearImageCardProps> = ({
 
       {/* Card Content */}
       {((title && !overlay) || description || children) && (
-        <LinearCardContent className={cn(
+        <NexCardContent className={cn(
           padding === 'sm' && "p-3",
           padding === 'md' && "p-4",
           padding === 'lg' && "p-6",
@@ -129,33 +129,33 @@ export const LinearImageCard: React.FC<LinearImageCardProps> = ({
         )}>
           {/* Title and Description (when not in overlay) */}
           {!overlay && (title || description) && (
-            <LinearCardHeader className="mb-0 space-y-1">
-              {title && <LinearCardTitle as="h3" className="text-lg">{title}</LinearCardTitle>}
-              {description && <LinearCardDescription>{description}</LinearCardDescription>}
-            </LinearCardHeader>
+            <NexCardHeader className="mb-0 space-y-1">
+              {title && <NexCardTitle as="h3" className="text-lg">{title}</NexCardTitle>}
+              {description && <NexCardDescription>{description}</NexCardDescription>}
+            </NexCardHeader>
           )}
           
           {/* Custom Content */}
           {children}
-        </LinearCardContent>
+        </NexCardContent>
       )}
 
       {/* Footer */}
       {footer && (
-        <LinearCardFooter className={cn(
+        <NexCardFooter className={cn(
           padding === 'sm' && "px-3 pb-3",
           padding === 'md' && "px-4 pb-4",
           padding === 'lg' && "px-6 pb-6",
           padding === 'xl' && "px-8 pb-8"
         )}>
           {footer}
-        </LinearCardFooter>
+        </NexCardFooter>
       )}
-    </LinearCard>
+    </NexCard>
   );
 };
 
-export interface LinearProductCardProps extends Omit<LinearImageCardProps, 'children' | 'footer'> {
+export interface NexProductCardProps extends Omit<NexImageCardProps, 'children' | 'footer'> {
   price?: {
     current: string;
     original?: string;
@@ -174,7 +174,7 @@ export interface LinearProductCardProps extends Omit<LinearImageCardProps, 'chil
   };
 }
 
-export const LinearProductCard: React.FC<LinearProductCardProps> = ({
+export const NexProductCard: React.FC<NexProductCardProps> = ({
   price,
   rating,
   actionButton,
@@ -201,7 +201,7 @@ export const LinearProductCard: React.FC<LinearProductCardProps> = ({
   };
 
   return (
-    <LinearImageCard
+    <NexImageCard
       title={title}
       description={description}
       footer={

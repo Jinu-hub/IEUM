@@ -3,31 +3,31 @@ import { useEffect, useState } from 'react';
 import { redirect, useActionData, useNavigate, useNavigation, useParams, useSubmit, type LoaderFunctionArgs } from 'react-router';
 import { toast } from "sonner";
 import {
-  LinearBadge,
-  LinearButton,
-  LinearCard,
-  LinearCardContent,
-  LinearInput,
-  LinearToggle,
-} from '~/core/components/linear';
+    NexBadge,
+    NexButton,
+    NexCard,
+    NexCardContent,
+    NexInput,
+    NexToggle,
+} from '~/core/components/nex';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "~/core/components/ui/select";
 import makeServerClient from '~/core/lib/supa-client.server';
 import { createTargetWithSources } from '../db/mutations';
 import { getIntegrationsInfo, getMailingList, getTarget, getTargetSources, getWorkspace } from '../db/queries';
 import { useIntegrationSources } from '../hooks/useIntegrationSources';
 import {
-  getNonMemberSlackChannels,
-  getSourceTypeLabel,
+    getNonMemberSlackChannels,
+    getSourceTypeLabel,
 } from '../lib/common';
 import {
-  generateCronExpression,
-  parseCronExpression
+    generateCronExpression,
+    parseCronExpression
 } from '../lib/scheduleUtils';
 import type { TargetData } from '../lib/types';
 import { hours, scheduleTypes, weekdays } from '../lib/types';
@@ -424,14 +424,14 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
         {/* 헤더 섹션 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <LinearButton
+            <NexButton
               variant="ghost"
               size="sm"
               leftIcon={<ArrowLeft />}
               onClick={handleGoBack}
             >
               뒤로
-            </LinearButton>
+            </NexButton>
             <div className="space-y-1">
               <h1 className="text-3xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
                 {isNew ? '새 타겟 추가' : '타겟 편집'}
@@ -443,25 +443,25 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
           </div>
 
           <div className="flex items-center space-x-3">
-            <LinearBadge variant={formData.isActive ? "success" : "secondary"} size="md">
+            <NexBadge variant={formData.isActive ? "success" : "secondary"} size="md">
               {formData.isActive ? "활성" : "비활성"}
-            </LinearBadge>
-            <LinearButton
+            </NexBadge>
+            <NexButton
               variant="primary"
               onClick={handleSave}
               loading={isSaving}
               disabled={isSaving}
             >
               {isSaving ? '저장 중...' : '저장'}
-            </LinearButton>
+            </NexButton>
           </div>
         </div>
 
         {/* 메인 폼 */}
         <div className="grid gap-6">
           {/* 기본 정보 섹션 */}
-          <LinearCard variant="outlined">
-            <LinearCardContent className="p-6">
+          <NexCard variant="outlined">
+            <NexCardContent className="p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <TargetIcon className="h-5 w-5 text-primary" />
@@ -473,7 +473,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                 {/* 표시명 */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">표시명</label>
-                  <LinearInput
+                  <NexInput
                     placeholder="타겟 이름을 입력하세요"
                     value={formData.displayName || ''}
                     onChange={(e) => handleInputChange('displayName', e.target.value)}
@@ -484,7 +484,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                 {/* 활성 상태 */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">활성 상태</label>
-                  <LinearToggle
+                  <NexToggle
                     checked={formData.isActive || false}
                     onChange={(checked) => handleInputChange('isActive', checked)}
                     label={formData.isActive ? '활성' : '비활성'}
@@ -515,12 +515,12 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                   </Select>
                 </div>
               </div>
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
 
           {/* 스케줄 섹션 */}
-          <LinearCard variant="outlined">
-            <LinearCardContent className="p-6">
+          <NexCard variant="outlined">
+            <NexCardContent className="p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Clock className="h-5 w-5 text-primary" />
@@ -627,12 +627,12 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                   </div>
                 )}
               </div>
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
 
           {/* 인테그레이션 소스 섹션 */}
-          <LinearCard variant="outlined">
-            <LinearCardContent className="p-6">
+          <NexCard variant="outlined">
+            <NexCardContent className="p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Settings className="h-5 w-5 text-primary" />
@@ -648,9 +648,9 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                     return (
                       <div key={source.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-3">
-                          <LinearBadge variant="secondary" size="sm">
+                          <NexBadge variant="secondary" size="sm">
                             {integration?.name}
-                          </LinearBadge>
+                          </NexBadge>
                           <span className="text-sm text-foreground">{source.sourceIdent}</span>
                           {integration?.type === 'github' && (
                             <span className="text-xs text-muted-foreground">레포지토리</span>
@@ -659,14 +659,14 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                             <span className="text-xs text-muted-foreground">채널</span>
                           )}
                         </div>
-                        <LinearButton
+                        <NexButton
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveSource(source.id)}
                           disabled={isSaving}
                         >
                           <X className="h-4 w-4" />
-                        </LinearButton>
+                        </NexButton>
                       </div>
                     );
                   })}
@@ -700,10 +700,10 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                               <div className="flex items-center space-x-2">
                                 <span>{integration.name}</span>
                                 {integration.connection_status === 'connected' && (
-                                  <LinearBadge variant="success" size="sm">연결됨</LinearBadge>
+                                  <NexBadge variant="success" size="sm">연결됨</NexBadge>
                                 )}
                                 {integration.connection_status === 'disconnected' && (
-                                  <LinearBadge variant="secondary" size="sm">연결안됨</LinearBadge>
+                                  <NexBadge variant="secondary" size="sm">연결안됨</NexBadge>
                                 )}
                               </div>
                             </SelectItem>
@@ -784,7 +784,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                         if (selectedIntegration && selectedIntegration.connection_status !== 'connected') {
                           // 연결 해제된 경우 설정 화면으로 이동하는 버튼
                           return (
-                            <LinearButton
+                            <NexButton
                               variant="primary"
                               size="sm"
                               leftIcon={<Settings />}
@@ -793,13 +793,13 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                               disabled={isSaving}
                             >
                               연결 설정으로 이동
-                            </LinearButton>
+                            </NexButton>
                           );
                         }
                         
                         // 연결된 경우 추가 버튼
                         return (
-                          <LinearButton
+                          <NexButton
                             variant="secondary"
                             size="sm"
                             leftIcon={<Plus />}
@@ -808,7 +808,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                             className="w-full sm:w-auto sm:min-w-[120px] cursor-pointer"
                           >
                             추가
-                          </LinearButton>
+                          </NexButton>
                         );
                       })()}
                     </div>
@@ -852,9 +852,9 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                               <span className="text-sm text-muted-foreground">
                                 #{channel.name}
                               </span>
-                              <LinearBadge variant="warning" size="sm">
+                              <NexBadge variant="warning" size="sm">
                                 초대 필요
-                              </LinearBadge>
+                              </NexBadge>
                             </div>
                           ))}
                         {nonMemberChannels.length > 8 && (
@@ -879,8 +879,8 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                   );
                 })()}
               </div>
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
         </div>
       </div>
     </div>

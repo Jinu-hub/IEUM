@@ -4,28 +4,28 @@ import {
   AreaChart,
   Bar,
   BarChart,
+  CartesianGrid,
+  Cell,
   LabelList,
+  Legend,
   Line,
   LineChart,
   Pie,
   PieChart,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
   Radar,
   RadarChart,
   RadialBar,
   RadialBarChart,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
-  Legend,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts';
 
-// 차트 색상 팔레트 (Linear 디자인 시스템 기반)
+// 차트 색상 팔레트 (Nex 디자인 시스템 기반)
 export const chartColors = {
   primary: ['#5E6AD2', '#7C89F9', '#9BA7FF', '#B8C1FF', '#D5DBFF'],
   success: ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#D1FAE5'],
@@ -131,7 +131,7 @@ export const sampleChartData = {
 };
 
 // Area Chart 컴포넌트들
-export const LinearAreaChart = ({ data = sampleChartData.area, className = "" }) => (
+export const NexAreaChart = ({ data = sampleChartData.area, className = "" }) => (
   <ChartContainer className={className}>
     <AreaChart data={data}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
@@ -167,7 +167,7 @@ export const LinearAreaChart = ({ data = sampleChartData.area, className = "" })
   </ChartContainer>
 );
 
-export const LinearAreaChartGradient = ({ data = sampleChartData.area, className = "" }) => (
+export const NexAreaChartGradient = ({ data = sampleChartData.area, className = "" }) => (
   <ChartContainer className={className}>
     <AreaChart data={data}>
       <defs>
@@ -199,7 +199,7 @@ export const LinearAreaChartGradient = ({ data = sampleChartData.area, className
   </ChartContainer>
 );
 
-export const LinearAreaChartStacked = ({ data = sampleChartData.area, className = "" }) => (
+export const NexAreaChartStacked = ({ data = sampleChartData.area, className = "" }) => (
   <ChartContainer className={className}>
     <AreaChart data={data}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
@@ -236,7 +236,7 @@ export const LinearAreaChartStacked = ({ data = sampleChartData.area, className 
 );
 
 // Line Chart 컴포넌트들
-export const LinearLineChart = ({ data = sampleChartData.line, className = "" }) => (
+export const NexLineChart = ({ data = sampleChartData.line, className = "" }) => (
   <ChartContainer className={className}>
     <LineChart data={data}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
@@ -272,7 +272,7 @@ export const LinearLineChart = ({ data = sampleChartData.line, className = "" })
   </ChartContainer>
 );
 
-export const LinearLineChartSmooth = ({ data = sampleChartData.line, className = "" }) => (
+export const NexLineChartSmooth = ({ data = sampleChartData.line, className = "" }) => (
   <ChartContainer className={className}>
     <LineChart data={data}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
@@ -300,7 +300,7 @@ export const LinearLineChartSmooth = ({ data = sampleChartData.line, className =
   </ChartContainer>
 );
 
-export const LinearLineChartArea = ({ data = sampleChartData.line, className = "" }) => (
+export const NexLineChartArea = ({ data = sampleChartData.line, className = "" }) => (
   <ChartContainer className={className}>
     <LineChart data={data}>
       <defs>
@@ -342,7 +342,7 @@ export const LinearLineChartArea = ({ data = sampleChartData.line, className = "
 
 // ===== shadcn Bar Variants =====
 // Bar Chart (기본)
-export const LinearBarChart = ({ data = sampleChartData.bar, className = "" }) => (
+export const NexBarChart = ({ data = sampleChartData.bar, className = "" }) => (
   <ChartContainer className={className}>
     <BarChart data={data}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
@@ -355,7 +355,7 @@ export const LinearBarChart = ({ data = sampleChartData.bar, className = "" }) =
 );
 
 // Bar Chart - Multiple
-export const LinearBarChartMultiple = ({ data = sampleChartData.bar, className = "" }) => (
+export const NexBarChartMultiple = ({ data = sampleChartData.bar, className = "" }) => (
   <ChartContainer className={className}>
     <BarChart data={data}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
@@ -370,7 +370,7 @@ export const LinearBarChartMultiple = ({ data = sampleChartData.bar, className =
 );
 
 // Bar Chart - Stacked + Legend
-export const LinearBarChartStackedLegend = ({ data = sampleChartData.bar, className = "" }) => (
+export const NexBarChartStackedLegend = ({ data = sampleChartData.bar, className = "" }) => (
   <ChartContainer className={className}>
     <BarChart data={data}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
@@ -385,7 +385,7 @@ export const LinearBarChartStackedLegend = ({ data = sampleChartData.bar, classN
 );
 
 // Bar Chart - Custom Label
-export const LinearBarChartCustomLabel = ({ data = sampleChartData.bar, className = "" }) => (
+export const NexBarChartCustomLabel = ({ data = sampleChartData.bar, className = "" }) => (
   <ChartContainer className={className}>
     <BarChart data={data}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
@@ -401,7 +401,7 @@ export const LinearBarChartCustomLabel = ({ data = sampleChartData.bar, classNam
 
 // ===== shadcn Pie Variants =====
 // Pie Chart - Label List
-export const LinearPieChartLabelList = ({ data = sampleChartData.pie, className = "" }) => (
+export const NexPieChartLabelList = ({ data = sampleChartData.pie, className = "" }) => (
   <ChartContainer className={className}>
     <PieChart>
       <Pie data={data} cx="50%" cy="50%" outerRadius={80} dataKey="value">
@@ -417,7 +417,7 @@ export const LinearPieChartLabelList = ({ data = sampleChartData.pie, className 
 );
 
 // Pie Chart - Donut with Text
-export const LinearPieChartDonutText = ({ data = sampleChartData.pie, className = "" }) => (
+export const NexPieChartDonutText = ({ data = sampleChartData.pie, className = "" }) => (
   <ChartContainer className={className}>
     <PieChart>
       <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value">
@@ -442,7 +442,7 @@ export const LinearPieChartDonutText = ({ data = sampleChartData.pie, className 
 
 // ===== shadcn Radial Variants =====
 // Radial Chart - Label
-export const LinearRadialChartLabel = ({ data = sampleChartData.radial, className = "" }) => (
+export const NexRadialChartLabel = ({ data = sampleChartData.radial, className = "" }) => (
   <ChartContainer className={className}>
     <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="80%" data={data}>
       <RadialBar dataKey="value" background />
@@ -453,7 +453,7 @@ export const LinearRadialChartLabel = ({ data = sampleChartData.radial, classNam
 );
 
 // Radial Chart - Text
-export const LinearRadialChartText = ({ data = sampleChartData.radial, className = "" }) => (
+export const NexRadialChartText = ({ data = sampleChartData.radial, className = "" }) => (
   <ChartContainer className={className}>
     <RadialBarChart cx="50%" cy="50%" innerRadius="30%" outerRadius="80%" data={data}>
       <RadialBar dataKey="value" background />
@@ -472,7 +472,7 @@ export const LinearRadialChartText = ({ data = sampleChartData.radial, className
   </ChartContainer>
 );
 // Radar Chart 컴포넌트들
-export const LinearRadarChart = ({ data = sampleChartData.radar, className = "" }) => (
+export const NexRadarChart = ({ data = sampleChartData.radar, className = "" }) => (
   <ChartContainer className={className}>
     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
       <PolarGrid className="stroke-gray-200 dark:stroke-gray-700" />
@@ -514,7 +514,7 @@ export const LinearRadarChart = ({ data = sampleChartData.radar, className = "" 
   </ChartContainer>
 );
 
-export const LinearRadarChartDots = ({ data = sampleChartData.radar, className = "" }) => (
+export const NexRadarChartDots = ({ data = sampleChartData.radar, className = "" }) => (
   <ChartContainer className={className}>
     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
       <PolarGrid className="stroke-gray-200 dark:stroke-gray-700" />
@@ -541,7 +541,7 @@ export const LinearRadarChartDots = ({ data = sampleChartData.radar, className =
   </ChartContainer>
 );
 
-export const LinearRadarChartFilled = ({ data = sampleChartData.radar, className = "" }) => (
+export const NexRadarChartFilled = ({ data = sampleChartData.radar, className = "" }) => (
   <ChartContainer className={className}>
     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
       <PolarGrid className="stroke-gray-200 dark:stroke-gray-700" />

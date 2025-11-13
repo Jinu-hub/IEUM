@@ -3,19 +3,19 @@ import { useEffect, useState } from 'react';
 import { data, redirect, useFetcher, useSearchParams, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
 import {
-  BookOpenIcon,
-  CheckCircleIcon,
-  GitHubIcon,
-  HashIcon,
-  LinearBadge,
-  LinearCard,
-  LinearCardContent,
-  LinearCardDescription,
-  LinearCardHeader,
-  LinearCardTitle,
-  LockIcon,
-  SlackIcon
-} from '~/core/components/linear';
+    BookOpenIcon,
+    CheckCircleIcon,
+    GitHubIcon,
+    HashIcon,
+    NexBadge,
+    NexCard,
+    NexCardContent,
+    NexCardDescription,
+    NexCardHeader,
+    NexCardTitle,
+    LockIcon,
+    SlackIcon
+} from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
 import { getIntegrationsInfo, getWorkspace } from '../db/queries';
@@ -341,12 +341,12 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
       {/* 통합 서비스 카드 목록 */}
       <div className="grid gap-6">
         {integrations.map((integration) => (
-          <LinearCard
+          <NexCard
             key={integration.type}
             variant="default"
             className="transition-all duration-200 hover:shadow-lg"
           >
-            <LinearCardHeader>
+            <NexCardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className={cn(
@@ -358,23 +358,23 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                   </div>
                   <div>
                     <div className="flex items-center">
-                      <LinearCardTitle as="h3" className="text-xl">
+                      <NexCardTitle as="h3" className="text-xl">
                         {integration.name}
-                      </LinearCardTitle>
+                      </NexCardTitle>
                       {getStatusBadge(integration.status)}
                     </div>
-                    <LinearCardDescription className="mt-1">
+                    <NexCardDescription className="mt-1">
                       {integration.description}
-                    </LinearCardDescription>
+                    </NexCardDescription>
                   </div>
                 </div>
                 <div className="flex items-center">
                   {getActionButton(integration)}
                 </div>
               </div>
-            </LinearCardHeader>
+            </NexCardHeader>
 
-            <LinearCardContent>
+            <NexCardContent>
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-2">
@@ -450,7 +450,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                                   .map((repo: any) => {
                                     const RepoIcon = repo.private ? LockIcon : BookOpenIcon;
                                     return (
-                                      <LinearBadge
+                                      <NexBadge
                                         key={repo.id}
                                         variant={"success"}
                                         size="sm"
@@ -458,7 +458,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                                         icon={<RepoIcon className="w-2.5 h-2.5" />}
                                       >
                                         {repo.name}
-                                      </LinearBadge>
+                                      </NexBadge>
                                     );
                                   })}
                                 {integration.resourceCache.repos.length > 10 && (
@@ -550,7 +550,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                                     const canInteract = !isLoading && (!currentMembership || canLeave);
                                     
                                     return (
-                                      <LinearBadge
+                                      <NexBadge
                                         key={channel.id || index}
                                         variant={currentMembership ? "success" : "warning"}
                                         size="sm"
@@ -591,7 +591,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                                         {currentMembership && !canLeave && !isLoading && (
                                           <span className="ml-1 text-xs opacity-60">🔒</span>
                                         )}
-                                      </LinearBadge>
+                                      </NexBadge>
                                     );
                                   })}
                                 {integration.resourceCache.channels.length > 10 && (
@@ -618,22 +618,22 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                   </div>
                 )}
               </div>
-            </LinearCardContent>
-          </LinearCard>
+            </NexCardContent>
+          </NexCard>
         ))}
       </div>
 
       {/* 도움말 섹션 */}
-      <LinearCard variant="outlined" className="mt-8">
-        <LinearCardHeader>
-          <LinearCardTitle as="h3" className="text-lg">
+      <NexCard variant="outlined" className="mt-8">
+        <NexCardHeader>
+          <NexCardTitle as="h3" className="text-lg">
             연결 도움말
-          </LinearCardTitle>
-          <LinearCardDescription>
+          </NexCardTitle>
+          <NexCardDescription>
             외부 서비스 연결에 대한 추가 정보
-          </LinearCardDescription>
-        </LinearCardHeader>
-        <LinearCardContent>
+          </NexCardDescription>
+        </NexCardHeader>
+        <NexCardContent>
           <div className="space-y-4 text-sm">
             <div>
               <h4 className="font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-2 flex items-center space-x-2">
@@ -662,8 +662,8 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
             </div>
 
           </div>
-        </LinearCardContent>
-      </LinearCard>
+        </NexCardContent>
+      </NexCard>
     </div>
   );
 }

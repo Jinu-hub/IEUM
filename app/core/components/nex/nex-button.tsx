@@ -1,8 +1,8 @@
 import React from 'react';
+import { nexTheme } from '~/core/lib/theme';
 import { cn } from '~/core/lib/utils';
-import { linearTheme } from '~/core/lib/theme';
 
-export interface LinearButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface NexButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'gradient';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
@@ -12,7 +12,7 @@ export interface LinearButtonProps extends React.ButtonHTMLAttributes<HTMLButton
 }
 
 const getButtonStyles = (variant: string, size: string) => {
-  const theme = linearTheme.components.button;
+  const theme = nexTheme.components.button;
   
   const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
   
@@ -32,7 +32,7 @@ const getButtonStyles = (variant: string, size: string) => {
   return cn(baseStyles, sizeStyles[size as keyof typeof sizeStyles], variantStyles[variant as keyof typeof variantStyles]);
 };
 
-export const LinearButton: React.FC<LinearButtonProps> = ({
+export const NexButton: React.FC<NexButtonProps> = ({
   variant = 'primary',
   size = 'md',
   children,

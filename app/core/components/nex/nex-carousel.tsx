@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '~/core/lib/utils';
 
-export interface LinearCarouselProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NexCarouselProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode[];
   autoPlay?: boolean;
   autoPlayInterval?: number;
@@ -21,7 +21,7 @@ export interface LinearCarouselProps extends React.HTMLAttributes<HTMLDivElement
   }[];
 }
 
-export const LinearCarousel: React.FC<LinearCarouselProps> = ({
+export const NexCarousel: React.FC<NexCarouselProps> = ({
   children,
   autoPlay = false,
   autoPlayInterval = 3000,
@@ -211,11 +211,11 @@ export const LinearCarousel: React.FC<LinearCarouselProps> = ({
   );
 };
 
-export interface LinearCarouselItemProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NexCarouselItemProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
-export const LinearCarouselItem: React.FC<LinearCarouselItemProps> = ({
+export const NexCarouselItem: React.FC<NexCarouselItemProps> = ({
   children,
   className,
   ...props
