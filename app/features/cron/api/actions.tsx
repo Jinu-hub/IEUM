@@ -11,6 +11,7 @@ import { runSlackFetch } from "~/core/integrations/slack/run";
 import { isScheduledWithinHour } from "~/core/lib/cron-utils";
 import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
+import type { CreateContentsInput } from "~/core/lib/types";
 import { createNewsletterRun, updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
 import { getIntegrationsInfo, getTargetSources } from "~/features/settings/db/queries";
 import { createContents } from "./create-contents";
@@ -182,28 +183,31 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
           const endDate = new Date();
           const startDate = new Date();
           startDate.setDate(endDate.getDate() - 7);
-          const period = `${startDate.getFullYear()}-${startDate.getMonth() + 1}-${startDate.getDate()} ~ ${endDate.getFullYear()}-${endDate.getMonth() + 1}-${endDate.getDate()}`;
-
-          // コンテンツを生成
-          const content = await createContents({
+          const range = `${startDate.getFullYear()}-${startDate.getMonth() + 1}-${startDate.getDate()} ~ ${endDate.getFullYear()}-${endDate.getMonth() + 1}-${endDate.getDate()}`;
+          const input: CreateContentsInput = {
             githubResult : githubResult || null,
             slackResult : slackResult ? Object.fromEntries(
               Object.entries(slackResult).map(([key, value]) => [key, value.messages])
             ) : null,
             workspaceId: target.workspace_id,
             targetId: target.target_id,
-            period: period,
+            period: 'weekly',
+            range: range,
+            from: startDate,
+            to: endDate,
             runId: runMapping[target.target_id].runId,
             runStepId: runMapping[target.target_id].runStepId,
             language: "ja",
             source: "slack",
             timezone: target.timezone
-          });
-          
+          }
+          // コンテンツを生成
+          const content = await createContents(input);
           logger.info('Contents generation completed', { 
             targetId: target.target_id,
             result: content.status
           });
+          
           await updateNewsletterRun(adminClient, { 
             runId: runMapping[target.target_id].runId, 
             runStepId: runMapping[target.target_id].runStepId, 
@@ -212,9 +216,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
             metricsJson: {} 
           });
 
-          await sendMails(target.workspace_id, 
-            runMapping[target.target_id].runId,
-            target.target_id, target.display_name, target.mailing_list_id || '', 
+          await sendMails(input, target.display_name, target.mailing_list_id || '', 
             slackResult, content.data as { finalContents: string, htmlContents: string });
 
         }
@@ -384,28 +386,31 @@ export async function action({ request, params }: ActionFunctionArgs) {
           const endDate = new Date();
           const startDate = new Date();
           startDate.setDate(endDate.getDate() - 7);
-          const period = `${startDate.getFullYear()}-${startDate.getMonth() + 1}-${startDate.getDate()} ~ ${endDate.getFullYear()}-${endDate.getMonth() + 1}-${endDate.getDate()}`;
-
-          // コンテンツを生成
-          const content = await createContents({
+          const range = `${startDate.getFullYear()}-${startDate.getMonth() + 1}-${startDate.getDate()} ~ ${endDate.getFullYear()}-${endDate.getMonth() + 1}-${endDate.getDate()}`;
+          const input: CreateContentsInput = {
             githubResult : githubResult || null,
             slackResult : slackResult ? Object.fromEntries(
               Object.entries(slackResult).map(([key, value]) => [key, value.messages])
             ) : null,
             workspaceId: target.workspace_id,
             targetId: target.target_id,
-            period: period,
-            language: "ja",
-            source: "slack",
-            timezone: target.timezone,
+            period: 'weekly',
+            range: range,
+            from: startDate,
+            to: endDate,
             runId: runMapping[target.target_id].runId,
             runStepId: runMapping[target.target_id].runStepId,
-          });
-          
+            language: "ja",
+            source: "slack",
+            timezone: target.timezone
+          }
+          // コンテンツを生成
+          const content = await createContents(input);
           logger.info('Contents generation completed', { 
             targetId: target.target_id,
             result: content.status
           });
+          
           await updateNewsletterRun(adminClient, { 
             runId: runMapping[target.target_id].runId, 
             runStepId: runMapping[target.target_id].runStepId, 
@@ -414,9 +419,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
             metricsJson: {} 
           });
 
-          await sendMails(target.workspace_id, 
-            runMapping[target.target_id].runId,
-            target.target_id, target.display_name, target.mailing_list_id || '', 
+          await sendMails(input, target.display_name, target.mailing_list_id || '', 
             slackResult, content.data as { finalContents: string, htmlContents: string });
 
         }

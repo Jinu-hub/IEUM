@@ -172,9 +172,10 @@ export const updateNewsletterRunStep = async (client: SupabaseClient<Database>,
 
 
 export const saveNewsletterEditions = async (client: SupabaseClient<Database>, 
-    { workspaceId, runId, targetId, subject, htmlBody, textBody, statsJson, sentAt, status, providerMessageId, failureReason }: 
+    { workspaceId, runId, targetId, subject, htmlBody, textBody, statsJson, sentAt, status, providerMessageId, failureReason, period, periodKey }: 
     { workspaceId: string, runId: string, targetId: string, subject: string, htmlBody: string, textBody: string
-        , statsJson: any, sentAt: string, status: string, providerMessageId: string, failureReason: string | null }) => {
+        , statsJson: any, sentAt: string, status: string, providerMessageId: string, failureReason: string | null
+        , period: string, periodKey: string }) => {
     try {
         const sentAtValue = sentAt ?? new Date().toISOString();
         const { data: newsletterEditions, error } = await client
@@ -191,6 +192,8 @@ export const saveNewsletterEditions = async (client: SupabaseClient<Database>,
                 status: status as Database["public"]["Enums"]["mail_status"],
                 provider_message_id: providerMessageId,
                 failure_reason: failureReason,
+                period: period as Database["public"]["Enums"]["period"],
+                period_key: periodKey,
             })
             .select()
             .single();

@@ -59,16 +59,16 @@ export async function analyzeData(
 ): Promise<any> {
     logger.info('📝 Analyzing data started');
     const language = input.language;
-    const period = 'weekly';
-    const periodKey = generatePeriodKey(period);
+    const period = input.period;
+    const periodKey = generatePeriodKey(period, input.from);
 
     // 2-1. github data를 기반으로 kpi snapshot을 생성
     const kpiInfo = await repoKpiExtractor(input.githubResult || {});
-    const metaJson = createGithubHighlightMetaJson(kpiInfo, input.period);
+    const metaJson = createGithubHighlightMetaJson(kpiInfo, input.range);
     await saveHighlight(adminClient, {
         workspaceId: input.workspaceId,
         runId: input.runId,
-        source: 'github',
+        source: 'github-kpi',
         title: 'Github Kpi snapshot',
         url: null,
         weight: 1,
@@ -82,11 +82,11 @@ export async function analyzeData(
     //await saveContentToFile(kpiInfo, 'output-test', 'kpi_info_', 'json');
 
     // 2-2. slack data를 기반으로 topic clustering을 생성
-    const topicsTemp = await topicClustering(linkedData, language, input.source, input.period);
+    const topicsTemp = await topicClustering(linkedData, language, input.source, input.range);
     await saveHighlight(adminClient, {
         workspaceId: input.workspaceId,
         runId: input.runId,
-        source: 'slack',
+        source: 'slack-activity',
         title: 'Slack channel activity',
         url: null,
         weight: 1,
@@ -103,7 +103,7 @@ export async function analyzeData(
     let count = 0;
     for (const highlight of highlightsTemp) {
         count++;
-        const metaJson = createChatroomHighlightMetaJson(highlight, period);
+        const metaJson = createChatroomHighlightMetaJson(highlight, period, input.range);
         await saveHighlight(adminClient, {
             workspaceId: input.workspaceId,
             runId: input.runId,
@@ -243,7 +243,7 @@ export async function mergeContents(input: CreateContentsInput,
         mainTemplate = mainTemplate.replace('{{MEMBER_ACTIVITY_SECTION}}', memberSection);
         mainTemplate = mainTemplate.replace('{{ONGOING_SECTION}}', ongoingSection);
 
-        baseTemplate = baseTemplate.replace('{{PERIOD}}', input.period);
+        baseTemplate = baseTemplate.replace('{{PERIOD}}', input.range);
         baseTemplate = baseTemplate.replace('{{KPI_SECTION}}', kpiSection);
         baseTemplate = baseTemplate.replace('{{MAIN_SECTION}}', mainTemplate);
         baseTemplate = baseTemplate.replace('{{CLOSING_SECTION}}', closingSection);

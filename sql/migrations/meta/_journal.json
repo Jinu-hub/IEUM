@@ -78,6 +78,13 @@
       "when": 1762678385652,
       "tag": "0010_mighty_ulik",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1762753453868,
+      "tag": "0011_oval_katie_power",
+      "breakpoints": true
     }
   ]
 }

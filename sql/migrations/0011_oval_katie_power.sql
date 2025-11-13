@@ -1,0 +1,2 @@
+ALTER TABLE "newsletter_editions" ADD COLUMN "period" "period" DEFAULT 'weekly' NOT NULL;--> statement-breakpoint
+ALTER TABLE "newsletter_editions" ADD COLUMN "period_key" text DEFAULT 'current' NOT NULL;

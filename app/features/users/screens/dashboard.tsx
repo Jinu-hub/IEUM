@@ -1,27 +1,25 @@
-import React from 'react';
-import type { Route } from "./+types/dashboard";
 import { data, redirect } from 'react-router';
-import { 
-  LinearCard, 
-  LinearCardContent,
+import {
+  BookOpenIcon,
+  CheckCircleIcon,
+  DiscordIcon,
+  GitHubIcon,
   LinearBadge,
   LinearButton,
-  GitHubIcon,
-  SlackIcon,
-  DiscordIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  BookOpenIcon,
+  LinearCard,
+  LinearCardContent,
   LockIcon,
+  SlackIcon,
+  XCircleIcon,
 } from '~/core/components/linear';
-import { cn } from '~/core/lib/utils';
-import type { EmailStatus } from '~/features/contents/lib/types';
-import { sampleSentEmails } from '~/features/contents/lib/mackData';
-import { getStatusConfig } from '~/features/contents/lib/common';
-import { getNextScheduledTime, formatTimeUntil } from '~/features/settings/lib/scheduleUtils';
-import { sampleTargets } from '~/features/settings/lib/mockdata';
+import type { MAIL_STATUS } from '~/core/lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
+import { cn } from '~/core/lib/utils';
+import { getSentEmailList } from '~/features/contents/db/queries';
+import { getStatusConfig } from '~/features/contents/lib/common';
 import { getIntegrationsInfo, getTargets, getWorkspace } from '~/features/settings/db/queries';
+import { formatTimeUntil, getNextScheduledTime } from '~/features/settings/lib/scheduleUtils';
+import type { Route } from "./+types/dashboard";
 
 export const meta: Route.MetaFunction = () => {
   return [{ title: `Dashboard | ${import.meta.env.VITE_APP_NAME}` }];
@@ -39,23 +37,24 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const workspaceId = workspace[0].workspace_id;
   const integrationsInfo = await getIntegrationsInfo(client, { workspaceId: workspaceId });
   const targets = await getTargets(client, { workspaceId: workspaceId });
-  return data({ user, workspaceId, integrationsInfo, targets });
+  const sentEmails = await getSentEmailList(client, { workspaceId: workspaceId });
+  return data({ user, workspaceId, integrationsInfo, targets, sentEmails });
 };
 
 
 export default function Dashboard( { loaderData }: Route.ComponentProps ) {
-  const { user, workspaceId, integrationsInfo, targets } = loaderData;
+  const { user, workspaceId, integrationsInfo, targets, sentEmails } = loaderData;
   const isConnectedGitHub = integrationsInfo?.find((integration: any) => integration.type === 'github')?.connection_status === 'connected';
   const isConnectedSlack = integrationsInfo?.find((integration: any) => integration.type === 'slack')?.connection_status === 'connected';
   const githubData = integrationsInfo?.find((integration: any) => integration.type === 'github')?.resource_cache_json as any;
   const slackData = integrationsInfo?.find((integration: any) => integration.type === 'slack')?.resource_cache_json as any;
   const accessibleChannelsCount = slackData?.channels?.filter((channel: any) => channel.is_member === true).length || 0;
-
+  
   // 이메일 통계 계산
   const emailStats = {
-    sent: sampleSentEmails.filter(email => email.status === 'sent').length,
-    delivered: sampleSentEmails.filter(email => email.status === 'delivered').length,
-    failed: sampleSentEmails.filter(email => email.status === 'failed').length,
+    sending: sentEmails.filter(email => email.status === 'sending').length,
+    delivered: sentEmails.filter(email => email.status === 'delivered').length,
+    failed: sentEmails.filter(email => email.status === 'failed').length,
   };
 
   return (
@@ -438,9 +437,9 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { status: 'sent' as EmailStatus, count: emailStats.sent },
-            { status: 'delivered' as EmailStatus, count: emailStats.delivered },
-            { status: 'failed' as EmailStatus, count: emailStats.failed }
+            { status: 'sending' as typeof MAIL_STATUS[number], count: emailStats.sending },
+            { status: 'delivered' as typeof MAIL_STATUS[number], count: emailStats.delivered },
+            { status: 'failed' as typeof MAIL_STATUS[number], count: emailStats.failed }
           ].map(({ status, count }) => {
             const statusConfig = getStatusConfig(status);
             const StatusIcon = statusConfig.icon;
@@ -449,10 +448,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               <LinearCard key={status} variant="outlined" hoverable>
                 <LinearCardContent className="p-4">
                   <div className="flex items-center space-x-3">
-                    <div className={cn("p-2 rounded-full", statusConfig.bgColor)}>
-                      <div className={cn("h-5 w-5", statusConfig.color)}>
-                        <StatusIcon />
-                      </div>
+                    <div className={cn("p-2 rounded-full flex items-center justify-center", statusConfig.bgColor)}>
+                      <StatusIcon className={cn("h-5 w-5", statusConfig.color)} />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "database.types";
+import { getPeriodKeyRange } from "~/core/processes/utils";
 
 export const getSentEmailList = async (
   client: SupabaseClient<Database>,
@@ -84,3 +85,72 @@ export const getSentEmail = async (
     textBody: data.text_body || '',
   };
 };
+
+
+export async function getHighlightsMetadata(
+  client: SupabaseClient<Database>,
+  { workspaceId, period, periodNumber, source }: 
+  { workspaceId: string, period: string, periodNumber: number, source?: string },
+) {
+  const { startKey, endKey } = getPeriodKeyRange(period, periodNumber);
+
+  let query = client
+    .from("highlights")
+    .select("period_key, meta_json")
+    .eq("workspace_id", workspaceId)
+    .eq("period", period as Database["public"]["Enums"]["period"])
+    .gte("period_key", startKey)
+    .lte("period_key", endKey);
+  if (source) {
+    query = query.eq("source", source)
+  }
+  query = query.order("created_at", { ascending: false });
+  const { data, error } = await query;
+  if (error) {
+    console.log('getHighlights error', error);
+    throw error;
+  }
+  return data;
+}
+
+
+export async function getHighlightsCount(
+  client: SupabaseClient<Database>,
+  { workspaceId, period, periodNumber, source }: 
+  { workspaceId: string, period: string, periodNumber: number, source?: string },
+) {
+  const { startKey, endKey } = getPeriodKeyRange(period, periodNumber);
+  let query = client
+    .from('highlights')
+    .select('*', { count: 'exact', head: true })
+    .eq('workspace_id', workspaceId)
+    .eq('period', period as Database["public"]["Enums"]["period"])
+    .gte('period_key', startKey)
+    .lte('period_key', endKey);
+  if (source) {
+    query = query.eq('source', source);
+  }
+  const { count, error } = await query;
+  if (error) {
+    console.log('getHighlightsCount error', error);
+    throw error;  
+  }
+  return count ?? 0;
+}
+
+export async function getSentEmailMetadata(client: SupabaseClient<Database>, 
+  { workspaceId, period, periodNumber }: { workspaceId: string, period: string, periodNumber: number }) {
+  const { startKey, endKey } = getPeriodKeyRange(period, periodNumber);
+  const { data, error } = await client
+    .from('newsletter_editions')
+    .select('period_key, stats_json')
+    .eq('workspace_id', workspaceId)
+    .eq('period', period as Database["public"]["Enums"]["period"])
+    .gte('period_key', startKey)
+    .lte('period_key', endKey);
+  if (error) {
+    console.log('getSentEmails error', error);
+    throw error;
+  }
+  return data;
+}

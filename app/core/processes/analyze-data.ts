@@ -189,7 +189,7 @@ export async function topicClustering(
     linkedData: LinkedActivityDoc, 
     language: SupportedLanguage = 'en',
     source: string = 'slack',
-    period?: string,
+    range?: string,
 ): Promise<z.infer<typeof TopicOutput> & { activityMeta: ChatroomActivityMetaJson[] }> {
     const slackData = linkedData.items.slack;
     
@@ -285,7 +285,7 @@ export async function topicClustering(
         activityDetails.length > 0
             ? [
                   {
-                      period: period ?? '',
+                      range: range ?? '',
                       activities: activityDetails,
                   },
               ]

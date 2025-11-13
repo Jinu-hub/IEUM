@@ -498,6 +498,8 @@ import {
       failureReason: text("failure_reason"),
       isArchived: boolean("is_archived").notNull().default(false),
       archivedAt: timestamp("archived_at", { withTimezone: true }),
+      period: period("period").notNull().default("weekly"),
+      periodKey: text("period_key").notNull().default("current"),
     },
     (table) => [
       index("idx_editions_ws_target_sent").on(table.workspaceId, table.targetId, table.sentAt),

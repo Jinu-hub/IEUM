@@ -14,6 +14,9 @@ export type CreateContentsInput = {
   runId: string;
   runStepId: string;
   period: string;
+  range: string;
+  from: Date;
+  to: Date;
   language: 'en' | 'ko' | 'ja';
   source: string;
   timezone?: string;
@@ -255,14 +258,14 @@ export type RankedHighlight = {
 };
 
 export type GithubHighlightMetaJson = {
-  period: string;
+  range: string;
   totalCommits: number;
   commitsByDeveloper: { developer: string; commits: number }[];
   commitsByCase: { case: string; commits: number }[];
 };
 
 export type ChatroomActivityMetaJson = {
-  period: string;
+  range: string;
   activities: {
     channelName: string;
     messageCount: number;
@@ -272,7 +275,7 @@ export type ChatroomActivityMetaJson = {
 };
 
 export type ChatroomHighlightMetaJson = {
-  period: string;
+  range: string;
   clusterId: string;
   summary: string;
   audience: "internal" | "engineering" | "product" | "leadership" | "all";

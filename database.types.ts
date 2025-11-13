@@ -427,6 +427,8 @@ export type Database = {
           failure_reason: string | null
           html_body: string
           is_archived: boolean
+          period: Database["public"]["Enums"]["period"]
+          period_key: string
           provider_message_id: string | null
           run_id: string | null
           sent_at: string | null
@@ -444,6 +446,8 @@ export type Database = {
           failure_reason?: string | null
           html_body: string
           is_archived?: boolean
+          period?: Database["public"]["Enums"]["period"]
+          period_key?: string
           provider_message_id?: string | null
           run_id?: string | null
           sent_at?: string | null
@@ -461,6 +465,8 @@ export type Database = {
           failure_reason?: string | null
           html_body?: string
           is_archived?: boolean
+          period?: Database["public"]["Enums"]["period"]
+          period_key?: string
           provider_message_id?: string | null
           run_id?: string | null
           sent_at?: string | null

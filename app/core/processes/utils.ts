@@ -208,10 +208,10 @@ export function getFunCornerLeaderboardData(linkedData: LinkedActivityDoc, kpiDa
 /**
  * github data를 기반으로 highlight meta json을 생성
  * @param kpiData 
- * @param period 
+ * @param range 
  * @returns 
  */
-export function createGithubHighlightMetaJson(kpiData: KpiSnapshot, period: string): GithubHighlightMetaJson {
+export function createGithubHighlightMetaJson(kpiData: KpiSnapshot, range: string): GithubHighlightMetaJson {
     const totalCommits = kpiData?.overall?.commits ?? 0;
 
     const perUser = [...(kpiData?.perUser ?? [])].sort(
@@ -229,14 +229,17 @@ export function createGithubHighlightMetaJson(kpiData: KpiSnapshot, period: stri
         });
     }
 
-    const perCase = [...(kpiData?.perCase ?? [])].sort(
-        (a, b) => (b.commits ?? 0) - (a.commits ?? 0),
-    );
+    const perCase = [...(kpiData?.perCase ?? [])].filter((item) => item.case !== "other");
+    perCase.sort((a, b) => (b.commits ?? 0) - (a.commits ?? 0));
     const topCases = perCase.slice(0, 5).map((item) => ({
         case: item.case,
         commits: item.commits ?? 0,
     }));
-    const otherCaseCommits = perCase.slice(5).reduce((sum, item) => sum + (item.commits ?? 0), 0);
+    const otherCaseCommits =
+        perCase.slice(5).reduce((sum, item) => sum + (item.commits ?? 0), 0) +
+        (kpiData?.perCase ?? [])
+            .filter((item) => item.case === "other")
+            .reduce((sum, item) => sum + (item.commits ?? 0), 0);
     if (otherCaseCommits > 0) {
         topCases.push({
             case: "Others",
@@ -245,7 +248,7 @@ export function createGithubHighlightMetaJson(kpiData: KpiSnapshot, period: stri
     }
 
     const meta = {
-        period: period,
+        range: range,
         totalCommits,
         commitsByDeveloper: topUsers,
         commitsByCase: topCases,
@@ -254,9 +257,10 @@ export function createGithubHighlightMetaJson(kpiData: KpiSnapshot, period: stri
     return meta;
 }
 
-export function createChatroomHighlightMetaJson(highlight: RankedHighlight, period: string): ChatroomHighlightMetaJson {
+export function createChatroomHighlightMetaJson(highlight: RankedHighlight, period: string, range: string): ChatroomHighlightMetaJson {
     const meta = {
         period: period,
+        range: range,
         clusterId: highlight.clusterId,
         summary: highlight.summary ?? '',
         audience: highlight.audience,
@@ -273,36 +277,36 @@ export function createChatroomHighlightMetaJson(highlight: RankedHighlight, peri
     return meta;
 }
 
-export function generatePeriodKey(period: string): string {
-    const now = new Date();
+function getIsoWeek(date: Date) {
+    const tmp = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    const day = tmp.getUTCDay() || 7;
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - day);
+    const year = tmp.getUTCFullYear();
+    const yearStart = new Date(Date.UTC(year, 0, 1));
+    const week = Math.ceil(((tmp.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+    return { year, week };
+}
+
+export function generatePeriodKey(period: string, baseDate: Date = new Date()): string {
     const pad = (value: number, length = 2) => value.toString().padStart(length, '0');
-    const year = now.getUTCFullYear();
+    const year = baseDate.getUTCFullYear();
 
     switch (period) {
         case 'daily': {
-            return `${year}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}`;
+            return `${year}${pad(baseDate.getUTCMonth() + 1)}${pad(baseDate.getUTCDate())}`;
         }
-        case 'weekly':
-        {
-            const jan4 = new Date(Date.UTC(year, 0, 4));
-            const dayOfYear =
-                Math.floor(
-                    (Date.UTC(year, now.getUTCMonth(), now.getUTCDate()) -
-                        Date.UTC(year, 0, 1)) /
-                        86400000,
-                ) + 1;
-            const jan4DayOfWeek = jan4.getUTCDay() || 7;
-            const weekNumber = Math.ceil((dayOfYear + jan4DayOfWeek - 1) / 7);
-            return `${year}-W${pad(weekNumber)}`;
+        case 'weekly': {
+            const { year: isoYear, week } = getIsoWeek(baseDate);
+            return `${isoYear}-W${pad(week)}`;
         }
         case 'monthly': {
-            return `${year}-${pad(now.getUTCMonth() + 1)}`;
+            return `${year}-${pad(baseDate.getUTCMonth() + 1)}`;
         }
         case 'yearly': {
             return `${year}`;
         }
         default: {
-            return now.toISOString();
+            return baseDate.toISOString();
         }
     }
 }
@@ -313,6 +317,32 @@ export function countMessagesIncludingReplies(items: LinkedItem[]): number {
         return 1 + replies.reduce((sum, reply) => sum + countFromItem(reply), 0);
     };
     return items.reduce((sum, item) => sum + countFromItem(item), 0);
+}
+
+export function getPeriodKeyRange(period: string, periodNumber: number, baseDate: Date = new Date()) {
+    const safeNumber = Math.max(0, Math.floor(periodNumber ?? 0));
+    const endKey = generatePeriodKey(period, baseDate);
+    const startDate = new Date(baseDate);
+
+    switch (period) {
+        case 'daily':
+            startDate.setUTCDate(startDate.getUTCDate() - safeNumber);
+            break;
+        case 'weekly':
+            startDate.setUTCDate(startDate.getUTCDate() - safeNumber * 7);
+            break;
+        case 'monthly':
+            startDate.setUTCMonth(startDate.getUTCMonth() - safeNumber);
+            break;
+        case 'yearly':
+            startDate.setUTCFullYear(startDate.getUTCFullYear() - safeNumber);
+            break;
+        default:
+            startDate.setUTCDate(startDate.getUTCDate() - safeNumber);
+    }
+
+    const startKey = generatePeriodKey(period, startDate);
+    return { startKey, endKey };
 }
 
 export function countReactionsIncludingReplies(items: LinkedItem[]): number {
