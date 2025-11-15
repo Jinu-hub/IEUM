@@ -37,7 +37,7 @@ export const chartColors = {
 };
 
 // 차트 툴팁 컴포넌트
-export const ChartTooltip = ({ active, payload, label }: any) => {
+export const ChartTooltip = ({ active, payload, label, dataName = "value" }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
@@ -51,7 +51,7 @@ export const ChartTooltip = ({ active, payload, label }: any) => {
               style={{ backgroundColor: entry.color }}
             />
             <span className="text-gray-600 dark:text-gray-300">
-              {entry.name}:
+              {dataName}:
             </span>
             <span className="font-medium text-gray-900 dark:text-white">
               {entry.value}
@@ -167,7 +167,7 @@ export const NexAreaChart = ({ data = sampleChartData.area, className = "" }) =>
   </ChartContainer>
 );
 
-export const NexAreaChartGradient = ({ data = sampleChartData.area, className = "" }) => (
+export const NexAreaChartGradient = ({ data = sampleChartData.area, className = "", dataName = "value" }) => (
   <ChartContainer className={className}>
     <AreaChart data={data}>
       <defs>
@@ -188,7 +188,7 @@ export const NexAreaChartGradient = ({ data = sampleChartData.area, className = 
         tickLine={false}
         axisLine={false}
       />
-      <Tooltip content={<ChartTooltip />} />
+      <Tooltip content={<ChartTooltip dataName={dataName} />} />
       <Area 
         type="monotone" 
         dataKey="value" 
@@ -342,13 +342,13 @@ export const NexLineChartArea = ({ data = sampleChartData.line, className = "" }
 
 // ===== shadcn Bar Variants =====
 // Bar Chart (기본)
-export const NexBarChart = ({ data = sampleChartData.bar, className = "" }) => (
+export const NexBarChart = ({ data = sampleChartData.bar, className = "", barName = "value" }) => (
   <ChartContainer className={className}>
     <BarChart data={data}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
       <XAxis dataKey="name" tickLine={false} axisLine={false} className="text-xs text-gray-600 dark:text-gray-400" />
       <YAxis tickLine={false} axisLine={false} className="text-xs text-gray-600 dark:text-gray-400" />
-      <Tooltip content={<ChartTooltip />} />
+      <Tooltip content={<ChartTooltip dataName={barName} />} />
       <Bar dataKey="desktop" fill={chartColors.primary[0]} radius={[4,4,0,0]} />
     </BarChart>
   </ChartContainer>
@@ -401,7 +401,7 @@ export const NexBarChartCustomLabel = ({ data = sampleChartData.bar, className =
 
 // ===== shadcn Pie Variants =====
 // Pie Chart - Label List
-export const NexPieChartLabelList = ({ data = sampleChartData.pie, className = "" }) => (
+export const NexPieChartLabelList = ({ data = sampleChartData.pie, className = "", barName = "value" }) => (
   <ChartContainer className={className}>
     <PieChart>
       <Pie data={data} cx="50%" cy="50%" outerRadius={80} dataKey="value">
@@ -410,7 +410,7 @@ export const NexPieChartLabelList = ({ data = sampleChartData.pie, className = "
         ))}
         <LabelList dataKey="name" position="outside" className="fill-current text-gray-600 dark:text-gray-300" />
       </Pie>
-      <Tooltip content={<ChartTooltip />} />
+      <Tooltip content={<ChartTooltip dataName={barName} />} />
       <Legend />
     </PieChart>
   </ChartContainer>

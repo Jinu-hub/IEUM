@@ -2,6 +2,7 @@ import { CalendarRange, GitCommit, MailCheck, MessageSquareDot, Sparkles } from 
 import { data, redirect } from 'react-router';
 import {
   NexAreaChart,
+  NexAreaChartGradient,
   NexBadge,
   NexBarChart,
   NexCard,
@@ -9,13 +10,14 @@ import {
   NexCardHeader,
   NexCardTitle,
   NexLineChart,
-  NexPieChartLabelList
+  NexPieChartLabelList,
+  chartColors,
 } from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { getHighlightsCount, getHighlightsMetadata, getSentEmailMetadata } from '~/features/contents/db/queries';
 import { getWorkspace } from '~/features/settings/db/queries';
-import { gitHubCommitsByDeveloper, gitHubCommitsByRepo, gitHubIssuesByLabel, newsletterMetrics, slackChannelActivity } from '~/features/users/lib/mockdata';
-import { extractEmailSentData, extractGitHubKpiData, extractSlackActivityData } from '../lib/utils';
+import { newsletterMetrics, slackChannelActivity } from '~/features/users/lib/mockdata';
+import { createGithubCaseCommitData, createGithubCommitRaw, createGithubDeveloperCommitData, extractEmailSentData, extractGitHubKpiData, extractSlackActivityData } from '../lib/utils';
 import type { Route } from './+types/analytics';
 
 export const meta: Route.MetaFunction = () => {
@@ -47,7 +49,27 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
   const { emailSentCount, emailSentMemberCount, emailSentRange } = emailSummary;
   const hasEmailMetadata = emailSentCount > 0;
   const commitCount = githubSummary.latest?.meta.totalCommits ?? 0;
-  console.log(githubSummary);
+  
+  // GitHub 커밋 추이 데이터 준비 (최근 8주간)
+  const githubCommitData = createGithubCommitRaw(githubSummary.perPeriod);
+  const githubCaseData = createGithubCaseCommitData(githubSummary.perPeriod);
+  const caseColorPalette = [
+    chartColors.primary[0],        // Nex Blue
+    '#0EA5E9',                     // Sky Blue
+    chartColors.success[0],        // Emerald
+    chartColors.warning[0],        // Amber
+    '#F472B6',                     // Pink
+    chartColors.primary[1],
+    '#22D3EE',                     // Cyan
+    chartColors.success[1],
+    '#FB923C',                     // Orange
+    '#C084FC',                     // Soft Purple
+  ];
+  const githubCaseDataWithColor = githubCaseData.map((item, index) => ({
+    ...item,
+    color: caseColorPalette[index % caseColorPalette.length],
+  }));
+  const githubDeveloperData = createGithubDeveloperCommitData(githubSummary.perPeriod);
   const slackActivities = slackSummary.latest?.activities ?? [];
   const slackRange = slackSummary.latest?.range ?? "";
   const totalMessageCount = slackActivities.reduce<number>((sum, activity) => {
@@ -189,14 +211,21 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
             <NexCardHeader>
               <NexCardTitle>주간 커밋 현황</NexCardTitle>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                최근 4주간 커밋 현황
+                최근 8주간 커밋 현황
               </p>
             </NexCardHeader>
             <NexCardContent className="mt-6">
-              <NexPieChartLabelList 
-                data={gitHubCommitsByRepo}
-                className="h-64"
-              />
+              {githubCommitData.length > 0 ? (
+                <NexAreaChartGradient 
+                  data={githubCommitData}
+                  className="h-64"
+                  dataName="commits"
+                />
+              ) : (
+                <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                  <p className="text-sm">데이터가 없습니다</p>
+                </div>
+              )}
             </NexCardContent>
           </NexCard>
 
@@ -205,18 +234,21 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
             <NexCardHeader>
               <NexCardTitle>개발자별 커밋수</NexCardTitle>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                이번 달 기준 커밋 활동
+                최근 4주간 개발자별 커밋 현황
               </p>
             </NexCardHeader>
             <NexCardContent className="mt-6">
-              <NexBarChart 
-                data={gitHubCommitsByDeveloper.map(dev => ({ 
-                  name: dev.name, 
-                  desktop: dev.commits,
-                  mobile: dev.additions 
-                }))}
-                className="h-64"
-              />
+              {githubDeveloperData.length > 0 ? (
+                <NexBarChart 
+                  data={githubDeveloperData}
+                  className="h-64"
+                  barName="commits"
+                />
+              ) : (
+                <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                  <p className="text-sm">데이터가 없습니다</p>
+                </div>
+              )}
             </NexCardContent>
           </NexCard>
 
@@ -229,30 +261,37 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
               </p>
             </NexCardHeader>
             <NexCardContent className="mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <NexPieChartLabelList 
-                  data={gitHubIssuesByLabel}
-                  className="h-64"
-                />
-                <div className="space-y-4">
-                  {gitHubIssuesByLabel.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div 
-                          className="w-4 h-4 rounded-full" 
-                          style={{ backgroundColor: item.color }}
-                        />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {item.name}
-                        </span>
+              {githubCaseDataWithColor.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <NexPieChartLabelList 
+                    data={githubCaseDataWithColor}
+                    className="h-64"
+                    barName="commits"
+                  />
+                  <div className="space-y-4">
+                    {githubCaseDataWithColor.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div
+                            className="w-3.5 h-3.5 rounded-full"
+                            style={{ backgroundColor: item.color }}
+                          />
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            {item.name}
+                          </span>
+                        </div>
+                        <NexBadge variant="outline" size="sm">
+                          {item.value}건
+                        </NexBadge>
                       </div>
-                      <NexBadge variant="outline" size="sm">
-                        {item.value}건
-                      </NexBadge>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                  <p className="text-sm">데이터가 없습니다</p>
+                </div>
+              )}
             </NexCardContent>
           </NexCard>
 

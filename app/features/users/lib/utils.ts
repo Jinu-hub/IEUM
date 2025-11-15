@@ -297,3 +297,86 @@ export function extractSlackActivityData(slackActivity: SlackActivityMetadataRow
     perPeriod,
   };
 }
+
+type GithubSummaryPeriod = ReturnType<typeof extractGitHubKpiData>['perPeriod'][number];
+
+type GithubDeveloperEntry = {
+  name?: unknown;
+  developer?: unknown;
+  commits?: unknown;
+  count?: unknown;
+};
+
+export function createGithubCommitRaw(perPeriod: GithubSummaryPeriod[]) {
+  const mapped = perPeriod
+    .slice(0, 8)
+    .map((period) => {
+      const periodKey = period?.periodKey ?? '';
+      const displayName = periodKey.includes('-W')
+        ? `W${periodKey.split('-W')[1]}`
+        : periodKey || 'Unknown';
+      const totalCommits = typeof period?.meta?.totalCommits === 'number'
+        ? period.meta.totalCommits
+        : 0;
+
+      return {
+        name: displayName,
+        value: totalCommits,
+        value2: 0,
+      };
+    });
+
+  if (mapped.length === 1) {
+    mapped.push({ name: 'None', value: 0, value2: 0 });
+  }
+
+  return mapped.reverse();
+}
+
+export function createGithubDeveloperCommitData(
+  perPeriod: GithubSummaryPeriod[],
+  topN: number = 5,
+) {
+  const latest = perPeriod[0];
+  if (!latest) {
+    return [] as Array<{ name: string; desktop: number; mobile: number }>;
+  }
+
+  const developers = Array.isArray(latest?.meta?.commitsByDeveloper)
+    ? (latest.meta?.commitsByDeveloper as GithubDeveloperEntry[])
+    : [];
+
+  const mapped = developers.map((entry) => {
+    const rawName = (typeof entry.name === 'string' && entry.name)
+      || (typeof entry.developer === 'string' && entry.developer)
+      || 'Unknown';
+    const rawCommits = entry.commits ?? entry.count;
+    const commits = typeof rawCommits === 'number'
+      ? rawCommits
+      : typeof rawCommits === 'string'
+        ? Number(rawCommits)
+        : 0;
+
+    return {
+      name: rawName,
+      desktop: Number.isFinite(commits) ? commits : 0,
+      mobile: 0,
+    };
+  });
+
+  const othersEntry = mapped.find((item) => item.name === 'Others');
+  const withoutOthers = mapped
+    .filter((item) => item.name !== 'Others')
+    .sort((a, b) => b.desktop - a.desktop);
+
+  const topWithoutOthers = withoutOthers.slice(0, Math.max(topN - 1, 0));
+  const result = [...topWithoutOthers];
+
+  if (othersEntry) {
+    result.push(othersEntry);
+  } else if (withoutOthers.length > topWithoutOthers.length && topN > topWithoutOthers.length) {
+    result.push(withoutOthers[topWithoutOthers.length]);
+  }
+
+  return result.slice(0, topN);
+}
