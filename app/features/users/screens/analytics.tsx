@@ -19,12 +19,14 @@ import {
   getSentEmailMetadata
 } from '~/features/contents/db/queries';
 import { getWorkspace } from '~/features/settings/db/queries';
-import { newsletterMetrics, slackChannelActivity } from '~/features/users/lib/mockdata';
+import { newsletterMetrics } from '~/features/users/lib/mockdata';
 import {
   addColorToGithubCaseData,
   createGithubCaseCommitData,
   createGithubCommitRaw,
   createGithubDeveloperCommitData,
+  createSlackChannelActivityData,
+  createSlackChannelSummaryData,
   createWeeklyStatsCardData,
   extractEmailSentData,
   extractGitHubKpiData,
@@ -45,7 +47,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const workspace = await getWorkspace(client, { userId: user.id });
   const workspaceId = workspace[0].workspace_id;
   const emailMetadata = await getSentEmailMetadata(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 4 });
-  const slackActivity = await getHighlightsMetadata(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 4, source: 'slack-activity' });
+  const slackActivity = await getHighlightsMetadata(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 8, source: 'slack-activity' });
   const githubKpi = await getHighlightsMetadata(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 8, source: 'github-kpi' });
   const highlightsCount = await getHighlightsCount(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 1, source: 'slack' });
   return data({ emailMetadata: emailMetadata || null, slackActivity, githubKpi, highlightsCount });
@@ -57,10 +59,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
   const emailSummary = extractEmailSentData(emailMetadata);
   const githubSummary = extractGitHubKpiData(githubKpi);
   const slackSummary = extractSlackActivityData(slackActivity);
-  //console.log('emailSummary', emailSummary);
-  //console.log('githubSummary', githubSummary);
-  //console.log('slackSummary', slackSummary);
-  
+
   const { emailSentCount, emailSentMemberCount, emailSentRange } = emailSummary;
   const hasEmailMetadata = emailSentCount > 0;
   const commitCount: number = typeof githubSummary.latest?.meta?.totalCommits === 'number' 
@@ -72,6 +71,10 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
   const githubDeveloperData = createGithubDeveloperCommitData(githubSummary.perPeriod);
   const githubCaseData = createGithubCaseCommitData(githubSummary.perPeriod);
   const githubCaseDataWithColor = addColorToGithubCaseData(githubCaseData);
+
+  // Slack 데이터 준비
+  const slackChannelActivityData = createSlackChannelActivityData(slackSummary.perPeriod);
+  const slackChannelSummaryData = createSlackChannelSummaryData(slackSummary.perPeriod);
   const slackActivities = slackSummary.latest?.activities ?? [];
   const totalMessageCount = slackActivities.reduce<number>((sum, activity) => {
     if (activity && typeof activity === "object" && !Array.isArray(activity)) {
@@ -316,64 +319,92 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
             Slack 소통 현황
           </h2>
-          <NexBadge variant="success" size="sm">활성</NexBadge>
         </div>
 
         <NexCard variant="elevated" className="p-6">
           <NexCardHeader>
-            <NexCardTitle>채널별 메시지 활동</NexCardTitle>
+            <NexCardTitle>메시지 및 리액션 활동</NexCardTitle>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              최근 7일간 채널별 메시지 수 추이
+              최근 8주간 메시지 및 리액션 수 추이
             </p>
           </NexCardHeader>
           <NexCardContent className="mt-6">
-            <NexAreaChart 
-              data={slackChannelActivity.map(day => ({
-                name: day.date,
-                value: day.general + day.development,
-                value2: day.design + day.random
-              }))}
-              className="h-80"
-            />
+            {slackChannelActivityData.length > 0 ? (
+              <NexAreaChart 
+                data={slackChannelActivityData}
+                className="h-80"
+              />
+            ) : (
+              <div className="h-80 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                <p className="text-sm">데이터가 없습니다</p>
+              </div>
+            )}
           </NexCardContent>
         </NexCard>
-
-        {/* 채널별 통계 요약 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { channel: '#general', messages: 325, reactions: 89, color: 'primary' },
-            { channel: '#development', messages: 481, reactions: 156, color: 'success' },
-            { channel: '#design', messages: 178, reactions: 67, color: 'warning' },
-            { channel: '#random', messages: 170, reactions: 45, color: 'info' }
-          ].map((stat, index) => (
-            <NexCard key={index} variant="outlined" className="p-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    {stat.channel}
-                  </span>
-                  <NexBadge variant={stat.color as any} size="sm">
-                    활성
-                  </NexBadge>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">메시지</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {stat.messages}
-                    </span>
+          {/* 채널별 통계 요약 */}
+          <section className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
+            <div className="flex items-center space-x-2 mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                채널별 통계 요약
+              </h3>
+              <NexBadge variant="secondary" size="sm">
+                {slackChannelSummaryData.length}개 채널
+              </NexBadge>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {slackChannelSummaryData.length > 0 ? (
+              slackChannelSummaryData.map((stat, index) => (
+                <NexCard key={index} variant="elevated" className="p-5 hover:shadow-lg transition-shadow">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="h-3 w-3 rounded-full flex-shrink-0"
+                          style={{
+                            backgroundColor: 
+                              stat.color === 'primary' ? '#3B82F6' :
+                              stat.color === 'success' ? '#10B981' :
+                              stat.color === 'warning' ? '#F59E0B' :
+                              stat.color === 'info' ? '#06B6D4' :
+                              '#8B5CF6'
+                          }}
+                        />
+                        <span className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                          {stat.channel}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">메시지</span>
+                        <span className="text-lg font-bold text-gray-900 dark:text-white">
+                          {stat.messages.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">리액션</span>
+                        <span className="text-lg font-bold text-gray-900 dark:text-white">
+                          {stat.reactions.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">리액션</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {stat.reactions}
-                    </span>
+                </NexCard>
+              ))
+            ) : (
+              <div className="col-span-full">
+                <NexCard variant="outlined" className="p-10 text-center">
+                  <div className="flex flex-col items-center space-y-3">
+                    <MessageSquareDot className="h-10 w-10 text-gray-400" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      채널 데이터가 없습니다
+                    </p>
                   </div>
-                </div>
+                </NexCard>
               </div>
-            </NexCard>
-          ))}
-        </div>
+            )}
+          </div>
+        </section>
       </section>
 
       {/* 뉴스레터 지표 섹션 */}

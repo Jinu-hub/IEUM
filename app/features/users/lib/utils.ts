@@ -309,6 +309,138 @@ export function extractSlackActivityData(slackActivity: SlackActivityMetadataRow
 }
 
 type GithubSummaryPeriod = ReturnType<typeof extractGitHubKpiData>['perPeriod'][number];
+type SlackSummaryPeriod = ReturnType<typeof extractSlackActivityData>['perPeriod'][number];
+
+/**
+ * Create the Slack channel activity data for chart.
+ * @param perPeriod - The per period data from Slack activity.
+ * @param weeks - The number of weeks to include (default: 8).
+ * @returns The Slack channel activity data for chart.
+ */
+export function createSlackChannelActivityData(
+  perPeriod: SlackSummaryPeriod[],
+  weeks: number = 8,
+) {
+  if (perPeriod.length === 0) {
+    return [] as Array<{ name: string; value: number; value2: number }>;
+  }
+
+  const periodsToUse = perPeriod.slice(0, weeks);
+  const result: Array<{ name: string; value: number; value2: number }> = [];
+
+  for (const period of periodsToUse) {
+    const activities = Array.isArray(period?.activities) ? period.activities : [];
+    
+    // 주별로 messageCount와 reactionCount 합산
+    let totalMessageCount = 0;
+    let totalReactionCount = 0;
+    
+    for (const activity of activities) {
+      if (activity && typeof activity === "object" && !Array.isArray(activity)) {
+        const activityRecord = activity as Record<string, unknown>;
+        
+        const messageCount = typeof activityRecord.messageCount === 'number'
+          ? activityRecord.messageCount
+          : 0;
+        
+        const reactionCount = typeof activityRecord.reactionCount === 'number'
+          ? activityRecord.reactionCount
+          : 0;
+        
+        totalMessageCount += messageCount;
+        totalReactionCount += reactionCount;
+      }
+    }
+
+    // 주간 표시 이름 생성 (periodKey에서 주 번호 추출)
+    const periodKey = period?.periodKey ?? '';
+    const displayName = periodKey.includes('-W')
+      ? `W${periodKey.split('-W')[1]}`
+      : periodKey || 'Unknown';
+
+    result.push({
+      name: displayName,
+      value: totalMessageCount,
+      value2: totalReactionCount,
+    });
+  }
+
+  if (result.length === 1) {
+    result.push({ name: 'None', value: 0, value2: 0 });
+  }
+
+  return result.reverse();
+}
+
+/**
+ * Create the Slack channel summary data aggregated by channel.
+ * @param perPeriod - The per period data from Slack activity.
+ * @param weeks - The number of weeks to aggregate (default: 8).
+ * @returns The Slack channel summary data.
+ */
+export function createSlackChannelSummaryData(
+  perPeriod: SlackSummaryPeriod[],
+  weeks: number = 8,
+) {
+  if (perPeriod.length === 0) {
+    return [] as Array<{ channel: string; messages: number; reactions: number; color: string }>;
+  }
+
+  const periodsToUse = perPeriod.slice(0, weeks);
+  const channelMap = new Map<string, { messages: number; reactions: number }>();
+
+  // 여러 주간의 데이터를 채널별로 합산
+  for (const period of periodsToUse) {
+    const activities = Array.isArray(period?.activities) ? period.activities : [];
+    
+    for (const activity of activities) {
+      if (activity && typeof activity === "object" && !Array.isArray(activity)) {
+        const activityRecord = activity as Record<string, unknown>;
+        
+        const rawChannelName = typeof activityRecord.channelName === 'string'
+          ? activityRecord.channelName
+          : null;
+        
+        if (rawChannelName) {
+          // channelName에서 실제 채널명 추출 (예: 'CDR68RY0L:dev_lead' -> 'dev_lead')
+          const channelName = rawChannelName.includes(':')
+            ? rawChannelName.split(':').slice(1).join(':')
+            : rawChannelName;
+          
+          const messageCount = typeof activityRecord.messageCount === 'number'
+            ? activityRecord.messageCount
+            : 0;
+          
+          const reactionCount = typeof activityRecord.reactionCount === 'number'
+            ? activityRecord.reactionCount
+            : 0;
+          
+          const currentStats = channelMap.get(channelName) ?? { messages: 0, reactions: 0 };
+          channelMap.set(channelName, {
+            messages: currentStats.messages + messageCount,
+            reactions: currentStats.reactions + reactionCount,
+          });
+        }
+      }
+    }
+  }
+
+  // 색상 팔레트
+  const colors = ['primary', 'success', 'warning', 'info', 'danger', 'secondary'];
+  
+  // Map을 배열로 변환하고 채널명 기준으로 정렬
+  const result = Array.from(channelMap.entries())
+    .map(([channelName, stats], index) => ({
+      channel: `#${channelName}`,
+      messages: stats.messages,
+      reactions: stats.reactions,
+      color: colors[index % colors.length] as 'primary' | 'success' | 'warning' | 'info' | 'danger' | 'secondary',
+    }))
+    .sort((a, b) => a.channel.localeCompare(b.channel));
+
+  return result;
+}
+
 /**
  * Create the GitHub commit raw data.
  * @param perPeriod - The per period data.
