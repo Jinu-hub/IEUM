@@ -1,28 +1,8 @@
-
-
-type EmailMetadataRow = {
-  stats_json?: unknown;
-  period_key?: unknown;
-} | Record<string, unknown>;
-
-type GitHubKpiMetadataRow = {
-  period_key?: unknown;
-  meta_json?: unknown;
-} | Record<string, unknown>;
-
-type SlackActivityMetadataRow = {
-  period_key?: unknown;
-  meta_json?: unknown;
-} | Record<string, unknown>;
-
-type SlackActivitySummaryEntry = {
-  periodKey: string;
-  range: string;
-  activities: unknown[];
-  meta: Record<string, unknown>;
-  sortTimestamp: number;
-};
-
+/**
+ * Parse the range string into a start and end date.
+ * @param range - The range string to parse.
+ * @returns The start and end date.
+ */
 function parseRange(range?: unknown) {
   if (typeof range !== "string") {
     return undefined;
@@ -44,13 +24,11 @@ function formatDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-type PeriodAccumulator = {
-  count: number;
-  memberCount: number;
-  earliest: Date | null;
-  latest: Date | null;
-};
-
+/**
+ * Convert the period key to a timestamp.
+ * @param periodKey - The period key to convert.
+ * @returns The timestamp.
+ */
 function periodKeyToTimestamp(periodKey: string) {
   if (!periodKey) return 0;
 
@@ -91,6 +69,11 @@ function periodKeyToTimestamp(periodKey: string) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+/**
+ * Extract the email sent data from the email metadata.
+ * @param emailMetadata - The email metadata to extract the data from.
+ * @returns The email sent data.
+ */
 export function extractEmailSentData(emailMetadata: EmailMetadataRow[] | null | undefined) {
   if (!Array.isArray(emailMetadata) || emailMetadata.length === 0) {
     return {
@@ -197,6 +180,11 @@ export function extractEmailSentData(emailMetadata: EmailMetadataRow[] | null | 
   };
 }
 
+/**
+ * Extract the GitHub KPI data from the GitHub KPI metadata.
+ * @param githubKpi - The GitHub KPI metadata to extract the data from.
+ * @returns The GitHub KPI data.
+ */
 export function extractGitHubKpiData(githubKpi: GitHubKpiMetadataRow[] | null | undefined) {
   if (!Array.isArray(githubKpi) || githubKpi.length === 0) {
     return {
@@ -233,6 +221,11 @@ export function extractGitHubKpiData(githubKpi: GitHubKpiMetadataRow[] | null | 
   };
 }
 
+/**
+ * Normalize the Slack metadata.
+ * @param metaRaw - The Slack metadata to normalize.
+ * @returns The normalized Slack metadata.
+ */
 function normalizeSlackMeta(metaRaw: unknown): { range: string; activities: unknown[]; meta: Record<string, unknown> } {
   let meta: Record<string, unknown> = {};
   if (metaRaw && typeof metaRaw === "object" && !Array.isArray(metaRaw)) {
@@ -250,6 +243,11 @@ function normalizeSlackMeta(metaRaw: unknown): { range: string; activities: unkn
   return { range, activities, meta };
 }
 
+/**
+ * Extract the Slack activity data from the Slack activity metadata.
+ * @param slackActivity - The Slack activity metadata to extract the data from.
+ * @returns The Slack activity data.
+ */
 export function extractSlackActivityData(slackActivity: SlackActivityMetadataRow[] | null | undefined) {
   if (!Array.isArray(slackActivity) || slackActivity.length === 0) {
     return {
@@ -299,14 +297,11 @@ export function extractSlackActivityData(slackActivity: SlackActivityMetadataRow
 }
 
 type GithubSummaryPeriod = ReturnType<typeof extractGitHubKpiData>['perPeriod'][number];
-
-type GithubDeveloperEntry = {
-  name?: unknown;
-  developer?: unknown;
-  commits?: unknown;
-  count?: unknown;
-};
-
+/**
+ * Create the GitHub commit raw data.
+ * @param perPeriod - The per period data.
+ * @returns The GitHub commit raw data.
+ */
 export function createGithubCommitRaw(perPeriod: GithubSummaryPeriod[]) {
   const mapped = perPeriod
     .slice(0, 8)
@@ -333,6 +328,49 @@ export function createGithubCommitRaw(perPeriod: GithubSummaryPeriod[]) {
   return mapped.reverse();
 }
 
+/**
+ * Create the GitHub case commit data.
+ * @param perPeriod - The per period data.
+ * @returns The GitHub case commit data.
+ */
+export function createGithubCaseCommitData(
+  perPeriod: GithubSummaryPeriod[],
+) {
+  const latest = perPeriod[0];
+  if (!latest) {
+    return [] as Array<{ name: string; value: number }>;
+  }
+
+  const cases = Array.isArray(latest?.meta?.commitsByCase)
+    ? (latest.meta?.commitsByCase as GithubCaseEntry[])
+    : [];
+
+  const mapped = cases.map((entry) => {
+    const rawName = typeof entry.case === 'string' && entry.case
+      ? entry.case
+      : 'Unknown';
+    const rawCommits = entry.commits ?? entry.count;
+    const commits = typeof rawCommits === 'number'
+      ? rawCommits
+      : typeof rawCommits === 'string'
+        ? Number(rawCommits)
+        : 0;
+
+    return {
+      name: rawName,
+      value: Number.isFinite(commits) ? commits : 0,
+    };
+  });
+
+  return mapped.sort((a, b) => b.value - a.value);
+}
+
+/**
+ * Create the GitHub developer commit data.
+ * @param perPeriod - The per period data.
+ * @param topN - The top N developers to return.
+ * @returns The GitHub developer commit data.
+ */
 export function createGithubDeveloperCommitData(
   perPeriod: GithubSummaryPeriod[],
   topN: number = 5,
