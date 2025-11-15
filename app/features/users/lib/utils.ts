@@ -1,3 +1,15 @@
+import type React from "react";
+import { DEFAULT_PALETTE, STATS_CARD_DATA } from "./constants";
+import type {
+  EmailMetadataRow,
+  GithubCaseEntry,
+  GithubDeveloperEntry,
+  GitHubKpiMetadataRow,
+  PeriodAccumulator,
+  SlackActivityMetadataRow,
+  SlackActivitySummaryEntry,
+} from "./types";
+
 /**
  * Parse the range string into a start and end date.
  * @param range - The range string to parse.
@@ -300,11 +312,12 @@ type GithubSummaryPeriod = ReturnType<typeof extractGitHubKpiData>['perPeriod'][
 /**
  * Create the GitHub commit raw data.
  * @param perPeriod - The per period data.
+ * @param weeks - The number of weeks to include (default: 8).
  * @returns The GitHub commit raw data.
  */
-export function createGithubCommitRaw(perPeriod: GithubSummaryPeriod[]) {
+export function createGithubCommitRaw(perPeriod: GithubSummaryPeriod[], weeks: number = 8) {
   const mapped = perPeriod
-    .slice(0, 8)
+    .slice(0, weeks)
     .map((period) => {
       const periodKey = period?.periodKey ?? '';
       const displayName = periodKey.includes('-W')
@@ -331,76 +344,119 @@ export function createGithubCommitRaw(perPeriod: GithubSummaryPeriod[]) {
 /**
  * Create the GitHub case commit data.
  * @param perPeriod - The per period data.
+ * @param weeks - The number of weeks to aggregate (default: 1).
  * @returns The GitHub case commit data.
  */
 export function createGithubCaseCommitData(
   perPeriod: GithubSummaryPeriod[],
+  weeks: number = 1,
 ) {
-  const latest = perPeriod[0];
-  if (!latest) {
+  if (perPeriod.length === 0) {
     return [] as Array<{ name: string; value: number }>;
   }
 
-  const cases = Array.isArray(latest?.meta?.commitsByCase)
-    ? (latest.meta?.commitsByCase as GithubCaseEntry[])
-    : [];
+  // 여러 주간의 데이터를 합산
+  const periodsToAggregate = perPeriod.slice(0, weeks);
+  const caseMap = new Map<string, number>();
 
-  const mapped = cases.map((entry) => {
-    const rawName = typeof entry.case === 'string' && entry.case
-      ? entry.case
-      : 'Unknown';
-    const rawCommits = entry.commits ?? entry.count;
-    const commits = typeof rawCommits === 'number'
-      ? rawCommits
-      : typeof rawCommits === 'string'
-        ? Number(rawCommits)
-        : 0;
+  for (const period of periodsToAggregate) {
+    const cases = Array.isArray(period?.meta?.commitsByCase)
+      ? (period.meta?.commitsByCase as GithubCaseEntry[])
+      : [];
 
-    return {
-      name: rawName,
-      value: Number.isFinite(commits) ? commits : 0,
-    };
-  });
+    for (const entry of cases) {
+      const rawName = typeof entry.case === 'string' && entry.case
+        ? entry.case
+        : 'Unknown';
+      const rawCommits = entry.commits ?? entry.count;
+      const commits = typeof rawCommits === 'number'
+        ? rawCommits
+        : typeof rawCommits === 'string'
+          ? Number(rawCommits)
+          : 0;
+
+      if (Number.isFinite(commits) && commits > 0) {
+        const currentCount = caseMap.get(rawName) ?? 0;
+        caseMap.set(rawName, currentCount + commits);
+      }
+    }
+  }
+
+  // Map을 배열로 변환하고 정렬
+  const mapped = Array.from(caseMap.entries()).map(([name, commits]) => ({
+    name,
+    value: commits,
+  }));
 
   return mapped.sort((a, b) => b.value - a.value);
+}
+
+/**
+ * Apply color palette to GitHub case commit data.
+ * @param caseData - The case commit data to apply colors to.
+ * @returns The case data with color property added.
+ */
+export function addColorToGithubCaseData(
+  caseData: Array<{ name: string; value: number }>
+) {
+  
+  const palette = DEFAULT_PALETTE;
+
+  return caseData.map((item, index) => ({
+    ...item,
+    color: palette[index % palette.length],
+  }));
 }
 
 /**
  * Create the GitHub developer commit data.
  * @param perPeriod - The per period data.
  * @param topN - The top N developers to return.
+ * @param weeks - The number of weeks to aggregate (default: 4).
  * @returns The GitHub developer commit data.
  */
 export function createGithubDeveloperCommitData(
   perPeriod: GithubSummaryPeriod[],
   topN: number = 5,
+  weeks: number = 4,
 ) {
-  const latest = perPeriod[0];
-  if (!latest) {
+  if (perPeriod.length === 0) {
     return [] as Array<{ name: string; desktop: number; mobile: number }>;
   }
 
-  const developers = Array.isArray(latest?.meta?.commitsByDeveloper)
-    ? (latest.meta?.commitsByDeveloper as GithubDeveloperEntry[])
-    : [];
+  // 여러 주간의 데이터를 합산
+  const periodsToAggregate = perPeriod.slice(0, weeks);
+  const developerMap = new Map<string, number>();
 
-  const mapped = developers.map((entry) => {
-    const rawName = (typeof entry.name === 'string' && entry.name)
-      || (typeof entry.developer === 'string' && entry.developer)
-      || 'Unknown';
-    const rawCommits = entry.commits ?? entry.count;
-    const commits = typeof rawCommits === 'number'
-      ? rawCommits
-      : typeof rawCommits === 'string'
-        ? Number(rawCommits)
-        : 0;
+  for (const period of periodsToAggregate) {
+    const developers = Array.isArray(period?.meta?.commitsByDeveloper)
+      ? (period.meta?.commitsByDeveloper as GithubDeveloperEntry[])
+      : [];
 
-    return {
-      name: rawName,
-      desktop: Number.isFinite(commits) ? commits : 0,
-      mobile: 0,
-    };
-  });
+    for (const entry of developers) {
+      const rawName = (typeof entry.name === 'string' && entry.name)
+        || (typeof entry.developer === 'string' && entry.developer)
+        || 'Unknown';
+      const rawCommits = entry.commits ?? entry.count;
+      const commits = typeof rawCommits === 'number'
+        ? rawCommits
+        : typeof rawCommits === 'string'
+          ? Number(rawCommits)
+          : 0;
+
+      if (Number.isFinite(commits) && commits > 0) {
+        const currentCount = developerMap.get(rawName) ?? 0;
+        developerMap.set(rawName, currentCount + commits);
+      }
+    }
+  }
+
+  // Map을 배열로 변환
+  const mapped = Array.from(developerMap.entries()).map(([name, commits]) => ({
+    name,
+    desktop: commits,
+    mobile: 0,
+  }));
 
   const othersEntry = mapped.find((item) => item.name === 'Others');
   const withoutOthers = mapped
@@ -417,4 +473,61 @@ export function createGithubDeveloperCommitData(
   }
 
   return result.slice(0, topN);
+}
+
+/**
+ * Create weekly statistics card data.
+ * @param stats - The statistics values.
+ * @param icons - The icons for each statistic.
+ * @returns The card data array.
+ */
+export function createWeeklyStatsCardData(
+  stats: {
+    commitCount: number | undefined;
+    totalMessageCount: number;
+    highlightsCount: number;
+    emailSentCount: number;
+    emailSentMemberCount: number;
+  },
+  icons: {
+    gitCommit: React.ComponentType<{ className?: string }>;
+    messageSquareDot: React.ComponentType<{ className?: string }>;
+    sparkles: React.ComponentType<{ className?: string }>;
+    mailCheck: React.ComponentType<{ className?: string }>;
+  },
+) {
+  return [
+    {
+      label: STATS_CARD_DATA.githubCommit.label,
+      value: stats.commitCount ?? 0,
+      subLabel: STATS_CARD_DATA.githubCommit.subLabel,
+      icon: icons.gitCommit,
+      iconBg: STATS_CARD_DATA.githubCommit.iconBg,
+      iconColor: STATS_CARD_DATA.githubCommit.iconColor,
+    },
+    {
+      label: STATS_CARD_DATA.slackMessage.label,
+      value: stats.totalMessageCount,
+      subLabel: STATS_CARD_DATA.slackMessage.subLabel,
+      icon: icons.messageSquareDot,
+      iconBg: STATS_CARD_DATA.slackMessage.iconBg,
+      iconColor: STATS_CARD_DATA.slackMessage.iconColor,
+    },
+    {
+      label: STATS_CARD_DATA.slackHighlight.label,
+      value: stats.highlightsCount,
+      subLabel: STATS_CARD_DATA.slackHighlight.subLabel,
+      icon: icons.sparkles,
+      iconBg: STATS_CARD_DATA.slackHighlight.iconBg,
+      iconColor: STATS_CARD_DATA.slackHighlight.iconColor,
+    },
+    {
+      label: STATS_CARD_DATA.newsletterSent.label,
+      value: stats.emailSentCount,
+      subLabel: STATS_CARD_DATA.newsletterSent.subLabel + ': ' + stats.emailSentMemberCount,
+      icon: icons.mailCheck,
+      iconBg: STATS_CARD_DATA.newsletterSent.iconBg,
+      iconColor: STATS_CARD_DATA.newsletterSent.iconColor,
+    },
+  ];
 }

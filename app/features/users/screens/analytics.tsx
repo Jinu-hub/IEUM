@@ -10,14 +10,26 @@ import {
   NexCardHeader,
   NexCardTitle,
   NexLineChart,
-  NexPieChartLabelList,
-  chartColors,
+  NexPieChartLabelList
 } from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
-import { getHighlightsCount, getHighlightsMetadata, getSentEmailMetadata } from '~/features/contents/db/queries';
+import {
+  getHighlightsCount,
+  getHighlightsMetadata,
+  getSentEmailMetadata
+} from '~/features/contents/db/queries';
 import { getWorkspace } from '~/features/settings/db/queries';
 import { newsletterMetrics, slackChannelActivity } from '~/features/users/lib/mockdata';
-import { createGithubCaseCommitData, createGithubCommitRaw, createGithubDeveloperCommitData, extractEmailSentData, extractGitHubKpiData, extractSlackActivityData } from '../lib/utils';
+import {
+  addColorToGithubCaseData,
+  createGithubCaseCommitData,
+  createGithubCommitRaw,
+  createGithubDeveloperCommitData,
+  createWeeklyStatsCardData,
+  extractEmailSentData,
+  extractGitHubKpiData,
+  extractSlackActivityData
+} from '../lib/utils';
 import type { Route } from './+types/analytics';
 
 export const meta: Route.MetaFunction = () => {
@@ -45,33 +57,22 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
   const emailSummary = extractEmailSentData(emailMetadata);
   const githubSummary = extractGitHubKpiData(githubKpi);
   const slackSummary = extractSlackActivityData(slackActivity);
+  //console.log('emailSummary', emailSummary);
+  //console.log('githubSummary', githubSummary);
+  //console.log('slackSummary', slackSummary);
   
   const { emailSentCount, emailSentMemberCount, emailSentRange } = emailSummary;
   const hasEmailMetadata = emailSentCount > 0;
-  const commitCount = githubSummary.latest?.meta.totalCommits ?? 0;
+  const commitCount: number = typeof githubSummary.latest?.meta?.totalCommits === 'number' 
+    ? githubSummary.latest.meta.totalCommits 
+    : 0;
   
-  // GitHub 커밋 추이 데이터 준비 (최근 8주간)
+  // GitHub 커밋 추이 데이터 준비
   const githubCommitData = createGithubCommitRaw(githubSummary.perPeriod);
-  const githubCaseData = createGithubCaseCommitData(githubSummary.perPeriod);
-  const caseColorPalette = [
-    chartColors.primary[0],        // Nex Blue
-    '#0EA5E9',                     // Sky Blue
-    chartColors.success[0],        // Emerald
-    chartColors.warning[0],        // Amber
-    '#F472B6',                     // Pink
-    chartColors.primary[1],
-    '#22D3EE',                     // Cyan
-    chartColors.success[1],
-    '#FB923C',                     // Orange
-    '#C084FC',                     // Soft Purple
-  ];
-  const githubCaseDataWithColor = githubCaseData.map((item, index) => ({
-    ...item,
-    color: caseColorPalette[index % caseColorPalette.length],
-  }));
   const githubDeveloperData = createGithubDeveloperCommitData(githubSummary.perPeriod);
+  const githubCaseData = createGithubCaseCommitData(githubSummary.perPeriod);
+  const githubCaseDataWithColor = addColorToGithubCaseData(githubCaseData);
   const slackActivities = slackSummary.latest?.activities ?? [];
-  const slackRange = slackSummary.latest?.range ?? "";
   const totalMessageCount = slackActivities.reduce<number>((sum, activity) => {
     if (activity && typeof activity === "object" && !Array.isArray(activity)) {
       const value = (activity as Record<string, unknown>).messageCount;
@@ -127,50 +128,21 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
       </div>
       <section className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {[
+          {createWeeklyStatsCardData(
             {
-              label: "GitHub 커밋",
-              value: commitCount,
-              subLabel: "커밋 총 개수",
-              icon: GitCommit,
-              iconBg: "bg-blue-100 dark:bg-blue-900/40",
-              iconColor: "text-blue-600 dark:text-blue-300",
+              commitCount,
+              totalMessageCount,
+              highlightsCount,
+              emailSentCount,
+              emailSentMemberCount,
             },
             {
-              label: "Slack 메시지",
-              value: totalMessageCount,
-              subLabel: "주고받은 메시지 총 개수",
-              icon: MessageSquareDot,
-              iconBg: "bg-green-100 dark:bg-green-900/40",
-              iconColor: "text-green-600 dark:text-green-300",
-            },
-            {
-              label: "Slack 하이라이트",
-              value: highlightsCount,
-              subLabel: "수집된 하이라이트 수",
-              icon: Sparkles,
-              iconBg: "bg-purple-100 dark:bg-purple-900/40",
-              iconColor: "text-purple-600 dark:text-purple-300",
-            },
-            {
-              label: "뉴스레터 발송",
-              value: emailSentCount,
-              subLabel: "발송 대상자 수 : " + emailSentMemberCount,
-              icon: MailCheck,
-              iconBg: "bg-indigo-100 dark:bg-indigo-900/40",
-              iconColor: "text-indigo-600 dark:text-indigo-300",
-            },
-            /*
-            {
-              label: "발송 대상 수",
-              value: emailSentMemberCount,
-              subLabel: "총 누적 대상자",
-              icon: Users,
-              iconBg: "bg-amber-100 dark:bg-amber-900/40",
-              iconColor: "text-amber-600 dark:text-amber-300",
-            },
-            */
-          ].map(({ label, value, subLabel, icon: Icon, iconBg, iconColor }) => (
+              gitCommit: GitCommit,
+              messageSquareDot: MessageSquareDot,
+              sparkles: Sparkles,
+              mailCheck: MailCheck,
+            }
+          ).map(({ label, value, subLabel, icon: Icon, iconBg, iconColor }) => (
             <NexCard key={label} variant="outlined" className="p-4 sm:p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
