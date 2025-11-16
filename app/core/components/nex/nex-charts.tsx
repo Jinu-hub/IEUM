@@ -44,20 +44,27 @@ export const ChartTooltip = ({ active, payload, label, dataName = "value" }: any
         <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
           {label}
         </p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center space-x-2 text-sm">
-            <div 
-              className="w-3 h-3 rounded-full" 
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-gray-600 dark:text-gray-300">
-              {dataName}:
-            </span>
-            <span className="font-medium text-gray-900 dark:text-white">
-              {entry.value}
-            </span>
-          </div>
-        ))}
+        {payload.map((entry: any, index: number) => {
+          // dataNameが配列の場合は各エントリに対応する名前を使用、文字列の場合は同じ名前を使用
+          const name = Array.isArray(dataName) 
+            ? (dataName[index] || entry.dataKey || "value")
+            : dataName;
+          
+          return (
+            <div key={index} className="flex items-center space-x-2 text-sm">
+              <div 
+                className="w-3 h-3 rounded-full" 
+                style={{ backgroundColor: entry.color }}
+              />
+              <span className="text-gray-600 dark:text-gray-300">
+                {name}:
+              </span>
+              <span className="font-medium text-gray-900 dark:text-white">
+                {entry.value}
+              </span>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -146,7 +153,7 @@ export const NexAreaChart = ({ data = sampleChartData.area, className = "" }) =>
         tickLine={false}
         axisLine={false}
       />
-      <Tooltip content={<ChartTooltip />} />
+      <Tooltip content={<ChartTooltip dataName={["message", "reaction"]} />} />
       <Area 
         type="monotone" 
         dataKey="value" 
@@ -236,7 +243,8 @@ export const NexAreaChartStacked = ({ data = sampleChartData.area, className = "
 );
 
 // Line Chart 컴포넌트들
-export const NexLineChart = ({ data = sampleChartData.line, className = "" }) => (
+export const NexLineChart = ({ data = sampleChartData.line, className = "", dataName }:
+   { data?: any[]; className?: string; dataName?: string | string[] }) => (
   <ChartContainer className={className}>
     <LineChart data={data}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
@@ -251,7 +259,7 @@ export const NexLineChart = ({ data = sampleChartData.line, className = "" }) =>
         tickLine={false}
         axisLine={false}
       />
-      <Tooltip content={<ChartTooltip />} />
+      <Tooltip content={<ChartTooltip dataName={dataName} />} />
       <Line 
         type="monotone" 
         dataKey="users" 

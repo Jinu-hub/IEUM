@@ -19,9 +19,9 @@ import {
   getSentEmailMetadata
 } from '~/features/contents/db/queries';
 import { getWorkspace } from '~/features/settings/db/queries';
-import { newsletterMetrics } from '~/features/users/lib/mockdata';
 import {
   addColorToGithubCaseData,
+  calculateMemberStats,
   createGithubCaseCommitData,
   createGithubCommitRaw,
   createGithubDeveloperCommitData,
@@ -57,6 +57,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
   const { emailMetadata, slackActivity, githubKpi, highlightsCount } = loaderData;
 
   const emailSummary = extractEmailSentData(emailMetadata);
+  console.log('emailSummary', emailSummary);
   const githubSummary = extractGitHubKpiData(githubKpi);
   const slackSummary = extractSlackActivityData(slackActivity);
 
@@ -73,18 +74,15 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
   const githubCaseDataWithColor = addColorToGithubCaseData(githubCaseData);
 
   // Slack 데이터 준비
-  const slackChannelActivityData = createSlackChannelActivityData(slackSummary.perPeriod);
+  const slackActivityData = createSlackChannelActivityData(slackSummary.perPeriod);
+  const totalMessageCount = slackActivityData[0]?.value ?? 0;
+  if (slackActivityData.length === 1) {
+    slackActivityData.unshift({ name: 'None', value: 0, value2: 0 });
+  }
   const slackChannelSummaryData = createSlackChannelSummaryData(slackSummary.perPeriod);
-  const slackActivities = slackSummary.latest?.activities ?? [];
-  const totalMessageCount = slackActivities.reduce<number>((sum, activity) => {
-    if (activity && typeof activity === "object" && !Array.isArray(activity)) {
-      const value = (activity as Record<string, unknown>).messageCount;
-      if (typeof value === "number") {
-        return sum + value;
-      }
-    }
-    return sum;
-  }, 0);
+
+  // 발송 멤버 수의 평균값과 성장률 계산
+  const { averageMemberCount, growthRate, isGrowth, isNoChange } = calculateMemberStats(emailSummary.perPeriod);
 
   return (
     <div className="p-6 space-y-8">
@@ -329,9 +327,9 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
             </p>
           </NexCardHeader>
           <NexCardContent className="mt-6">
-            {slackChannelActivityData.length > 0 ? (
+            {slackActivityData.length > 0 ? (
               <NexAreaChart 
-                data={slackChannelActivityData}
+                data={slackActivityData}
                 className="h-80"
               />
             ) : (
@@ -414,34 +412,70 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
             <span className="text-white text-sm font-bold">📧</span>
           </div>
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            뉴스레터 성과
+            뉴스레터 현황
           </h2>
-          <NexBadge variant="success" size="sm">성장 중</NexBadge>
+          {/*<NexBadge variant="success" size="sm">성장 중</NexBadge>*/}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 발송/열람 추이 */}
           <NexCard variant="elevated" className="p-6 lg:col-span-2">
             <NexCardHeader>
-              <NexCardTitle>발송 및 열람률 추이</NexCardTitle>
+              <NexCardTitle>발송추이</NexCardTitle>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                최근 4주간 뉴스레터 성과 변화
+                최근 4주간 뉴스레터 발송 추이
               </p>
             </NexCardHeader>
             <NexCardContent className="mt-6">
               <NexLineChart 
-                data={newsletterMetrics.map(metric => ({
-                  name: metric.week,
-                  users: metric.sent,
-                  revenue: metric.opened
-                }))}
+                data={emailSummary.perPeriod.length > 0 
+                  ? emailSummary.perPeriod.slice().reverse().map(period => ({
+                      name:  period.periodKey.replace('2025-', ''),
+                      users: period.count,
+                      revenue: period.memberCount
+                    }))
+                  : []
+                }
                 className="h-64"
+                dataName={["발송수", "멤버수"]}
               />
             </NexCardContent>
           </NexCard>
 
           {/* 핵심 지표 요약 */}
+          
           <div className="space-y-4">
+            
+            <NexCard variant="outlined" className="p-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    평균 발송 멤버 수
+                  </span>
+                  <NexBadge variant="info" size="sm">주간</NexBadge>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {averageMemberCount.toLocaleString()}
+                </div>
+                {(growthRate !== 0 || isNoChange) && (
+                  <div className="flex items-center space-x-2">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      지난 주 대비
+                    </div>
+                    {isNoChange ? (
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        변화 없음
+                      </div>
+                    ) : (
+                      <div className={`text-sm ${isGrowth ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {isGrowth ? '+' : ''}{growthRate.toFixed(1)}% {isGrowth ? '증가' : '감소'}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </NexCard>
+            {/*
             <NexCard variant="outlined" className="p-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -492,6 +526,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
                 </div>
               </div>
             </NexCard>
+            */}
           </div>
         </div>
       </section>

@@ -365,10 +365,6 @@ export function createSlackChannelActivityData(
     });
   }
 
-  if (result.length === 1) {
-    result.push({ name: 'None', value: 0, value2: 0 });
-  }
-
   return result.reverse();
 }
 
@@ -662,4 +658,56 @@ export function createWeeklyStatsCardData(
       iconColor: STATS_CARD_DATA.newsletterSent.iconColor,
     },
   ];
+}
+
+/**
+ * 발송 멤버 수의 평균값과 성장률을 계산합니다.
+ * @param perPeriod - 기간별 발송 데이터 배열
+ * @returns 평균 발송 멤버 수, 성장률, 성장 여부
+ */
+export function calculateMemberStats(perPeriod: Array<{ periodKey: string; count: number; memberCount: number; range: string }>) {
+  // perPeriod는 이미 최신→과거 순으로 정렬되어 있음
+  // 평균 발송 멤버 수 계산
+  const averageMemberCount = perPeriod.length > 0
+    ? Math.round(perPeriod.reduce((sum, period) => sum + period.memberCount, 0) / perPeriod.length)
+    : 0;
+  
+  // 최신 주와 이전 주 데이터 가져오기 (perPeriod[0]이 최신, perPeriod[1]이 이전 주)
+  const latestPeriod = perPeriod[0];
+  const previousPeriod = perPeriod[1];
+  
+  let growthRate = 0;
+  let isGrowth = true;
+  let isNoChange = false;
+  
+  // 성장률 계산
+  if (latestPeriod && previousPeriod && previousPeriod.memberCount > 0) {
+    growthRate = ((latestPeriod.memberCount - previousPeriod.memberCount) / previousPeriod.memberCount) * 100;
+    // 값이 같은 경우 (0% 변화)
+    if (Math.abs(growthRate) < 0.01) {
+      isNoChange = true;
+      growthRate = 0;
+    } else {
+      isGrowth = growthRate >= 0;
+    }
+  } else if (latestPeriod && previousPeriod && previousPeriod.memberCount === 0 && latestPeriod.memberCount > 0) {
+    // 이전 주가 0이고 이번 주가 0보다 큰 경우 100% 성장으로 표시
+    growthRate = 100;
+    isGrowth = true;
+  } else if (latestPeriod && previousPeriod && previousPeriod.memberCount === 0 && latestPeriod.memberCount === 0) {
+    // 둘 다 0인 경우 변화 없음
+    isNoChange = true;
+    growthRate = 0;
+  } else if (latestPeriod && previousPeriod && latestPeriod.memberCount === previousPeriod.memberCount) {
+    // 값이 정확히 같은 경우
+    isNoChange = true;
+    growthRate = 0;
+  }
+  
+  return {
+    averageMemberCount,
+    growthRate,
+    isGrowth,
+    isNoChange,
+  };
 }
