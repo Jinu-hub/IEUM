@@ -3,31 +3,31 @@ import { useEffect, useState } from 'react';
 import { redirect, useActionData, useNavigate, useNavigation, useParams, useSubmit, type LoaderFunctionArgs } from 'react-router';
 import { toast } from "sonner";
 import {
-    NexBadge,
-    NexButton,
-    NexCard,
-    NexCardContent,
-    NexInput,
-    NexToggle,
+  NexBadge,
+  NexButton,
+  NexCard,
+  NexCardContent,
+  NexInput,
+  NexToggle,
 } from '~/core/components/nex';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "~/core/components/ui/select";
 import makeServerClient from '~/core/lib/supa-client.server';
 import { createTargetWithSources } from '../db/mutations';
 import { getIntegrationsInfo, getMailingList, getTarget, getTargetSources, getWorkspace } from '../db/queries';
 import { useIntegrationSources } from '../hooks/useIntegrationSources';
 import {
-    getNonMemberSlackChannels,
-    getSourceTypeLabel,
+  getNonMemberSlackChannels,
+  getSourceTypeLabel,
 } from '../lib/common';
 import {
-    generateCronExpression,
-    parseCronExpression
+  generateCronExpression,
+  parseCronExpression
 } from '../lib/scheduleUtils';
 import type { TargetData } from '../lib/types';
 import { hours, scheduleTypes, weekdays } from '../lib/types';
@@ -180,7 +180,8 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   // 타겟 편집 시 기존 데이터로 폼 초기화
   useEffect(() => {
     if (target && !isNew) {
-      setFormData({
+      setFormData((prev) => ({
+        ...prev,
         targetId: target.target_id,
         displayName: target.display_name,
         isActive: target.is_active,
@@ -189,7 +190,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
         //mailingListName: target.mailing_list_name ?? '',
         mailingListId: target.mailing_list_id ?? '',
         timezone: target.timezone,
-      });
+      }));
 
       // 스케줄 정보가 있으면 UI 상태도 초기화
       if (target.schedule_cron) {
@@ -225,6 +226,21 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
           };
         });
         setIntegrationSources(sourcesWithType);
+
+        // targetSources 기반 isMemberMail 결정
+        try {
+          const hasSources = Array.isArray(targetSources) && targetSources.length > 0;
+          let derivedIsMemberMail = true; // 기본값
+          if (hasSources) {
+            const anyTrue = targetSources.some((s: any) => s?.isMemberMail === true);
+            const allFalse = targetSources.every((s: any) => s?.isMemberMail === false);
+            derivedIsMemberMail = anyTrue ? true : (allFalse ? false : true);
+          }
+          setIsMemberMail(derivedIsMemberMail);
+        } catch {
+          // 문제가 생겨도 UX상 기본 true 유지
+          setIsMemberMail(true);
+        }
       }
     }
   }, [target, targetSources, integrations, isNew]);
@@ -243,6 +259,8 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     sourceType: '',
     sourceIdent: '',
   });
+  // 멤버 메일 발송 여부 (TargetData와 분리)
+  const [isMemberMail, setIsMemberMail] = useState(true);
   
   // 커스텀 훅으로 integration 소스 관리
   const {
@@ -407,6 +425,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     submitFormData.append('scheduleCron', formData.scheduleCron || '');
     submitFormData.append('mailingListId', formData.mailingListId || '');
     submitFormData.append('timezone', formData.timezone || 'Asia/Seoul');
+    submitFormData.append('isMemberMail', isMemberMail ? 'true' : 'false');
     
     // Integration Sources를 JSON 문자열로 변환
     submitFormData.append('integrationSources', JSON.stringify(integrationSources));
@@ -513,6 +532,32 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* 멤버 메일 발송 여부 */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">채널 멤버 메일 발송 여부</label>
+                  <NexToggle
+                    checked={isMemberMail}
+                    onChange={(checked) => {
+                      setIsMemberMail(checked);
+                      // 토글 상태를 integrationSources의 isMemberMail에 반영
+                      setIntegrationSources(prev =>
+                        prev.map(src => ({
+                          ...src,
+                          isMemberMail: checked
+                            ? (src.integrationType === 'slack')
+                            : false
+                        }))
+                      );
+                    }}
+                    label={isMemberMail ? '활성' : '비활성'}
+                  />
+                  {isMemberMail && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      슬랙 채널 멤버에 메일이 설정되어 있을시, 메일 송신 대상에 자동으로 포함됩니다.
+                    </p>
+                  )}
                 </div>
               </div>
             </NexCardContent>
@@ -658,6 +703,17 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                           {integration?.type === 'slack' && (
                             <span className="text-xs text-muted-foreground">채널</span>
                           )}
+                          <span
+                            className="text-xs text-muted-foreground"
+                            title={integration?.type === 'github' ? '현재는 지원하지 않습니다.' 
+                              : isMemberMail ? '슬랙 채널 멤버에 메일이 설정되어 있을시, 메일 송신 대상에 자동으로 포함됩니다.' 
+                              : '슬랙 채널 멤버 메일을 자동으로 포함하지 않습니다.'}
+                          >
+                          -  멤버메일:{' '}
+                            {integration?.type === 'github'
+                              ? 'OFF'
+                              : (isMemberMail ? 'ON' : 'OFF')}
+                          </span>
                         </div>
                         <NexButton
                           variant="ghost"

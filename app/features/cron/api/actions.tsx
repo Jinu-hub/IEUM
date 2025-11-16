@@ -83,8 +83,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     for (const target of allTargets ?? []) {
       const { runId, runStepId } = await createNewsletterRun(adminClient, {
         workspaceId: target.workspace_id,
-        trigger: 'cron',
-        logRef: null,
+        trigger: 'cron', logRef: null,
       });
       runMapping[target.target_id] = { runId, runStepId };
     }
@@ -94,11 +93,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       await updateNewsletterRun(adminClient, { 
         runId: runMapping[target.target_id].runId, 
         runStepId: runMapping[target.target_id].runStepId,
-        status: 'running', 
-        step: 'collect_data',
-        metricsJson: {} 
+        status: 'running', step: 'collect_data', metricsJson: {} 
       });
-
       try {
         const integrationsInfo = await getIntegrationsInfo(adminClient, { workspaceId: target.workspace_id });
         const githubData = integrationsInfo?.find((integration: any) => integration.type === 'github')?.resource_cache_json as any;
@@ -111,6 +107,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
           let slackChannels = null;
           const matchedRepos: string[] = [];
           const matchedChannels: string[] = [];
+          const sourcesWithType = sources.map((s: any) => ({
+            ...s,
+            integrationType: integrationsInfo.find((i: any) => i.integration_id === s.integrationId)?.type || ''
+          }));
           
           for (const source of sources) {
             if (source.sourceType === 'slack_channel') {
@@ -169,6 +169,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
               outDir: 'output-test',
               token: slackToken,
               days: 7,
+              sources: sourcesWithType, 
             }).catch((error) => {
               logger.error('Slack fetch error', { error });
             });
@@ -201,6 +202,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
             source: "slack",
             timezone: target.timezone
           }
+
           // コンテンツを生成
           const content = await createContents(input);
           logger.info('Contents generation completed', { 
@@ -215,9 +217,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
             step: 'send_email',
             metricsJson: {} 
           });
-
+          
           await sendMails(input, target.display_name, target.mailing_list_id || '', 
-            slackResult, content.data as { finalContents: string, htmlContents: string });
+            slackResult, content.data as { finalContents: string, htmlContents: string })
 
         }
       } catch (error: any) {
@@ -286,8 +288,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     for (const target of allTargets ?? []) {
       const { runId, runStepId } = await createNewsletterRun(adminClient, {
         workspaceId: target.workspace_id,
-        trigger: 'cron',
-        logRef: null,
+        trigger: 'cron', logRef: null,
       });
       runMapping[target.target_id] = { runId, runStepId };
     }
@@ -297,11 +298,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
       await updateNewsletterRun(adminClient, { 
         runId: runMapping[target.target_id].runId, 
         runStepId: runMapping[target.target_id].runStepId,
-        status: 'running', 
-        step: 'collect_data',
-        metricsJson: {} 
+        status: 'running', step: 'collect_data', metricsJson: {} 
       });
-
       try {
         const integrationsInfo = await getIntegrationsInfo(adminClient, { workspaceId: target.workspace_id });
         const githubData = integrationsInfo?.find((integration: any) => integration.type === 'github')?.resource_cache_json as any;
@@ -314,6 +312,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
           let slackChannels = null;
           const matchedRepos: string[] = [];
           const matchedChannels: string[] = [];
+          const sourcesWithType = sources.map((s: any) => ({
+            ...s,
+            integrationType: integrationsInfo.find((i: any) => i.integration_id === s.integrationId)?.type || ''
+          }));
           
           for (const source of sources) {
             if (source.sourceType === 'slack_channel') {
@@ -372,6 +374,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
               outDir: 'output-test',
               token: slackToken,
               days: 7,
+              sources: sourcesWithType, 
             }).catch((error) => {
               logger.error('Slack fetch error', { error });
             });
@@ -404,6 +407,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
             source: "slack",
             timezone: target.timezone
           }
+
           // コンテンツを生成
           const content = await createContents(input);
           logger.info('Contents generation completed', { 
@@ -418,9 +422,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
             step: 'send_email',
             metricsJson: {} 
           });
-
+          
           await sendMails(input, target.display_name, target.mailing_list_id || '', 
-            slackResult, content.data as { finalContents: string, htmlContents: string });
+            slackResult, content.data as { finalContents: string, htmlContents: string })
 
         }
       } catch (error: any) {

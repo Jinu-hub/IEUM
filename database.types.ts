@@ -908,6 +908,7 @@ export type Database = {
           filter_json: Json
           integration_id: string
           is_active: boolean
+          is_member_mail: boolean
           priority: number
           source_ident: string
           source_type: string
@@ -921,6 +922,7 @@ export type Database = {
           filter_json?: Json
           integration_id: string
           is_active?: boolean
+          is_member_mail?: boolean
           priority?: number
           source_ident: string
           source_type: string
@@ -934,6 +936,7 @@ export type Database = {
           filter_json?: Json
           integration_id?: string
           is_active?: boolean
+          is_member_mail?: boolean
           priority?: number
           source_ident?: string
           source_type?: string

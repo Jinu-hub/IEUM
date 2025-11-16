@@ -381,6 +381,7 @@ export const createTargetSources = async (
             integration_id: sources.integrationId,
             source_type: sources.sourceType,
             source_ident: sources.sourceIdent,
+            is_member_mail: sources.isMemberMail,
         }, {
             onConflict: 'workspace_id,target_id,integration_id,source_type,source_ident'
         })

@@ -180,7 +180,8 @@ export const getTargetSources = async (
     sourceIdent: source.source_ident,
     filterJson: source.filter_json || {},
     priority: source.priority,
-    isActive: source.is_active
+    isActive: source.is_active,
+    isMemberMail: source.is_member_mail,
   }));
 };
 

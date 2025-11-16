@@ -295,6 +295,7 @@ import {
         filterJson: jsonb("filter_json").notNull().default(sql`'{}'::jsonb`),
         priority: integer("priority").notNull().default(0),
         isActive: boolean("is_active").notNull().default(true),
+        isMemberMail: boolean("is_member_mail").notNull().default(true),
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
         updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
     },

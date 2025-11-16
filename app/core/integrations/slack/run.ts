@@ -1,10 +1,11 @@
 import dayjs from "dayjs";
 import "dotenv/config";
 import pLimit from "p-limit";
+import type { IntegrationSource } from "~/features/settings/lib/types";
 import { logger } from "../../lib/logger";
 import { createSlackClient } from "./client";
 import { getSlackConfig } from "./config";
-import { fetchChannelInfo, fetchChannelMessages, listChannels } from "./fetchers";
+import { fetchChannelInfo, fetchChannelMembers, fetchChannelMessages, listChannels } from "./fetchers";
 import type { ChannelData } from "./types";
 
 export async function runSlackFetch(overrides?: {
@@ -13,12 +14,13 @@ export async function runSlackFetch(overrides?: {
   channels?: string;
   outDir?: string;
   skipThreadReplies?: boolean; // スレッド返信をスキップするオプション
+  sources?: IntegrationSource[]; // 소스 타입 정보
 }) {
   const cfg = getSlackConfig(process.env, overrides);
   const slack = createSlackClient(cfg.token);
 
   // トークン情報とスコープを確認
-  /*
+  
   try {
     const authTest = await slack.auth.test();
     logger.info('🔐 Token Info', {
@@ -38,7 +40,6 @@ export async function runSlackFetch(overrides?: {
   } catch (error: any) {
     logger.error('Failed to verify token', { error: String(error) });
   }
-  */
 
   const now = dayjs();
   const oldestTs = now.subtract(cfg.days, "day").unix().toString();
@@ -81,22 +82,35 @@ export async function runSlackFetch(overrides?: {
         }
         
         const key = ch + ":" + (channelInfo?.name || "");
-        /*
-        logger.info(`[${index + 1}/${channelIds.length}] 👥 Fetching channel members...`);
-        const membersStartTime = Date.now();
-        const members = await fetchChannelMembers(slack, ch);
-        logger.info(`[${index + 1}/${channelIds.length}] ✅ Fetched ${members.length} members (${Date.now() - membersStartTime}ms)`);
         let emailList: string[] = [];
-        members.forEach((member) => {
-          emailList.push(member.profile?.email || "");
-        });
-        */
+        // sources 조건: slack_channel 이고, sourceIdent(선두 # 제거)가 channelInfo.name 과 같으며, isMemberMail === true
+        const shouldCollectEmails =
+          Array.isArray(overrides?.sources) &&
+          overrides!.sources.some((s) => {
+            const cleanIdent =
+              typeof s.sourceIdent === "string" && s.sourceIdent.startsWith("#")
+                ? s.sourceIdent.substring(1)
+                : s.sourceIdent;
+            return (
+              s.sourceType === "slack_channel" &&
+              cleanIdent === (channelInfo?.name || "") &&
+              s.isMemberMail === true
+            );
+          });
+        if (shouldCollectEmails) {
+          logger.info(`[${index + 1}/${channelIds.length}] 👥 Fetching channel members...`);
+          const members = await fetchChannelMembers(slack, ch);
+          members.forEach((member) => {
+            emailList.push(member.profile?.email || "");
+          });
+        }
+        
         logger.info(`[${index + 1}/${channelIds.length}] 💬 Fetching channel messages...`);
         const messagesStartTime = Date.now();
         const messages = await fetchChannelMessages(slack, ch, oldestTs);
         logger.info(`[${index + 1}/${channelIds.length}] ✅ Fetched ${messages.length} messages (${Date.now() - messagesStartTime}ms)`);
         
-        result[key] = { messages};
+        result[key] = { messages, emailList };
         const totalTime = Date.now() - startTime;
         logger.info(`[${index + 1}/${channelIds.length}] ✨ Completed channel ${channelInfo?.name || ch} (Total: ${totalTime}ms)`);
       })

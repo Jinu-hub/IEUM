@@ -54,6 +54,7 @@ export interface IntegrationSource {
     integrationType: string; // integration type을 저장 ('github', 'slack' 등)
     sourceType: string; // 'github_repo' | 'slack_channel'
     sourceIdent: string; // repo name or channel name
+    isMemberMail: boolean;
 }
 
 // 메일 리스트 데이터 타입

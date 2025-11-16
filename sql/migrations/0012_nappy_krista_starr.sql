@@ -1,0 +1,1 @@
+ALTER TABLE "target_sources" ADD COLUMN "is_member_mail" boolean DEFAULT false NOT NULL;
