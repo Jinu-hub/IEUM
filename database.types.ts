@@ -985,6 +985,7 @@ export type Database = {
       }
       targets: {
         Row: {
+          category: Database["public"]["Enums"]["category_type"]
           created_at: string
           default_rule_set_id: string | null
           display_name: string
@@ -1002,6 +1003,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          category?: Database["public"]["Enums"]["category_type"]
           created_at?: string
           default_rule_set_id?: string | null
           display_name: string
@@ -1019,6 +1021,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          category?: Database["public"]["Enums"]["category_type"]
           created_at?: string
           default_rule_set_id?: string | null
           display_name?: string
@@ -1214,6 +1217,23 @@ export type Database = {
     }
     Enums: {
       audit_action: "insert" | "update" | "delete"
+      category_type:
+        | "development"
+        | "infrastructure"
+        | "qa"
+        | "data_ai"
+        | "product"
+        | "design"
+        | "operations"
+        | "communication"
+        | "community"
+        | "learning"
+        | "business"
+        | "finance"
+        | "hr"
+        | "okr"
+        | "personal"
+        | "fun"
       connection_status:
         | "connected"
         | "expired"
@@ -1379,6 +1399,24 @@ export const Constants = {
   public: {
     Enums: {
       audit_action: ["insert", "update", "delete"],
+      category_type: [
+        "development",
+        "infrastructure",
+        "qa",
+        "data_ai",
+        "product",
+        "design",
+        "operations",
+        "communication",
+        "community",
+        "learning",
+        "business",
+        "finance",
+        "hr",
+        "okr",
+        "personal",
+        "fun",
+      ],
       connection_status: [
         "connected",
         "expired",

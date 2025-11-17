@@ -104,6 +104,10 @@ Content characteristics:
 - Produce 1–6 lines, each STRICTLY formatted as: \`"Name: content"\`.
 - Choose \`Name\` from \`Member.displayName\` if available; otherwise use \`meta.userInfo.real_name\` or \`meta.userInfo.name\`.
 - Extract only the key utterances from \`messages\`. If needed, lightly shorten with ellipsis (\`...\`) without changing meaning.
+- **Ordering & Context:**
+  - **Sort all conversations chronologically by \`tsISO\` timestamp** (earliest first).
+  - **Prioritize messages that form a coherent conversation flow**—prefer utterances that respond to, reference, or build upon previous messages.
+  - When multiple messages exist, select those that create a logical narrative sequence rather than isolated statements.
 - Preserve original quote language; if it differs from {{LANGUAGE}}, prefix the content with a language tag:
   - Japanese → "[JP] " ; Korean → "[KO] "
   - Example:

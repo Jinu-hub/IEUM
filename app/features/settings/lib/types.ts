@@ -37,6 +37,7 @@ export function mapDBStatusToUI(dbStatus: DBConnectionStatus | null | undefined)
 // 타겟 데이터의 타입 정의
 export interface TargetData {
     targetId: string; // 새 target 생성 시에는 undefined 가능
+    category: string;
     displayName: string;
     isActive: boolean;
     isMemberMail?: boolean;

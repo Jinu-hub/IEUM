@@ -1,0 +1,2 @@
+CREATE TYPE "public"."category_type" AS ENUM('development', 'infrastructure', 'qa', 'data_ai', 'product', 'design', 'operations', 'communication', 'community', 'learning', 'business', 'finance', 'hr', 'okr', 'personal', 'fun');--> statement-breakpoint
+ALTER TABLE "targets" ADD COLUMN "category" "category_type" DEFAULT 'development' NOT NULL;

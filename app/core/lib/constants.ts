@@ -45,6 +45,26 @@ export const PERIOD = [
   "daily", "weekly", "monthly", "yearly",
 ] as const;
 
+export const CATEGORY_TYPE = [
+  'development',     // 개발
+  'infrastructure',  // 인프라/DevOps
+  'qa',              // QA/테스트
+  'data_ai',         // 데이터/AI
+  'product',         // 기획/PM
+  'design',          // UX/UI
+  'operations',      // 운영
+  'communication',   // 커뮤니케이션/공지
+  'community',       // 친목/문화
+  'learning',        // 학습/교육
+  'business',        // 영업/마케팅
+  'finance',         // 재무
+  'hr',              // 인사
+  'okr',             // 전략/성과
+  'personal',        // 개인 요약
+  'fun',             // Fun Corner
+] as const;
+
+
 /* =========================================================
    Type Definitions
    ========================================================= */
@@ -57,6 +77,7 @@ export type RuleType = typeof RULE_TYPE[number];
 export type DeliveryEventTypeEmail = typeof DELIVERY_EVENT_TYPE_EMAIL[number];
 export type AuditAction = typeof AUDIT_ACTION[number];
 export type ConnectionStatus = typeof CONNECTION_STATUS[number];
+export type CategoryType = typeof CATEGORY_TYPE[number];
 
 
 /* =========================================================

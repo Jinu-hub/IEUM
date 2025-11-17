@@ -60,6 +60,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
   //console.log('emailSummary', emailSummary);
   const githubSummary = extractGitHubKpiData(githubKpi);
   const slackSummary = extractSlackActivityData(slackActivity);
+  //console.log('slackSummary', slackSummary.latest?.activities);
 
   const { emailSentCount, emailSentMemberCount, emailSentRange } = emailSummary;
   const hasEmailMetadata = emailSentCount > 0;
@@ -75,10 +76,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
 
   // Slack 데이터 준비
   const slackActivityData = createSlackChannelActivityData(slackSummary.perPeriod);
-  const totalMessageCount = slackActivityData[0]?.value ?? 0;
-  if (slackActivityData.length === 1) {
-    slackActivityData.unshift({ name: 'None', value: 0, value2: 0 });
-  }
+  const totalMessageCount = slackActivityData.length > 0 ? slackActivityData[slackActivityData.length - 1]?.value ?? 0 : 0;
   const slackChannelSummaryData = createSlackChannelSummaryData(slackSummary.perPeriod);
 
   // 발송 멤버 수의 평균값과 성장률 계산

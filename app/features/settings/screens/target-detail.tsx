@@ -17,6 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/core/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/core/components/ui/tooltip";
+import { CATEGORY_TYPE } from '~/core/lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { createTargetWithSources } from '../db/mutations';
 import { getIntegrationsInfo, getMailingList, getTarget, getTargetSources, getWorkspace } from '../db/queries';
@@ -25,6 +31,7 @@ import {
   getNonMemberSlackChannels,
   getSourceTypeLabel,
 } from '../lib/common';
+import { getCategoryLabel } from '../lib/constants';
 import {
   generateCronExpression,
   parseCronExpression
@@ -85,6 +92,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       // Form 데이터 파싱
       const targetData = {
         targetId: formData.get('targetId') as string,
+        category: formData.get('category') as string,
         displayName: formData.get('displayName') as string,
         isActive: formData.get('isActive') === 'true',
         scheduleCron: formData.get('scheduleCron') as string || '',
@@ -170,6 +178,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   // 폼 상태
   const [formData, setFormData] = useState<Partial<TargetData>>({
+    category: 'development',
     displayName: '',
     isActive: true,
     scheduleCron: '',
@@ -183,6 +192,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
       setFormData((prev) => ({
         ...prev,
         targetId: target.target_id,
+        category: target.category ?? '',
         displayName: target.display_name,
         isActive: target.is_active,
         scheduleCron: target.schedule_cron ?? '',
@@ -488,7 +498,37 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                 <h2 className="text-xl font-semibold text-foreground">기본 정보</h2>
               </div>
 
-              <div className="grid gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">카테고리</label>
+                <Tooltip>
+                  <Select
+                    value={formData.category || undefined}
+                    onValueChange={(value) => handleInputChange('category', value)}
+                    disabled={true}
+                  >
+                    <TooltipTrigger asChild>
+                      <SelectTrigger>
+                        <SelectValue placeholder="카테고리를 선택하세요" />
+                      </SelectTrigger>
+                    </TooltipTrigger>
+                    <SelectContent >
+                      {CATEGORY_TYPE.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {getCategoryLabel(category)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <TooltipContent 
+                    side="top"
+                    className="bg-primary text-primary-foreground border-primary shadow-lg max-w-xs"
+                  >
+                    <p className="font-medium">추후 다른 카테고리를 지원할 예정입니다</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+
+              <div className="grid gap-6 mt-6">
                 {/* 표시명 */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">표시명</label>
@@ -705,14 +745,15 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                           )}
                           <span
                             className="text-xs text-muted-foreground"
-                            title={integration?.type === 'github' ? '현재는 지원하지 않습니다.' 
-                              : isMemberMail ? '슬랙 채널 멤버에 메일이 설정되어 있을시, 메일 송신 대상에 자동으로 포함됩니다.' 
-                              : '슬랙 채널 멤버 메일을 자동으로 포함하지 않습니다.'}
                           >
-                          -  멤버메일:{' '}
-                            {integration?.type === 'github'
-                              ? 'OFF'
-                              : (isMemberMail ? 'ON' : 'OFF')}
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <span>- 멤버메일: {integration?.type === 'github' ? 'OFF' : (isMemberMail ? 'ON' : 'OFF')}</span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{integration?.type === 'github' ? '현재는 지원하지 않습니다.' : isMemberMail ? '슬랙 채널 멤버에 메일이 설정되어 있을시, 메일 송신 대상에 자동으로 포함됩니다.' : '슬랙 채널 멤버 메일을 자동으로 포함하지 않습니다.'}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </span>
                         </div>
                         <NexButton

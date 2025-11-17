@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { CategoryType } from "~/core/lib/constants";
 import type { ConnectionStatus, DBConnectionStatus } from "./types";
 
 
@@ -77,6 +78,38 @@ export interface ConnectedIntegration {
     variant?: 'success' | 'warning' | 'secondary';
   }
   
+/**
+ * 카테고리 타입별 화면 표시 라벨
+ */
+export const CATEGORY_LABELS: Record<CategoryType, string> = {
+  development: '개발',
+  infrastructure: '인프라/DevOps',
+  qa: 'QA/테스트',
+  data_ai: '데이터/AI',
+  product: '기획/PM',
+  design: 'UX/UI',
+  operations: '운영',
+  communication: '커뮤니케이션/공지',
+  community: '친목/문화',
+  learning: '학습/교육',
+  business: '영업/마케팅',
+  finance: '재무',
+  hr: '인사',
+  okr: '전략/성과',
+  personal: '개인 요약',
+  fun: 'Fun Corner',
+} as const;
+
+/**
+ * 카테고리 타입으로부터 화면 표시 라벨을 가져옵니다.
+ * @param category - 카테고리 타입
+ * @returns 화면 표시 라벨
+ */
+export function getCategoryLabel(category: CategoryType | string | undefined | null): string {
+  if (!category) return '';
+  return CATEGORY_LABELS[category as CategoryType] || category;
+}
+
 /**
  * Mail List User Schema
  */

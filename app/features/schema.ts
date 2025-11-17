@@ -25,6 +25,7 @@ import {
 import { authUsers, authenticatedRole, serviceRole } from "drizzle-orm/supabase";
 import {
   AUDIT_ACTION,
+  CATEGORY_TYPE,
   CONNECTION_STATUS,
   DELIVERY_EVENT_TYPE_EMAIL,
   INTEGRATION_TYPE,
@@ -49,6 +50,7 @@ import {
   export const auditAction = pgEnum("audit_action", AUDIT_ACTION);
   export const connectionStatusEnum = pgEnum("connection_status", CONNECTION_STATUS);
   export const period = pgEnum("period", PERIOD);
+  export const categoryType = pgEnum("category_type", CATEGORY_TYPE);
   
   // GitHub App 설치 요청 상태
   export const installationRequestStatus = pgEnum("installation_request_status", [
@@ -254,6 +256,7 @@ import {
      {
        targetId: uuid("target_id").defaultRandom().primaryKey(),
        workspaceId: uuid("workspace_id").notNull().references(() => workspace.workspaceId, { onDelete: "cascade" }),
+       category: categoryType("category").notNull().default("development"),
        displayName: text("display_name").notNull(),
        mailingListId: uuid("mailing_list_id").references(() => mailList.mailingListId, { onDelete: "set null" }),
        scheduleCron: text("schedule_cron"),

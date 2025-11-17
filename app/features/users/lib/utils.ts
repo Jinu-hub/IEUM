@@ -365,6 +365,10 @@ export function createSlackChannelActivityData(
     });
   }
 
+  if (result.length === 1) {
+    result.unshift({ name: 'None', value: 0, value2: 0 });
+  }
+
   return result.reverse();
 }
 

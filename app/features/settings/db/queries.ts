@@ -133,6 +133,7 @@ export const getTargets = async (
   }
   return data.map(target => ({
     targetId: target.target_id,
+    category: target.category,
     displayName: target.display_name,
     isActive: target.is_active,
     isMemberMail: target.is_member_mail,
