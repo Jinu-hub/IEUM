@@ -169,12 +169,40 @@ export function validateCronExpression(cronString: string): { isValid: boolean; 
   return { isValid: true };
 }
 
+// 타임존에서 locale 추출 헬퍼 함수
+function getLocaleFromTimezone(timezone: string): string {
+  const timezoneToLocale: Record<string, string> = {
+    'Asia/Tokyo': 'ja-JP',
+    'Asia/Seoul': 'ko-KR',
+    'America/New_York': 'en-US',
+    'America/Los_Angeles': 'en-US',
+    'Europe/London': 'en-GB',
+    'Europe/Paris': 'fr-FR',
+    'Europe/Berlin': 'de-DE',
+    'Australia/Sydney': 'en-AU',
+  };
+  
+  // 매핑된 locale이 있으면 사용, 없으면 timezone 기반 추론
+  if (timezoneToLocale[timezone]) {
+    return timezoneToLocale[timezone];
+  }
+  
+  // Asia/Seoul → ko-KR, America/New_York → en-US 형식으로 추론
+  const region = timezone.split('/')[0];
+  if (region === 'Asia') return 'ko-KR';
+  if (region === 'America') return 'en-US';
+  if (region === 'Europe') return 'en-GB';
+  
+  return 'ko-KR'; // 기본값
+}
+
 // 마지막 발송 시각 포맷 함수 (hydration-safe)
-export function formatLastSent(lastSentAt?: string): string {
+export function formatLastSent(lastSentAt?: string, timezone: string = 'Asia/Tokyo'): string {
   if (!lastSentAt) return "미발송";
   
   const date = new Date(lastSentAt);
-  
+  const locale = getLocaleFromTimezone(timezone);
+
   // 클라이언트에서만 상대적 시간 계산 (hydration mismatch 방지)
   if (typeof window !== 'undefined') {
     const now = new Date();
@@ -182,7 +210,7 @@ export function formatLastSent(lastSentAt?: string): string {
     const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
     const diffInHours = Math.floor(diffInMinutes / 60);
     const diffInDays = Math.floor(diffInHours / 24);
-    
+
     if (diffInMinutes < 60) {
       return `${diffInMinutes}분 전`;
     } else if (diffInHours < 24) {
@@ -192,11 +220,12 @@ export function formatLastSent(lastSentAt?: string): string {
     }
   }
   
-  // 서버에서는 절대 날짜만 표시
-  return date.toLocaleDateString('ko-KR', {
+  // 서버에서는 지정된 타임존으로 절대 날짜 표시
+  return date.toLocaleDateString(locale, {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: timezone
   });
 };
 

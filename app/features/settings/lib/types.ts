@@ -39,9 +39,10 @@ export interface TargetData {
     targetId: string; // 새 target 생성 시에는 undefined 가능
     displayName: string;
     isActive: boolean;
+    isMemberMail?: boolean;
     scheduleCron?: string;
     scheduleHour?: string;
-    lastSentAt?: string;
+    lastSentAt?: string | null;
     mailingListName?: string;
     mailingListId?: string;
     timezone: string;

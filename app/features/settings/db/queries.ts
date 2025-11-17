@@ -135,6 +135,7 @@ export const getTargets = async (
     targetId: target.target_id,
     displayName: target.display_name,
     isActive: target.is_active,
+    isMemberMail: target.is_member_mail,
     scheduleCron: target.schedule_cron ?? undefined,
     lastSentAt: target.last_sent_at ?? undefined,
     mailingListId: target.mailing_list_id ?? undefined,
@@ -249,4 +250,22 @@ export const getMailingListMembers = async (
     metaJson: member.meta_json as Record<string, any>,
     createdAt: member.created_at,
   }));
+};
+
+export const getTargetLastSentAt = async (
+  client: SupabaseClient<Database>,
+  { workspaceId, targetId }: { workspaceId: string, targetId: string },
+) => {
+  const { data, error } = await client
+    .from('newsletter_editions')
+    .select('sent_at')
+    .eq('workspace_id', workspaceId)
+    .eq('target_id', targetId)
+    .order('sent_at', { ascending: false })
+    .limit(1);
+  if (error) {
+    console.log('getTargetLastSentAt error', error);
+    throw error;
+  }
+  return data[0]?.sent_at ?? null;
 };

@@ -261,6 +261,7 @@ import {
        scheduleHour: integer("schedule_hour").notNull().default(0),
        defaultRuleSetId: uuid("default_rule_set_id").references(() => ruleSets.ruleSetId, { onDelete: "set null" }),
        isActive: boolean("is_active").notNull().default(true),
+       isMemberMail: boolean("is_member_mail").notNull().default(true),
        lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
        lastRunId: uuid("last_run_id").references(() => newsletterRuns.runId, { onDelete: "set null" }),
        previewThumbUrl: text("preview_thumb_url"),
@@ -271,8 +272,8 @@ import {
        index("idx_targets_ws").on(table.workspaceId),
        index("idx_targets_mailing_list").on(table.mailingListId),
        index("idx_targets_ws_active").on(table.workspaceId, table.isActive),
-      index("idx_targets_last_run").on(table.lastRunId),
-      index("idx_targets_ws_active_schedule").on(table.workspaceId, table.isActive, table.scheduleCron),
+       index("idx_targets_last_run").on(table.lastRunId),
+       index("idx_targets_ws_active_schedule").on(table.workspaceId, table.isActive, table.scheduleCron),
    
        pgPolicy("tgt_select", { for: "select", to: authenticatedRole, using: isMember(table.workspaceId) }),
        pgPolicy("tgt_insert", { for: "insert", to: authenticatedRole, withCheck: isAdmin(table.workspaceId) }),

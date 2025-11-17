@@ -989,6 +989,7 @@ export type Database = {
           default_rule_set_id: string | null
           display_name: string
           is_active: boolean
+          is_member_mail: boolean
           last_run_id: string | null
           last_sent_at: string | null
           mailing_list_id: string | null
@@ -1005,6 +1006,7 @@ export type Database = {
           default_rule_set_id?: string | null
           display_name: string
           is_active?: boolean
+          is_member_mail?: boolean
           last_run_id?: string | null
           last_sent_at?: string | null
           mailing_list_id?: string | null
@@ -1021,6 +1023,7 @@ export type Database = {
           default_rule_set_id?: string | null
           display_name?: string
           is_active?: boolean
+          is_member_mail?: boolean
           last_run_id?: string | null
           last_sent_at?: string | null
           mailing_list_id?: string | null

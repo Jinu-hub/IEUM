@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
-import type { IntegrationSource } from '../lib/types';
+import { useCallback, useState } from 'react';
 import type { SourceItem } from '../lib/constants';
+import type { IntegrationSource } from '../lib/types';
 
 /**
  * Integration 소스 관리를 위한 커스텀 훅
@@ -67,6 +67,7 @@ export function useIntegrationSources(integrations: any[]) {
         integrationType: newIntegration.integrationType,
         sourceType,
         sourceIdent: newIntegration.sourceIdent,
+        isMemberMail: true,
       };
 
       setIntegrationSources(prev => [...prev, newSource]);

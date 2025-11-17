@@ -57,7 +57,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
   const { emailMetadata, slackActivity, githubKpi, highlightsCount } = loaderData;
 
   const emailSummary = extractEmailSentData(emailMetadata);
-  console.log('emailSummary', emailSummary);
+  //console.log('emailSummary', emailSummary);
   const githubSummary = extractGitHubKpiData(githubKpi);
   const slackSummary = extractSlackActivityData(slackActivity);
 
@@ -69,7 +69,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
   
   // GitHub 커밋 추이 데이터 준비
   const githubCommitData = createGithubCommitRaw(githubSummary.perPeriod);
-  const githubDeveloperData = createGithubDeveloperCommitData(githubSummary.perPeriod);
+  const githubDeveloperData = createGithubDeveloperCommitData(githubSummary.perPeriod, 5, 1);
   const githubCaseData = createGithubCaseCommitData(githubSummary.perPeriod);
   const githubCaseDataWithColor = addColorToGithubCaseData(githubCaseData);
 
@@ -207,7 +207,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
             <NexCardHeader>
               <NexCardTitle>개발자별 커밋수</NexCardTitle>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                최근 4주간 개발자별 커밋 현황
+                이번 주 개발자별 커밋 현황
               </p>
             </NexCardHeader>
             <NexCardContent className="mt-6">

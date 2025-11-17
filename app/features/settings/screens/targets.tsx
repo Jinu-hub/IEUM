@@ -3,24 +3,24 @@ import { useState } from 'react';
 import { redirect, useNavigate, useSubmit } from 'react-router';
 import { toast } from 'sonner';
 import {
-    NexBadge,
-    NexButton,
-    NexCard,
-    NexCardContent,
-    NexCardDescription,
-    NexCardTitle,
-    PlusIcon,
+  NexBadge,
+  NexButton,
+  NexCard,
+  NexCardContent,
+  NexCardDescription,
+  NexCardTitle,
+  PlusIcon,
 } from '~/core/components/nex';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "~/core/components/ui/dropdown-menu";
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
 import { switchTargetActive } from '../db/mutations';
-import { getMailingList, getTargets, getWorkspace } from '../db/queries';
+import { getMailingList, getTargetLastSentAt, getTargets, getWorkspace } from '../db/queries';
 import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
 import type { TargetData } from '../lib/types';
 import type { Route } from "./+types/targets";
@@ -42,13 +42,17 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const targetData = await getTargets(client, { workspaceId: workspaceId });
   const mailingListData = await getMailingList(client, { workspaceId: workspaceId });
   
-  const mergedTargetData = targetData.map(target => {
-    const mailingList = mailingListData.find(ml => ml.mailingListId === target.mailingListId);
-    return {
-      ...target,
-      mailingListName: mailingList?.name || undefined,
-    };
-  });
+  const mergedTargetData = await Promise.all(
+    targetData.map(async (target) => {
+      const mailingList = mailingListData.find(ml => ml.mailingListId === target.mailingListId);
+      const targetLastSentAt = await getTargetLastSentAt(client, { workspaceId: workspaceId, targetId: target.targetId });
+      return {
+        ...target,
+        mailingListName: mailingList?.name || undefined,
+        lastSentAt: targetLastSentAt || undefined,
+      };
+    })
+  );
   
   return { workspaceId, targetData: mergedTargetData };
 };
@@ -252,7 +256,10 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                             <div>
                               <span className="font-medium">송신 대상:</span>
                               <div className="text-muted-foreground">
-                                {target.mailingListName || "미설정"}
+                                {target.mailingListName || "미설정"} 
+                              </div>
+                              <div className="text-muted-foreground">
+                                {target.isMemberMail ? "(멤버 메일 포함)" : ""}
                               </div>
                             </div>
                           </div>
@@ -263,7 +270,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                             <div>
                               <span className="font-medium">마지막 발송:</span>
                               <div className="text-muted-foreground">
-                                {formatLastSent(target.lastSentAt)}
+                                {formatLastSent(target.lastSentAt || undefined, target.timezone || "Asia/Tokyo")}
                               </div>
                             </div>
                           </div>

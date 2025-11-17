@@ -280,8 +280,8 @@ export const createOrUpdateIntegration = async (
 
 export const insertTarget = async (
     client: SupabaseClient<Database>,
-    { workspaceId, displayName, mailingListId, scheduleCron, scheduleHour, timezone, isActive}:
-    { workspaceId: string, displayName: string, mailingListId: string, scheduleCron: string, scheduleHour: number, timezone: string, isActive: boolean},
+    { workspaceId, displayName, mailingListId, scheduleCron, scheduleHour, timezone, isActive, isMemberMail}:
+    { workspaceId: string, displayName: string, mailingListId: string, scheduleCron: string, scheduleHour: number, timezone: string, isActive: boolean, isMemberMail: boolean},
 ) => {
     const { data, error } = await client
         .from('targets')
@@ -292,7 +292,8 @@ export const insertTarget = async (
             schedule_cron: scheduleCron,
             schedule_hour: scheduleHour,
             timezone: timezone,
-            is_active: isActive
+            is_active: isActive,
+            is_member_mail: isMemberMail
         })
         .select().single();
     if (error) {
@@ -304,8 +305,8 @@ export const insertTarget = async (
 
 export const updateTarget = async (
     client: SupabaseClient<Database>,
-    { targetId, displayName, mailingListId, scheduleCron, scheduleHour, timezone, isActive}:
-    { targetId: string, displayName: string, mailingListId: string, scheduleCron: string, scheduleHour: number, timezone: string, isActive: boolean},
+    { targetId, displayName, mailingListId, scheduleCron, scheduleHour, timezone, isActive, isMemberMail}:
+    { targetId: string, displayName: string, mailingListId: string, scheduleCron: string, scheduleHour: number, timezone: string, isActive: boolean, isMemberMail: boolean},
 ) => {
     const { data, error } = await client
         .from('targets')
@@ -315,7 +316,8 @@ export const updateTarget = async (
             schedule_cron: scheduleCron,
             schedule_hour: scheduleHour,
             timezone: timezone,
-            is_active: isActive
+            is_active: isActive,
+            is_member_mail: isMemberMail
         })
         .eq('target_id', targetId)
         .select().single();
@@ -339,7 +341,8 @@ export const createTarget = async (
             scheduleCron: targets.scheduleCron || '', 
             scheduleHour: targets.scheduleHour ? parseInt(targets.scheduleHour) : 0,
             timezone: targets.timezone, 
-            isActive: targets.isActive });
+            isActive: targets.isActive,
+            isMemberMail: targets.isMemberMail || true });
     } else {
         return insertTarget(client, { 
             workspaceId: workspaceId, 
@@ -348,7 +351,8 @@ export const createTarget = async (
             scheduleCron: targets.scheduleCron || '', 
             scheduleHour: targets.scheduleHour ? parseInt(targets.scheduleHour) : 0,
             timezone: targets.timezone, 
-            isActive: targets.isActive });
+            isActive: targets.isActive,
+            isMemberMail: targets.isMemberMail || true});
     }
 }
 
@@ -436,6 +440,8 @@ export const createTargetWithSources = async (
         }
 
         // 2. Target 생성/업데이트
+        // sourcesが空、またはsourcesの中にisMemberMailがtrueのものが1つでもある場合、trueに設定
+        targets.isMemberMail = sources.length === 0 || sources.some(source => source.isMemberMail === true);
         const targetData = await createTarget(client, {
             workspaceId, targets
         });
