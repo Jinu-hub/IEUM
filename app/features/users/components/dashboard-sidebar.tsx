@@ -1,23 +1,11 @@
 import {
-  AudioWaveformIcon,
-  BookOpenIcon,
-  BotIcon,
-  BriefcaseIcon,
-  BuildingIcon,
-  CommandIcon,
-  FrameIcon,
   GalleryVerticalEndIcon,
   HeartHandshakeIcon,
   LayoutDashboardIcon,
   LineChartIcon,
-  MapIcon,
   MegaphoneIcon,
-  PieChartIcon,
-  RocketIcon,
   Settings2Icon,
-  SquareTerminalIcon,
-  Target,
-  UsersIcon,
+  Target
 } from "lucide-react";
 
 import {
@@ -29,27 +17,28 @@ import {
 } from "~/core/components/ui/sidebar";
 
 import SidebarMain from "./sidebar-main";
-import SidebarProjects from "./sidebar-projects";
 import TeamSwitcher from "./sidebar-team-switcher";
 import SidebarUser from "./sidebar-user";
 
 const data = {
   teams: [
     {
-      name: "SalesForge",
-      logo: BuildingIcon,
-      plan: "Enterprise",
+      name: "Default",
+      logo: GalleryVerticalEndIcon,
+      description: "Basic Workspace",
     },
+    /*
     {
       name: "TechCo Solutions",
       logo: BriefcaseIcon,
-      plan: "Startup",
+      description: "Startup",
     },
     {
       name: "GrowthMate",
       logo: RocketIcon,
-      plan: "Free",
+      description: "Free",
     },
+    */
   ],
   navMain: [
     {
@@ -69,6 +58,8 @@ const data = {
         {
           title: "Reports",
           url: "#",
+          disabled: true,
+          tooltip: "추후 공개 예정",
         },
         {
           title: "Test",
@@ -178,7 +169,9 @@ export default function DashboardSidebar({
       </SidebarHeader>
       <SidebarContent>
         <SidebarMain items={data.navMain} />
+        {/*
         <SidebarProjects projects={data.projects} />
+        */}
       </SidebarContent>
       <SidebarFooter>
         <SidebarUser

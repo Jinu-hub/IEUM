@@ -23,7 +23,7 @@ export default function TeamSwitcher({
   teams: {
     name: string;
     logo: React.ElementType;
-    plan: string;
+    description: string;
   }[];
 }) {
   const { isMobile } = useSidebar();
@@ -49,7 +49,7 @@ export default function TeamSwitcher({
                 <span className="truncate font-semibold">
                   {activeTeam.name}
                 </span>
-                <span className="truncate text-xs">{activeTeam.plan}</span>
+                <span className="truncate text-xs">{activeTeam.description}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -61,7 +61,7 @@ export default function TeamSwitcher({
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Teams
+              Workspaces
             </DropdownMenuLabel>
             {teams.map((team, index) => (
               <DropdownMenuItem
@@ -77,11 +77,21 @@ export default function TeamSwitcher({
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="bg-background flex size-6 items-center justify-center rounded-md border">
+            <DropdownMenuItem
+              className="gap-2 p-2 text-muted-foreground"
+              disabled
+              onSelect={(event) => event.preventDefault()}
+              title="추후 지원 예정입니다."
+            >
+              <div className="bg-background flex size-6 items-center justify-center rounded-md border border-dashed">
                 <Plus className="size-4" />
               </div>
-              <div className="text-muted-foreground font-medium">Add team</div>
+              <div className="flex flex-1 items-center justify-between font-medium">
+                <span>Add Workspace</span>
+                <span className="rounded-full bg-muted-foreground/20 px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                  Soon
+                </span>
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

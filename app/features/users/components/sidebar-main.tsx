@@ -1,5 +1,5 @@
 import { ChevronRight, type LucideIcon } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 
 import {
   Collapsible,
@@ -28,44 +28,116 @@ export default function SidebarMain({
     items?: {
       title: string;
       url: string;
+      disabled?: boolean;
+      tooltip?: string;
     }[];
   }[];
 }) {
+  const { pathname } = useLocation();
+
+  const normalizePath = (path: string) => {
+    if (!path) return "";
+    if (path === "/") return "/";
+    return path.replace(/\/+$/, "");
+  };
+
+  const normalizedPathname = normalizePath(pathname);
+
+  const isExactRoute = (url: string) => {
+    if (!url) return false;
+    return normalizedPathname === normalizePath(url);
+  };
+
+  const isRouteWithin = (url: string) => {
+    if (!url) return false;
+    const normalizedUrl = normalizePath(url);
+
+    if (normalizedUrl === "/") {
+      return normalizedPathname === "/";
+    }
+
+    return (
+      normalizedPathname === normalizedUrl ||
+      normalizedPathname.startsWith(`${normalizedUrl}/`)
+    );
+  };
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
-          <Collapsible
-            key={item.title}
-            asChild
-            defaultOpen={item.isActive}
-            className="group/collapsible"
-          >
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={item.title}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  {item.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton asChild>
-                        <Link to={subItem.url}>
-                          <span>{subItem.title}</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
-        ))}
+        {items.map((item) => {
+          const isGroupActive =
+            item.items?.some((subItem) => isExactRoute(subItem.url)) ?? false;
+          const isParentActive = isGroupActive || isRouteWithin(item.url);
+
+          return (
+            <Collapsible
+              key={item.title}
+              asChild
+              defaultOpen={item.isActive || isGroupActive}
+              className="group/collapsible"
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    isActive={isParentActive}
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {item.items?.map((subItem) => {
+                      const isSubItemActive =
+                        !subItem.disabled && isExactRoute(subItem.url);
+                      const tooltipText =
+                        subItem.tooltip ?? "추후 공개 예정입니다.";
+
+                      return (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          {subItem.disabled ? (
+                            <SidebarMenuSubButton
+                              asChild
+                              aria-disabled
+                              className="hover:bg-transparent hover:text-muted-foreground"
+                              title={tooltipText}
+                            >
+                              <span className="flex w-full cursor-not-allowed items-center justify-between text-muted-foreground">
+                                <span>{subItem.title}</span>
+                                <span className="rounded-full bg-muted-foreground/20 px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                                  Soon
+                                </span>
+                              </span>
+                            </SidebarMenuSubButton>
+                          ) : (
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={isSubItemActive}
+                            >
+                              <Link
+                                to={subItem.url}
+                                aria-current={
+                                  isSubItemActive ? "page" : undefined
+                                }
+                                title={subItem.tooltip}
+                              >
+                                <span>{subItem.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          )}
+                        </SidebarMenuSubItem>
+                      );
+                    })}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );
