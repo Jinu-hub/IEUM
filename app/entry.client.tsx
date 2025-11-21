@@ -24,7 +24,7 @@ import { getInitialNamespaces } from "remix-i18next/client";
 // Import i18n configuration and language resources
 import i18n from "./i18n";
 import en from "./locales/en";
-import es from "./locales/es";
+import ja from "./locales/ja";
 import ko from "./locales/ko";
 
 /**
@@ -73,8 +73,8 @@ async function hydrate() {
         en: {
           common: en, // English translations
         },
-        es: {
-          common: es, // Spanish translations
+        ja: {
+          common: ja, // Japanese translations
         },
         ko: {
           common: ko, // Korean translations

@@ -15,7 +15,6 @@
  * This module is critical for ensuring that the application can render content in
  * the user's preferred language on the server before sending it to the client.
  */
-import resourcesToBackend from "i18next-resources-to-backend";
 import { createCookie } from "react-router";
 import { RemixI18Next } from "remix-i18next/server";
 
@@ -23,7 +22,7 @@ import { RemixI18Next } from "remix-i18next/server";
 import i18n from "~/i18n";
 // Import translation resources for each supported language
 import en from "~/locales/en";
-import es from "~/locales/es";
+import ja from "~/locales/ja";
 import ko from "~/locales/ko";
 
 /**
@@ -71,9 +70,9 @@ const i18next = new RemixI18Next({
       en: {
         common: en,
       },
-      // Spanish translations
-      es: {
-        common: es,
+      // Japanese translations
+      ja: {
+        common: ja,
       },
       // Korean translations
       ko: {

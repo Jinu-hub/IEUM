@@ -16,7 +16,7 @@
  * - Authenticated state with user profile information
  * - Unauthenticated state with sign in/sign up buttons
  */
-import { CogIcon, HomeIcon, LogOutIcon, MenuIcon } from "lucide-react";
+import { HomeIcon, LogOutIcon, MenuIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
@@ -167,6 +167,7 @@ function Actions() {
   return (
     <>
       {/* Settings/debug dropdown menu */}
+      {/*}
       <DropdownMenu>
         <DropdownMenuTrigger asChild className="cursor-pointer">
           <Button variant="ghost" size="icon">
@@ -174,7 +175,6 @@ function Actions() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {/* Sentry monitoring link */}
           <DropdownMenuItem asChild>
             <SheetClose asChild>
               <Link to="/debug/sentry" viewTransition>
@@ -182,7 +182,6 @@ function Actions() {
               </Link>
             </SheetClose>
           </DropdownMenuItem>
-          {/* Google Analytics link */}
           <DropdownMenuItem asChild>
             <SheetClose asChild>
               <Link to="/debug/analytics" viewTransition>
@@ -192,6 +191,7 @@ function Actions() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      */}
       
       {/* Theme switcher component (light/dark mode) */}
       <ThemeSwitcher />

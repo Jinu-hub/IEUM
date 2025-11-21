@@ -16,6 +16,9 @@ import {
   SidebarRail,
 } from "~/core/components/ui/sidebar";
 
+import LangSwitcher from "~/core/components/lang-switcher";
+import ThemeSwitcher from "~/core/components/theme-switcher";
+
 import SidebarMain from "./sidebar-main";
 import TeamSwitcher from "./sidebar-team-switcher";
 import SidebarUser from "./sidebar-user";
@@ -174,13 +177,19 @@ export default function DashboardSidebar({
         */}
       </SidebarContent>
       <SidebarFooter>
-        <SidebarUser
-          user={{
-            name: user.name,
-            email: user.email,
-            avatarUrl: user.avatarUrl,
-          }}
-        />
+        <div className="flex flex-col gap-3">
+          <SidebarUser
+            user={{
+              name: user.name,
+              email: user.email,
+              avatarUrl: user.avatarUrl,
+            }}
+          />
+          <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:hidden">
+            <ThemeSwitcher />
+            <LangSwitcher />
+          </div>
+        </div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
