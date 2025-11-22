@@ -121,6 +121,10 @@ const ja: Translation = {
     newPassword: "新しいパスワード",
     confirmNewPassword: "パスワード確認",
     successMessage: "パスワードが更新されました。",
+    passwordRequirements: "パスワード要件",
+    passwordRequirementsLength: "8文字以上",
+    passwordRequirementsUppercaseAndLowercase: "大文字と小文字を含む",
+    passwordRequirementsNumber: "数字を含む",
   },
   connectSocialAccounts: {
     title: "ソーシャルアカウント接続",
@@ -128,6 +132,7 @@ const ja: Translation = {
   },
   deleteAccount: {
     title: "要注意エリア",
+    warning: "この操作は取り消すことができません。アカウントを削除すると、すべてのデータが永久に失われます。",
     confirmDelete: "私はアカウントを削除します。",
     confirmIrreversible: "私はこの操作後、元に戻せないことを理解しています。",
     deleteButton: "アカウントを削除",

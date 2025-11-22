@@ -1,14 +1,14 @@
+import { Link2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/core/components/ui/card";
+  NexCard,
+  NexCardContent,
+  NexCardDescription,
+  NexCardHeader,
+  NexCardTitle,
+} from "~/core/components/nex";
 import { GithubLogo } from "~/features/auth/components/logos/github";
 import { KakaoLogo } from "~/features/auth/components/logos/kakao";
-
-import { useTranslation } from "react-i18next";
 import {
   ConnectProviderButton,
   DisconnectProviderButton,
@@ -34,14 +34,21 @@ export default function ConnectSocialAccountsForm({
 }) {
   const { t } = useTranslation("common", { keyPrefix: "connectSocialAccounts" });
   return (
-    <Card className="w-full max-w-screen-md">
-      <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>
-          {t("description")}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2">
+    <NexCard variant="elevated" padding="lg" className="w-full max-w-screen-md">
+      <NexCardHeader>
+        <div className="flex items-center gap-3">
+          <div className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 p-3 shadow-lg">
+            <Link2 className="size-6 text-white" />
+          </div>
+          <div>
+            <NexCardTitle>{t("title")}</NexCardTitle>
+            <NexCardDescription>
+              {t("description")}
+            </NexCardDescription>
+          </div>
+        </div>
+      </NexCardHeader>
+      <NexCardContent className="flex flex-col gap-4">
         {enabledProviders.map((provider) => {
           if (providers.includes(provider.key)) {
             return (
@@ -63,7 +70,7 @@ export default function ConnectSocialAccountsForm({
             );
           }
         })}
-      </CardContent>
-    </Card>
+      </NexCardContent>
+    </NexCard>
   );
 }

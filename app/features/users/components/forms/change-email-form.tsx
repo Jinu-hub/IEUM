@@ -1,18 +1,22 @@
 import type { Route } from "@rr/app/features/users/api/+types/change-email";
 
+import { ArrowRight, MailIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useFetcher } from "react-router";
 
 import { useTranslation } from "react-i18next";
-import FetcherFormButton from "~/core/components/fetcher-form-button";
 import FormErrors from "~/core/components/form-error";
 import FormSuccess from "~/core/components/form-success";
 import {
-  Card, CardContent, CardDescription, CardFooter, CardHeader,
-  CardTitle
-} from "~/core/components/ui/card";
-import { Input } from "~/core/components/ui/input";
-import { Label } from "~/core/components/ui/label";
+  NexButton,
+  NexCard,
+  NexCardContent,
+  NexCardDescription,
+  NexCardFooter,
+  NexCardHeader,
+  NexCardTitle,
+  NexInput,
+} from "~/core/components/nex";
 
 export default function ChangeEmailForm({ email }: { email: string }) {
   const { t } = useTranslation("common", { keyPrefix: "changeEmail" });
@@ -36,59 +40,76 @@ export default function ChangeEmailForm({ email }: { email: string }) {
       className="w-full max-w-screen-md"
       action="/api/users/email"
     >
-      <Card className="justify-between">
-        <CardHeader>
-          <CardTitle>{email ? t("title") : t("addEmailTitle")}</CardTitle>
-          <CardDescription>
+      <NexCard variant="elevated" padding="lg">
+        <NexCardHeader>
+          <NexCardTitle>{email ? t("title") : t("addEmailTitle")}</NexCardTitle>
+          <NexCardDescription>
             {email
               ? t("description")
               : t("addEmailDescription")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex w-full flex-col gap-7">
-            <div className="flex cursor-not-allowed flex-col items-start space-y-2">
-              <Label
-                htmlFor="currentEmail"
-                className="flex flex-col items-start gap-1"
-              >
-                {t("currentEmail")}
-              </Label>
-              <Input
+          </NexCardDescription>
+        </NexCardHeader>
+        <NexCardContent>
+          <div className="flex w-full flex-col gap-6">
+            {/* Current Email (Disabled) */}
+            <div className="relative">
+              <NexInput
                 id="currentEmail"
                 name="currentEmail"
                 required
                 type="email"
                 disabled
                 value={email}
+                label={t("currentEmail")}
+                variant="filled"
+                inputSize="lg"
+                leftIcon={<MailIcon className="size-5" />}
+                className="cursor-not-allowed opacity-70"
               />
             </div>
-            <div className="flex flex-col items-start space-y-2">
-              <Label
-                htmlFor="email"
-                className="flex flex-col items-start gap-1"
-              >
-                {t("newEmail")}
-              </Label>
-              <Input id="email" name="email" required type="email" />
+
+            {/* Arrow Indicator */}
+            <div className="flex justify-center">
+              <div className="rounded-full bg-gradient-to-r from-blue-500 to-purple-500 p-3 shadow-lg">
+                <ArrowRight className="size-5 text-white" />
+              </div>
+            </div>
+
+            {/* New Email */}
+            <div>
+              <NexInput
+                id="email"
+                name="email"
+                required
+                type="email"
+                label={t("newEmail")}
+                placeholder="new-email@example.com"
+                variant="outlined"
+                inputSize="lg"
+                leftIcon={<MailIcon className="size-5" />}
+              />
             </div>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <FetcherFormButton
-            label={email ? t("title") : t("addEmailTitle")}
-            className="w-full"
-            submitting={fetcher.state === "submitting"}
+        </NexCardContent>
+        <NexCardFooter className="flex flex-col gap-4">
+          <NexButton
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full cursor-pointer"
+            loading={fetcher.state === "submitting"}
             disabled={fetcher.state === "submitting"}
-          />
+          >
+            {email ? t("title") : t("addEmailTitle")}
+          </NexButton>
           {fetcher.data && "success" in fetcher.data && fetcher.data.success ? (
             <FormSuccess message={t("emailUpdateProcessStarted")} />
           ) : null}
           {fetcher.data && "error" in fetcher.data && fetcher.data.error ? (
             <FormErrors errors={[fetcher.data.error]} />
           ) : null}
-        </CardFooter>
-      </Card>
+        </NexCardFooter>
+      </NexCard>
     </fetcher.Form>
   );
 }

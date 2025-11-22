@@ -121,6 +121,10 @@ const en: Translation = {
     newPassword: "New password",
     confirmNewPassword: "Confirm new password",
     successMessage: "Password updated",
+    passwordRequirements: "Password requirements",
+    passwordRequirementsLength: "At least 8 characters",
+    passwordRequirementsUppercaseAndLowercase: "Contains uppercase and lowercase letters",
+    passwordRequirementsNumber: "Contains numbers",
   },
   connectSocialAccounts: {
     title: "Connect social accounts",
@@ -128,6 +132,7 @@ const en: Translation = {
   },
   deleteAccount: {
     title: "Danger zone",
+    warning: "This action cannot be undone. Deleting your account will permanently delete all your data.",
     confirmDelete: "I confirm that I want to delete my account.",
     confirmIrreversible: "I understand that this action is irreversible.",
     deleteButton: "Delete account",

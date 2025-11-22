@@ -36,7 +36,8 @@ export default function Account({ loaderData }: Route.ComponentProps) {
     (identity) => identity.provider === "email",
   );
   return (
-    <div className="flex w-full flex-col items-center gap-10 pt-0 pb-8">
+    <div className="flex w-full flex-col items-center gap-8 pt-0 pb-12 px-4">
+      {/* Profile Section */}
       <Suspense
         fallback={
           <div className="bg-card animate-fast-pulse h-60 w-full max-w-screen-md rounded-xl border shadow-sm" />
@@ -62,8 +63,15 @@ export default function Account({ loaderData }: Route.ComponentProps) {
           }}
         </Await>
       </Suspense>
-      <ChangeEmailForm email={user?.email ?? ""} />
-      <ChangePasswordForm hasPassword={hasEmailIdentity ?? false} />
+
+      {/* Security Settings Section */}
+      <div className="w-full max-w-screen-md space-y-8">
+        <div className="space-y-6">
+          <ChangeEmailForm email={user?.email ?? ""} />
+          <ChangePasswordForm hasPassword={hasEmailIdentity ?? false} />
+        </div>
+      </div>
+
       {/*
       <Suspense
         fallback={
@@ -97,7 +105,11 @@ export default function Account({ loaderData }: Route.ComponentProps) {
         </Await>
       </Suspense>
       */}
-      <DeleteAccountForm />
+
+      {/* Danger Zone */}
+      <div className="w-full max-w-screen-md space-y-8 mt-8">        
+        <DeleteAccountForm />
+      </div>
     </div>
   );
 }

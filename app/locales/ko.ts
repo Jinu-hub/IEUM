@@ -120,6 +120,10 @@ const ko: Translation = {
     newPassword: "새 비밀번호",
     confirmNewPassword: "비밀번호 확인",
     successMessage: "비밀번호가 업데이트되었습니다.",
+    passwordRequirements: "비밀번호 요구사항",
+    passwordRequirementsLength: "8자 이상",
+    passwordRequirementsUppercaseAndLowercase: "대소문자 포함",
+    passwordRequirementsNumber: "숫자 포함",
   },
   connectSocialAccounts: {
     title: "소셜 계정 연결",
@@ -127,6 +131,7 @@ const ko: Translation = {
   },
   deleteAccount: {
     title: "위험 영역",
+    warning: "이 작업은 취소할 수 없습니다. 계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.",
     confirmDelete: "나는 이 계정을 삭제하려 합니다.",
     confirmIrreversible: "나는 이 작업 후, 되돌릴 수 없다는 것을 이해하고 있습니다.",
     deleteButton: "계정 삭제",

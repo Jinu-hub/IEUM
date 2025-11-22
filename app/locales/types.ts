@@ -119,6 +119,10 @@ export type Translation = {
     newPassword: string;
     confirmNewPassword: string;
     successMessage: string;
+    passwordRequirements: string;
+    passwordRequirementsLength: string;
+    passwordRequirementsUppercaseAndLowercase: string;
+    passwordRequirementsNumber: string;
   };
   connectSocialAccounts: {
     title: string;
@@ -126,6 +130,7 @@ export type Translation = {
   };
   deleteAccount: {
     title: string;
+    warning: string;
     confirmDelete: string;
     confirmIrreversible: string;
     deleteButton: string;

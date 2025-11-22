@@ -1,27 +1,27 @@
 import { type Route } from "@rr/app/features/users/api/+types/edit-profile";
-import { UserIcon } from "lucide-react";
+import { CheckCircle2, ImageIcon, UserIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 
 import { useTranslation } from "react-i18next";
-import FetcherFormButton from "~/core/components/fetcher-form-button";
 import FormErrors from "~/core/components/form-error";
 import FormSuccess from "~/core/components/form-success";
+import {
+  NexButton,
+  NexCard,
+  NexCardContent,
+  NexCardDescription,
+  NexCardFooter,
+  NexCardHeader,
+  NexCardTitle,
+  NexInput,
+} from "~/core/components/nex";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "~/core/components/ui/avatar";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "~/core/components/ui/card";
 import { Checkbox } from "~/core/components/ui/checkbox";
-import { Input } from "~/core/components/ui/input";
 import { Label } from "~/core/components/ui/label";
 
 export default function EditProfileForm({
@@ -59,65 +59,86 @@ export default function EditProfileForm({
       ref={formRef}
       action="/api/users/profile"
     >
-      <Card className="justify-between">
-        <CardHeader>
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex w-full flex-col gap-7">
-            <div className="flex items-center gap-10">
+      <NexCard variant="elevated" padding="lg">
+        <NexCardHeader>
+          <NexCardTitle>{t("title")}</NexCardTitle>
+          <NexCardDescription>{t("description")}</NexCardDescription>
+        </NexCardHeader>
+        <NexCardContent>
+          <div className="flex w-full flex-col gap-8">
+            {/* Avatar Section */}
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 rounded-xl bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/40 dark:to-blue-900/40 border border-purple-100 dark:border-purple-800/50">
               <Label
                 htmlFor="avatar"
-                className="flex flex-col items-start gap-2"
+                className="flex flex-col items-center gap-3 cursor-pointer group"
               >
-                <span>{t("avatar")}</span>
-                <Avatar className="size-24">
-                  {avatar ? <AvatarImage src={avatar} alt="Avatar" /> : null}
-                  <AvatarFallback>
-                    <UserIcon className="text-muted-foreground size-10" />
-                  </AvatarFallback>
-                </Avatar>
-              </Label>
-              <div className="text-muted-foreground flex w-1/2 flex-col gap-2 text-sm">
-                <div className="flex flex-col gap-1">
-                  <span>{t("maxSize")}</span>
-                  <span>{t("allowedFormats")}</span>
+                <div className="relative">
+                  <Avatar className="size-28 ring-4 ring-white dark:ring-gray-700 shadow-xl transition-transform group-hover:scale-105">
+                    {avatar ? <AvatarImage src={avatar} alt="Avatar" /> : null}
+                    <AvatarFallback className="bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/60 dark:to-blue-900/60">
+                      <UserIcon className="text-purple-600 dark:text-purple-300 size-12" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute bottom-0 right-0 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-full p-2 shadow-lg">
+                    <ImageIcon className="size-4" />
+                  </div>
                 </div>
-                <Input
+                <span className="text-sm font-medium text-purple-700 dark:text-purple-300">{t("avatar")}</span>
+              </Label>
+              <div className="flex-1 flex flex-col gap-3">
+                <div className="flex flex-col gap-2 text-sm">
+                  <span className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                    <CheckCircle2 className="size-4 text-green-500 dark:text-green-400" />
+                    {t("maxSize")}
+                  </span>
+                  <span className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                    <CheckCircle2 className="size-4 text-green-500 dark:text-green-400" />
+                    {t("allowedFormats")}
+                  </span>
+                </div>
+                <input
                   id="avatar"
                   name="avatar"
                   type="file"
                   onChange={onChangeAvatar}
+                  className="block w-full text-sm text-slate-700 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-purple-500 file:to-blue-500 file:text-white hover:file:from-purple-600 hover:file:to-blue-600 file:cursor-pointer cursor-pointer file:transition-all"
                 />
               </div>
             </div>
-            <div className="flex flex-col items-start space-y-2">
-              <Label htmlFor="name" className="flex flex-col items-start gap-1">
-                {t("name")}
-              </Label>
-              <Input
+
+            {/* Name Input */}
+            <div className="flex flex-col space-y-2">
+              <NexInput
                 id="name"
                 name="name"
                 required
                 type="text"
+                label={t("name")}
                 placeholder="Nico"
                 defaultValue={name}
+                variant="outlined"
+                inputSize="lg"
+                leftIcon={<UserIcon className="size-5" />}
+                error={
+                  fetcher.data &&
+                  "fieldErrors" in fetcher.data &&
+                  fetcher.data.fieldErrors?.name
+                    ? fetcher.data.fieldErrors.name[0]
+                    : undefined
+                }
               />
-              {fetcher.data &&
-              "fieldErrors" in fetcher.data &&
-              fetcher.data.fieldErrors?.name ? (
-                <FormErrors errors={fetcher.data?.fieldErrors?.name} />
-              ) : null}
             </div>
-            <div className="flex items-center gap-2">
+
+            {/* Marketing Consent */}
+            <div className="flex items-start gap-3 p-4 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary transition-colors">
               <Checkbox
                 id="marketingConsent"
                 name="marketingConsent"
                 defaultChecked={marketingConsent}
+                className="mt-1"
               />
-              <Label htmlFor="marketingConsent">
-              {t("marketingConsent")}
+              <Label htmlFor="marketingConsent" className="cursor-pointer flex-1">
+                <span className="text-sm font-medium">{t("marketingConsent")}</span>
               </Label>
             </div>
             {fetcher.data &&
@@ -128,21 +149,26 @@ export default function EditProfileForm({
               />
             ) : null}
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <FetcherFormButton
-            submitting={fetcher.state === "submitting"}
-            label={t("saveProfile")}
-            className="w-full"
-          />
+        </NexCardContent>
+        <NexCardFooter className="flex flex-col gap-4">
+          <NexButton
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full cursor-pointer"
+            loading={fetcher.state === "submitting"}
+            disabled={fetcher.state === "submitting"}
+          >
+            {t("saveProfile")}
+          </NexButton>
           {fetcher.data && "success" in fetcher.data && fetcher.data.success ? (
             <FormSuccess message={t("profileUpdated")} />
           ) : null}
           {fetcher.data && "error" in fetcher.data && fetcher.data.error ? (
             <FormErrors errors={[fetcher.data.error]} />
           ) : null}
-        </CardFooter>
-      </Card>
+        </NexCardFooter>
+      </NexCard>
     </fetcher.Form>
   );
 }
