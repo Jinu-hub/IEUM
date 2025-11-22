@@ -1,9 +1,9 @@
 import type { Translation } from "./types";
 
-const es: Translation = {
+const ja: Translation = {
   home: {
-    title: "Supaplate",
-    subtitle: "作業を始めましょう！",
+    title: "Nexletter",
+    subtitle: "スマートなチーム向けニュースレター",
   },
   navigation: {
     en: "英語",
@@ -11,17 +11,17 @@ const es: Translation = {
     ja: "日本語",
   },
   join: {
-    heroTitle: "スマートなブックマーク整理",
-    heroSubtitle: "始めましょうか？",
-    heroDescription: "リンクを意味のある知識に変えるために、タグとメモを使ってあなただけのアーカイブを作ってみましょう。",
-    title: "アカウントを作成",
+    heroTitle: "Nexletter",
+    heroSubtitle: "スマートなチーム向けニュースレターを始めてみませんか",
+    heroDescription: "Slack メッセージ, GitHub 活動, プロジェクト進捗を自動分析して、チームの週次ニュースレターを作成/送信します。もう手動での週次レポートは不要です。",
+    title: "アカウント作成",
     description: "アカウントを作成するための情報を入力してください",
     name: "名前",
     email: "メールアドレス",
     password: "パスワード",
     passwordHint: "8文字以上で入力してください。",
     confirmPassword: "パスワード確認",
-    createAccount: "アカウントを作成",
+    createAccount: "アカウント作成",
     alreadyHave: "既にアカウントを持っていますか？",
     signIn: "サインイン",
     marketing: "マーケティングメールを受け取る",
@@ -33,10 +33,10 @@ const es: Translation = {
     verifyEmail: "サインインする前に、メールを確認してください。このタブを閉じることができます。",
   },
   login: {
-    title: "アカウントにサインイン",
+    title: "サインイン",
     description: "詳細を入力してください",
     email: "メールアドレス",
-    emailPlaceholder: "例: nico@supaplate.com",
+    emailPlaceholder: "例: yourname@supaplate.com",
     password: "パスワード",
     passwordPlaceholder: "パスワードを入力してください",
     forgotPassword: "パスワードを忘れた方はこちら",
@@ -47,6 +47,14 @@ const es: Translation = {
     noAccount: "アカウントを持っていませんか？",
     signUp: "アカウントを作成",
   },
+  forgotPassword: {
+    title: "パスワードを忘れた方はこちら",
+    description: "パスワードをリセットするためのメールを送信します",
+    email: "メールアドレス",
+    emailPlaceholder: "例: yourname@supaplate.com",
+    sendResetLink: "リセットリンクを送信",
+    backToLogin: "ログイン画面に戻る",
+  },
 };
 
-export default es;
+export default ja;

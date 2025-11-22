@@ -16,6 +16,7 @@ import { useEffect, useRef } from "react";
 import { Form, data } from "react-router";
 import { z } from "zod";
 
+import { useTranslation } from "react-i18next";
 import FormButton from "~/core/components/form-button";
 import FormErrors from "~/core/components/form-error";
 import FormSuccess from "~/core/components/form-success";
@@ -109,6 +110,7 @@ export async function action({ request }: Route.ActionArgs) {
  * @param actionData - Data returned from the form action, including errors or success status
  */
 export default function ForgotPassword({ actionData }: Route.ComponentProps) {
+  const { t } = useTranslation();
   // Reference to the form element for resetting after successful submission
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -124,10 +126,10 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center">
           <CardTitle className="text-2xl font-semibold">
-            Forgot your password?
+            {t("forgotPassword.title")}
           </CardTitle>
           <CardDescription className="text-center text-base">
-            Enter your email and we&apos;ll send you a reset link.
+            {t("forgotPassword.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -138,14 +140,14 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
           >
             <div className="flex flex-col items-start space-y-2">
               <Label htmlFor="name" className="flex flex-col items-start gap-1">
-                Email
+                {t("forgotPassword.email")}
               </Label>
               <Input
                 id="email"
                 name="email"
                 required
                 type="email"
-                placeholder="nico@supaplate.com"
+                placeholder={t("forgotPassword.emailPlaceholder")}
               />
               {actionData &&
               "fieldErrors" in actionData &&
@@ -153,12 +155,12 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
                 <FormErrors errors={actionData.fieldErrors.email} />
               ) : null}
             </div>
-            <FormButton label="Send reset link" className="w-full" />
+            <FormButton label={t("forgotPassword.sendResetLink")} className="w-full" />
             {actionData && "error" in actionData && actionData.error ? (
               <FormErrors errors={[actionData.error]} />
             ) : null}
             {actionData && "success" in actionData && actionData.success ? (
-              <FormSuccess message="Check your email for a reset link, you can close this tab." />
+              <FormSuccess message={t("success")} />
             ) : null}
           </Form>
         </CardContent>

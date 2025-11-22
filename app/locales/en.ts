@@ -2,8 +2,8 @@ import type { Translation } from "./types";
 
 const en: Translation = {
   home: {
-    title: "LinkVerse",
-    subtitle: "Link becomes knowledge",
+    title: "Nexletter",
+    subtitle: "For Team Newsletters",
   },
   navigation: {
     en: "English",
@@ -11,9 +11,9 @@ const en: Translation = {
     ja: "Japanese",
   },
   join: {
-    heroTitle: "Smarter bookmark organizing",
-    heroSubtitle: "Shall we begin?",
-    heroDescription: "Turn your links into meaningful knowledge with tags and notes.",
+    heroTitle: "Nexletter",
+    heroSubtitle: "Start your smarter team newsletter",
+    heroDescription: "Automatically analyze Slack conversations, GitHub activities, and project progress to create a weekly newsletter for your team. No more manual weekly reports.",
     title: "Create an account",
     description: "Enter your details to create an account",
     name: "Name",
@@ -46,6 +46,14 @@ const en: Translation = {
     resendConfirmation: "Resend confirmation email",
     noAccount: "Don't have an account?",
     signUp: "Sign up",
+  },
+  forgotPassword: {
+    title: "Forgot your password?",
+    description: "Enter your email to reset your password",
+    email: "Email",
+    emailPlaceholder: "e.g. nico@supaplate.com",
+    sendResetLink: "Send reset link",
+    backToLogin: "Back to login",
   },
 };
 

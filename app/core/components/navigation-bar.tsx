@@ -18,7 +18,7 @@
  */
 import { HomeIcon, LogOutIcon, MenuIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 
 import LangSwitcher from "./lang-switcher";
 import ThemeSwitcher from "./theme-switcher";
@@ -127,25 +127,34 @@ function UserMenu({
  * @returns Fragment containing sign in and sign up buttons
  */
 function AuthButtons() {
+  const { t } = useTranslation();
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
+  const isJoinPage = location.pathname === "/join";
+  
   return (
     <>
-      {/* Sign in button (less prominent) */}
-      <Button variant="ghost" asChild>
-        <SheetClose asChild>
-          <Link to="/login" viewTransition>
-            Sign in
-          </Link>
-        </SheetClose>
-      </Button>
+      {/* Sign in button (less prominent) - hidden on /login page */}
+      {!isLoginPage && (
+        <Button variant="ghost" asChild>
+          <SheetClose asChild>
+            <Link to="/login" viewTransition>
+              {t("login.loginButton")}
+            </Link>
+          </SheetClose>
+        </Button>
+      )}
       
-      {/* Sign up button (more prominent) */}
-      <Button variant="default" asChild>
-        <SheetClose asChild>
-          <Link to="/join" viewTransition>
-            Sign up
-          </Link>
-        </SheetClose>
-      </Button>
+      {/* Sign up button (more prominent) - hidden on /join page */}
+      {!isJoinPage && (
+        <Button variant="default" asChild>
+          <SheetClose asChild>
+            <Link to="/join" viewTransition>
+              {t("join.createAccount")}
+            </Link>
+          </SheetClose>
+        </Button>
+      )}
     </>
   );
 }
@@ -267,6 +276,7 @@ export function NavigationBar({
           >
             Blog
           </Link>
+          {/*
           <Link
             to="/contact"
             viewTransition
@@ -274,6 +284,7 @@ export function NavigationBar({
           >
             Contact
           </Link>
+          */}
           <Link
             to="/payments/checkout"
             viewTransition

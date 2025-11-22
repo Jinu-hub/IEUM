@@ -45,4 +45,12 @@ export type Translation = {
     noAccount: string;
     signUp: string;
   };
+  forgotPassword: {
+    title: string;
+    description: string;
+    email: string;
+    emailPlaceholder: string;
+    backToLogin: string;
+    sendResetLink: string;
+  };
 };

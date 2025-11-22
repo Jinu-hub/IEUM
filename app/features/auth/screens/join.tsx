@@ -15,6 +15,7 @@ import type { Route } from "./+types/join";
 
 import { CheckCircle2Icon } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Form, Link, data } from "react-router";
 import { z } from "zod";
 
@@ -37,8 +38,12 @@ import { Input } from "~/core/components/ui/input";
 import { Label } from "~/core/components/ui/label";
 import makeServerClient from "~/core/lib/supa-client.server";
 
+import { NexHero } from "~/core/components/nex/nex-hero";
 import { SignUpButtons } from "../components/auth-login-buttons";
 import { doesUserExist } from "../lib/queries.server";
+//import { Particles } from "components/magicui/particles";
+//import { Meteors } from "components/magicui/meteors";
+import { useTheme } from "remix-themes";
 
 /**
  * Meta function for the registration page
@@ -172,9 +177,11 @@ export async function action({ request }: Route.ActionArgs) {
  * @param actionData - Data returned from the form action, including errors or success status
  */
 export default function Join({ actionData }: Route.ComponentProps) {
+  const { t } = useTranslation();
+  const [theme] = useTheme();
   // Reference to the form element for resetting after successful submission
   const formRef = useRef<HTMLFormElement>(null);
-  
+
   // Reset the form when registration is successful
   useEffect(() => {
     if (actionData && "success" in actionData && actionData.success) {
@@ -183,165 +190,192 @@ export default function Join({ actionData }: Route.ComponentProps) {
     }
   }, [actionData]);
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="flex flex-col items-center">
-          <CardTitle className="text-2xl font-semibold" role="heading">
-            Create an account
-          </CardTitle>
-          <CardDescription className="text-base">
-            Enter your details to create an account
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <Form
-            className="flex w-full flex-col gap-5"
-            method="post"
-            ref={formRef}
-          >
-            <div className="flex flex-col items-start space-y-2">
-              <Label htmlFor="name" className="flex flex-col items-start gap-1">
-                Name
-              </Label>
-              <Input
-                id="name"
-                name="name"
-                required
-                type="text"
-                placeholder="Nico"
-              />
-              {actionData &&
-              "fieldErrors" in actionData &&
-              actionData.fieldErrors?.name ? (
-                <FormErrors errors={actionData.fieldErrors.name} />
-              ) : null}
-            </div>
-            <div className="flex flex-col items-start space-y-2">
-              <Label
-                htmlFor="email"
-                className="flex flex-col items-start gap-1"
-              >
-                Email
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                required
-                type="email"
-                placeholder="nico@supaplate.com"
-              />
-              {actionData &&
-              "fieldErrors" in actionData &&
-              actionData.fieldErrors?.email ? (
-                <FormErrors errors={actionData.fieldErrors.email} />
-              ) : null}
-            </div>
-            <div className="flex flex-col items-start space-y-2">
-              <Label
-                htmlFor="password"
-                className="flex flex-col items-start gap-1"
-              >
-                Password
-                <small className="text-muted-foreground">
-                  Must be at least 8 characters.
-                </small>
-              </Label>
-              <Input
-                id="password"
-                name="password"
-                required
-                type="password"
-                placeholder="Enter your password"
-              />
-              {actionData &&
-              "fieldErrors" in actionData &&
-              actionData.fieldErrors?.password ? (
-                <FormErrors errors={actionData.fieldErrors.password} />
-              ) : null}
-            </div>
-            <div className="flex flex-col items-start space-y-2">
-              <Label
-                htmlFor="confirmPassword"
-                className="flex flex-col items-start gap-1"
-              >
-                Confirm password
-              </Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                required
-                type="password"
-                placeholder="Confirm your password"
-              />
-              {actionData &&
-              "fieldErrors" in actionData &&
-              actionData.fieldErrors?.confirmPassword ? (
-                <FormErrors errors={actionData.fieldErrors.confirmPassword} />
-              ) : null}
-            </div>
-            <FormButton label="Create account" className="w-full" />
-            {actionData && "error" in actionData && actionData.error ? (
-              <FormErrors errors={[actionData.error]} />
-            ) : null}
-
-            <div className="flex items-center gap-2">
-              <Checkbox id="marketing" name="marketing" />
-              <Label htmlFor="marketing" className="text-muted-foreground">
-                Sign up for marketing emails
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox id="terms" name="terms" checked />
-              <Label htmlFor="terms" className="text-muted-foreground">
-                <span>
-                  I have read and agree to the{" "}
-                  <Link
-                    to="/legal/terms-of-service"
-                    viewTransition
-                    className="text-muted-foreground text-underline hover:text-foreground underline transition-colors"
-                  >
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    to="/legal/privacy-policy"
-                    viewTransition
-                    className="text-muted-foreground hover:text-foreground text-underline underline transition-colors"
-                  >
-                    Privacy Policy
-                  </Link>
-                </span>
-              </Label>
-            </div>
-            {actionData && "success" in actionData && actionData.success ? (
-              <Alert className="bg-green-600/20 text-green-700 dark:bg-green-950/20 dark:text-green-600">
-                <CheckCircle2Icon
-                  className="size-4"
-                  color="oklch(0.627 0.194 149.214)"
+    <div className="relative min-h-screen overflow-hidden flex flex-col items-center justify-center bg-white dark:bg-zinc-950">
+      {/*
+      {theme === "dark" && (
+        <Meteors 
+          className="fixed inset-0 pointer-events-none z-0"
+          number={30} 
+          startTop="-5%" 
+        />
+      )}
+      {theme === "light" && (
+        <Particles
+          className="fixed inset-0 pointer-events-none z-0"
+          quantity={120}
+          staticity={50}
+          ease={50}
+          size={0.5}
+          color={"#000000"}
+        />
+      )}
+      */}
+      <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-5xl px-4 -mt-16">
+        <NexHero
+          title={t("join.heroTitle")}
+          subtitle={t("join.heroSubtitle")}
+          description={t("join.heroDescription")}
+          background="custom"
+        />
+        <Card className="w-full max-w-md -mt-16">
+          <CardHeader className="flex flex-col items-center">
+            <CardTitle className="text-2xl font-semibold" role="heading">
+              {t("join.title")}
+            </CardTitle>
+            <CardDescription className="text-base">
+              {t("join.description")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <Form
+              className="flex w-full flex-col gap-5"
+              method="post"
+              ref={formRef}
+            >
+              <div className="flex flex-col items-start space-y-2">
+                <Label htmlFor="name" className="flex flex-col items-start gap-1">
+                  {t("join.name")}
+                </Label>
+                <Input
+                  id="name"
+                  name="name"
+                  required
+                  type="text"
+                  placeholder={t("join.name")}
                 />
-                <AlertTitle>Account created!</AlertTitle>
-                <AlertDescription className="text-green-700 dark:text-green-600">
-                  Before you can sign in, please verify your email. You can
-                  close this tab.
-                </AlertDescription>
-              </Alert>
-            ) : null}
-          </Form>
-          <SignUpButtons />
-        </CardContent>
-      </Card>
-      <div className="flex flex-col items-center justify-center text-sm">
-        <p className="text-muted-foreground">
-          Already have an account?{" "}
-          <Link
-            to="/login"
-            viewTransition
-            data-testid="form-signin-link"
-            className="text-muted-foreground hover:text-foreground text-underline underline transition-colors"
-          >
-            Sign in
-          </Link>
-        </p>
+                {actionData &&
+                "fieldErrors" in actionData &&
+                actionData.fieldErrors?.name ? (
+                  <FormErrors errors={actionData.fieldErrors.name} />
+                ) : null}
+              </div>
+              <div className="flex flex-col items-start space-y-2">
+                <Label
+                  htmlFor="email"
+                  className="flex flex-col items-start gap-1"
+                >
+                  {t("join.email")}
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  required
+                  type="email"
+                  placeholder={t("join.email")}
+                />
+                {actionData &&
+                "fieldErrors" in actionData &&
+                actionData.fieldErrors?.email ? (
+                  <FormErrors errors={actionData.fieldErrors.email} />
+                ) : null}
+              </div>
+              <div className="flex flex-col items-start space-y-2">
+                <Label
+                  htmlFor="password"
+                  className="flex flex-col items-start gap-1"
+                >
+                  {t("join.password")}
+                  <small className="text-muted-foreground">
+                    {t("join.passwordHint")}
+                  </small>
+                </Label>
+                <Input
+                  id="password"
+                  name="password"
+                  required
+                  type="password"
+                  placeholder={t("join.password")}
+                />
+                {actionData &&
+                "fieldErrors" in actionData &&
+                actionData.fieldErrors?.password ? (
+                  <FormErrors errors={actionData.fieldErrors.password} />
+                ) : null}
+              </div>
+              <div className="flex flex-col items-start space-y-2">
+                <Label
+                  htmlFor="confirmPassword"
+                  className="flex flex-col items-start gap-1"
+                >
+                  {t("join.confirmPassword")}
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  required
+                  type="password"
+                  placeholder={t("join.confirmPassword")}
+                />
+                {actionData &&
+                "fieldErrors" in actionData &&
+                actionData.fieldErrors?.confirmPassword ? (
+                  <FormErrors errors={actionData.fieldErrors.confirmPassword} />
+                ) : null}
+              </div>
+              <FormButton label={t("join.createAccount")}
+                className="w-full cursor-pointer" />
+              {actionData && "error" in actionData && actionData.error ? (
+                <FormErrors errors={[actionData.error]} />
+              ) : null}
+
+              <div className="flex items-center gap-2">
+                <Checkbox id="marketing" name="marketing" />
+                <Label htmlFor="marketing" className="text-muted-foreground">
+                  {t("join.marketing")}
+                </Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox id="terms" name="terms" checked />
+                <Label htmlFor="terms" className="text-muted-foreground">
+                  <span>
+                    {t("join.terms")} {" "}
+                    <Link
+                      to="/legal/terms-of-service"
+                      viewTransition
+                      className="text-muted-foreground text-underline hover:text-foreground underline transition-colors"
+                    >
+                      {t("join.tos")}
+                    </Link>{" "}
+                    {t("join.and")} {" "}
+                    <Link
+                      to="/legal/privacy-policy"
+                      viewTransition
+                      className="text-muted-foreground hover:text-foreground text-underline underline transition-colors"
+                    >
+                      {t("join.privacy")}
+                    </Link>
+                  </span>
+                </Label>
+              </div>
+              {actionData && "success" in actionData && actionData.success ? (
+                <Alert className="bg-green-600/20 text-green-700 dark:bg-green-950/20 dark:text-green-600">
+                  <CheckCircle2Icon
+                    className="size-4"
+                    color="oklch(0.627 0.194 149.214)"
+                  />
+                  <AlertTitle>{t("join.accountCreated")}</AlertTitle>
+                  <AlertDescription className="text-green-700 dark:text-green-600">
+                    {t("join.verifyEmail")}
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+            </Form>
+            <SignUpButtons />
+          </CardContent>
+        </Card>
+        <div className="flex flex-col items-center justify-center text-sm">
+          <p className="text-muted-foreground">
+            {t("join.alreadyHave")} {" "}
+            <Link
+              to="/login"
+              viewTransition
+              data-testid="form-signin-link"
+              className="text-muted-foreground hover:text-foreground text-underline underline transition-colors"
+            >
+              {t("join.signIn")}
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

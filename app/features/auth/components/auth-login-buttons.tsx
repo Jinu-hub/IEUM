@@ -13,15 +13,13 @@
  * This modular approach allows for easy addition or removal of authentication methods
  * without modifying the main authentication screens.
  */
-import { LockIcon, MailIcon, PhoneIcon } from "lucide-react";
+import { LockIcon, MailIcon } from "lucide-react";
 import { Link } from "react-router";
 
 import { Button } from "~/core/components/ui/button";
 
-import { AppleLogo } from "./logos/apple";
 import { GithubLogo } from "./logos/github";
 import { GoogleLogo } from "./logos/google";
-import { KakaoLogo } from "./logos/kakao";
 
 /**
  * Generic authentication button component
@@ -131,6 +129,7 @@ function SocialLoginButtons() {
         label="Github"
         href="/auth/social/start/github"
       />
+      {/*
       <AuthLoginButton
         logo={<AppleLogo className="size-4 scale-150 dark:text-white" />}
         label="Apple"
@@ -141,6 +140,7 @@ function SocialLoginButtons() {
         label="Kakao"
         href="/auth/social/start/kakao"
       />
+      */}
     </>
   );
 }

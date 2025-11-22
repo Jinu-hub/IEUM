@@ -17,19 +17,8 @@
  */
 import type { Route } from "./+types/contact-us";
 
-import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { useEffect, useRef, useState } from "react";
-import { Form, data } from "react-router";
-import Turnstile, { useTurnstile } from "react-turnstile";
-import { toast } from "sonner";
 import { z } from "zod";
 
-import FormButton from "~/core/components/form-button";
-import FormErrors from "~/core/components/form-error";
-import { Input } from "~/core/components/ui/input";
-import { Label } from "~/core/components/ui/label";
-import { Textarea } from "~/core/components/ui/textarea";
-import resendClient from "~/core/lib/resend-client.server";
 
 /**
  * Meta function for setting page metadata
@@ -174,6 +163,7 @@ const schema = z.object({
  * @returns JSON response indicating success or error with appropriate details
  */
 export async function action({ request }: Route.ActionArgs) {
+  /*
   // Extract form data from the request
   const formData = await request.formData();
 
@@ -234,6 +224,11 @@ export async function action({ request }: Route.ActionArgs) {
     success: true,
     error: null,
   };
+  */
+  return {
+    success: true,
+    error: null,
+  };
 }
 
 /**
@@ -246,6 +241,7 @@ export async function action({ request }: Route.ActionArgs) {
  * @param actionData - Data returned from the action function after form submission
  */
 export default function ContactUs({ actionData }: Route.ComponentProps) {
+  /*
   // State for storing CAPTCHA tokens from both providers
   const [hcaptchaToken, setHcaptchaToken] = useState<string>("");
   const [turnstileToken, setTurnstileToken] = useState<string>("");
@@ -257,6 +253,7 @@ export default function ContactUs({ actionData }: Route.ComponentProps) {
   const hcaptchaRef = useRef<HCaptcha>(null); // Reference to HCaptcha widget for resetting
   const turnstile = useTurnstile(); // Hook for Turnstile widget interactions
   const formRef = useRef<HTMLFormElement>(null); // Reference to the form element
+  */
   
   /**
    * Effect for handling form submission results
@@ -268,6 +265,7 @@ export default function ContactUs({ actionData }: Route.ComponentProps) {
    * 3. Showing success or error messages
    * 4. Resetting the form on successful submission
    */
+  /*
   useEffect(() => {
     if (!actionData) return;
     
@@ -293,7 +291,8 @@ export default function ContactUs({ actionData }: Route.ComponentProps) {
       toast.error(actionData.error.message);
     }
   }, [actionData]);
-  
+  */
+
   /**
    * Effect for delayed rendering of CAPTCHA widgets
    * 
@@ -301,9 +300,9 @@ export default function ContactUs({ actionData }: Route.ComponentProps) {
    * The delayed rendering prevents hydration mismatches and other SSR issues
    * that can occur with third-party CAPTCHA widgets.
    */
-  useEffect(() => {
-    setRenderCaptchas(true);
-  }, []);
+  // useEffect(() => {
+  //   setRenderCaptchas(true);
+  // }, []);
   /**
    * Render the contact form with dual CAPTCHA protection
    * 
@@ -313,149 +312,155 @@ export default function ContactUs({ actionData }: Route.ComponentProps) {
    * 3. Two CAPTCHA widgets (HCaptcha and Turnstile)
    * 4. A submit button that is disabled until both CAPTCHAs are verified
    * 5. Error messages for field validation and CAPTCHA verification
-   */
+  */
+  //  
+  // return (
+  //   <div className="flex flex-col items-center gap-20">
+  //     {/* Header section */}
+  //     <div>
+  //       <h1 className="text-center text-3xl font-semibold tracking-tight md:text-5xl">
+  //         Contact Us
+  //       </h1>
+  //       <p className="text-muted-foreground mt-2 text-center font-medium md:text-lg">
+  //         This is a page to demo HCaptcha and Turnstile captchas.
+  //       </p>
+  //     </div>
+
+  //     {/* Contact form */}
+  //     <Form
+  //       method="post"
+  //       ref={formRef}
+  //       className="flex w-full max-w-2xl flex-col gap-5"
+  //     >
+  //       {/* Name field */}
+  //       <div className="flex flex-col items-start space-y-2">
+  //         <Label htmlFor="name" className="flex flex-col items-start gap-1">
+  //           Name
+  //         </Label>
+  //         <Input
+  //           id="name"
+  //           name="name"
+  //           required
+  //           type="text"
+  //           placeholder="Enter your name"
+  //         />
+  //         {/* Display name field validation errors if any */}
+  //         {actionData &&
+  //         "fieldErrors" in actionData &&
+  //         actionData.fieldErrors?.name ? (
+  //           <FormErrors errors={actionData.fieldErrors.name} />
+  //         ) : null}
+  //       </div>
+
+  //       {/* Email field */}
+  //       <div className="flex flex-col items-start space-y-2">
+  //         <Label htmlFor="email" className="flex flex-col items-start gap-1">
+  //           Email
+  //         </Label>
+  //         <Input
+  //           id="email"
+  //           name="email"
+  //           required
+  //           type="email"
+  //           placeholder="Enter your email"
+  //         />
+  //         {/* Display email field validation errors if any */}
+  //         {actionData &&
+  //         "fieldErrors" in actionData &&
+  //         actionData.fieldErrors?.email ? (
+  //           <FormErrors errors={actionData.fieldErrors.email} />
+  //         ) : null}
+  //       </div>
+
+  //       {/* Message field */}
+  //       <div className="flex flex-col items-start space-y-2">
+  //         <Label htmlFor="message" className="flex flex-col items-start gap-1">
+  //           Message
+  //         </Label>
+  //         <Textarea
+  //           id="message"
+  //           name="message"
+  //           required
+  //           placeholder="Enter your message"
+  //           className="h-32 resize-none"
+  //         />
+  //         {/* Display message field validation errors if any */}
+  //         {actionData &&
+  //         "fieldErrors" in actionData &&
+  //         actionData.fieldErrors?.message ? (
+  //           <FormErrors errors={actionData.fieldErrors.message} />
+  //         ) : null}
+  //       </div>
+
+  //       {/* Hidden fields for CAPTCHA tokens */}
+  //       <input type="hidden" name="hcaptcha" value={hcaptchaToken} required />
+  //       <input type="hidden" name="turnstile" value={turnstileToken} required />
+
+  //       {/* CAPTCHA widgets - only rendered after initial mount to prevent SSR issues */}
+  //       {renderCaptchas ? (
+  //         <div className="flex flex-col items-center justify-between gap-5 md:flex-row md:gap-0">
+  //           {/* HCaptcha widget */}
+  //           <div>
+  //             <HCaptcha
+  //               sitekey={import.meta.env.VITE_HCAPTCHA_SITE_KEY}
+  //               onVerify={(token) => {
+  //                 setHcaptchaToken(token);
+  //               }}
+  //               ref={hcaptchaRef}
+  //             />
+  //             {/* Display HCaptcha verification errors if any */}
+  //             {actionData &&
+  //             "errors" in actionData &&
+  //             actionData.errors?.hcaptcha ? (
+  //               <FormErrors
+  //                 key="hcaptcha"
+  //                 errors={actionData.errors.hcaptcha}
+  //               />
+  //             ) : null}
+  //           </div>
+
+  //           {/* Turnstile widget */}
+  //           <div>
+  //             <Turnstile
+  //               sitekey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+  //               onVerify={(token) => {
+  //                 setTurnstileToken(token);
+  //               }}
+  //             />
+  //             {/* Display Turnstile verification errors if any */}
+  //             {actionData &&
+  //             "errors" in actionData &&
+  //             actionData.errors?.turnstile ? (
+  //               <FormErrors
+  //                 key="turnstile"
+  //                 errors={actionData.errors.turnstile}
+  //               />
+  //             ) : null}
+  //           </div>
+  //         </div>
+  //       ) : null}
+
+  //       {/* Informational note about the dual CAPTCHA implementation */}
+  //       <span className="text-center text-sm text-amber-500">
+  //         Note: This is a demo, you will not render two captchas at the same
+  //         time.
+  //         <br />
+  //         You will have to choose between HCaptcha and Turnstile.
+  //       </span>
+
+  //       {/* Submit button - disabled until both CAPTCHAs are verified */}
+  //       <FormButton
+  //         type="submit"
+  //         className="w-full"
+  //         disabled={!hcaptchaToken || !turnstileToken}
+  //         label="Send"
+  //       />
+  //     </Form>
+  //   </div>
+  // );
   return (
-    <div className="flex flex-col items-center gap-20">
-      {/* Header section */}
-      <div>
-        <h1 className="text-center text-3xl font-semibold tracking-tight md:text-5xl">
-          Contact Us
-        </h1>
-        <p className="text-muted-foreground mt-2 text-center font-medium md:text-lg">
-          This is a page to demo HCaptcha and Turnstile captchas.
-        </p>
-      </div>
-
-      {/* Contact form */}
-      <Form
-        method="post"
-        ref={formRef}
-        className="flex w-full max-w-2xl flex-col gap-5"
-      >
-        {/* Name field */}
-        <div className="flex flex-col items-start space-y-2">
-          <Label htmlFor="name" className="flex flex-col items-start gap-1">
-            Name
-          </Label>
-          <Input
-            id="name"
-            name="name"
-            required
-            type="text"
-            placeholder="Enter your name"
-          />
-          {/* Display name field validation errors if any */}
-          {actionData &&
-          "fieldErrors" in actionData &&
-          actionData.fieldErrors?.name ? (
-            <FormErrors errors={actionData.fieldErrors.name} />
-          ) : null}
-        </div>
-
-        {/* Email field */}
-        <div className="flex flex-col items-start space-y-2">
-          <Label htmlFor="email" className="flex flex-col items-start gap-1">
-            Email
-          </Label>
-          <Input
-            id="email"
-            name="email"
-            required
-            type="email"
-            placeholder="Enter your email"
-          />
-          {/* Display email field validation errors if any */}
-          {actionData &&
-          "fieldErrors" in actionData &&
-          actionData.fieldErrors?.email ? (
-            <FormErrors errors={actionData.fieldErrors.email} />
-          ) : null}
-        </div>
-
-        {/* Message field */}
-        <div className="flex flex-col items-start space-y-2">
-          <Label htmlFor="message" className="flex flex-col items-start gap-1">
-            Message
-          </Label>
-          <Textarea
-            id="message"
-            name="message"
-            required
-            placeholder="Enter your message"
-            className="h-32 resize-none"
-          />
-          {/* Display message field validation errors if any */}
-          {actionData &&
-          "fieldErrors" in actionData &&
-          actionData.fieldErrors?.message ? (
-            <FormErrors errors={actionData.fieldErrors.message} />
-          ) : null}
-        </div>
-
-        {/* Hidden fields for CAPTCHA tokens */}
-        <input type="hidden" name="hcaptcha" value={hcaptchaToken} required />
-        <input type="hidden" name="turnstile" value={turnstileToken} required />
-
-        {/* CAPTCHA widgets - only rendered after initial mount to prevent SSR issues */}
-        {renderCaptchas ? (
-          <div className="flex flex-col items-center justify-between gap-5 md:flex-row md:gap-0">
-            {/* HCaptcha widget */}
-            <div>
-              <HCaptcha
-                sitekey={import.meta.env.VITE_HCAPTCHA_SITE_KEY}
-                onVerify={(token) => {
-                  setHcaptchaToken(token);
-                }}
-                ref={hcaptchaRef}
-              />
-              {/* Display HCaptcha verification errors if any */}
-              {actionData &&
-              "errors" in actionData &&
-              actionData.errors?.hcaptcha ? (
-                <FormErrors
-                  key="hcaptcha"
-                  errors={actionData.errors.hcaptcha}
-                />
-              ) : null}
-            </div>
-
-            {/* Turnstile widget */}
-            <div>
-              <Turnstile
-                sitekey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                onVerify={(token) => {
-                  setTurnstileToken(token);
-                }}
-              />
-              {/* Display Turnstile verification errors if any */}
-              {actionData &&
-              "errors" in actionData &&
-              actionData.errors?.turnstile ? (
-                <FormErrors
-                  key="turnstile"
-                  errors={actionData.errors.turnstile}
-                />
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-
-        {/* Informational note about the dual CAPTCHA implementation */}
-        <span className="text-center text-sm text-amber-500">
-          Note: This is a demo, you will not render two captchas at the same
-          time.
-          <br />
-          You will have to choose between HCaptcha and Turnstile.
-        </span>
-
-        {/* Submit button - disabled until both CAPTCHAs are verified */}
-        <FormButton
-          type="submit"
-          className="w-full"
-          disabled={!hcaptchaToken || !turnstileToken}
-          label="Send"
-        />
-      </Form>
+    <div>
+      <h1>Contact Us</h1>
     </div>
   );
 }
