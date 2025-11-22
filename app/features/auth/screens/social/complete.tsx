@@ -11,6 +11,7 @@
  * This implementation uses Supabase's OAuth authentication system to exchange the OAuth code
  * for a valid session, creating or updating the user in the Supabase database.
  */
+import { useTranslation } from "react-i18next";
 import type { Route } from "./+types/complete";
 
 import { data, redirect } from "react-router";
@@ -117,10 +118,11 @@ export async function loader({ request }: Route.LoaderArgs) {
  * @param loaderData - Data from the loader containing any error messages
  */
 export default function Confirm({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("common", { keyPrefix: "common" });
   return (
     <div className="flex flex-col items-center justify-center gap-2.5">
       {/* Display error heading */}
-      <h1 className="text-2xl font-semibold">Login failed</h1>
+      <h1 className="text-2xl font-semibold">{t("loginFailed")}</h1>
       {/* Display specific error message from the provider or Supabase */}
       <p className="text-muted-foreground">{loaderData.error}</p>
     </div>

@@ -13,6 +13,7 @@
  * This is a critical security component that ensures email ownership before
  * completing sensitive account actions.
  */
+import { useTranslation } from "react-i18next";
 import type { Route } from "./+types/confirm";
 
 import { data, redirect } from "react-router";
@@ -117,10 +118,11 @@ export async function loader({ request }: Route.LoaderArgs) {
  * @param loaderData - Data from the loader containing any error messages
  */
 export default function Confirm({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("common", { keyPrefix: "common" });
   return (
     <div className="flex flex-col items-center justify-center gap-2.5">
       {/* Display error heading */}
-      <h1 className="text-2xl font-semibold">Confirmation failed</h1>
+      <h1 className="text-2xl font-semibold">{t("confirmationFailed")}</h1>
       {/* Display specific error message from Supabase */}
       <p className="text-muted-foreground">{loaderData.error}</p>
     </div>

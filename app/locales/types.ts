@@ -8,6 +8,12 @@ export type Translation = {
     kr: string;
     ja: string;
   };
+  common: {
+    confirmationComplete: string;
+    confirmationFailed: string;
+    loginFailed: string;
+    retry: string;
+  };
   join: {
     heroTitle: string;
     heroSubtitle: string;
@@ -44,6 +50,36 @@ export type Translation = {
     resendConfirmation: string;
     noAccount: string;
     signUp: string;
+  };
+  magicLink: {
+    title: string;
+    description: string;
+    email: string;
+    emailPlaceholder: string;
+    sendButton: string;
+    successMessage: string;
+  };
+  otpStart: {
+    title: string;
+    description: string;
+    email: string;
+    emailPlaceholder: string;
+    sendButton: string;
+  };
+  otpComplete: {
+    title: string;
+    description: string;
+    emailPlaceholder: string;
+    submitButton: string;
+  };
+  newPassword: {
+    title: string;
+    description: string;
+    password: string;
+    passwordPlaceholder: string;
+    confirmPassword: string;
+    confirmPasswordPlaceholder: string;
+    updatePasswordButton: string;
   };
   forgotPassword: {
     title: string;

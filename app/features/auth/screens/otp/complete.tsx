@@ -18,6 +18,7 @@ import { useRef } from "react";
 import { Form, data, redirect, useSubmit } from "react-router";
 import { z } from "zod";
 
+import { useTranslation } from "react-i18next";
 import FormButton from "~/core/components/form-button";
 import FormErrors from "~/core/components/form-error";
 import {
@@ -28,10 +29,7 @@ import {
   CardTitle,
 } from "~/core/components/ui/card";
 import { Input } from "~/core/components/ui/input";
-import { InputOTPSeparator } from "~/core/components/ui/input-otp";
-import { InputOTPGroup } from "~/core/components/ui/input-otp";
-import { InputOTPSlot } from "~/core/components/ui/input-otp";
-import { InputOTP } from "~/core/components/ui/input-otp";
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "~/core/components/ui/input-otp";
 import makeServerClient from "~/core/lib/supa-client.server";
 
 /**
@@ -158,7 +156,9 @@ export default function OtpComplete({
 }: Route.ComponentProps) {
   // Reference to the form element for submission
   const formRef = useRef<HTMLFormElement>(null);
-  
+
+  const { t } = useTranslation("common", { keyPrefix: "otpComplete" });
+
   // Hook to programmatically submit the form
   const submit = useSubmit();
   
@@ -172,9 +172,9 @@ export default function OtpComplete({
       <Card className="w-full max-w-md">
         {/* Card header with title and description */}
         <CardHeader className="flex flex-col items-center">
-          <CardTitle className="text-2xl font-semibold">Confirm code</CardTitle>
+          <CardTitle className="text-2xl font-semibold">{t("title")}</CardTitle>
           <CardDescription className="text-center text-base">
-            Enter the code we sent you.
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -192,7 +192,7 @@ export default function OtpComplete({
               required
               type="email"
               defaultValue={loaderData.email}
-              placeholder="nico@supaplate.com"
+              placeholder={t("emailPlaceholder")}
             />
 
             {/* Specialized OTP input component with 6 digit slots */}
@@ -218,7 +218,7 @@ export default function OtpComplete({
               </InputOTPGroup>
             </InputOTP>
             {/* Manual submit button as fallback */}
-            <FormButton label="Submit" className="w-full" />
+            <FormButton label={t("submitButton")} className="w-full" />
             {/* Error message display */}
             {actionData && "error" in actionData && actionData.error ? (
               <FormErrors errors={[actionData.error]} />

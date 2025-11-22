@@ -110,7 +110,7 @@ export async function action({ request }: Route.ActionArgs) {
  * @param actionData - Data returned from the form action, including errors or success status
  */
 export default function ForgotPassword({ actionData }: Route.ComponentProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common", { keyPrefix: "forgotPassword" });
   // Reference to the form element for resetting after successful submission
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -126,10 +126,10 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center">
           <CardTitle className="text-2xl font-semibold">
-            {t("forgotPassword.title")}
+            {t("title")}
           </CardTitle>
           <CardDescription className="text-center text-base">
-            {t("forgotPassword.description")}
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -140,14 +140,14 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
           >
             <div className="flex flex-col items-start space-y-2">
               <Label htmlFor="name" className="flex flex-col items-start gap-1">
-                {t("forgotPassword.email")}
+                {t("email")}
               </Label>
               <Input
                 id="email"
                 name="email"
                 required
                 type="email"
-                placeholder={t("forgotPassword.emailPlaceholder")}
+                placeholder={t("emailPlaceholder")}
               />
               {actionData &&
               "fieldErrors" in actionData &&
@@ -155,7 +155,7 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
                 <FormErrors errors={actionData.fieldErrors.email} />
               ) : null}
             </div>
-            <FormButton label={t("forgotPassword.sendResetLink")} className="w-full" />
+            <FormButton label={t("sendResetLink")} className="w-full" />
             {actionData && "error" in actionData && actionData.error ? (
               <FormErrors errors={[actionData.error]} />
             ) : null}

@@ -177,7 +177,7 @@ export async function action({ request }: Route.ActionArgs) {
  * @param actionData - Data returned from the form action, including errors or success status
  */
 export default function Join({ actionData }: Route.ComponentProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common", { keyPrefix: "join" });
   const [theme] = useTheme();
   // Reference to the form element for resetting after successful submission
   const formRef = useRef<HTMLFormElement>(null);
@@ -212,18 +212,18 @@ export default function Join({ actionData }: Route.ComponentProps) {
       */}
       <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-5xl px-4 -mt-16">
         <NexHero
-          title={t("join.heroTitle")}
-          subtitle={t("join.heroSubtitle")}
-          description={t("join.heroDescription")}
+          title={t("heroTitle")}
+          subtitle={t("heroSubtitle")}
+          description={t("heroDescription")}
           background="custom"
         />
         <Card className="w-full max-w-md -mt-16">
           <CardHeader className="flex flex-col items-center">
             <CardTitle className="text-2xl font-semibold" role="heading">
-              {t("join.title")}
+              {t("title")}
             </CardTitle>
             <CardDescription className="text-base">
-              {t("join.description")}
+              {t("description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
@@ -234,14 +234,14 @@ export default function Join({ actionData }: Route.ComponentProps) {
             >
               <div className="flex flex-col items-start space-y-2">
                 <Label htmlFor="name" className="flex flex-col items-start gap-1">
-                  {t("join.name")}
+                  {t("name")}
                 </Label>
                 <Input
                   id="name"
                   name="name"
                   required
                   type="text"
-                  placeholder={t("join.name")}
+                  placeholder={t("name")}
                 />
                 {actionData &&
                 "fieldErrors" in actionData &&
@@ -254,14 +254,14 @@ export default function Join({ actionData }: Route.ComponentProps) {
                   htmlFor="email"
                   className="flex flex-col items-start gap-1"
                 >
-                  {t("join.email")}
+                  {t("email")}
                 </Label>
                 <Input
                   id="email"
                   name="email"
                   required
                   type="email"
-                  placeholder={t("join.email")}
+                  placeholder={t("email")}
                 />
                 {actionData &&
                 "fieldErrors" in actionData &&
@@ -274,9 +274,9 @@ export default function Join({ actionData }: Route.ComponentProps) {
                   htmlFor="password"
                   className="flex flex-col items-start gap-1"
                 >
-                  {t("join.password")}
+                  {t("password")}
                   <small className="text-muted-foreground">
-                    {t("join.passwordHint")}
+                    {t("passwordHint")}
                   </small>
                 </Label>
                 <Input
@@ -284,7 +284,7 @@ export default function Join({ actionData }: Route.ComponentProps) {
                   name="password"
                   required
                   type="password"
-                  placeholder={t("join.password")}
+                  placeholder={t("password")}
                 />
                 {actionData &&
                 "fieldErrors" in actionData &&
@@ -297,14 +297,14 @@ export default function Join({ actionData }: Route.ComponentProps) {
                   htmlFor="confirmPassword"
                   className="flex flex-col items-start gap-1"
                 >
-                  {t("join.confirmPassword")}
+                  {t("confirmPassword")}
                 </Label>
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
                   required
                   type="password"
-                  placeholder={t("join.confirmPassword")}
+                  placeholder={t("confirmPassword")}
                 />
                 {actionData &&
                 "fieldErrors" in actionData &&
@@ -312,7 +312,7 @@ export default function Join({ actionData }: Route.ComponentProps) {
                   <FormErrors errors={actionData.fieldErrors.confirmPassword} />
                 ) : null}
               </div>
-              <FormButton label={t("join.createAccount")}
+              <FormButton label={t("createAccount")}
                 className="w-full cursor-pointer" />
               {actionData && "error" in actionData && actionData.error ? (
                 <FormErrors errors={[actionData.error]} />
@@ -321,28 +321,28 @@ export default function Join({ actionData }: Route.ComponentProps) {
               <div className="flex items-center gap-2">
                 <Checkbox id="marketing" name="marketing" />
                 <Label htmlFor="marketing" className="text-muted-foreground">
-                  {t("join.marketing")}
+                  {t("marketing")}
                 </Label>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox id="terms" name="terms" checked />
                 <Label htmlFor="terms" className="text-muted-foreground">
                   <span>
-                    {t("join.terms")} {" "}
+                    {t("terms")} {" "}
                     <Link
                       to="/legal/terms-of-service"
                       viewTransition
                       className="text-muted-foreground text-underline hover:text-foreground underline transition-colors"
                     >
-                      {t("join.tos")}
+                      {t("tos")}
                     </Link>{" "}
-                    {t("join.and")} {" "}
+                    {t("and")} {" "}
                     <Link
                       to="/legal/privacy-policy"
                       viewTransition
                       className="text-muted-foreground hover:text-foreground text-underline underline transition-colors"
                     >
-                      {t("join.privacy")}
+                      {t("privacy")}
                     </Link>
                   </span>
                 </Label>
@@ -353,9 +353,9 @@ export default function Join({ actionData }: Route.ComponentProps) {
                     className="size-4"
                     color="oklch(0.627 0.194 149.214)"
                   />
-                  <AlertTitle>{t("join.accountCreated")}</AlertTitle>
+                  <AlertTitle>{t("accountCreated")}</AlertTitle>
                   <AlertDescription className="text-green-700 dark:text-green-600">
-                    {t("join.verifyEmail")}
+                    {t("verifyEmail")}
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -365,14 +365,14 @@ export default function Join({ actionData }: Route.ComponentProps) {
         </Card>
         <div className="flex flex-col items-center justify-center text-sm">
           <p className="text-muted-foreground">
-            {t("join.alreadyHave")} {" "}
+            {t("alreadyHave")} {" "}
             <Link
               to="/login"
               viewTransition
               data-testid="form-signin-link"
               className="text-muted-foreground hover:text-foreground text-underline underline transition-colors"
             >
-              {t("join.signIn")}
+              {t("signIn")}
             </Link>
           </p>
         </div>

@@ -16,6 +16,7 @@ import { useEffect, useRef } from "react";
 import { Form, data } from "react-router";
 import { z } from "zod";
 
+import { useTranslation } from "react-i18next";
 import FormButton from "~/core/components/form-button";
 import FormErrors from "~/core/components/form-error";
 import FormSuccess from "~/core/components/form-success";
@@ -128,7 +129,7 @@ export async function action({ request }: Route.ActionArgs) {
 export default function MagicLink({ actionData }: Route.ComponentProps) {
   // Reference to the form element for resetting after successful submission
   const formRef = useRef<HTMLFormElement>(null);
-  
+  const { t } = useTranslation("common", { keyPrefix: "magicLink" });
   // Reset the form when the magic link is successfully sent
   useEffect(() => {
     if (actionData && "success" in actionData && actionData.success) {
@@ -141,10 +142,10 @@ export default function MagicLink({ actionData }: Route.ComponentProps) {
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center">
           <CardTitle className="text-2xl font-semibold">
-            Enter your email
+            {t("title")}
           </CardTitle>
           <CardDescription className="text-center text-base">
-            We&apos;ll send you a verification code.
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -155,22 +156,22 @@ export default function MagicLink({ actionData }: Route.ComponentProps) {
           >
             <div className="flex flex-col items-start space-y-2">
               <Label htmlFor="name" className="flex flex-col items-start gap-1">
-                Email
+                {t("email")}
               </Label>
               <Input
                 id="email"
                 name="email"
                 required
                 type="email"
-                placeholder="nico@supaplate.com"
+                placeholder="yourname@supaplate.com"
               />
             </div>
-            <FormButton label="Send magic link" className="w-full" />
+            <FormButton label={t("sendButton")} className="w-full" />
             {actionData && "error" in actionData && actionData.error ? (
               <FormErrors errors={[actionData.error]} />
             ) : null}
             {actionData && "success" in actionData && actionData.success ? (
-              <FormSuccess message="Check your email and click the magic link to continue. You can close this tab." />
+              <FormSuccess message={t("successMessage")} />
             ) : null}
           </Form>
         </CardContent>

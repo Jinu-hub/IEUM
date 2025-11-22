@@ -11,6 +11,7 @@
  *
  * This implementation uses Supabase's OAuth authentication system.
  */
+import { useTranslation } from "react-i18next";
 import type { Route } from "./+types/start";
 
 import { data, redirect } from "react-router";
@@ -83,6 +84,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
  * @param loaderData - Data from the loader containing any error messages
  */
 export default function StartSocialLogin({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("common", { keyPrefix: "common" });
   // Extract error from loader data
   const { error } = loaderData;
 
@@ -90,7 +92,7 @@ export default function StartSocialLogin({ loaderData }: Route.ComponentProps) {
     <div className="flex flex-col items-center justify-center gap-2.5">
       {/* Display error message */}
       <h1 className="text-2xl font-semibold">{error}</h1>
-      <p className="text-muted-foreground">Please try again.</p>
+      <p className="text-muted-foreground">{t("retry")}</p>
     </div>
   );
 }

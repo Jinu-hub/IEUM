@@ -124,7 +124,7 @@ export async function action({ request }: Route.ActionArgs) {
  * @param actionData - Data returned from the form action, including any errors
  */
 export default function Login({ actionData }: Route.ComponentProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common", { keyPrefix: "login" });
   // Reference to the form element for accessing form data
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -155,10 +155,10 @@ export default function Login({ actionData }: Route.ComponentProps) {
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center">
           <CardTitle className="text-2xl font-semibold">
-            {t("login.title")}
+            {t("title")}
           </CardTitle>
           <CardDescription className="text-base">
-            {t("login.description")}
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -172,7 +172,7 @@ export default function Login({ actionData }: Route.ComponentProps) {
                 htmlFor="email"
                 className="flex flex-col items-start gap-1"
               >
-                {t("login.email")}
+                {t("email")}
               </Label>
               <Input
                 id="email"
@@ -193,7 +193,7 @@ export default function Login({ actionData }: Route.ComponentProps) {
                   htmlFor="password"
                   className="flex flex-col items-start gap-1"
                 >
-                  {t("login.password")}
+                  {t("password")}
                 </Label>
                 <Link
                   to="/auth/forgot-password/reset"
@@ -201,7 +201,7 @@ export default function Login({ actionData }: Route.ComponentProps) {
                   tabIndex={-1}
                   viewTransition
                 >
-                  {t("login.forgotPassword")}
+                  {t("forgotPassword")}
                 </Link>
               </div>
               <Input
@@ -218,20 +218,20 @@ export default function Login({ actionData }: Route.ComponentProps) {
                 <FormErrors errors={actionData.fieldErrors.password} />
               ) : null}
             </div>
-            <FormButton label={t("login.loginButton")} className="w-full" />
+            <FormButton label={t("loginButton")} className="w-full" />
             {actionData && "error" in actionData ? (
               actionData.error === "Email not confirmed" ? (
                 <Alert variant="destructive" className="bg-destructive/10">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>{t("login.emailNotConfirmedTitle")}</AlertTitle>
+                  <AlertTitle>{t("emailNotConfirmedTitle")}</AlertTitle>
                   <AlertDescription className="flex flex-col items-start gap-2">
-                    {t("login.emailNotConfirmedDesc")}
+                    {t("emailNotConfirmedDesc")}
                     <Button
                       variant="outline"
                       className="text-foreground flex items-center justify-between gap-2"
                       onClick={onResendClick}
                     >
-                      {t("login.resendConfirmation")}
+                      {t("resendConfirmation")}
                       {fetcher.state === "submitting" ? (
                         <Loader2Icon
                           data-testid="resend-confirmation-email-spinner"
@@ -251,14 +251,14 @@ export default function Login({ actionData }: Route.ComponentProps) {
       </Card>
       <div className="flex flex-col items-center justify-center text-sm">
         <p className="text-muted-foreground">
-          {t("login.noAccount")}
+          {t("noAccount")}
           <Link
             to="/join"
             viewTransition
             data-testid="form-signup-link"
             className="text-muted-foreground hover:text-foreground text-underline underline transition-colors"
           >
-            {t("login.signUp")}
+            {t("signUp")}
           </Link>
         </p>
       </div>
