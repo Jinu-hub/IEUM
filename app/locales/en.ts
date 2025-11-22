@@ -15,6 +15,7 @@ const en: Translation = {
     confirmationFailed: "Confirmation failed",
     loginFailed: "Login failed",
     retry: "Please try again.",
+    soonMessage: "Coming soon.",
   },
   join: {
     heroTitle: "Nexletter",
@@ -130,6 +131,26 @@ const en: Translation = {
     confirmDelete: "I confirm that I want to delete my account.",
     confirmIrreversible: "I understand that this action is irreversible.",
     deleteButton: "Delete account",
+  },
+  sidebar: {
+    dashboard: "Dashboard",
+    overview: "Overview",
+    analytics: "Analytics",
+    reports: "Reports",
+    test: "Test",
+    settings: "Settings",
+    integrations: "Integrations",
+    targets: "Targets",
+    mailList: "Mail List",
+    contents: "Contents",
+    sentMail: "Sent Mail",
+    user: {
+      upgrade: "Upgrade",
+      account: "Account",
+      payments: "Payments",
+      notifications: "Notifications",
+      logout: "Logout",
+    },
   },
 };
 

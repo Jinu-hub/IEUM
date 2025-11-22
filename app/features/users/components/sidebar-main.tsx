@@ -1,4 +1,5 @@
 import { ChevronRight, type LucideIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router";
 
 import {
@@ -34,7 +35,7 @@ export default function SidebarMain({
   }[];
 }) {
   const { pathname } = useLocation();
-
+  const { t } = useTranslation("common", { keyPrefix: "common" });
   const normalizePath = (path: string) => {
     if (!path) return "";
     if (path === "/") return "/";
@@ -95,7 +96,7 @@ export default function SidebarMain({
                       const isSubItemActive =
                         !subItem.disabled && isExactRoute(subItem.url);
                       const tooltipText =
-                        subItem.tooltip ?? "추후 공개 예정입니다.";
+                        subItem.tooltip ?? t("soonMessage");
 
                       return (
                         <SidebarMenuSubItem key={subItem.title}>

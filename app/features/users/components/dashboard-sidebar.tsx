@@ -23,7 +23,12 @@ import SidebarMain from "./sidebar-main";
 import TeamSwitcher from "./sidebar-team-switcher";
 import SidebarUser from "./sidebar-user";
 
-const data = {
+import { useTranslation } from "react-i18next";
+
+const getSidebarData = (
+  t: (key: string) => string,
+  commonT: (key: string) => string
+) => ({
   teams: [
     {
       name: "Default",
@@ -45,27 +50,27 @@ const data = {
   ],
   navMain: [
     {
-      title: "Dashboard",
+      title: t("dashboard"),
       url: "#",
       icon: LayoutDashboardIcon,
       isActive: true,
       items: [
         {
-          title: "Overview",
+          title: t("overview"),
           url: "/dashboard",
         },
         {
-          title: "Analytics",
+          title: t("analytics"),
           url: "/dashboard/analytics",
         },
         {
-          title: "Reports",
+          title: t("reports"),
           url: "#",
           disabled: true,
-          tooltip: "추후 공개 예정",
+          tooltip: commonT("soonMessage"),
         },
         {
-          title: "Test",
+          title: t("test"),
           url: "/dashboard/test"
         }
       ],
@@ -92,31 +97,31 @@ const data = {
     },
     */
     {
-      title: "Settings",
+      title: t("settings"),
       url: "#",
       icon: Settings2Icon,
       items: [
         {
-          title: "Integrations",
+          title: t("integrations"),
           url: "/settings/integrations",
         },
         {
-          title: "Targets",
+          title: t("targets"),
           url: "/settings/targets",
         },
         {
-          title: "Mail List",
+          title: t("mailList"),
           url: "/settings/mail-list",
         },
       ],
     },
     {
-      title: "Contents",
+      title: t("contents"),
       url: "#",
       icon: LineChartIcon,
       items: [
         {
-          title: "Sent Mail",
+          title: t("sentMail"),
           url: "/contents/sent-mail",
         },
         /*
@@ -153,7 +158,7 @@ const data = {
       icon: MegaphoneIcon,
     },
   ],
-};
+});
 
 export default function DashboardSidebar({
   user,
@@ -165,6 +170,10 @@ export default function DashboardSidebar({
     avatarUrl: string;
   };
 }) {
+  const { t } = useTranslation("common", { keyPrefix: "sidebar" });
+  const { t: commonT } = useTranslation("common");
+  const data = getSidebarData(t, commonT);
+
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
       <SidebarHeader>

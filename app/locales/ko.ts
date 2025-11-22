@@ -14,6 +14,7 @@ const ko: Translation = {
     confirmationFailed: "확인에 실패하였습니다",
     loginFailed: "로그인에 실패하였습니다",
     retry: "다시 시도해 주세요.",
+    soonMessage: "추후 공개 예정입니다.",
   },
   join: {
     heroTitle: "Nexletter",
@@ -129,6 +130,26 @@ const ko: Translation = {
     confirmDelete: "나는 이 계정을 삭제하려 합니다.",
     confirmIrreversible: "나는 이 작업 후, 되돌릴 수 없다는 것을 이해하고 있습니다.",
     deleteButton: "계정 삭제",
+  },
+  sidebar: {
+    dashboard: "대시보드",
+    overview: "개요",
+    analytics: "분석",
+    reports: "보고서",
+    test: "테스트",
+    settings: "설정",
+    integrations: "외부연동",
+    targets: "발송타겟",
+    mailList: "메일 리스트",
+    contents: "컨텐츠",
+    sentMail: "발송된 메일",
+    user: {
+      upgrade: "업그레이드",
+      account: "계정 관리",
+      payments: "결제",
+      notifications: "알림",
+      logout: "로그아웃",
+    },
   },
 };
 

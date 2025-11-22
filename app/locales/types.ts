@@ -13,6 +13,7 @@ export type Translation = {
     confirmationFailed: string;
     loginFailed: string;
     retry: string;
+    soonMessage: string;
   };
   join: {
     heroTitle: string;
@@ -128,5 +129,25 @@ export type Translation = {
     confirmDelete: string;
     confirmIrreversible: string;
     deleteButton: string;
+  };
+  sidebar: {
+    dashboard: string;
+    overview: string;
+    analytics: string;
+    reports: string;
+    test: string;
+    settings: string;
+    integrations: string;
+    targets: string;
+    mailList: string;
+    contents: string;
+    sentMail: string;
+    user: {
+      upgrade: string;
+      account: string;
+      payments: string;
+      notifications: string;
+      logout: string;
+    }
   };
 };

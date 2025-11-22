@@ -15,6 +15,7 @@ const ja: Translation = {
     confirmationFailed: "確認に失敗しました",
     loginFailed: "ログインに失敗しました",
     retry: "再試行してください。",
+    soonMessage: "将来、公開予定です。",
   },
   join: {
     heroTitle: "Nexletter",
@@ -130,6 +131,26 @@ const ja: Translation = {
     confirmDelete: "私はアカウントを削除します。",
     confirmIrreversible: "私はこの操作後、元に戻せないことを理解しています。",
     deleteButton: "アカウントを削除",
+  },
+  sidebar: {
+    dashboard: "ダッシュボード",
+    overview: "概要",
+    analytics: "分析",
+    reports: "レポート",
+    test: "テスト",
+    settings: "設定",
+    integrations: "外部連携",
+    targets: "送信ターゲット",
+    mailList: "メールリスト",
+    contents: "コンテンツ",
+    sentMail: "送信済みメール",
+    user: {
+      upgrade: "アップグレード",
+      account: "アカウント管理",
+      payments: "支払い",
+      notifications: "通知",
+      logout: "ログアウト",
+    },
   },
 };
 
