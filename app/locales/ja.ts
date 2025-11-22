@@ -55,6 +55,46 @@ const ja: Translation = {
     sendResetLink: "リセットリンクを送信",
     backToLogin: "ログイン画面に戻る",
   },
+  editProfile: {
+    title: "プロフィールを編集",
+    description: "プロフィール情報を管理します。",
+    name: "名前",
+    avatar: "アバター",
+    maxSize: "最大サイズ: 1MB",
+    allowedFormats: "許可されたフォーマット: PNG, JPG, GIF",
+    saveProfile: "プロフィールを保存",
+    marketingConsent: "マーケティングメールを受け取る",
+    profileUpdated: "プロフィールが更新されました",
+  },
+  changeEmail: {
+    title: "メールアドレス変更",
+    addEmailTitle: "メールアドレス追加",
+    description: "メールアドレスを変更します。",
+    addEmailDescription: "メールアドレスを追加します。",
+    email: "メールアドレス",
+    currentEmail: "現在のメールアドレス",
+    newEmail: "新しいメールアドレス",
+    emailUpdateProcessStarted: "古いメールアドレスに確認リンクが送信されました。リンクをクリックしてメールアドレス変更を完了してください。",
+  },
+  changePassword: {
+    title: "パスワード変更",
+    addPasswordTitle: "パスワード追加",
+    description: "パスワードを変更します。",
+    addPasswordDescription: "パスワードを追加します。",
+    newPassword: "新しいパスワード",
+    confirmNewPassword: "パスワード確認",
+    successMessage: "パスワードが更新されました。",
+  },
+  connectSocialAccounts: {
+    title: "ソーシャルアカウント接続",
+    description: "ソーシャルアカウントを接続します。",
+  },
+  deleteAccount: {
+    title: "要注意エリア",
+    confirmDelete: "私はアカウントを削除します。",
+    confirmIrreversible: "私はこの操作後、元に戻せないことを理解しています。",
+    deleteButton: "アカウントを削除",
+  },
 };
 
 export default ja;

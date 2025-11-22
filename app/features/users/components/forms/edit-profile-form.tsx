@@ -3,6 +3,7 @@ import { UserIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 
+import { useTranslation } from "react-i18next";
 import FetcherFormButton from "~/core/components/fetcher-form-button";
 import FormErrors from "~/core/components/form-error";
 import FormSuccess from "~/core/components/form-success";
@@ -32,6 +33,7 @@ export default function EditProfileForm({
   marketingConsent: boolean;
   avatarUrl: string | null;
 }) {
+  const { t } = useTranslation("common", { keyPrefix: "editProfile" });
   const fetcher = useFetcher<Route.ComponentProps["actionData"]>();
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
@@ -59,8 +61,8 @@ export default function EditProfileForm({
     >
       <Card className="justify-between">
         <CardHeader>
-          <CardTitle>Edit profile</CardTitle>
-          <CardDescription>Manage your profile information.</CardDescription>
+          <CardTitle>{t("title")}</CardTitle>
+          <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex w-full flex-col gap-7">
@@ -69,7 +71,7 @@ export default function EditProfileForm({
                 htmlFor="avatar"
                 className="flex flex-col items-start gap-2"
               >
-                <span>Avatar</span>
+                <span>{t("avatar")}</span>
                 <Avatar className="size-24">
                   {avatar ? <AvatarImage src={avatar} alt="Avatar" /> : null}
                   <AvatarFallback>
@@ -79,8 +81,8 @@ export default function EditProfileForm({
               </Label>
               <div className="text-muted-foreground flex w-1/2 flex-col gap-2 text-sm">
                 <div className="flex flex-col gap-1">
-                  <span>Max size: 1MB</span>
-                  <span>Allowed formats: PNG, JPG, GIF</span>
+                  <span>{t("maxSize")}</span>
+                  <span>{t("allowedFormats")}</span>
                 </div>
                 <Input
                   id="avatar"
@@ -92,7 +94,7 @@ export default function EditProfileForm({
             </div>
             <div className="flex flex-col items-start space-y-2">
               <Label htmlFor="name" className="flex flex-col items-start gap-1">
-                Name
+                {t("name")}
               </Label>
               <Input
                 id="name"
@@ -115,7 +117,7 @@ export default function EditProfileForm({
                 defaultChecked={marketingConsent}
               />
               <Label htmlFor="marketingConsent">
-                Consent to marketing emails
+              {t("marketingConsent")}
               </Label>
             </div>
             {fetcher.data &&
@@ -130,11 +132,11 @@ export default function EditProfileForm({
         <CardFooter className="flex flex-col gap-4">
           <FetcherFormButton
             submitting={fetcher.state === "submitting"}
-            label="Save profile"
+            label={t("saveProfile")}
             className="w-full"
           />
           {fetcher.data && "success" in fetcher.data && fetcher.data.success ? (
-            <FormSuccess message="Profile updated" />
+            <FormSuccess message={t("profileUpdated")} />
           ) : null}
           {fetcher.data && "error" in fetcher.data && fetcher.data.error ? (
             <FormErrors errors={[fetcher.data.error]} />

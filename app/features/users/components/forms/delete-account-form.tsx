@@ -1,6 +1,7 @@
 import type { Route } from "@rr/app/features/users/api/+types/delete-account";
 
 import { Loader2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 
 import FormErrors from "~/core/components/form-error";
@@ -15,11 +16,12 @@ import { Checkbox } from "~/core/components/ui/checkbox";
 import { Label } from "~/core/components/ui/label";
 
 export default function DeleteAccountForm() {
+  const { t } = useTranslation("common", { keyPrefix: "deleteAccount" });
   const fetcher = useFetcher<Route.ComponentProps["actionData"]>();
   return (
     <Card className="w-full max-w-screen-md bg-red-100 dark:bg-red-900/40">
       <CardHeader>
-        <CardTitle>Danger Zone</CardTitle>
+        <CardTitle>{t("title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <fetcher.Form method="delete" className="space-y-4" action="/api/users">
@@ -30,7 +32,7 @@ export default function DeleteAccountForm() {
               required
               className="border-black dark:border-white"
             />
-            I confirm that I want to delete my account.
+            {t("confirmDelete")}
           </Label>
           <Label>
             <Checkbox
@@ -39,7 +41,7 @@ export default function DeleteAccountForm() {
               required
               className="border-black dark:border-white"
             />
-            I understand that this action is irreversible.
+            {t("confirmIrreversible")}
           </Label>
           <Button
             variant={"destructive"}
@@ -49,7 +51,7 @@ export default function DeleteAccountForm() {
             {fetcher.state === "submitting" ? (
               <Loader2Icon className="ml-2 size-4 animate-spin" />
             ) : (
-              "Delete account"
+              t("deleteButton")
             )}
           </Button>
           {fetcher.data?.error ? (

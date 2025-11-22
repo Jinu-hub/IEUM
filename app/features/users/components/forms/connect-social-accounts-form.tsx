@@ -1,4 +1,3 @@
-import { Button } from "~/core/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,6 +8,7 @@ import {
 import { GithubLogo } from "~/features/auth/components/logos/github";
 import { KakaoLogo } from "~/features/auth/components/logos/kakao";
 
+import { useTranslation } from "react-i18next";
 import {
   ConnectProviderButton,
   DisconnectProviderButton,
@@ -32,12 +32,13 @@ export default function ConnectSocialAccountsForm({
 }: {
   providers: string[];
 }) {
+  const { t } = useTranslation("common", { keyPrefix: "connectSocialAccounts" });
   return (
     <Card className="w-full max-w-screen-md">
       <CardHeader>
-        <CardTitle>Connect social accounts</CardTitle>
+        <CardTitle>{t("title")}</CardTitle>
         <CardDescription>
-          Add or remove additional authentication methods to your account.
+          {t("description")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">

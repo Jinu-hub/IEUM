@@ -1,6 +1,7 @@
 import type { Route } from "@rr/app/features/users/api/+types/change-password";
 
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 
 import FetcherFormButton from "~/core/components/fetcher-form-button";
@@ -22,6 +23,7 @@ export default function ChangePasswordForm({
 }: {
   hasPassword: boolean;
 }) {
+  const { t } = useTranslation("common", { keyPrefix: "changePassword" });
   const formRef = useRef<HTMLFormElement>(null);
   const fetcher = useFetcher<Route.ComponentProps["actionData"]>();
   useEffect(() => {
@@ -43,12 +45,12 @@ export default function ChangePasswordForm({
       <Card className="justify-between">
         <CardHeader>
           <CardTitle>
-            {hasPassword ? "Change password" : "Add password"}
+            {hasPassword ? t("title") : t("addPasswordTitle")}
           </CardTitle>
           <CardDescription>
             {hasPassword
-              ? "Change your password."
-              : "Add a password to your account."}
+              ? t("description")
+              : t("addPasswordDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -58,7 +60,7 @@ export default function ChangePasswordForm({
                 htmlFor="password"
                 className="flex flex-col items-start gap-1"
               >
-                New password
+                {t("newPassword")}
               </Label>
               <Input id="password" name="password" required type="password" />
               {fetcher.data &&
@@ -72,7 +74,7 @@ export default function ChangePasswordForm({
                 htmlFor="confirmPassword"
                 className="flex flex-col items-start gap-1"
               >
-                Confirm new password
+                {t("confirmNewPassword")}
               </Label>
               <Input
                 id="confirmPassword"
@@ -92,12 +94,12 @@ export default function ChangePasswordForm({
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <FetcherFormButton
-            label={hasPassword ? "Change password" : "Add password"}
+            label={hasPassword ? t("title") : t("addPasswordTitle")}
             className="w-full"
             submitting={fetcher.state === "submitting"}
           />
           {fetcher.data && "success" in fetcher.data && fetcher.data.success ? (
-            <FormSuccess message="Password updated" />
+            <FormSuccess message={t("successMessage")} />
           ) : null}
           {fetcher.data && "error" in fetcher.data && fetcher.data.error ? (
             <FormErrors errors={[fetcher.data.error]} />

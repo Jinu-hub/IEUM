@@ -55,6 +55,46 @@ const en: Translation = {
     sendResetLink: "Send reset link",
     backToLogin: "Back to login",
   },
+  editProfile: {
+    title: "Edit profile",
+    description: "Manage your profile information.",
+    name: "Name",
+    avatar: "Avatar",
+    maxSize: "Max size: 1MB",
+    allowedFormats: "Allowed formats: PNG, JPG, GIF",
+    saveProfile: "Save profile",
+    marketingConsent: "Consent to marketing emails",
+    profileUpdated: "Profile updated",
+  },
+  changeEmail: {
+    title: "Change email",
+    addEmailTitle: "Add email",
+    description: "Change your email address.",
+    addEmailDescription: "Add an email address to your account.",
+    email: "Email",
+    currentEmail: "Current email",
+    newEmail: "New email",
+    emailUpdateProcessStarted: "Email update process started. Please check your old email for a verification link.",
+  },
+  changePassword: {
+    title: "Change password",
+    addPasswordTitle: "Add password",
+    description: "Change your password.",
+    addPasswordDescription: "Add a password to your account.",
+    newPassword: "New password",
+    confirmNewPassword: "Confirm new password",
+    successMessage: "Password updated",
+  },
+  connectSocialAccounts: {
+    title: "Connect social accounts",
+    description: "Add or remove additional authentication methods to your account.",
+  },
+  deleteAccount: {
+    title: "Danger zone",
+    confirmDelete: "I confirm that I want to delete my account.",
+    confirmIrreversible: "I understand that this action is irreversible.",
+    deleteButton: "Delete account",
+  },
 };
 
 export default en;

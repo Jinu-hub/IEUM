@@ -53,4 +53,44 @@ export type Translation = {
     backToLogin: string;
     sendResetLink: string;
   };
+  editProfile: {
+    title: string;
+    description: string;
+    name: string;
+    avatar: string;
+    maxSize: string;
+    allowedFormats: string;
+    saveProfile: string;
+    marketingConsent: string;
+    profileUpdated: string;
+  };
+  changeEmail: {
+    title: string;
+    addEmailTitle: string;
+    description: string;
+    addEmailDescription: string;
+    email: string;
+    currentEmail: string;
+    newEmail: string;
+    emailUpdateProcessStarted: string;
+  };
+  changePassword: {
+    title: string;
+    addPasswordTitle: string;
+    description: string;
+    addPasswordDescription: string;
+    newPassword: string;
+    confirmNewPassword: string;
+    successMessage: string;
+  };
+  connectSocialAccounts: {
+    title: string;
+    description: string;
+  };
+  deleteAccount: {
+    title: string;
+    confirmDelete: string;
+    confirmIrreversible: string;
+    deleteButton: string;
+  };
 };

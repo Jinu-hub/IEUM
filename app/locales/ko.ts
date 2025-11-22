@@ -54,6 +54,46 @@ const ko: Translation = {
     sendResetLink: "리셋 링크 보내기",
     backToLogin: "로그인 화면으로 돌아가기",
   },
+  editProfile: {
+    title: "프로필 수정",
+    description: "프로필 정보를 관리합니다.",
+    name: "이름",
+    avatar: "아바타",
+    maxSize: "최대 크기: 1MB",
+    allowedFormats: "허용된 형식: PNG, JPG, GIF",
+    saveProfile: "프로필 저장",
+    marketingConsent: "마케팅 이메일 수신 동의",
+    profileUpdated: "프로필이 업데이트되었습니다",
+  },
+  changeEmail: {
+    title: "이메일 변경",
+    addEmailTitle: "이메일 추가",
+    description: "이메일을 변경합니다.",
+    addEmailDescription: "이메일을 추가합니다.",
+    email: "이메일",
+    currentEmail: "현재 이메일",
+    newEmail: "새 이메일",
+    emailUpdateProcessStarted: "이전 이메일에 확인 링크가 전송되었습니다. 확인후 링크를 클릭하여 이메일 변경을 완료해 주세요.",
+  },
+  changePassword: {
+    title: "비밀번호 변경",
+    addPasswordTitle: "비밀번호 추가",
+    description: "비밀번호를 변경합니다.",
+    addPasswordDescription: "비밀번호를 추가합니다.",
+    newPassword: "새 비밀번호",
+    confirmNewPassword: "비밀번호 확인",
+    successMessage: "비밀번호가 업데이트되었습니다.",
+  },
+  connectSocialAccounts: {
+    title: "소셜 계정 연결",
+    description: "소셜 계정을 연결합니다.",
+  },
+  deleteAccount: {
+    title: "위험 영역",
+    confirmDelete: "나는 이 계정을 삭제하려 합니다.",
+    confirmIrreversible: "나는 이 작업 후, 되돌릴 수 없다는 것을 이해하고 있습니다.",
+    deleteButton: "계정 삭제",
+  },
 };
 
 export default ko;
