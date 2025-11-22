@@ -1,14 +1,15 @@
+import { useTranslation } from 'react-i18next';
 import { data, redirect } from 'react-router';
 import {
   BookOpenIcon,
   CheckCircleIcon,
   DiscordIcon,
   GitHubIcon,
+  LockIcon,
   NexBadge,
   NexButton,
   NexCard,
   NexCardContent,
-  LockIcon,
   SlackIcon,
   XCircleIcon,
 } from '~/core/components/nex';
@@ -43,6 +44,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 
 export default function Dashboard( { loaderData }: Route.ComponentProps ) {
+  const { t, i18n } = useTranslation("common", { keyPrefix: "dashboard" });
+  const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
+  const { t: tTimes } = useTranslation("common", { keyPrefix: "times" });
   const { user, workspaceId, integrationsInfo, targets, sentEmails } = loaderData;
   const isConnectedGitHub = integrationsInfo?.find((integration: any) => integration.type === 'github')?.connection_status === 'connected';
   const isConnectedSlack = integrationsInfo?.find((integration: any) => integration.type === 'slack')?.connection_status === 'connected';
@@ -69,8 +73,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               </svg>
             </div>
             <div>
-              <h1 className="text-3xl font-bold">대시보드</h1>
-              <p className="text-white/80 text-sm">시스템 현황을 한눈에 확인하세요</p>
+              <h1 className="text-3xl font-bold">{t("title")}</h1>
+              <p className="text-white/80 text-sm">{t("description")}</p>
             </div>
           </div>
         </div>
@@ -90,8 +94,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">연결 현황</h2>
-              <p className="text-sm text-muted-foreground">외부 서비스 연결 상태</p>
+              <h2 className="text-xl font-bold text-foreground">{t("connectionStatus")}</h2>
+              <p className="text-sm text-muted-foreground">{t("connectionStatusDescription")}</p>
             </div>
           </div>
           <NexButton 
@@ -103,7 +107,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-            <span>설정 페이지로 이동</span>
+            <span>{t("goToSettings")}</span>
           </NexButton>
         </div>
         <div className="grid auto-rows-min gap-4 md:grid-cols-3">
@@ -119,11 +123,11 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               </div>
               {isConnectedGitHub ? (
                 <NexBadge variant="success" size="sm" icon={<CheckCircleIcon className="w-3 h-3" />}>
-                  연결됨
+                  {commonT("connected")}
                 </NexBadge>
               ) : (
                 <NexBadge variant="secondary" size="sm" icon={<XCircleIcon className="w-3 h-3" />}>
-                  연결 안됨
+                  {commonT("notConnected")}
                 </NexBadge>
               )}
             </div>
@@ -132,31 +136,31 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               <div className="space-y-4 text-sm">
                 <div className="flex items-center space-x-2 p-3 bg-slate-100 dark:bg-white/10 rounded-lg">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-slate-600 dark:text-white/80">계정:</span>
+                  <span className="text-slate-600 dark:text-white/80">{commonT("account")}:</span>
                   <span className="text-slate-900 dark:text-white font-semibold">
                     {githubData.user.name || githubData.user.login}
                   </span>
                 </div>
                 
                 {/* 리포지토리 통계 */}
-                <span className="text-slate-500 dark:text-white/60 text-xs mb-1">접근 가능 리포지토리</span>
+                <span className="text-slate-500 dark:text-white/60 text-xs mb-1">{t("accessibleRepositories")}</span>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
                     <div className="flex items-center space-x-2 mb-2">
                       <BookOpenIcon className="w-4 h-4 text-green-400" />
-                      <span className="text-slate-500 dark:text-white/60 text-xs">공개</span>
+                      <span className="text-slate-500 dark:text-white/60 text-xs">{commonT("public")}</span>
                     </div>
                     <span className="text-slate-900 dark:text-white font-bold text-lg">
-                      {githubData.user.accessible_repos?.public || githubData.user.public_repos}개
+                      {githubData.user.accessible_repos?.public || githubData.user.public_repos} {commonT("numberOfRepo")}
                     </span>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
                     <div className="flex items-center space-x-2 mb-2">
                       <LockIcon className="w-4 h-4 text-yellow-400" />
-                      <span className="text-slate-500 dark:text-white/60 text-xs">비공개</span>
+                      <span className="text-slate-500 dark:text-white/60 text-xs">{commonT("private")}</span>
                     </div>
                     <span className="text-slate-900 dark:text-white font-bold text-lg">
-                      {githubData.user.accessible_repos?.private || githubData.user.total_private_repos || 0}개
+                      {githubData.user.accessible_repos?.private || githubData.user.total_private_repos || 0} {commonT("numberOfRepo")}
                     </span>
                   </div>
                 </div>
@@ -168,7 +172,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                   <GitHubIcon className="w-8 h-8 text-slate-400 dark:text-white/40" />
                 </div>
                 <p className="text-slate-500 dark:text-white/60 text-sm">
-                  GitHub 계정을 연결하여<br />리포지토리 데이터를 수집하세요
+                  {t("connectGitHubAccount")}
                 </p>
               </div>
             )}
@@ -187,11 +191,11 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               </div>
               {isConnectedSlack ? (
                 <NexBadge variant="success" size="sm" icon={<CheckCircleIcon className="w-3 h-3" />}>
-                  연결됨
+                  {commonT("connected")}
                 </NexBadge>
               ) : (
                 <NexBadge variant="secondary" size="sm" icon={<XCircleIcon className="w-3 h-3" />}>
-                  연결 안됨
+                  {commonT("notConnected")}
                 </NexBadge>
               )}
             </div>
@@ -200,14 +204,14 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               <div className="space-y-4 text-sm">
                 <div className="flex items-center space-x-2 p-3 bg-slate-100 dark:bg-white/10 rounded-lg">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-slate-600 dark:text-white/80">워크스페이스:</span>
+                  <span className="text-slate-600 dark:text-white/80">{commonT("workspace")}:</span>
                   <span className="text-slate-900 dark:text-white font-semibold">
                     {slackData.team.name}
                   </span>
                 </div>
                 
                 {/* 워크스페이스 통계 */}
-                <span className="text-slate-500 dark:text-white/60 text-xs mb-1">접근 가능 채널</span>
+                <span className="text-slate-500 dark:text-white/60 text-xs mb-1">{t("accessibleChannels")}</span>
                 <div className="grid grid-cols-2 gap-3">
                   
                   <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
@@ -215,10 +219,10 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                       <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
                       </svg>
-                      <span className="text-slate-500 dark:text-white/60 text-xs">채널</span>
+                      <span className="text-slate-500 dark:text-white/60 text-xs">{commonT("channel")}</span>
                     </div>
                     <span className="text-slate-900 dark:text-white font-bold text-lg">
-                      {slackData.channels?.length || 0}개
+                      {slackData.channels?.length || 0} {commonT("numberOfChannel")}
                     </span>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
@@ -226,9 +230,9 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                       <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="text-slate-500 dark:text-white/60 text-xs">접근가능</span>
+                      <span className="text-slate-500 dark:text-white/60 text-xs">{commonT("accessible")}</span>
                     </div>
-                    <span className="text-slate-900 dark:text-white font-bold text-lg">{accessibleChannelsCount}개</span>
+                    <span className="text-slate-900 dark:text-white font-bold text-lg">{accessibleChannelsCount} {commonT("numberOfChannel")}</span>
                   </div>
                 </div>
                 
@@ -239,7 +243,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                   <SlackIcon className="w-8 h-8 text-slate-400 dark:text-white/40" />
                 </div>
                 <p className="text-slate-500 dark:text-white/60 text-sm">
-                  Slack 워크스페이스를 연결하여<br />채널 데이터를 수집하세요
+                  {t("connectSlackWorkspace")}
                 </p>
               </div>
             )}
@@ -266,7 +270,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">
-                  출시 예정
+                  {commonT("surportSoonMessage")}
                 </span>
               </div>
             </div>
@@ -285,8 +289,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">타겟 관리</h2>
-              <p className="text-sm text-muted-foreground">발송 타겟 현황 및 다음 발송 예정</p>
+              <h2 className="text-xl font-bold text-foreground">{t("targetManagement")}</h2>
+              <p className="text-sm text-muted-foreground">{t("targetManagementDescription")}</p>
             </div>
           </div>
           <NexButton 
@@ -298,7 +302,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-            <span>타겟 관리</span>
+            <span>{t("goToTargets")}</span>
           </NexButton>
         </div>
         
@@ -312,8 +316,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                   </svg>
                 </div>
                 <p className="text-muted-foreground text-sm">
-                  설정된 타겟이 없습니다<br />
-                  첫 번째 발송 타겟을 추가해보세요
+                  {commonT("noTargets")}
                 </p>
               </NexCardContent>
             </NexCard>
@@ -348,7 +351,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                         variant={isActive ? "success" : "secondary"}
                         size="sm"
                       >
-                        {isActive ? "활성" : "비활성"}
+                        {isActive ? commonT("active") : commonT("inactive")}
                       </NexBadge>
                     </div>
                     
@@ -358,21 +361,21 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                     
                     <div className="space-y-2 text-xs">
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">메일링 리스트:</span>
+                        <span className="text-muted-foreground">{commonT("mailingList")}:</span>
                         <span className="font-medium text-foreground">
-                          {target.displayName || "미설정"}
+                          {target.displayName || t("notSet")}
                         </span>
                       </div>
                       
                       {target.scheduleCron ? (
                         <>
                           <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">다음 발송:</span>
+                            <span className="text-muted-foreground">{commonT("nextSend")}:</span>
                             <span className={cn(
                               "font-medium",
                               nextSchedule && isActive ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
                             )}>
-                              {nextSchedule && isActive ? formatTimeUntil(nextSchedule) : "예정 없음"}
+                              {nextSchedule && isActive ? formatTimeUntil(nextSchedule, tTimes, commonT) : commonT("noSchedule")}
                             </span>
                           </div>
                           
@@ -383,11 +386,12 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <span>
-                                  {nextSchedule.toLocaleDateString('ko-KR', {
+                                  {nextSchedule.toLocaleString(i18n.language, {
                                     month: 'short',
                                     day: 'numeric',
                                     hour: '2-digit',
-                                    minute: '2-digit'
+                                    minute: '2-digit',
+                                    timeZone: target.timezone || 'Asia/Tokyo'
                                   })}
                                 </span>
                               </div>
@@ -396,8 +400,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                         </>
                       ) : (
                         <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">발송 방식:</span>
-                          <span className="font-medium text-muted-foreground">수동 발송</span>
+                          <span className="text-muted-foreground">{commonT("sendMethod")}:</span>
+                          <span className="font-medium text-muted-foreground">{commonT("manualSend")}</span>
                         </div>
                       )}
                     </div>
@@ -419,8 +423,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">이메일 통계</h2>
-              <p className="text-sm text-muted-foreground">보낸 이메일 발송 현황</p>
+              <h2 className="text-xl font-bold text-foreground">{t("emailStatistics")}</h2>
+              <p className="text-sm text-muted-foreground">{t("emailStatisticsDescription")}</p>
             </div>
           </div>
           <NexButton 
@@ -432,7 +436,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-            <span>발송된 메일 보기</span>
+            <span>{t("goToSentMail")}</span>
           </NexButton>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -441,7 +445,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
             { status: 'delivered' as typeof MAIL_STATUS[number], count: emailStats.delivered },
             { status: 'failed' as typeof MAIL_STATUS[number], count: emailStats.failed }
           ].map(({ status, count }) => {
-            const statusConfig = getStatusConfig(status);
+            const statusConfig = getStatusConfig(status, commonT);
             const StatusIcon = statusConfig.icon;
             
             return (
@@ -466,9 +470,6 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
           })}
         </div>
       </div>
-
-      {/* 메인 콘텐츠 영역 */}
-      <div className="bg-muted/50 min-h-full flex-1 rounded-xl md:min-h-min" />
-      </div>
+    </div>
   );
 }

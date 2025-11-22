@@ -170,7 +170,7 @@ export function validateCronExpression(cronString: string): { isValid: boolean; 
 }
 
 // 타임존에서 locale 추출 헬퍼 함수
-function getLocaleFromTimezone(timezone: string): string {
+export function getLocaleFromTimezone(timezone: string): string {
   const timezoneToLocale: Record<string, string> = {
     'Asia/Tokyo': 'ja-JP',
     'Asia/Seoul': 'ko-KR',
@@ -306,12 +306,12 @@ export const getNextScheduledTime = (cronExpression?: string): Date | null => {
       nextDate.setDate(nextDate.getDate() + 1);
     }
   }
-  
+
   return nextDate;
 };
 
- // 시간 차이를 한국어로 포맷
-export const formatTimeUntil = (targetDate: Date): string => {
+ // 시간 차이를 지역 언어로 포맷
+export const formatTimeUntil = (targetDate: Date, t: (key: string) => string, tCommon: (key: string) => string): string => {
   const now = new Date();
   const diffInMs = targetDate.getTime() - now.getTime();
   const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
@@ -319,12 +319,12 @@ export const formatTimeUntil = (targetDate: Date): string => {
   const diffInDays = Math.floor(diffInHours / 24);
   
   if (diffInDays > 0) {
-    return `${diffInDays}일 후`;
+    return `${diffInDays} ${t("day")} ${tCommon("later")}`;
   } else if (diffInHours > 0) {
-    return `${diffInHours}시간 후`;
+    return `${diffInHours} ${t("hour")} ${tCommon("later")}`;
   } else if (diffInMinutes > 0) {
-    return `${diffInMinutes}분 후`;
+    return `${diffInMinutes} ${t("minute")} ${tCommon("later")}`;
   } else {
-    return "곧 발송";
+    return `${tCommon("soonSend")}`;
   }
 };

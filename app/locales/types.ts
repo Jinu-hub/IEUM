@@ -14,6 +14,40 @@ export type Translation = {
     loginFailed: string;
     retry: string;
     soonMessage: string;
+    surportSoonMessage: string;
+    account: string;
+    workspace: string;
+    noSchedule: string;
+    active: string;
+    inactive: string;
+    manualSend: string;
+    notSet: string;
+    nextSend: string;
+    mailingList: string;
+    sendMethod: string;
+    accessible: string;
+    channel: string;
+    numberOfChannel: string;
+    numberOfRepo: string;
+    private: string;
+    public: string;
+    connected: string;
+    disconnected: string;
+    soonSend: string;
+    ago: string;
+    later: string;
+    allStatus: string;
+    mailStatus: {
+      sending: string;
+      delivered: string;
+      failed: string;
+    }
+  };
+  times:{
+    day: string;
+    hour: string;
+    minute: string;
+    second: string;
   };
   join: {
     heroTitle: string;
@@ -154,5 +188,20 @@ export type Translation = {
       notifications: string;
       logout: string;
     }
+  };
+  dashboard: {
+    title: string;
+    description: string;
+    connectionStatus: string;
+    connectionStatusDescription: string;
+    accessibleRepositories: string;
+    accessibleChannels: string;
+    targetManagement: string;
+    targetManagementDescription: string;
+    emailStatistics: string;
+    emailStatisticsDescription: string;
+    goToSettings: string;
+    goToTargets: string;
+    goToSentMail: string;
   };
 };

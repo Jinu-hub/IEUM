@@ -1,14 +1,15 @@
 import {
-    Clock,
-    Mail,
-    Search
+  Clock,
+  Mail,
+  Search
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import {
-    NexBadge,
-    NexButton,
-    NexInput
+  NexBadge,
+  NexButton,
+  NexInput
 } from '~/core/components/nex';
 import { cn } from '~/core/lib/utils';
 // Route 타입은 React Router에서 자동 생성됩니다
@@ -41,12 +42,14 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
   const { sentEmailList } = loaderData;
   const navigate = useNavigate();
+  const { t } = useTranslation("common", { keyPrefix: "common" });
+  const { t: tTimes } = useTranslation("common", { keyPrefix: "times" });
   const [sentEmails, setSentEmails] = useState<SentEmailData[]>(sentEmailList);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   
   // 상태별 필터 옵션 생성
-  const statusFilters = createStatusFilters(sentEmails);
+  const statusFilters = createStatusFilters(sentEmails, t);
 
   // 검색 및 필터링
   const filteredEmails = sentEmails.filter(email => {
@@ -187,7 +190,7 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
             </div>
           ) : (
             filteredEmails.map((email, index) => {
-              const statusConfig = getStatusConfig(email.status);
+              const statusConfig = getStatusConfig(email.status, t);
               const StatusIcon = statusConfig.icon;
               
               return (
@@ -242,7 +245,7 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
                     <div className="col-span-2">
                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        <span>{formatTime(email.sentAt)}</span>
+                        <span>{formatTime(email.sentAt, t, tTimes)}</span>
                       </div>
                     </div>
 

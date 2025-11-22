@@ -1,24 +1,25 @@
 import {
-    ArrowLeft,
-    Calendar,
-    Copy,
-    Download,
-    ExternalLink,
-    Eye,
-    FileText,
-    Mail,
-    RotateCcw,
-    User,
-    X,
-    XCircle
+  ArrowLeft,
+  Calendar,
+  Copy,
+  Download,
+  ExternalLink,
+  Eye,
+  FileText,
+  Mail,
+  RotateCcw,
+  User,
+  X,
+  XCircle
 } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { redirect, useNavigate } from 'react-router';
 import {
-    NexBadge,
-    NexButton,
-    NexCard,
-    NexCardContent,
+  NexBadge,
+  NexButton,
+  NexCard,
+  NexCardContent,
 } from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
@@ -49,6 +50,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 export default function SentMailDetailScreen( { loaderData }: Route.ComponentProps ) {
   const { email } = loaderData;
   const navigate = useNavigate();
+  const { t } = useTranslation("common", { keyPrefix: "common" });
+  const { i18n } = useTranslation();
   
   // HTML 미리보기 상태
   const [previewMode, setPreviewMode] = useState<'none' | 'preview' | 'html' | 'markdown'>('none');
@@ -71,7 +74,7 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
     );
   }
 
-  const statusConfig = getStatusConfig(email.status);
+  const statusConfig = getStatusConfig(email.status, t);
   const StatusIcon = statusConfig.icon;
 
   // 메일 재발송 핸들러
@@ -246,7 +249,7 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                     <span className="text-sm font-medium text-muted-foreground">발송 시간</span>
                   </div>
                   <p className="text-sm text-foreground">
-                    {formatDetailedTime(email.sentAt)}
+                    {formatDetailedTime(email.sentAt, i18n.language)}
                   </p>
                 </div>
               </div>
@@ -264,7 +267,7 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                         {statusConfig.label}
                       </span>
                       <span className="text-sm text-muted-foreground">
-                        {formatDetailedTime(email.sentAt)}
+                        {formatDetailedTime(email.sentAt, i18n.language)}
                       </span>
                     </div>
                     {email.failureReason && (
