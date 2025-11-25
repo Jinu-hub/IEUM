@@ -138,9 +138,12 @@ export const sampleChartData = {
 };
 
 // Area Chart 컴포넌트들
-export const NexAreaChart = ({ data = sampleChartData.area, className = "" }) => (
+export const NexAreaChart = ({ data = sampleChartData.area, className = "" }) => {
+  const safeData = Array.isArray(data) && data.length > 0 ? data : sampleChartData.area;
+  
+  return (
   <ChartContainer className={className}>
-    <AreaChart data={data}>
+      <AreaChart data={safeData}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
       <XAxis 
         dataKey="name" 
@@ -173,10 +176,14 @@ export const NexAreaChart = ({ data = sampleChartData.area, className = "" }) =>
     </AreaChart>
   </ChartContainer>
 );
+};
 
-export const NexAreaChartGradient = ({ data = sampleChartData.area, className = "", dataName = "value" }) => (
+export const NexAreaChartGradient = ({ data = sampleChartData.area, className = "", dataName = "value" }) => {
+  const safeData = Array.isArray(data) && data.length > 0 ? data : sampleChartData.area;
+
+  return (
   <ChartContainer className={className}>
-    <AreaChart data={data}>
+      <AreaChart data={safeData}>
       <defs>
         <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
           <stop offset="5%" stopColor={chartColors.primary[0]} stopOpacity={0.8}/>
@@ -205,6 +212,7 @@ export const NexAreaChartGradient = ({ data = sampleChartData.area, className = 
     </AreaChart>
   </ChartContainer>
 );
+};
 
 export const NexAreaChartStacked = ({ data = sampleChartData.area, className = "" }) => (
   <ChartContainer className={className}>
@@ -244,9 +252,12 @@ export const NexAreaChartStacked = ({ data = sampleChartData.area, className = "
 
 // Line Chart 컴포넌트들
 export const NexLineChart = ({ data = sampleChartData.line, className = "", dataName }:
-   { data?: any[]; className?: string; dataName?: string | string[] }) => (
+   { data?: any[]; className?: string; dataName?: string | string[] }) => {
+  const safeData = Array.isArray(data) && data.length > 0 ? data : sampleChartData.line;
+  
+  return (
   <ChartContainer className={className}>
-    <LineChart data={data}>
+      <LineChart data={safeData}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
       <XAxis 
         dataKey="name" 
@@ -279,6 +290,7 @@ export const NexLineChart = ({ data = sampleChartData.line, className = "", data
     </LineChart>
   </ChartContainer>
 );
+};
 
 export const NexLineChartSmooth = ({ data = sampleChartData.line, className = "" }) => (
   <ChartContainer className={className}>
@@ -350,9 +362,12 @@ export const NexLineChartArea = ({ data = sampleChartData.line, className = "" }
 
 // ===== shadcn Bar Variants =====
 // Bar Chart (기본)
-export const NexBarChart = ({ data = sampleChartData.bar, className = "", barName = "value" }) => (
+export const NexBarChart = ({ data = sampleChartData.bar, className = "", barName = "value" }) => {
+  const safeData = Array.isArray(data) && data.length > 0 ? data : sampleChartData.bar;
+  
+  return (
   <ChartContainer className={className}>
-    <BarChart data={data}>
+      <BarChart data={safeData}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
       <XAxis dataKey="name" tickLine={false} axisLine={false} className="text-xs text-gray-600 dark:text-gray-400" />
       <YAxis tickLine={false} axisLine={false} className="text-xs text-gray-600 dark:text-gray-400" />
@@ -361,6 +376,7 @@ export const NexBarChart = ({ data = sampleChartData.bar, className = "", barNam
     </BarChart>
   </ChartContainer>
 );
+};
 
 // Bar Chart - Multiple
 export const NexBarChartMultiple = ({ data = sampleChartData.bar, className = "" }) => (
@@ -409,11 +425,14 @@ export const NexBarChartCustomLabel = ({ data = sampleChartData.bar, className =
 
 // ===== shadcn Pie Variants =====
 // Pie Chart - Label List
-export const NexPieChartLabelList = ({ data = sampleChartData.pie, className = "", barName = "value" }) => (
+export const NexPieChartLabelList = ({ data = sampleChartData.pie, className = "", barName = "value" }) => {
+  const safeData = Array.isArray(data) && data.length > 0 ? data : sampleChartData.pie;
+  
+  return (
   <ChartContainer className={className}>
     <PieChart>
-      <Pie data={data} cx="50%" cy="50%" outerRadius={80} dataKey="value">
-        {data.map((entry, index) => (
+        <Pie data={safeData} cx="50%" cy="50%" outerRadius={80} dataKey="value">
+          {safeData.map((entry, index) => (
           <Cell key={`cell-${index}`} fill={entry.color} />
         ))}
         <LabelList dataKey="name" position="outside" className="fill-current text-gray-600 dark:text-gray-300" />
@@ -423,6 +442,7 @@ export const NexPieChartLabelList = ({ data = sampleChartData.pie, className = "
     </PieChart>
   </ChartContainer>
 );
+};
 
 // Pie Chart - Donut with Text
 export const NexPieChartDonutText = ({ data = sampleChartData.pie, className = "" }) => (

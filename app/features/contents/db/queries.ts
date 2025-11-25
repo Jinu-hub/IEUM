@@ -154,3 +154,46 @@ export async function getSentEmailMetadata(client: SupabaseClient<Database>,
   }
   return data;
 }
+
+/**
+ * periodKeyが既に存在する場合、ユニークな番号を付けた新しいkeyを返します
+ * 例: "2025-W47" が存在する場合 "2025-W47_1" を返す
+ *     "2025-W47_1" も存在する場合 "2025-W47_2" を返す
+ * @param client - Supabase client
+ * @param workspaceId - workspace ID
+ * @param basePeriodKey - 基本となるperiodKey
+ * @returns ユニークなperiodKey
+ */
+export async function getUniquePeriodKey(
+  client: SupabaseClient<Database>,
+  workspaceId: string,
+  basePeriodKey: string,
+  tableName: 'highlights' | 'newsletter_editions' = 'highlights'
+): Promise<string> {
+  let currentKey = basePeriodKey;
+  let suffix = 0;
+
+  while (true) {
+    // 現在のkeyが既に存在するかチェック  
+    const { data, error } = await client
+      .from(tableName as any)
+      .select('period_key')
+      .eq('workspace_id', workspaceId)
+      .eq('period_key', currentKey)
+      .limit(1);
+
+    if (error) {
+      console.error('getUniquePeriodKey error', error);
+      throw error;
+    }
+
+    // 存在しない場合、このkeyを返す
+    if (!data || data.length === 0) {
+      return currentKey;
+    }
+
+    // 存在する場合、番号を増やして再試行
+    suffix++;
+    currentKey = `${basePeriodKey}_${suffix}`;
+  }
+}

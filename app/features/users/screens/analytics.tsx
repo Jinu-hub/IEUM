@@ -56,11 +56,24 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) {
   const { emailMetadata, slackActivity, githubKpi, highlightsCount } = loaderData;
 
-  const emailSummary = extractEmailSentData(emailMetadata);
-  //console.log('emailSummary', emailSummary);
-  const githubSummary = extractGitHubKpiData(githubKpi);
-  const slackSummary = extractSlackActivityData(slackActivity);
-  //console.log('slackSummary', slackSummary.latest?.activities);
+  const emailSummary = extractEmailSentData(emailMetadata) || {
+    emailSentCount: 0,
+    emailSentMemberCount: 0,
+    emailSentRange: "",
+    latestPeriodKey: "",
+    perPeriod: [],
+  };
+  
+  const githubSummary = extractGitHubKpiData(githubKpi) || {
+    latest: null,
+    perPeriod: [],
+  };
+  
+  const slackSummary = extractSlackActivityData(slackActivity) || {
+    latest: null,
+    perPeriod: [],
+  };
+  console.log('slackSummary', slackSummary);
 
   const { emailSentCount, emailSentMemberCount, emailSentRange } = emailSummary;
   const hasEmailMetadata = emailSentCount > 0;
@@ -68,19 +81,31 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
     ? githubSummary.latest.meta.totalCommits 
     : 0;
   
-  // GitHub 커밋 추이 데이터 준비
-  const githubCommitData = createGithubCommitRaw(githubSummary.perPeriod);
-  const githubDeveloperData = createGithubDeveloperCommitData(githubSummary.perPeriod, 5, 1);
-  const githubCaseData = createGithubCaseCommitData(githubSummary.perPeriod);
+  // GitHub 커밋 추이 데이터 준비 (안전한 기본값)
+  const githubCommitData = Array.isArray(githubSummary.perPeriod) 
+    ? createGithubCommitRaw(githubSummary.perPeriod) 
+    : [];
+  const githubDeveloperData = Array.isArray(githubSummary.perPeriod)
+    ? createGithubDeveloperCommitData(githubSummary.perPeriod, 5, 1)
+    : [];
+  const githubCaseData = Array.isArray(githubSummary.perPeriod)
+    ? createGithubCaseCommitData(githubSummary.perPeriod)
+    : [];
   const githubCaseDataWithColor = addColorToGithubCaseData(githubCaseData);
 
-  // Slack 데이터 준비
-  const slackActivityData = createSlackChannelActivityData(slackSummary.perPeriod);
+  // Slack 데이터 준비 (안전한 기본값)
+  const slackActivityData = Array.isArray(slackSummary.perPeriod)
+    ? createSlackChannelActivityData(slackSummary.perPeriod)
+    : [];
   const totalMessageCount = slackActivityData.length > 0 ? slackActivityData[slackActivityData.length - 1]?.value ?? 0 : 0;
-  const slackChannelSummaryData = createSlackChannelSummaryData(slackSummary.perPeriod);
-
+  const slackChannelSummaryData = Array.isArray(slackSummary.perPeriod)
+    ? createSlackChannelSummaryData(slackSummary.perPeriod)
+    : [];
+  
   // 발송 멤버 수의 평균값과 성장률 계산
-  const { averageMemberCount, growthRate, isGrowth, isNoChange } = calculateMemberStats(emailSummary.perPeriod);
+  const { averageMemberCount, growthRate, isGrowth, isNoChange } = Array.isArray(emailSummary.perPeriod)
+    ? calculateMemberStats(emailSummary.perPeriod)
+    : { averageMemberCount: 0, growthRate: 0, isGrowth: false, isNoChange: true };
 
   return (
     <div className="p-6 space-y-8">
@@ -131,7 +156,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
             {
               commitCount,
               totalMessageCount,
-              highlightsCount,
+              highlightsCount: typeof highlightsCount === 'number' ? highlightsCount : 0,
               emailSentCount,
               emailSentMemberCount,
             },
@@ -337,7 +362,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
             )}
           </NexCardContent>
         </NexCard>
-          {/* 채널별 통계 요약 */}
+          
           <section className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
             <div className="flex items-center space-x-2 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -425,18 +450,21 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
               </p>
             </NexCardHeader>
             <NexCardContent className="mt-6">
+              {Array.isArray(emailSummary.perPeriod) && emailSummary.perPeriod.length > 0 ? (
               <NexLineChart 
-                data={emailSummary.perPeriod.length > 0 
-                  ? emailSummary.perPeriod.slice().reverse().map(period => ({
-                      name:  period.periodKey.replace('2025-', ''),
-                      users: period.count,
-                      revenue: period.memberCount
-                    }))
-                  : []
-                }
+                  data={emailSummary.perPeriod.slice().reverse().map(period => ({
+                    name: period.periodKey?.replace('2025-', '') || '',
+                    users: period.count || 0,
+                    revenue: period.memberCount || 0
+                  }))}
                 className="h-64"
                 dataName={["발송수", "멤버수"]}
               />
+              ) : (
+                <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                  <p className="text-sm">데이터가 없습니다</p>
+                </div>
+              )}
             </NexCardContent>
           </NexCard>
 
@@ -534,3 +562,4 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
     </div>
   );
 }
+

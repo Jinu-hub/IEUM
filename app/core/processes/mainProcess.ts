@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CreateContentsInput } from "~/core/lib/types";
 import { saveHighlight, updateNewsletterRunStep } from "~/features/contents/db/mutations";
+import { getUniquePeriodKey } from "~/features/contents/db/queries";
 import { logger } from "../lib/logger";
 import adminClient from "../lib/supa-admin-client.server";
 import type { KpiSnapshot, LinkedActivityDoc, UnifiedActivityDoc } from "../lib/types";
@@ -60,7 +61,8 @@ export async function analyzeData(
     logger.info('📝 Analyzing data started');
     const language = input.language;
     const period = input.period;
-    const periodKey = generatePeriodKey(period, input.from);
+    const basePeriodKey = generatePeriodKey(period, input.from);
+    const periodKey = await getUniquePeriodKey(adminClient, input.workspaceId, basePeriodKey);
 
     // 2-1. github data를 기반으로 kpi snapshot을 생성
     const kpiInfo = await repoKpiExtractor(input.githubResult || {});
