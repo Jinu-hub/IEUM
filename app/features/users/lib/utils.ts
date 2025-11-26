@@ -1,5 +1,5 @@
 import type React from "react";
-import { DEFAULT_PALETTE, STATS_CARD_DATA } from "./constants";
+import { DEFAULT_PALETTE, STATS_CARD_STYLE } from "./constants";
 import type {
   EmailMetadataRow,
   GithubCaseEntry,
@@ -611,6 +611,7 @@ export function createGithubDeveloperCommitData(
  * Create weekly statistics card data.
  * @param stats - The statistics values.
  * @param icons - The icons for each statistic.
+ * @param translations - The translations for labels and subLabels.
  * @returns The card data array.
  */
 export function createWeeklyStatsCardData(
@@ -627,39 +628,45 @@ export function createWeeklyStatsCardData(
     sparkles: React.ComponentType<{ className?: string }>;
     mailCheck: React.ComponentType<{ className?: string }>;
   },
+  translations: {
+    githubCommit: { label: string; subLabel: string };
+    slackMessage: { label: string; subLabel: string };
+    slackHighlight: { label: string; subLabel: string };
+    newsletterSent: { label: string; subLabel: string };
+  },
 ) {
   return [
     {
-      label: STATS_CARD_DATA.githubCommit.label,
+      label: translations.githubCommit.label,
       value: stats.commitCount ?? 0,
-      subLabel: STATS_CARD_DATA.githubCommit.subLabel,
+      subLabel: translations.githubCommit.subLabel,
       icon: icons.gitCommit,
-      iconBg: STATS_CARD_DATA.githubCommit.iconBg,
-      iconColor: STATS_CARD_DATA.githubCommit.iconColor,
+      iconBg: STATS_CARD_STYLE.githubCommit.iconBg,
+      iconColor: STATS_CARD_STYLE.githubCommit.iconColor,
     },
     {
-      label: STATS_CARD_DATA.slackMessage.label,
+      label: translations.slackMessage.label,
       value: stats.totalMessageCount,
-      subLabel: STATS_CARD_DATA.slackMessage.subLabel,
+      subLabel: translations.slackMessage.subLabel,
       icon: icons.messageSquareDot,
-      iconBg: STATS_CARD_DATA.slackMessage.iconBg,
-      iconColor: STATS_CARD_DATA.slackMessage.iconColor,
+      iconBg: STATS_CARD_STYLE.slackMessage.iconBg,
+      iconColor: STATS_CARD_STYLE.slackMessage.iconColor,
     },
     {
-      label: STATS_CARD_DATA.slackHighlight.label,
+      label: translations.slackHighlight.label,
       value: stats.highlightsCount,
-      subLabel: STATS_CARD_DATA.slackHighlight.subLabel,
+      subLabel: translations.slackHighlight.subLabel,
       icon: icons.sparkles,
-      iconBg: STATS_CARD_DATA.slackHighlight.iconBg,
-      iconColor: STATS_CARD_DATA.slackHighlight.iconColor,
+      iconBg: STATS_CARD_STYLE.slackHighlight.iconBg,
+      iconColor: STATS_CARD_STYLE.slackHighlight.iconColor,
     },
     {
-      label: STATS_CARD_DATA.newsletterSent.label,
+      label: translations.newsletterSent.label,
       value: stats.emailSentCount,
-      subLabel: STATS_CARD_DATA.newsletterSent.subLabel + ': ' + stats.emailSentMemberCount,
+      subLabel: translations.newsletterSent.subLabel + ': ' + stats.emailSentMemberCount,
       icon: icons.mailCheck,
-      iconBg: STATS_CARD_DATA.newsletterSent.iconBg,
-      iconColor: STATS_CARD_DATA.newsletterSent.iconColor,
+      iconBg: STATS_CARD_STYLE.newsletterSent.iconBg,
+      iconColor: STATS_CARD_STYLE.newsletterSent.iconColor,
     },
   ];
 }

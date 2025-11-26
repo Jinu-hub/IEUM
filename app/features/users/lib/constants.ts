@@ -13,28 +13,20 @@ export const DEFAULT_PALETTE = [
     '#C084FC',        // Soft Purple
   ];
 
-export const STATS_CARD_DATA = {
+export const STATS_CARD_STYLE = {
   githubCommit: {
-    label: "GitHub 커밋",
-    subLabel: "커밋 총 개수",
     iconBg: "bg-blue-100 dark:bg-blue-900/40",
     iconColor: "text-blue-600 dark:text-blue-300",
   },
   slackMessage: {
-    label: "Slack 메시지",
-    subLabel: "주고받은 메시지 총 개수",
     iconBg: "bg-green-100 dark:bg-green-900/40",
     iconColor: "text-green-600 dark:text-green-300",
   },
   slackHighlight: {
-    label: "Slack 하이라이트",
-    subLabel: "수집된 하이라이트 수",
     iconBg: "bg-purple-100 dark:bg-purple-900/40",
     iconColor: "text-purple-600 dark:text-purple-300",
   },
   newsletterSent: {
-    label: "뉴스레터 발송",
-    subLabel: "발송 대상자 수",
     iconBg: "bg-indigo-100 dark:bg-indigo-900/40",
     iconColor: "text-indigo-600 dark:text-indigo-300",
   },

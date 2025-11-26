@@ -37,6 +37,13 @@ export type Translation = {
     ago: string;
     later: string;
     allStatus: string;
+    message: string;
+    reaction: string;
+    commits: string;
+    emailSentCount: string;
+    emailSentMemberCount: string;
+    increase: string;
+    decrease: string;
     mailStatus: {
       sending: string;
       delivered: string;
@@ -48,6 +55,7 @@ export type Translation = {
     hour: string;
     minute: string;
     second: string;
+    weekly: string;
   };
   join: {
     heroTitle: string;
@@ -203,5 +211,50 @@ export type Translation = {
     goToSettings: string;
     goToTargets: string;
     goToSentMail: string;
+  };
+  analytics: {
+    title: string;
+    description: string;
+    noData: string;
+    noDataDescription: string;
+    thisWeekStatistics: string;
+    checkDataCollectionPeriod: string;
+    githubDevelopmentActivity: string;
+    weeklyCommitStatus: string;
+    recent8WeeksCommitStatus: string;
+    developerCommitStatus: string;
+    thisWeekDeveloperCommitStatus: string;
+    caseDevelopmentStatus: string;
+    thisWeekCaseDevelopmentStatus: string;
+    slackCommunicationStatus: string;
+    messageAndReactionActivity: string;
+    recent8WeeksMessageAndReactionCountTrend: string;
+    channelSummary: string;
+    channels: string;
+    noChannelData: string;
+    newsletterStatus: string;
+    emailSentTrend: string;
+    recent4WeeksEmailSentTrend: string;
+    averageMemberCount: string;
+    lastWeekComparison: string;
+    noChange: string;
+    statsCard: {
+      githubCommit: {
+        label: string;
+        subLabel: string;
+      },
+      slackMessage: {
+        label: string;
+        subLabel: string;
+      },
+      slackHighlight: {
+        label: string;
+        subLabel: string;
+      },
+      newsletterSent: {
+        label: string;
+        subLabel: string;
+      },
+    }
   };
 };

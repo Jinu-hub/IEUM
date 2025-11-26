@@ -138,7 +138,7 @@ export const sampleChartData = {
 };
 
 // Area Chart 컴포넌트들
-export const NexAreaChart = ({ data = sampleChartData.area, className = "" }) => {
+export const NexAreaChart = ({ data = sampleChartData.area, className = "", dataName = ["value", "value2"] }: { data?: any[]; className?: string; dataName?: string | string[] }) => {
   const safeData = Array.isArray(data) && data.length > 0 ? data : sampleChartData.area;
   
   return (
@@ -156,7 +156,7 @@ export const NexAreaChart = ({ data = sampleChartData.area, className = "" }) =>
         tickLine={false}
         axisLine={false}
       />
-      <Tooltip content={<ChartTooltip dataName={["message", "reaction"]} />} />
+      <Tooltip content={<ChartTooltip dataName={dataName} />} />
       <Area 
         type="monotone" 
         dataKey="value" 
