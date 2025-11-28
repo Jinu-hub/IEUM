@@ -5,14 +5,15 @@
  * UI 로직을 컴포넌트에서 분리하여 재사용성과 테스트 가능성을 높입니다.
  */
 
+import { useTranslation } from 'react-i18next';
 import {
-    CheckCircleIcon,
-    GitHubIcon,
-    NexBadge,
-    NexButton,
-    PlusIcon,
-    SettingsIcon,
-    SlackIcon
+  CheckCircleIcon,
+  GitHubIcon,
+  NexBadge,
+  NexButton,
+  PlusIcon,
+  SettingsIcon,
+  SlackIcon
 } from '~/core/components/nex';
 import type { IntegrationService } from '../lib/constants';
 import type { ConnectionStatus } from '../lib/types';
@@ -54,6 +55,7 @@ export function useIntegrationUI({
   handleSlackDisconnect,
   integrationsInfo = []
 }: UseIntegrationUIOptions) {
+  const { t } = useTranslation("common", { keyPrefix: "integrations" });
 
   /**
    * 연결 상태에 따른 배지 컴포넌트 생성
@@ -67,7 +69,7 @@ export function useIntegrationUI({
             icon={<CheckCircleIcon className="w-3 h-3" />}
             className="ml-3"
           >
-            연결됨
+            {t("status.connected")}
           </NexBadge>
         );
       case 'connecting':
@@ -76,7 +78,7 @@ export function useIntegrationUI({
             variant="warning" 
             className="ml-3"
           >
-            연결 중...
+            {t("status.connecting")}
           </NexBadge>
         );
       case 'disconnecting':
@@ -85,7 +87,7 @@ export function useIntegrationUI({
             variant="warning" 
             className="ml-3"
           >
-            해제 중...
+            {t("status.disconnecting")}
           </NexBadge>
         );
       case 'unauthorized':
@@ -94,7 +96,7 @@ export function useIntegrationUI({
             variant="warning" 
             className="ml-3"
           >
-            승인 대기
+            {t("status.unauthorized")}
           </NexBadge>
         );
       case 'disconnected':
@@ -104,7 +106,7 @@ export function useIntegrationUI({
             variant="secondary" 
             className="ml-3"
           >
-            연결 안됨
+            {t("status.disconnected")}
           </NexBadge>
         );
     }
@@ -124,7 +126,7 @@ export function useIntegrationUI({
           loading={true}
           disabled
         >
-          연결 중...
+          {t("status.connecting")}
         </NexButton>
       );
     }
@@ -137,7 +139,7 @@ export function useIntegrationUI({
           loading={true}
           disabled
         >
-          해제 중...
+          {t("status.disconnecting")}
         </NexButton>
       );
     }
@@ -150,7 +152,7 @@ export function useIntegrationUI({
           onClick={onConnect}
           className="flex items-center space-x-2 cursor-pointer"
         >
-          확인하기
+          {t("actions.verify")}
         </NexButton>
       );
     }
@@ -165,7 +167,7 @@ export function useIntegrationUI({
               leftIcon={<SettingsIcon className="w-4 h-4" />}
               onClick={onConfigure}
             >
-              설정
+              {t("actions.settings")}
             </NexButton>
           )}
           <NexButton
@@ -174,7 +176,7 @@ export function useIntegrationUI({
             onClick={onDisconnect}
             className="flex items-center space-x-2 cursor-pointer"
           >
-            연결 해제
+            {t("actions.disconnect")}
           </NexButton>
         </div>
       );
@@ -188,7 +190,7 @@ export function useIntegrationUI({
         onClick={onConnect}
         className="flex items-center space-x-2 cursor-pointer"
       >
-        연결하기
+        {t("actions.connect")}
       </NexButton>
     );
   };
@@ -210,15 +212,15 @@ export function useIntegrationUI({
     {
       type: 'github',
       name: 'GitHub',
-      description: 'GitHub 리포지토리에서 커밋, 이슈, PR 정보를 수집하고 리포트를 생성합니다.',
+      description: t("github.description"),
       icon: <GitHubIcon className="w-8 h-8" />,
       status: githubStatus,
       features: [
-        '커밋 정보 수집',
-        'PR(Pull Request) 추적',
-        '이슈 관리',
-        '기여자 분석',
-        '자동 리포트 생성'
+        t("github.features.commits"),
+        t("github.features.pullRequests"),
+        t("github.features.issues"),
+        t("github.features.contributors"),
+        t("github.features.reports")
       ],
       onConnect: handleGitHubConnect,
       onDisconnect: handleGitHubDisconnect,
@@ -238,20 +240,20 @@ export function useIntegrationUI({
     {
       type: 'slack',
       name: 'Slack',
-      description: 'Slack 워크스페이스의 채널 메시지와 활동을 수집하고 분석합니다.',
+      description: t("slack.description"),
       icon: <SlackIcon className="w-8 h-8" />,
       status: slackStatus,
       features: [
-        '채널 메시지 수집',
-        '사용자 활동 분석',
-        '반응 및 참여도 측정',
-        '팀 커뮤니케이션 인사이트',
-        '자동 리포트 생성'
+        t("slack.features.messages"),
+        t("slack.features.activity"),
+        t("slack.features.engagement"),
+        t("slack.features.insights"),
+        t("slack.features.reports")
       ],
       onConnect: handleSlackConnect,
       onDisconnect: handleSlackDisconnect,
       onConfigure: () => console.log('Slack 설정'),
-      // DB에서 가져온 추가 정보
+      // DB에서 가져온 追加 정보
       ...(slackInfo && {
         id: slackInfo.integration_id,
         credentialRef: slackInfo.credential_ref,

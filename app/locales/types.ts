@@ -44,6 +44,14 @@ export type Translation = {
     emailSentMemberCount: string;
     increase: string;
     decrease: string;
+    mainFeatures: string;
+    connectionComplete: string;
+    total: string;
+    member: string;
+    nonMember: string;
+    collapse: string;
+    more: string;
+    viewDetails: string;
     mailStatus: {
       sending: string;
       delivered: string;
@@ -257,4 +265,73 @@ export type Translation = {
       },
     }
   };
+  integrations: {
+    title: string;
+    description: string;
+    connectionCompleteDescription: string;
+    connectedAccount: string;
+    accessibleRepositories: string;
+    loadingRepositories: string;
+    noAccessibleRepositories: string;
+    workspace: string;
+    connectedBot: string;
+    channelList: string;
+    collectDataTargetDescription1: string;
+    collectDataTargetDescription2: string;
+    loadingChannels: string;
+    noAccessibleChannels: string;
+    channelLeavePermissionRequired: string;
+    clickToLeaveChannel: string;
+    clickToJoinChannel: string;
+    popupBlocked: string;
+    popupBlockedDescription1: string;
+    popupBlockedDescription2: string;
+    popupBlockedDescription3: string;
+    status: {
+      connected: string;
+      connecting: string;
+      disconnecting: string;
+      unauthorized: string;
+      disconnected: string;
+    };
+    actions: {
+      verify: string;
+      settings: string;
+      disconnect: string;
+      connect: string;
+    };
+    github: {
+      description: string;
+      features: {
+        commits: string;
+        pullRequests: string;
+        issues: string;
+        contributors: string;
+        reports: string;
+      };
+    };
+    slack: {
+      description: string;
+      features: {
+        messages: string;
+        activity: string;
+        engagement: string;
+        insights: string;
+        reports: string;
+      };
+    };
+    help: {
+      title: string;
+      description: string;
+      githubConnection: string;
+      githubConnectionDescription1: string;
+      githubConnectionDescription2: string;
+      githubConnectionDescription3: string;
+      slackConnection: string;
+      slackConnectionDescription1: string;
+      slackConnectionDescription2: string;
+      slackConnectionDescription3: string;
+      slackConnectionDescription4: string;
+    };
+  }
 };
