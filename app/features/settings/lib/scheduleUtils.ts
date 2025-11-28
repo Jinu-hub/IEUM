@@ -197,8 +197,12 @@ export function getLocaleFromTimezone(timezone: string): string {
 }
 
 // 마지막 발송 시각 포맷 함수 (hydration-safe)
-export function formatLastSent(lastSentAt?: string, timezone: string = 'Asia/Tokyo'): string {
-  if (!lastSentAt) return "미발송";
+export function formatLastSent(
+  lastSentAt?: string, 
+  timezone: string = 'Asia/Tokyo',
+  t?: (key: string, options?: any) => string
+): string {
+  if (!lastSentAt) return t ? t("time.notSent") : "Not sent";
   
   const date = new Date(lastSentAt);
   const locale = getLocaleFromTimezone(timezone);
@@ -212,11 +216,11 @@ export function formatLastSent(lastSentAt?: string, timezone: string = 'Asia/Tok
     const diffInDays = Math.floor(diffInHours / 24);
 
     if (diffInMinutes < 60) {
-      return `${diffInMinutes}분 전`;
+      return t ? t("time.minutesAgo", { count: diffInMinutes }) : `${diffInMinutes} min ago`;
     } else if (diffInHours < 24) {
-      return `${diffInHours}시간 전`;
+      return t ? t("time.hoursAgo", { count: diffInHours }) : `${diffInHours} hours ago`;
     } else if (diffInDays < 7) {
-      return `${diffInDays}일 전`;
+      return t ? t("time.daysAgo", { count: diffInDays }) : `${diffInDays} days ago`;
     }
   }
   
@@ -230,8 +234,8 @@ export function formatLastSent(lastSentAt?: string, timezone: string = 'Asia/Tok
 };
 
 // 스케줄 표시용 포맷 함수 (MVP: weekly만 지원)
-export function formatSchedule(cron?: string): string {
-  if (!cron) return "수동 발송";
+export function formatSchedule(cron?: string, t?: (key: string, options?: any) => string): string {
+  if (!cron) return t ? t("schedule.manual") : "Manual send";
   
   // 간단한 cron 문자열 해석
   const parts = cron.split(' ');
@@ -241,26 +245,47 @@ export function formatSchedule(cron?: string): string {
   const hourNum = parseInt(hour);
   const nextHour = (hourNum + 1) % 24;
   
+  const timeRange = t 
+    ? t("schedule.timeRange", { start: hourNum, end: nextHour })
+    : `${hourNum}~${nextHour}`;
+  
   // MVP: weekly 스케줄
   if (dayOfWeek !== '*' && dayOfMonth === '*') {
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
     const dayIndex = parseInt(dayOfWeek);
-    return `매주 ${days[dayIndex]}요일 ${hourNum}시~${nextHour}시`;
+    if (t) {
+      const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayName = t(`schedule.daysOfWeek.${dayKeys[dayIndex]}`);
+      return t("schedule.weeklyFormat", { day: dayName, time: timeRange });
+    } else {
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      return `Every ${days[dayIndex]} ${timeRange}`;
+    }
   }
   
   // 🚀 향후 지원 예정
   // daily 스케줄
   if (dayOfMonth === '*' && dayOfWeek === '*') {
-    return `매일 ${hourNum}시~${nextHour}시 (향후 지원)`;
+    const comingSoon = t ? t("schedule.comingSoon") : "(Coming soon)";
+    if (t) {
+      return `${t("schedule.dailyFormat", { time: timeRange })} ${comingSoon}`;
+    } else {
+      return `Daily ${timeRange} ${comingSoon}`;
+    }
   }
   
   // monthly 스케줄
   if (dayOfMonth !== '*' && dayOfWeek === '*') {
-    return `매월 ${dayOfMonth}일 ${hourNum}시~${nextHour}시 (향후 지원)`;
+    const comingSoon = t ? t("schedule.comingSoon") : "(Coming soon)";
+    if (t) {
+      return `${t("schedule.monthlyFormat", { day: dayOfMonth, time: timeRange })} ${comingSoon}`;
+    } else {
+      return `Monthly ${dayOfMonth}th ${timeRange} ${comingSoon}`;
+    }
   }
   
   // custom이나 알 수 없는 형식
-  return `${cron} (향후 지원)`;
+  const comingSoon = t ? t("schedule.comingSoon") : "(Coming soon)";
+  return `${cron} ${comingSoon}`;
 };
 
 

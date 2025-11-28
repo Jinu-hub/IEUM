@@ -1,5 +1,6 @@
 import { Clock, Copy, Edit, Mail, MoreVertical, Power, PowerOff, Target, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { redirect, useNavigate, useSubmit } from 'react-router';
 import { toast } from 'sonner';
 import {
@@ -93,6 +94,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
 
 export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
+  const { t } = useTranslation("common", { keyPrefix: "targets" });
+  const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
+  const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
   const { workspaceId, targetData } = loaderData;
   const [targets, setTargets] = useState<TargetData[]>(targetData);
   const navigate = useNavigate();
@@ -149,15 +153,15 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
-              타겟 관리
+              {t("title")}
             </h1>
             <p className="text-lg text-[#8B92B5] dark:text-[#6C6F7E]">
-              뉴스레터 발송 타겟을 생성하고 관리하세요.
+              {t("description")}
             </p>
           </div>
           
           <NexBadge variant="info" size="md">
-            {targets.length}개의 타겟
+            {targets.length} {t("numberOfTargets")}
           </NexBadge>
         </div>
 
@@ -168,16 +172,16 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
             <NexCard variant="outlined" className="text-center py-12">
               <NexCardContent>
                 <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <NexCardTitle className="mb-2">타겟이 없습니다</NexCardTitle>
+                <NexCardTitle className="mb-2">{t("noTargets")}</NexCardTitle>
                 <NexCardDescription className="mb-6">
-                  첫 번째 뉴스레터 타겟을 추가해주세요
+                  {t("addFirstTarget")}
                 </NexCardDescription>
                 <NexButton 
                   variant="primary" 
                   leftIcon={<PlusIcon />}
                   onClick={handleAddTarget}
                 >
-                  타겟 추가
+                  {t("addTarget")}
                 </NexButton>
               </NexCardContent>
             </NexCard>
@@ -210,7 +214,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                               ? "bg-green-100 text-green-600 hover:bg-green-200 hover:shadow-green-200/50 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-800/40 dark:focus:ring-green-400" 
                               : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:shadow-gray-200/50 dark:bg-gray-800 dark:text-gray-500 dark:hover:bg-gray-700 dark:focus:ring-gray-400"
                           )}
-                          title={target.isActive ? "활성 - 클릭하여 비활성화" : "비활성 - 클릭하여 활성화"}
+                          title={target.isActive ? `${commonT("active")} - ${commonT("clickToDeactivate")}` : `${commonT("inactive")} - ${commonT("clickToActivate")}`}
                         >
                           {target.isActive ? (
                             <Power className="h-5 w-5" />
@@ -233,7 +237,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                             variant={target.isActive ? "success" : "secondary"}
                             size="sm"
                           >
-                            {target.isActive ? "활성" : "비활성"}
+                            {target.isActive ? commonT("active") : commonT("inactive")}
                           </NexBadge>
                         </div>
 
@@ -243,9 +247,9 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                           <div className="flex items-center space-x-2">
                             <Clock className="h-4 w-4 text-muted-foreground" />
                             <div>
-                              <span className="font-medium">스케줄:</span>
+                              <span className="font-medium">{commonT("schedule")}:</span>
                               <div className="text-muted-foreground">
-                                {formatSchedule(target.scheduleCron)}
+                                {formatSchedule(target.scheduleCron, timesT)}
                               </div>
                             </div>
                           </div>
@@ -254,12 +258,12 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                           <div className="flex items-center space-x-2">
                             <Mail className="h-4 w-4 text-muted-foreground" />
                             <div>
-                              <span className="font-medium">송신 대상:</span>
+                              <span className="font-medium">{commonT("sendTarget")}:</span>
                               <div className="text-muted-foreground">
-                                {target.mailingListName || "미설정"} 
+                                {target.mailingListName || commonT("notSet")} 
                               </div>
                               <div className="text-muted-foreground">
-                                {target.isMemberMail ? "(멤버 메일 포함)" : ""}
+                                {target.isMemberMail ? `${t("memberMailIncluded")}` : ""}
                               </div>
                             </div>
                           </div>
@@ -268,9 +272,9 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                           <div className="flex items-center space-x-2">
                             <Target className="h-4 w-4 text-muted-foreground" />
                             <div>
-                              <span className="font-medium">마지막 발송:</span>
+                              <span className="font-medium">{commonT("lastSent")}:</span>
                               <div className="text-muted-foreground">
-                                {formatLastSent(target.lastSentAt || undefined, target.timezone || "Asia/Tokyo")}
+                                {formatLastSent(target.lastSentAt || undefined, target.timezone || "Asia/Tokyo", timesT)}
                               </div>
                             </div>
                           </div>
@@ -295,21 +299,21 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                               className="flex items-center space-x-2"
                             >
                               <Edit className="h-4 w-4" />
-                              <span>편집</span>
+                              <span>{commonT("edit")}</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleCopyTarget(target.targetId)}
                               className="flex items-center space-x-2"
                             >
                               <Copy className="h-4 w-4" />
-                              <span>복사</span>
+                              <span>{commonT("copy")}</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleDeleteTarget(target.targetId)}
                               className="flex items-center space-x-2 text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
                             >
                               <Trash2 className="h-4 w-4" />
-                              <span>삭제</span>
+                              <span>{commonT("delete")}</span>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

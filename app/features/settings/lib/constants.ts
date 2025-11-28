@@ -81,32 +81,71 @@ export interface ConnectedIntegration {
 /**
  * 카테고리 타입별 화면 표시 라벨
  */
+/**
+ * カテゴリラベルを取得する関数
+ * @param t - 翻訳関数
+ * @returns カテゴリタイプをキーとしたラベルのマップ
+ */
+export const getCategoryLabels = (t: (key: string) => string): Record<CategoryType, string> => ({
+  development: t('categories.development'),
+  infrastructure: t('categories.infrastructure'),
+  qa: t('categories.qa'),
+  data_ai: t('categories.data_ai'),
+  product: t('categories.product'),
+  design: t('categories.design'),
+  operations: t('categories.operations'),
+  communication: t('categories.communication'),
+  community: t('categories.community'),
+  learning: t('categories.learning'),
+  business: t('categories.business'),
+  finance: t('categories.finance'),
+  hr: t('categories.hr'),
+  okr: t('categories.okr'),
+  personal: t('categories.personal'),
+  fun: t('categories.fun'),
+});
+
+/**
+ * 後方互換性のための定数 (非推奨)
+ * @deprecated getCategoryLabels関数を使用してください
+ */
 export const CATEGORY_LABELS: Record<CategoryType, string> = {
-  development: '개발',
-  infrastructure: '인프라/DevOps',
-  qa: 'QA/테스트',
-  data_ai: '데이터/AI',
-  product: '기획/PM',
+  development: 'Development',
+  infrastructure: 'Infrastructure/DevOps',
+  qa: 'QA/Testing',
+  data_ai: 'Data/AI',
+  product: 'Product/PM',
   design: 'UX/UI',
-  operations: '운영',
-  communication: '커뮤니케이션/공지',
-  community: '친목/문화',
-  learning: '학습/교육',
-  business: '영업/마케팅',
-  finance: '재무',
-  hr: '인사',
-  okr: '전략/성과',
-  personal: '개인 요약',
+  operations: 'Operations',
+  communication: 'Communication/Announcement',
+  community: 'Community/Culture',
+  learning: 'Learning/Education',
+  business: 'Sales/Marketing',
+  finance: 'Finance',
+  hr: 'HR',
+  okr: 'Strategy/OKR',
+  personal: 'Personal Summary',
   fun: 'Fun Corner',
 } as const;
 
 /**
- * 카테고리 타입으로부터 화면 표시 라벨을 가져옵니다.
- * @param category - 카테고리 타입
- * @returns 화면 표시 라벨
+ * カテゴリタイプから画面表示ラベルを取得します（i18n対応）
+ * @param category - カテゴリタイプ
+ * @param t - 翻訳関数
+ * @returns 画面表示ラベル
  */
-export function getCategoryLabel(category: CategoryType | string | undefined | null): string {
+export function getCategoryLabel(
+  category: CategoryType | string | undefined | null,
+  t?: (key: string) => string
+): string {
   if (!category) return '';
+  
+  if (t) {
+    const labels = getCategoryLabels(t);
+    return labels[category as CategoryType] || category;
+  }
+  
+  // 翻訳関数が提供されない場合は、後方互換性のためにデフォルト値を使用
   return CATEGORY_LABELS[category as CategoryType] || category;
 }
 

@@ -52,11 +52,51 @@ export type Translation = {
     collapse: string;
     more: string;
     viewDetails: string;
+    add: string;
+    edit: string;
+    delete: string;
+    copy: string;
+    clickToDeactivate: string;
+    clickToActivate: string;
+    schedule: string;
+    sendTarget: string;
+    lastSent: string;
+    back: string;
+    saving: string;
+    save: string;
+    basicInfo: string;
+    category: string;
+    selectCategory: string;
+    targetName: string;
+    activeStatus: string;
+    dataSources: string;
+    repository: string;
+    memberMail: string;
+    notSupport: string;
+    source: string;
     mailStatus: {
       sending: string;
       delivered: string;
       failed: string;
-    }
+    };
+    categories: {
+      development: string;
+      infrastructure: string;
+      qa: string;
+      data_ai: string;
+      product: string;
+      design: string;
+      operations: string;
+      communication: string;
+      community: string;
+      learning: string;
+      business: string;
+      finance: string;
+      hr: string;
+      okr: string;
+      personal: string;
+      fun: string;
+    };
   };
   times:{
     day: string;
@@ -64,6 +104,43 @@ export type Translation = {
     minute: string;
     second: string;
     weekly: string;
+    schedule: {
+      type: string;
+      sendDay: string;
+      sendTime: string;
+      preview: string;
+      manual: string;
+      weekly: string;
+      daily: string;
+      monthly: string;
+      day: string;
+      hour: string;
+      minute: string;
+      comingSoon: string;
+      timeRange: string;
+      weeklyFormat: string;
+      dailyFormat: string;
+      monthlyFormat: string;
+      daysOfWeek: {
+        sunday: string;
+        monday: string;
+        tuesday: string;
+        wednesday: string;
+        thursday: string;
+        friday: string;
+        saturday: string;
+      };
+    };
+    time: {
+      notSent: string;
+      minutesAgo: string;
+      hoursAgo: string;
+      daysAgo: string;
+    };
+  };
+  errors: {
+    saveError: string;
+    targetNameRequired: string;
   };
   join: {
     heroTitle: string;
@@ -334,4 +411,44 @@ export type Translation = {
       slackConnectionDescription4: string;
     };
   }
+  targets: {
+    title: string;
+    description: string;
+    numberOfTargets: string;
+    noTargets: string;
+    addFirstTarget: string;
+    addTarget: string;
+    memberMailIncluded: string;
+    detail: {
+      addTarget: string;
+      editTarget: string;
+      description: string;
+      soonSupportOtherCategory: string;
+      enterTargetName: string;
+      selectMailingList: string;
+      memberMailStatus: string;
+      memberMailStatusDescription: string;
+      scheduleTypeDescription: string;
+      manualDescription: string;
+      addDataSource: string;
+      connectedService: string;
+      selectConnectedService: string;
+      noConnectedService: string;
+      selectService: string;
+      selectSource: string;
+      noAvailableSource: string;
+      disconnectedService: string;
+      goToSettings: string;
+      botInvitationRequired: string;
+      inviteBotToChannel: string;
+      availableChannelCandidate: string;
+      availableChannelCandidateDescription: string;
+      invitationRequired: string;
+      botInvitationMethod: string;
+      botInvitationMethodDescription1: string;
+      botInvitationMethodDescription2: string;
+      botInvitationMethodDescription3: string;
+      botName: string;
+    };
+  };
 };

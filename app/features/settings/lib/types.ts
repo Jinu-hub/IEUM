@@ -78,42 +78,115 @@ export interface MailListMemberData {
     createdAt: string;
 }
   
-// 스케줄 타입
-// MVP 버전: weekly만 지원, 향후 daily, monthly, custom 추가 예정
-export const scheduleTypes = [
-    { value: 'manual', label: '수동 발송' },
-    { value: 'weekly', label: '매주' },
-    // 🚀 향후 지원 예정
-    // { value: 'daily', label: '매일' },
-    // { value: 'monthly', label: '매월' },
-    // { value: 'custom', label: '직접 입력 (Cron)' },
-  ];
-  
-  // 요일 옵션
-  export const weekdays = [
-    { value: '1', label: '월요일' },
-    { value: '2', label: '화요일' },
-    { value: '3', label: '수요일' },
-    { value: '4', label: '목요일' },
-    { value: '5', label: '금요일' },
-    { value: '6', label: '토요일' },
-    { value: '0', label: '일요일' },
-  ];
-  
-  // 시간 옵션 (24시간 형식)
-  export const hours = Array.from({ length: 24 }, (_, i) => ({
+/**
+ * スケジュールタイプのオプションを取得する関数（i18n対応）
+ * MVP: weekly のみサポート、今後 daily, monthly, custom 追加予定
+ * @param t - 翻訳関数
+ * @returns スケジュールタイプのオプション配列
+ */
+export const getScheduleTypes = (t: (key: string) => string) => [
+  { value: 'manual', label: t('schedule.manual') },
+  { value: 'weekly', label: t('schedule.weekly') },
+  // 🚀 今後サポート予定
+  // { value: 'daily', label: t('schedule.daily') },
+  // { value: 'monthly', label: t('schedule.monthly') },
+  // { value: 'custom', label: t('schedule.custom') },
+];
+
+/**
+ * 曜日オプションを取得する関数（i18n対応）
+ * @param t - 翻訳関数
+ * @returns 曜日オプション配列
+ */
+export const getWeekdays = (t: (key: string) => string) => [
+  { value: '1', label: t('schedule.daysOfWeek.monday') },
+  { value: '2', label: t('schedule.daysOfWeek.tuesday') },
+  { value: '3', label: t('schedule.daysOfWeek.wednesday') },
+  { value: '4', label: t('schedule.daysOfWeek.thursday') },
+  { value: '5', label: t('schedule.daysOfWeek.friday') },
+  { value: '6', label: t('schedule.daysOfWeek.saturday') },
+  { value: '0', label: t('schedule.daysOfWeek.sunday') },
+];
+
+/**
+ * 時間オプションを取得する関数（i18n対応）
+ * @param t - 翻訳関数
+ * @returns 時間オプション配列（24時間形式）
+ */
+export const getHours = (t: (key: string) => string) => 
+  Array.from({ length: 24 }, (_, i) => ({
     value: i.toString(),
-    label: `${i.toString().padStart(2, '0')}시`
+    label: `${i.toString().padStart(2, '0')}${t('hour')}`
   }));
-  
-  // 분 옵션 (15분 단위)
-  export const minutes = Array.from({ length: 4 }, (_, i) => ({
+
+/**
+ * 分オプションを取得する関数（i18n対応）
+ * @param t - 翻訳関数
+ * @returns 分オプション配列（15分単位）
+ */
+export const getMinutes = (t: (key: string) => string) => 
+  Array.from({ length: 4 }, (_, i) => ({
     value: (i * 15).toString(),
-    label: `${(i * 15).toString().padStart(2, '0')}분`
+    label: `${(i * 15).toString().padStart(2, '0')}${t('minute')}`
   }));
-  
-  // 월 일자 옵션
-  export const monthDays = Array.from({ length: 28 }, (_, i) => ({
+
+/**
+ * 月の日付オプションを取得する関数（i18n対応）
+ * @param t - 翻訳関数
+ * @returns 日付オプション配列
+ */
+export const getMonthDays = (t: (key: string) => string) => 
+  Array.from({ length: 28 }, (_, i) => ({
     value: (i + 1).toString(),
-    label: `${i + 1}일`
+    label: `${i + 1}${t('day')}`
   }));
+
+/**
+ * 後方互換性のための定数（非推奨）
+ * @deprecated getScheduleTypes関数を使用してください
+ */
+export const scheduleTypes = [
+  { value: 'manual', label: 'Manual send' },
+  { value: 'weekly', label: 'Weekly' },
+];
+
+/**
+ * 後方互換性のための定数（非推奨）
+ * @deprecated getWeekdays関数を使用してください
+ */
+export const weekdays = [
+  { value: '1', label: 'Mon' },
+  { value: '2', label: 'Tue' },
+  { value: '3', label: 'Wed' },
+  { value: '4', label: 'Thu' },
+  { value: '5', label: 'Fri' },
+  { value: '6', label: 'Sat' },
+  { value: '0', label: 'Sun' },
+];
+
+/**
+ * 後方互換性のための定数（非推奨）
+ * @deprecated getHours関数を使用してください
+ */
+export const hours = Array.from({ length: 24 }, (_, i) => ({
+  value: i.toString(),
+  label: `${i.toString().padStart(2, '0')}h`
+}));
+
+/**
+ * 後方互換性のための定数（非推奨）
+ * @deprecated getMinutes関数を使用してください
+ */
+export const minutes = Array.from({ length: 4 }, (_, i) => ({
+  value: (i * 15).toString(),
+  label: `${(i * 15).toString().padStart(2, '0')}m`
+}));
+
+/**
+ * 後方互換性のための定数（非推奨）
+ * @deprecated getMonthDays関数を使用してください
+ */
+export const monthDays = Array.from({ length: 28 }, (_, i) => ({
+  value: (i + 1).toString(),
+  label: `${i + 1}th`
+}));

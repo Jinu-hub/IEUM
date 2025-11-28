@@ -1,5 +1,6 @@
 import { ArrowLeft, Clock, Plus, Settings, Target as TargetIcon, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { redirect, useActionData, useNavigate, useNavigation, useParams, useSubmit, type LoaderFunctionArgs } from 'react-router';
 import { toast } from "sonner";
 import {
@@ -37,7 +38,7 @@ import {
   parseCronExpression
 } from '../lib/scheduleUtils';
 import type { TargetData } from '../lib/types';
-import { hours, scheduleTypes, weekdays } from '../lib/types';
+import { getHours, getScheduleTypes, getWeekdays } from '../lib/types';
 import type { Route } from "./+types/target-detail";
 
 export const meta = ({ params }: { params: { targetId: string } }) => {
@@ -162,6 +163,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 };
 
 export default function TargetDetailScreen( { loaderData }: Route.ComponentProps ) {
+  const { t } = useTranslation("common", { keyPrefix: "targets" });
+  const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
+  const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
   const { workspaceId, target, mailingLists, integrations, targetSources } = loaderData;
   const navigate = useNavigate();
   const submit = useSubmit();
@@ -169,6 +173,11 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   const navigation = useNavigation();
   const { targetId } = useParams();
   const isNew = targetId === 'new';
+
+  // i18n対応のオプション配列
+  const scheduleTypes = getScheduleTypes(timesT);
+  const weekdays = getWeekdays(timesT);
+  const hours = getHours(timesT);
 
   // 저장 상태
   const [isSaving, setIsSaving] = useState(false);
@@ -299,7 +308,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     if (actionData && !isSubmitting && actionData !== processedActionData) {
       if (actionData.error || actionData.status === 'error') {
         // 에러 처리
-        toast.error(actionData.message || '저장 중 오류가 발생했습니다.');
+        toast.error(actionData.message || commonT("errors.saveError"));
         setIsSaving(false);
         setProcessedActionData(actionData); // 처리 완료 표시
       } else if (actionData.status === 'success') {
@@ -421,7 +430,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   const handleSave = () => {
     // 유효성 검사
     if (!formData.displayName?.trim()) {
-      alert('타겟 이름을 입력해주세요.');
+      alert(t("errors.targetNameRequired"));
       return;
     }
 
@@ -458,22 +467,24 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
               size="sm"
               leftIcon={<ArrowLeft />}
               onClick={handleGoBack}
+              disabled={isSaving}
+              className="cursor-pointer"
             >
-              뒤로
+              {commonT("back")}
             </NexButton>
             <div className="space-y-1">
               <h1 className="text-3xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
-                {isNew ? '새 타겟 추가' : '타겟 편집'}
+                {isNew ? t("detail.addTarget") : t("detail.editTarget")}
               </h1>
               <p className="text-lg text-[#8B92B5] dark:text-[#6C6F7E]">
-                뉴스레터 발송 타겟의 설정을 구성하세요.
+                {t("detail.description")}
               </p>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
             <NexBadge variant={formData.isActive ? "success" : "secondary"} size="md">
-              {formData.isActive ? "활성" : "비활성"}
+              {formData.isActive ? commonT("active") : commonT("inactive")}
             </NexBadge>
             <NexButton
               variant="primary"
@@ -481,7 +492,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
               loading={isSaving}
               disabled={isSaving}
             >
-              {isSaving ? '저장 중...' : '저장'}
+              {isSaving ? commonT("saving") : commonT("save")}
             </NexButton>
           </div>
         </div>
@@ -495,11 +506,11 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                 <div className="p-2 rounded-lg bg-primary/10">
                   <TargetIcon className="h-5 w-5 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-foreground">기본 정보</h2>
+                <h2 className="text-xl font-semibold text-foreground">{commonT("basicInfo")}</h2>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">카테고리</label>
+                <label className="text-sm font-medium text-foreground">{commonT("category")}</label>
                 <Tooltip>
                   <Select
                     value={formData.category || undefined}
@@ -508,13 +519,13 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                   >
                     <TooltipTrigger asChild>
                       <SelectTrigger>
-                        <SelectValue placeholder="카테고리를 선택하세요" />
+                        <SelectValue placeholder={commonT("selectCategory")} />
                       </SelectTrigger>
                     </TooltipTrigger>
                     <SelectContent >
                       {CATEGORY_TYPE.map((category) => (
                         <SelectItem key={category} value={category}>
-                          {getCategoryLabel(category)}
+                          {getCategoryLabel(category, commonT)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -523,17 +534,17 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                     side="top"
                     className="bg-primary text-primary-foreground border-primary shadow-lg max-w-xs"
                   >
-                    <p className="font-medium">추후 다른 카테고리를 지원할 예정입니다</p>
+                    <p className="font-medium">{t("detail.soonSupportOtherCategory")}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
 
               <div className="grid gap-6 mt-6">
-                {/* 표시명 */}
+                {/* 타겟 이름 */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">표시명</label>
+                  <label className="text-sm font-medium text-foreground">{commonT("targetName")}</label>
                   <NexInput
-                    placeholder="타겟 이름을 입력하세요"
+                    placeholder={t("detail.enterTargetName")}
                     value={formData.displayName || ''}
                     onChange={(e) => handleInputChange('displayName', e.target.value)}
                     disabled={isSaving}
@@ -542,11 +553,11 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
 
                 {/* 활성 상태 */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">활성 상태</label>
+                  <label className="text-sm font-medium text-foreground">{commonT("activeStatus")}</label>
                   <NexToggle
                     checked={formData.isActive || false}
                     onChange={(checked) => handleInputChange('isActive', checked)}
-                    label={formData.isActive ? '활성' : '비활성'}
+                    label={formData.isActive ? commonT("active") : commonT("inactive")}
                     variant="success"
                     size="md"
                     disabled={isSaving}
@@ -555,14 +566,14 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
 
                 {/* 메일링 리스트 */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">송신 대상</label>
+                  <label className="text-sm font-medium text-foreground">{commonT("sendTarget")}</label>
                   <Select
                     value={formData.mailingListId || ''}
                     onValueChange={(value) => handleInputChange('mailingListId', value)}
                     disabled={isSaving}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="메일링 리스트를 선택하세요" />
+                      <SelectValue placeholder={t("detail.selectMailingList")} />
                     </SelectTrigger>
                     <SelectContent>
                       {mailingLists.map((list) => (
@@ -576,7 +587,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
 
                 {/* 멤버 메일 발송 여부 */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">채널 멤버 메일 발송 여부</label>
+                  <label className="text-sm font-medium text-foreground">{t("detail.memberMailStatus")}</label>
                   <NexToggle
                     checked={isMemberMail}
                     onChange={(checked) => {
@@ -591,11 +602,11 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                         }))
                       );
                     }}
-                    label={isMemberMail ? '활성' : '비활성'}
+                    label={isMemberMail ? commonT("active") : commonT("inactive")}
                   />
                   {isMemberMail && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      슬랙 채널 멤버에 메일이 설정되어 있을시, 메일 송신 대상에 자동으로 포함됩니다.
+                      {t("detail.memberMailStatusDescription")}
                     </p>
                   )}
                 </div>
@@ -611,9 +622,9 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                   <Clock className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-foreground">발송 스케줄</h2>
+                  <h2 className="text-xl font-semibold text-foreground">{commonT("schedule")}</h2>
                   <p className="text-xs text-muted-foreground mt-1">
-                    현재는 주간 발송만 지원합니다. 향후 일간, 월간, 커스텀 추가 예정입니다.
+                    {t("detail.scheduleTypeDescription")}
                   </p>
                 </div>
               </div>
@@ -621,7 +632,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
               <div className="space-y-6">
                 {/* 스케줄 타입 선택 */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">스케줄 타입</label>
+                  <label className="text-sm font-medium text-foreground">{timesT("schedule.type")}</label>
                   <Select value={scheduleType} onValueChange={handleScheduleTypeChange} disabled={isSaving}>
                     <SelectTrigger>
                       <SelectValue />
@@ -641,7 +652,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                   <div className="space-y-6 p-4 bg-muted/30 rounded-lg border border-muted">
                     {/* 요일 설정 */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">발송 요일</label>
+                      <label className="text-sm font-medium text-foreground">{timesT("schedule.sendDay")}</label>
                       <Select 
                         value={selectedWeekday} 
                         onValueChange={setSelectedWeekday}
@@ -662,7 +673,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
 
                     {/* 시간 설정 */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">발송 시각</label>
+                      <label className="text-sm font-medium text-foreground">{timesT("schedule.sendTime")}</label>
                       <Select 
                         value={selectedHour} 
                         onValueChange={setSelectedHour}
@@ -677,7 +688,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                             const nextHour = (currentHour + 1) % 24;
                             return (
                               <SelectItem key={hour.value} value={hour.value}>
-                                {currentHour}시~{nextHour}시
+                                {timesT("schedule.timeRange", { start: currentHour, end: nextHour })}
                               </SelectItem>
                             );
                           })}
@@ -687,11 +698,11 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
 
                     {/* 스케줄 미리보기 */}
                     <div className="bg-background rounded-lg p-4 border border-muted">
-                      <h4 className="text-sm font-medium text-foreground mb-2">스케줄 미리보기</h4>
+                      <h4 className="text-sm font-medium text-foreground mb-2">{timesT("schedule.preview")}</h4>
                       <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4 text-primary" />
                         <span className="text-sm font-medium text-foreground">
-                          매주 {weekdays.find(d => d.value === selectedWeekday)?.label} {parseInt(selectedHour)}시~{(parseInt(selectedHour) + 1) % 24}시
+                          {timesT("schedule.weeklyFormat", { day: weekdays.find(d => d.value === selectedWeekday)?.label, time: timesT("schedule.timeRange", { start: parseInt(selectedHour), end: (parseInt(selectedHour) + 1) % 24 }) })}
                         </span>
                       </div>
                       {formData.scheduleCron && (
@@ -707,7 +718,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                 {scheduleType === 'manual' && (
                   <div className="p-4 bg-muted/30 rounded-lg border border-muted">
                     <p className="text-sm text-muted-foreground">
-                      수동 발송 모드입니다. 타겟 목록에서 직접 발송 버튼을 클릭하여 뉴스레터를 보낼 수 있습니다.
+                      {t("detail.manualDescription")}
                     </p>
                   </div>
                 )}
@@ -722,7 +733,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Settings className="h-5 w-5 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-foreground">데이터 소스</h2>
+                <h2 className="text-xl font-semibold text-foreground">{commonT("dataSources")}</h2>
               </div>
 
               {/* 기존 인테그레이션 소스 목록 */}
@@ -738,20 +749,20 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                           </NexBadge>
                           <span className="text-sm text-foreground">{source.sourceIdent}</span>
                           {integration?.type === 'github' && (
-                            <span className="text-xs text-muted-foreground">레포지토리</span>
+                            <span className="text-xs text-muted-foreground">{commonT("repository")}</span>
                           )}
                           {integration?.type === 'slack' && (
-                            <span className="text-xs text-muted-foreground">채널</span>
+                            <span className="text-xs text-muted-foreground">{commonT("channel")}</span>
                           )}
                           <span
                             className="text-xs text-muted-foreground"
                           >
                             <Tooltip>
                               <TooltipTrigger>
-                                <span>- 멤버메일: {integration?.type === 'github' ? 'OFF' : (isMemberMail ? 'ON' : 'OFF')}</span>
+                                <span>- {commonT("memberMail")}: {integration?.type === 'github' ? 'OFF' : (isMemberMail ? 'ON' : 'OFF')}</span>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>{integration?.type === 'github' ? '현재는 지원하지 않습니다.' : isMemberMail ? '슬랙 채널 멤버에 메일이 설정되어 있을시, 메일 송신 대상에 자동으로 포함됩니다.' : '슬랙 채널 멤버 메일을 자동으로 포함하지 않습니다.'}</p>
+                                <p>{integration?.type === 'github' ? (commonT("notSupport")) : isMemberMail ? t("detail.memberMailIncluded") : t("detail.memberMailNotIncluded")}</p>
                               </TooltipContent>
                             </Tooltip>
                           </span>
@@ -772,12 +783,12 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
 
               {/* 새 인테그레이션 소스 추가 */}
               <div className="space-y-4 p-4 border-2 border-dashed border-muted rounded-lg">
-                <h3 className="text-sm font-medium text-foreground">새 데이터 소스 추가</h3>
+                <h3 className="text-sm font-medium text-foreground">{t("detail.addDataSource")}</h3>
                 
                 <div className="space-y-6">
                   {/* 연결된 서비스 선택 */}
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-muted-foreground">연결된 서비스</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t("detail.connectedService")}</label>
                     <Select
                       value={newIntegration.integrationType}
                       onValueChange={(value) => setNewIntegration(prev => ({ 
@@ -788,7 +799,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                       disabled={isSaving}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="연결된 서비스를 선택하세요" />
+                        <SelectValue placeholder={t("detail.selectConnectedService")} />
                       </SelectTrigger>
                       <SelectContent>
                         {integrations.length > 0 ? (
@@ -797,17 +808,17 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                               <div className="flex items-center space-x-2">
                                 <span>{integration.name}</span>
                                 {integration.connection_status === 'connected' && (
-                                  <NexBadge variant="success" size="sm">연결됨</NexBadge>
+                                  <NexBadge variant="success" size="sm">{commonT("connected")}</NexBadge>
                                 )}
                                 {integration.connection_status === 'disconnected' && (
-                                  <NexBadge variant="secondary" size="sm">연결안됨</NexBadge>
+                                  <NexBadge variant="secondary" size="sm">{commonT("disconnected")}</NexBadge>
                                 )}
                               </div>
                             </SelectItem>
                           ))
                         ) : (
                           <SelectItem value="no-integrations" disabled>
-                            연결된 서비스가 없습니다
+                            {t("detail.noConnectedService")}
                           </SelectItem>
                         )}
                       </SelectContent>
@@ -822,7 +833,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                         const selectedIntegration = integrations.find((i: any) => i.type === newIntegration.integrationType);
                         return selectedIntegration && (selectedIntegration.type === 'github' || selectedIntegration.type === 'slack')
                           ? getSourceTypeLabel(selectedIntegration.type)
-                          : '소스';
+                          : commonT("source");
                       })()}
                     </label>
                     
@@ -838,8 +849,8 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                             <SelectValue 
                               placeholder={
                                 !newIntegration.integrationType 
-                                  ? "먼저 서비스를 선택하세요"
-                                  : "소스를 선택하세요"
+                                  ? t("detail.selectService")
+                                  : t("detail.selectSource")
                               } 
                             />
                           </SelectTrigger>
@@ -857,7 +868,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                               ))
                             ) : newIntegration.integrationType ? (
                               <SelectItem value="no-sources-available" disabled>
-                                사용 가능한 소스가 없습니다
+                                {t("detail.noAvailableSource")}
                               </SelectItem>
                             ) : null}
                           </SelectContent>
@@ -868,7 +879,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                           const selectedIntegration = integrations.find((i: any) => i.type === newIntegration.integrationType);
                           return selectedIntegration && selectedIntegration.connection_status !== 'connected' ? (
                             <div className="text-xs text-amber-600">
-                              선택한 서비스가 연결 해제되었습니다. 먼저 연결을 완료하세요.
+                              {t("detail.disconnectedService")}
                             </div>
                           ) : null;
                         })()}
@@ -889,7 +900,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                               className="w-full sm:w-auto sm:min-w-[120px] cursor-pointer"
                               disabled={isSaving}
                             >
-                              연결 설정으로 이동
+                              {t("detail.goToSettings")}
                             </NexButton>
                           );
                         }
@@ -904,7 +915,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                             disabled={!newIntegration.integrationType || !newIntegration.sourceIdent || isSaving}
                             className="w-full sm:w-auto sm:min-w-[120px] cursor-pointer"
                           >
-                            추가
+                            {commonT("add")}
                           </NexButton>
                         );
                       })()}
@@ -915,9 +926,9 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                       const selectedIntegration = integrations.find((i: any) => i.type === newIntegration.integrationType);
                       return selectedIntegration?.type === 'slack' && selectedIntegration.connection_status === 'connected' && (
                         <div className="text-xs text-muted-foreground p-2 bg-muted/50 rounded">
-                          <p>💡 봇이 초대된 채널만 데이터 수집이 가능합니다.</p>
+                          <p>{t("detail.botInvitationRequired")}</p>
                           {availableSources.length === 0 && (
-                            <p className="mt-1 text-amber-600">아래 후보 채널에서 봇을 초대해주세요.</p>
+                            <p className="mt-1 text-amber-600">{t("detail.inviteBotToChannel")}</p>
                           )}
                         </div>
                       );
@@ -932,10 +943,10 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                     <div className="mt-6 pt-4 border-t border-muted">
                       <div className="mb-3">
                         <h4 className="text-sm font-medium text-foreground mb-1">
-                          사용 가능한 채널 후보
+                          {t("detail.availableChannelCandidate")}
                         </h4>
                         <p className="text-xs text-muted-foreground">
-                          아래 채널들에 봇을 초대하면 데이터 소스로 사용할 수 있습니다.
+                          {t("detail.availableChannelCandidateDescription")}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -950,7 +961,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                                 #{channel.name}
                               </span>
                               <NexBadge variant="warning" size="sm">
-                                초대 필요
+                                {t("detail.invitationRequired")}
                               </NexBadge>
                             </div>
                           ))}
@@ -959,17 +970,21 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                             onClick={() => setExpandedNonMemberChannels(!expandedNonMemberChannels)}
                             className="text-xs text-[#5E6AD2] hover:text-[#7C89F9] dark:text-[#7C89F9] dark:hover:text-[#5E6AD2] underline cursor-pointer px-3 py-2"
                           >
-                            {expandedNonMemberChannels ? '축소하기' : `+${nonMemberChannels.length - 8}개 더 보기`}
+                            {expandedNonMemberChannels ? commonT("collapse") : `${commonT("more")} ${nonMemberChannels.length - 8} ${commonT("numberOfChannel")}`}
                           </button>
                         )}
                       </div>
+                      
                       <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                        <p className="text-xs text-blue-700 dark:text-blue-300 space-y-2">
+                          <strong>{t("detail.botInvitationMethod")}1:</strong> {t("detail.botInvitationMethodDescription1")}
+                        </p>
                         <p className="text-xs text-blue-700 dark:text-blue-300">
-                          <strong>봇 초대 방법:</strong> Slack에서 원하는 채널로 이동 → 
+                          <strong>{t("detail.botInvitationMethod")}2:</strong> {t("detail.botInvitationMethodDescription2")} → 
                           <code className="mx-1 px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs">
-                            /invite @봇이름
+                            /invite @{t("detail.botName")}
                           </code>
-                          입력 → 봇이 채널에 추가되면 자동으로 위 목록에서 사라집니다.
+                          {t("detail.botInvitationMethodDescription3")}
                         </p>
                       </div>
                     </div>
