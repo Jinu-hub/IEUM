@@ -1,16 +1,17 @@
 import {
   ArrowLeft,
   Calendar,
+  Check,
   Copy,
   Download,
   ExternalLink,
   Eye,
   FileText,
   Mail,
-  RotateCcw,
   User,
   X,
-  XCircle
+  XCircle,
+  Zap
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -51,10 +52,14 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
   const { email } = loaderData;
   const navigate = useNavigate();
   const { t } = useTranslation("common", { keyPrefix: "common" });
+  const { t: sentMailT } = useTranslation("common", { keyPrefix: "sentMail" });
   const { i18n } = useTranslation();
   
   // HTML 미리보기 상태
   const [previewMode, setPreviewMode] = useState<'none' | 'preview' | 'html' | 'markdown'>('none');
+  
+  // ID 복사 상태
+  const [copied, setCopied] = useState(false);
   
   if (!email) {
     return (
@@ -62,11 +67,11 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
             <Mail className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <h1 className="text-2xl font-bold text-foreground mb-2">메일을 찾을 수 없습니다</h1>
-            <p className="text-muted-foreground mb-6">요청하신 메일을 찾을 수 없습니다.</p>
-            <NexButton variant="primary" onClick={() => navigate('/contents/sent-mail')}>
+            <h1 className="text-2xl font-bold text-foreground mb-2">{sentMailT("detail.noSentMail")}</h1>
+            <p className="text-muted-foreground mb-6">{sentMailT("detail.noSentMailDescription")}</p>
+            <NexButton variant="primary" className="cursor-pointer" onClick={() => navigate('/contents/sent-mail')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              목록으로 돌아가기
+              {t("back")}
             </NexButton>
           </div>
         </div>
@@ -86,7 +91,10 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
   // 메일 ID 복사 핸들러
   const handleCopyId = (messageId: string) => {
     navigator.clipboard.writeText(messageId);
-    console.log('메시지 ID 복사됨:', messageId);
+    setCopied(true);
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   };
 
   // HTML 미리보기 핸들러
@@ -132,14 +140,15 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
             <NexButton 
               variant="ghost" 
               size="sm"
+              className="cursor-pointer"
               onClick={() => navigate('/contents/sent-mail')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              목록으로
+              {t("back")}
             </NexButton>
             <div className="space-y-1">
               <h1 className="text-2xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
-                메일 상세
+                {sentMailT("detail.mailDetail")}
               </h1>
               <p className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
                 {email.targetTitle}
@@ -172,24 +181,37 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                       </h2>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      메시지 ID: {email.providerMessageId}
+                      {t("mail.messageId")}: {email.providerMessageId}
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex items-center space-x-2">
+                  {/*
                   <NexButton variant="ghost" size="sm" onClick={handleResendEmail}>
                     <RotateCcw className="h-4 w-4 mr-1" />
-                    재발송
+                    {t("mail.resend")}
                   </NexButton>
+                  */}
                   {email.providerMessageId && (
                     <NexButton 
-                      variant="ghost" 
+                      variant={copied ? "primary" : "secondary"}
                       size="sm"
+                      className="cursor-pointer transition-all"
                       onClick={() => handleCopyId(email.providerMessageId!)}
+                      disabled={copied}
                     >
-                      <Copy className="h-4 w-4 mr-1" />
-                      ID 복사
+                      {copied ? (
+                        <>
+                          <Check className="h-4 w-4 mr-1" />
+                          {t("mail.copied")}
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4 mr-1" />
+                          {t("mail.idCopy")}
+                        </>
+                      )}
                     </NexButton>
                   )}
                   {email.archiveUrl && (
@@ -199,7 +221,7 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                       onClick={() => handleViewArchive(email.archiveUrl!)}
                     >
                       <ExternalLink className="h-4 w-4 mr-1" />
-                      아카이브
+                      {t("mail.archive")}
                     </NexButton>
                   )}
                 </div>
@@ -235,7 +257,7 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-muted-foreground">SUBJECT</span>
+                    <span className="text-sm font-medium text-muted-foreground">{t("mail.subject")}</span>
                   </div>
                   <p className="text-sm text-foreground">
                     {email.subject}
@@ -246,7 +268,7 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-muted-foreground">발송 시간</span>
+                    <span className="text-sm font-medium text-muted-foreground">{t("mail.sentAt")}</span>
                   </div>
                   <p className="text-sm text-foreground">
                     {formatDetailedTime(email.sentAt, i18n.language)}
@@ -256,7 +278,10 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
 
               {/* 이메일 이벤트 상태 */}
               <div className="space-y-4">
-                <h4 className="text-sm font-medium text-muted-foreground">이메일 이벤트</h4>
+                <div className="flex items-center space-x-2">
+                  <Zap className="h-4 w-4 text-muted-foreground" />
+                  <h4 className="text-sm font-medium text-muted-foreground">{t("mail.emailEvent")}</h4>
+                </div>
                 <div className="flex items-center space-x-4 p-4 bg-[#F8F9FA] dark:bg-[#2C2D30] rounded-lg">
                   <div className={cn("p-2 rounded-full", statusConfig.bgColor)}>
                     <StatusIcon className={cn("h-4 w-4", statusConfig.color)} />
@@ -286,7 +311,7 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                     <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
                     <div>
                       <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
-                        발송 실패
+                        {t("mail.status.failed")}
                       </h3>
                       <p className="text-sm text-red-700 dark:text-red-300 mt-1">
                         {email.failureReason}
@@ -304,22 +329,22 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
           <NexCardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-foreground">
-                이메일 미리보기
+                {t("mail.previewEmail")}
               </h3>
               <div className="flex items-center space-x-2">
-                <NexButton variant="ghost" size="sm" onClick={handlePreviewEmail}>
+                <NexButton variant="ghost" size="sm" className="cursor-pointer" onClick={handlePreviewEmail}>
                   <Eye className="h-4 w-4 mr-1" />
-                  미리보기
+                  {t("preview")}
                 </NexButton>
-                <NexButton variant="ghost" size="sm" onClick={handleViewHTML}>
+                <NexButton variant="ghost" size="sm" className="cursor-pointer" onClick={handleViewHTML}>
                   <FileText className="h-4 w-4 mr-1" />
                   HTML
                 </NexButton>
-                <NexButton variant="ghost" size="sm" onClick={handleDownloadHTML}>
+                <NexButton variant="ghost" size="sm" className="cursor-pointer" onClick={handleDownloadHTML}>
                   <Download className="h-4 w-4 mr-1" />
-                  다운로드
+                  {t("download")}
                 </NexButton>
-                <NexButton variant="ghost" size="sm" onClick={handleViewMarkdown}>
+                <NexButton variant="ghost" size="sm" className="cursor-pointer" onClick={handleViewMarkdown}>
                   <FileText className="h-4 w-4 mr-1" />
                   MARKDOWN
                 </NexButton>
@@ -331,10 +356,10 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                 <div className="text-center space-y-3">
                   <Mail className="h-12 w-12 mx-auto text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
-                    버튼을 클릭하여 이메일을 미리보기하거나 HTML을 확인하세요
+                    {sentMailT("detail.previewEmailDescription")}
                   </p>
-                  <NexButton variant="secondary" size="sm" onClick={handlePreviewEmail}>
-                    이메일 미리보기
+                  <NexButton variant="secondary" className="cursor-pointer" size="sm" onClick={handlePreviewEmail}>
+                    {t("mail.previewEmail")}
                   </NexButton>
                 </div>
               </div>
@@ -342,8 +367,8 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
               <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg bg-white dark:bg-[#1A1B1E] overflow-hidden">
                 <div className="p-4 border-b border-[#E1E4E8] dark:border-[#2C2D30] bg-[#F8F9FA] dark:bg-[#2C2D30]">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">이메일 미리보기</span>
-                    <NexButton variant="ghost" size="sm" onClick={() => setPreviewMode('none')}>
+                    <span className="text-sm font-medium text-foreground">{t("mail.previewEmail")}</span>
+                    <NexButton variant="ghost" className="cursor-pointer" size="sm" onClick={() => setPreviewMode('none')}>
                       <X className="h-4 w-4" />
                     </NexButton>
                   </div>
@@ -352,7 +377,7 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                   <iframe
                     srcDoc={email.htmlBody}
                     className="w-full h-[600px] border-0"
-                    title="이메일 미리보기"
+                    title={t("mail.previewEmail")}
                   />
                 </div>
               </div>
@@ -360,8 +385,8 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
               <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg bg-white dark:bg-[#1A1B1E] overflow-hidden">
                 <div className="p-4 border-b border-[#E1E4E8] dark:border-[#2C2D30] bg-[#F8F9FA] dark:bg-[#2C2D30]">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">HTML 코드</span>
-                    <NexButton variant="ghost" size="sm" onClick={() => setPreviewMode('none')}>
+                    <span className="text-sm font-medium text-foreground">HTML {t("code")}</span>
+                    <NexButton variant="ghost" size="sm" className="cursor-pointer" onClick={() => setPreviewMode('none')}>
                       <X className="h-4 w-4" />
                     </NexButton>
                   </div>
@@ -376,8 +401,8 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
               <div className="border border-[#E1E4E8] dark:border-[#2C2D30] rounded-lg bg-white dark:bg-[#1A1B1E] overflow-hidden">
                 <div className="p-4 border-b border-[#E1E4E8] dark:border-[#2C2D30] bg-[#F8F9FA] dark:bg-[#2C2D30]">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">MARKDOWN 코드</span>
-                    <NexButton variant="ghost" size="sm" onClick={() => setPreviewMode('none')}>
+                    <span className="text-sm font-medium text-foreground">MARKDOWN {t("code")}</span>
+                    <NexButton variant="ghost" size="sm" className="cursor-pointer" onClick={() => setPreviewMode('none')}>
                       <X className="h-4 w-4" />
                     </NexButton>
                   </div>

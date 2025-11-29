@@ -44,6 +44,8 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
   const navigate = useNavigate();
   const { t } = useTranslation("common", { keyPrefix: "common" });
   const { t: tTimes } = useTranslation("common", { keyPrefix: "times" });
+  const { t: sentMailT } = useTranslation("common", { keyPrefix: "sentMail" });
+  const { t: searchesT } = useTranslation("common", { keyPrefix: "searches" });
   const [sentEmails, setSentEmails] = useState<SentEmailData[]>(sentEmailList);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -89,15 +91,15 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
-              보낸 메일
+              {sentMailT("title")}
             </h1>
             <p className="text-lg text-[#8B92B5] dark:text-[#6C6F7E]">
-              발송된 이메일의 배송 상태 및 통계를 확인하세요.
+              {sentMailT("description")}
             </p>
           </div>
           
           <NexBadge variant="info" size="md">
-            {filteredEmails.length}개의 이메일
+            {t("mail.numberOfEmails", { count: filteredEmails.length })}
           </NexBadge>
         </div>
 
@@ -107,7 +109,7 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <NexInput
-              placeholder="대상 또는 제목으로 검색..."
+              placeholder={searchesT("searchSentMailList")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -122,7 +124,7 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
                 variant={selectedStatus === filter.value ? "primary" : "ghost"}
                 size="sm"
                 onClick={() => setSelectedStatus(filter.value)}
-                className="whitespace-nowrap"
+                className="whitespace-nowrap cursor-pointer"
               >
                 {filter.label}
                 <NexBadge
@@ -142,10 +144,10 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
           {/* 헤더 */}
           <div className="px-6 py-4 border-b border-[#E1E4E8] dark:border-[#2C2D30] bg-[#F8F9FA] dark:bg-[#1A1B1E]">
             <div className="grid grid-cols-12 gap-4 text-sm font-medium text-[#6C6F7E] dark:text-[#B4B5B9]">
-              <div className="col-span-1">상태</div>
-              <div className="col-span-4">대상</div>
-              <div className="col-span-5">제목</div>
-              <div className="col-span-2">발송 시간</div>
+              <div className="col-span-1">{t("mail.statuses")}</div>
+              <div className="col-span-4">{t("mail.target")}</div>
+              <div className="col-span-5">{t("mail.subject")}</div>
+              <div className="col-span-2">{t("mail.sentAt")}</div>
               {/*<div className="col-span-2 text-right">액션</div>*/}
             </div>
           </div>
@@ -158,19 +160,20 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
                   <Search className="h-12 w-12 mx-auto text-muted-foreground" />
                   <div>
                     <h3 className="text-lg font-medium text-foreground mb-2">
-                      검색 결과가 없습니다
+                      {searchesT("noSearchResult")}
                     </h3>
                     <p className="text-muted-foreground mb-4">
-                      검색 조건을 확인하고 다시 시도해주세요.
+                      {searchesT("noSearchResultDescription", { searchTerm: searchTerm })}
                     </p>
                     <NexButton 
                       variant="secondary" 
+                      className="cursor-pointer"
                       onClick={() => {
                         setSearchTerm('');
                         setSelectedStatus('all');
                       }}
                     >
-                      필터 초기화
+                      {searchesT("resetSearch")}
                     </NexButton>
                   </div>
                 </div>
@@ -179,10 +182,10 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
                   <Mail className="h-12 w-12 mx-auto text-muted-foreground" />
                   <div>
                     <h3 className="text-lg font-medium text-foreground mb-2">
-                      보낸 메일이 없습니다
+                      {sentMailT("noSentMail")}
                     </h3>
                     <p className="text-muted-foreground">
-                      아직 발송된 이메일이 없습니다.
+                      {sentMailT("noSentMailDescription")}
                     </p>
                   </div>
                 </div>

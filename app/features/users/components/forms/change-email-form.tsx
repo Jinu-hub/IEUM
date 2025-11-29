@@ -1,6 +1,6 @@
 import type { Route } from "@rr/app/features/users/api/+types/change-email";
 
-import { ArrowRight, MailIcon } from "lucide-react";
+import { ArrowDown, MailIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useFetcher } from "react-router";
 
@@ -71,7 +71,7 @@ export default function ChangeEmailForm({ email }: { email: string }) {
             {/* Arrow Indicator */}
             <div className="flex justify-center">
               <div className="rounded-full bg-gradient-to-r from-blue-500 to-purple-500 p-3 shadow-lg">
-                <ArrowRight className="size-5 text-white" />
+                <ArrowDown className="size-5 text-white" />
               </div>
             </div>
 

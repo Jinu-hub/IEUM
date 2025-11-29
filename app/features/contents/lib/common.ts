@@ -38,7 +38,7 @@ export const getStatusConfig = (status: typeof MAIL_STATUS[number], t: (key: str
     case 'sending':
       return {
         icon: Clock,
-        label: t("mailStatus.sending"),
+        label: t("mail.status.sending"),
         variant: 'info' as const,
         color: 'text-blue-600',
         bgColor: 'bg-blue-50 dark:bg-blue-950',
@@ -46,7 +46,7 @@ export const getStatusConfig = (status: typeof MAIL_STATUS[number], t: (key: str
     case 'delivered':
       return {
         icon: CheckCircle,
-        label: t("mailStatus.delivered"),
+        label: t("mail.status.delivered"),
         variant: 'success' as const,
         color: 'text-green-600',
         bgColor: 'bg-green-50 dark:bg-green-950',
@@ -54,7 +54,7 @@ export const getStatusConfig = (status: typeof MAIL_STATUS[number], t: (key: str
     case 'failed':
       return {
         icon: XCircle,
-        label: t("mailStatus.failed"),
+        label: t("mail.status.failed"),
         variant: 'error' as const,
         color: 'text-red-600',
         bgColor: 'bg-red-50 dark:bg-red-950',
@@ -63,7 +63,7 @@ export const getStatusConfig = (status: typeof MAIL_STATUS[number], t: (key: str
       // Fallback for unexpected status
       return {
         icon: Clock,
-        label: t("mailStatus.unknown") || 'Unknown',
+        label: t("mail.status.unknown") || 'Unknown',
         variant: 'default' as const,
         color: 'text-gray-600',
         bgColor: 'bg-gray-50 dark:bg-gray-950',
@@ -74,9 +74,9 @@ export const getStatusConfig = (status: typeof MAIL_STATUS[number], t: (key: str
 // 상태별 필터 옵션 생성 함수 (MVP용 단순화)
 export const createStatusFilters = (emails: SentEmailData[], t: (key: string) => string) => [
   { value: 'all', label: t('allStatus'), count: emails.length },
-  { value: 'sending', label: t('mailStatus.sending'), count: emails.filter(e => e.status === 'sending').length },
-  { value: 'delivered', label: t('mailStatus.delivered'), count: emails.filter(e => e.status === 'delivered').length },
-  { value: 'failed', label: t('mailStatus.failed'), count: emails.filter(e => e.status === 'failed').length },
+  { value: 'sending', label: t('mail.status.sending'), count: emails.filter(e => e.status === 'sending').length },
+  { value: 'delivered', label: t('mail.status.delivered'), count: emails.filter(e => e.status === 'delivered').length },
+  { value: 'failed', label: t('mail.status.failed'), count: emails.filter(e => e.status === 'failed').length },
 ];
 
 // 송신률 계산 (MVP용)

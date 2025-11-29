@@ -94,10 +94,28 @@ export type Translation = {
     editMember: string;
     noMembers: string;
     addFirstMember: string;
-    mailStatus: {
-      sending: string;
-      delivered: string;
-      failed: string;
+    preview: string;
+    download: string;
+    code: string;
+    mail: {
+      numberOfEmails: string;
+      statuses: string;
+      target: string;
+      subject: string;
+      sentAt: string;
+      messageId: string;
+      resend: string;
+      idCopy: string;
+      copied: string;
+      archive: string;
+      emailEvent: string;
+      previewEmail: string;
+      status: {
+        sending: string;
+        delivered: string;
+        failed: string;
+        unknown: string;
+      };
     };
     categories: {
       development: string;
@@ -176,6 +194,7 @@ export type Translation = {
     noSearchResultDescription: string;
     resetSearch: string;
     searchMember: string;
+    searchSentMailList: string;
   };
   join: {
     heroTitle: string;
@@ -522,6 +541,18 @@ export type Translation = {
       exampleMailListName: string;
       description: string;
       exampleDescription: string;
+    };
+  };
+  sentMail: {
+    title: string;
+    description: string;
+    noSentMail: string;
+    noSentMailDescription: string;
+    detail: {
+      noSentMail: string;
+      noSentMailDescription: string;
+      mailDetail: string;
+      previewEmailDescription: string;
     };
   };
 };
