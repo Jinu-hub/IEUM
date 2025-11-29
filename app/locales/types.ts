@@ -74,6 +74,26 @@ export type Translation = {
     memberMail: string;
     notSupport: string;
     source: string;
+    numberOfMailLists: string;
+    memberCount: string;
+    numberOfMembers: string;
+    createdAt: string;
+    joinedAt: string;
+    tags: string;
+    email: string;
+    name: string;
+    optional: string;
+    noTitle: string;
+    noDescription: string;
+    cancel: string;
+    confirm: string;
+    csvUpload: string;
+    csvDownload: string;
+    comingSoon: string;
+    addMember: string;
+    editMember: string;
+    noMembers: string;
+    addFirstMember: string;
     mailStatus: {
       sending: string;
       delivered: string;
@@ -96,6 +116,12 @@ export type Translation = {
       okr: string;
       personal: string;
       fun: string;
+    };
+    sources: {
+      signup_form: string;
+      import: string;
+      api: string;
+      manual: string;
     };
   };
   times:{
@@ -136,11 +162,20 @@ export type Translation = {
       minutesAgo: string;
       hoursAgo: string;
       daysAgo: string;
+      weeksAgo: string;
+      justNow: string;
     };
   };
   errors: {
     saveError: string;
     targetNameRequired: string;
+  };
+  searches: {
+    searchMailList: string;
+    noSearchResult: string;
+    noSearchResultDescription: string;
+    resetSearch: string;
+    searchMember: string;
   };
   join: {
     heroTitle: string;
@@ -449,6 +484,44 @@ export type Translation = {
       botInvitationMethodDescription2: string;
       botInvitationMethodDescription3: string;
       botName: string;
+    };
+  };
+  mailLists: {
+    title: string;
+    description: string;
+    noMailLists: string;
+    addFirstMailList: string;
+    addMailList: string;
+    mailListDeletedSuccess: string;
+    mailListDeletedFailed: string;
+    mailListSavedSuccess: string;
+    mailListMemberSavedSuccess: string;
+    mailListMemberSavedFailed: string;
+    confirmCancelContinue: string;
+    mailListMemberDeletedSuccess: string;
+    mailListMemberDeletedFailed: string;
+    confirmDeleteMailList: string;
+    detail: {
+      mailListInformationSaveFirst: string;
+      memberInformationEdit: string;
+      newMemberAdd: string;
+      memberAddBeforeMailListNameSave: string;
+      selectedMemberCount: string;
+      deleteSelectedMembers: string;
+      targetNameRequired: string;
+      confirmDeleteMember: string;
+      confirmDeleteSelectedMembers: string;
+      noMailListFound: string;
+      noMailListFoundDescription: string;
+      goBackToMailList: string;
+      newMailList: string;
+      mailListManagement: string;
+      mailListInputAndMemberManagement: string;
+      mailListMemberManagement: string;
+      mailListName: string;
+      exampleMailListName: string;
+      description: string;
+      exampleDescription: string;
     };
   };
 };

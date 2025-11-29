@@ -832,7 +832,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                       {(() => {
                         const selectedIntegration = integrations.find((i: any) => i.type === newIntegration.integrationType);
                         return selectedIntegration && (selectedIntegration.type === 'github' || selectedIntegration.type === 'slack')
-                          ? getSourceTypeLabel(selectedIntegration.type)
+                          ? getSourceTypeLabel(selectedIntegration.type, commonT)
                           : commonT("source");
                       })()}
                     </label>

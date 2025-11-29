@@ -1,7 +1,4 @@
-import type { GitHubRepository } from "./constants";
-import type { SlackChannel } from "./constants";
-import type { SourceItem } from "./constants";
-import type { ConnectedIntegration } from "./constants";
+import type { ConnectedIntegration, GitHubRepository, SlackChannel, SourceItem } from "./constants";
 
 /**
  * Settings 페이지에서 공통으로 사용하는 유틸리티 함수들
@@ -117,31 +114,41 @@ export function getSourcesForIntegration(
 /**
  * 인테그레이션 타입에 따른 소스 타입 라벨을 반환
  */
-export function getSourceTypeLabel(integrationType: 'github' | 'slack'): string {
+export function getSourceTypeLabel(integrationType: 'github' | 'slack', t: (key: string) => string): string {
   switch (integrationType) {
     case 'github':
-      return '레포지토리';
+      return t('repository');
     case 'slack':
-      return '채널';
+      return t('channel');
     default:
-      return '소스';
+      return t('source');
   }
 }
 
-// 날짜 포맷 함수
-export function formatDate(dateString: string): string {
+/**
+ * 日付フォーマット関数（i18n対応）
+ * @param dateString - 日付文字列
+ * @param t - 翻訳関数
+ * @param locale - ロケール（デフォルト: 'en-US'）
+ * @returns フォーマット済み日付文字列
+ */
+export function formatDate(
+  dateString: string,
+  t?: (key: string, options?: any) => string,
+  locale: string = 'en-US'
+): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffInMs = now.getTime() - date.getTime();
   const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
   
   if (diffInDays < 7) {
-    return `${diffInDays}일 전`;
+    return t ? t('time.daysAgo', { count: diffInDays }) : `${diffInDays} days ago`;
   } else if (diffInDays < 30) {
     const weeks = Math.floor(diffInDays / 7);
-    return `${weeks}주 전`;
+    return t ? t('time.weeksAgo', { count: weeks }) : `${weeks} weeks ago`;
   } else {
-    return date.toLocaleDateString('ko-KR', {
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -149,8 +156,18 @@ export function formatDate(dateString: string): string {
   }
 };
 
-// 날짜 포맷 함수
-export function formatDateShort(dateString: string): string {
+/**
+ * 日付フォーマット関数（短縮版、i18n対応）
+ * @param dateString - 日付文字列
+ * @param t - 翻訳関数
+ * @param locale - ロケール（デフォルト: 'en-US'）
+ * @returns フォーマット済み日付文字列
+ */
+export function formatDateShort(
+  dateString: string,
+  t?: (key: string, options?: any) => string,
+  locale: string = 'en-US'
+): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffInMs = now.getTime() - date.getTime();
@@ -158,11 +175,14 @@ export function formatDateShort(dateString: string): string {
   
   if (diffInDays < 1) {
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    return diffInHours < 1 ? '방금 전' : `${diffInHours}시간 전`;
+    if (diffInHours < 1) {
+      return t ? t('time.justNow') : 'Just now';
+    }
+    return t ? t('time.hoursAgo', { count: diffInHours }) : `${diffInHours} hours ago`;
   } else if (diffInDays < 7) {
-    return `${diffInDays}일 전`;
+    return t ? t('time.daysAgo', { count: diffInDays }) : `${diffInDays} days ago`;
   } else {
-    return date.toLocaleDateString('ko-KR', {
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -178,15 +198,33 @@ export function formatMemberCount(count: number): string {
   return count.toString();
 };
 
-// 소스 라벨 함수
-export function getSourceLabel(source: string): string {
-  const labels: Record<string, string> = {
-    'signup_form': '가입 폼',
-    'import': '가져오기',
-    'api': 'API',
-    'manual': '수동 추가'
+/**
+ * ソースラベルを取得する関数（i18n対応）
+ * @param source - ソースタイプ
+ * @param t - 翻訳関数
+ * @returns ソースラベル
+ */
+export function getSourceLabel(source: string, t?: (key: string) => string): string {
+  const sourceMap: Record<string, string> = {
+    'signup_form': 'sources.signup_form',
+    'import': 'sources.import',
+    'api': 'sources.api',
+    'manual': 'sources.manual'
   };
-  return labels[source] || source;
+  
+  if (t && sourceMap[source]) {
+    return t(sourceMap[source]);
+  }
+  
+  // 翻訳関数がない場合やマップにない場合は、デフォルト値を返す
+  const defaults: Record<string, string> = {
+    'signup_form': 'Signup Form',
+    'import': 'Import',
+    'api': 'API',
+    'manual': 'Manual Add'
+  };
+  
+  return defaults[source] || source;
 };
 
 // 소스 색상 함수

@@ -1,22 +1,23 @@
 import { Calendar, Copy, Edit, Mail, MoreVertical, Search, Trash2, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { redirect, useFetcher, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
 import {
-    NexBadge,
-    NexButton,
-    NexCard,
-    NexCardContent,
-    NexCardDescription,
-    NexCardTitle,
-    NexInput,
-    PlusIcon,
+  NexBadge,
+  NexButton,
+  NexCard,
+  NexCardContent,
+  NexCardDescription,
+  NexCardTitle,
+  NexInput,
+  PlusIcon,
 } from '~/core/components/nex';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "~/core/components/ui/dropdown-menu";
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
@@ -81,6 +82,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
+  const { t } = useTranslation("common", { keyPrefix: "mailLists" });
+  const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
+  const { t: timesT, i18n } = useTranslation("common", { keyPrefix: "times" });
+  const { t: searchesT } = useTranslation("common", { keyPrefix: "searches" });
   const { workspaceId, mailListsData } = loaderData;
   const [mailLists, setMailLists] = useState<MailListData[]>(mailListsData);
   const [searchTerm, setSearchTerm] = useState('');
@@ -98,10 +103,10 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
     if (fetcher.state === 'idle' && fetcher.data) {
       if (fetcher.data.actionType === 'deleteMailingList') {
         if (fetcher.data.status === 'success') {
-          toast.success(fetcher.data.message || '메일 리스트가 삭제되었습니다.');
+          toast.success(fetcher.data.message || t("mailListDeletedSuccess"));
           setMailLists(prev => prev.filter(mailList => mailList.mailingListId !== fetcher.data.result.mailing_list_id));
         } else if (fetcher.data.status === 'error') {
-          toast.error(fetcher.data.message || '메일 리스트 삭제에 실패했습니다.');
+          toast.error(fetcher.data.message || t("mailListDeletedFailed"));
         }
       }
     }
@@ -131,7 +136,7 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
 
   // 메일 리스트 삭제 핸들러
   const handleDeleteMailList = (mailingListId: string) => {
-    if (confirm("정말로 이 메일 리스트를 삭제하시겠습니까? 모든 멤버 정보가 함께 삭제됩니다.")) {
+    if (confirm(t("confirmDeleteMailList"))) {
       const submitFormData = new FormData();
       submitFormData.append('actionType', 'deleteMailingList');
       submitFormData.append('mailingListId', mailingListId);
@@ -147,15 +152,15 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
-              메일 리스트 관리
+              {t("title")}
             </h1>
             <p className="text-lg text-[#8B92B5] dark:text-[#6C6F7E]">
-              뉴스레터 발송 대상 리스트를 생성하고 관리하세요.
+              {t("description")}
             </p>
           </div>
           
           <NexBadge variant="info" size="md">
-            {mailLists.length}개의 리스트
+            {mailLists.length} {commonT("numberOfMailLists")}
           </NexBadge>
         </div>
 
@@ -164,7 +169,7 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <NexInput
-              placeholder="메일 리스트 검색..."
+              placeholder={searchesT("searchMailList")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -175,7 +180,7 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
             leftIcon={<PlusIcon />}
             onClick={handleAddMailList}
           >
-            새 리스트 추가
+            {t("addMailList")}
           </NexButton>
         </div>
 
@@ -188,30 +193,30 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
                 {searchTerm ? (
                   <>
                     <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <NexCardTitle className="mb-2">검색 결과가 없습니다</NexCardTitle>
+                    <NexCardTitle className="mb-2">{searchesT("noSearchResult")}</NexCardTitle>
                     <NexCardDescription className="mb-6">
-                      '{searchTerm}'에 대한 메일 리스트를 찾을 수 없습니다.
+                      {searchesT("noSearchResultDescription", { searchTerm: searchTerm })}
                     </NexCardDescription>
                     <NexButton 
                       variant="secondary" 
                       onClick={() => setSearchTerm('')}
                     >
-                      검색 초기화
+                      {searchesT("resetSearch")}
                     </NexButton>
                   </>
                 ) : (
                   <>
                     <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <NexCardTitle className="mb-2">메일 리스트가 없습니다</NexCardTitle>
+                    <NexCardTitle className="mb-2">{t("noMailLists")}</NexCardTitle>
                     <NexCardDescription className="mb-6">
-                      첫 번째 메일 리스트를 추가해주세요
+                      {t("addFirstMailList")}
                     </NexCardDescription>
                     <NexButton 
                       variant="primary" 
                       leftIcon={<PlusIcon />}
                       onClick={handleAddMailList}
                     >
-                      메일 리스트 추가
+                      {t("addMailList")}
                     </NexButton>
                   </>
                 )}
@@ -259,9 +264,9 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
                           <div className="flex items-center space-x-2">
                             <Users className="h-4 w-4 text-muted-foreground" />
                             <div>
-                              <span className="font-medium">멤버 수:</span>
+                              <span className="font-medium">{commonT("memberCount")}:</span>
                               <div className="text-muted-foreground">
-                                {(mailList.memberCount || 0).toLocaleString()}명
+                                {(mailList.memberCount || 0).toLocaleString()} {commonT("numberOfMembers")}
                               </div>
                             </div>
                           </div>
@@ -270,9 +275,9 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
                           <div className="flex items-center space-x-2">
                             <Calendar className="h-4 w-4 text-muted-foreground" />
                             <div>
-                              <span className="font-medium">생성일:</span>
+                              <span className="font-medium">{commonT("createdAt")}:</span>
                               <div className="text-muted-foreground">
-                                {formatDate(mailList.createdAt)}
+                                {formatDate(mailList.createdAt, timesT, i18n.language)}
                               </div>
                             </div>
                           </div>
@@ -297,21 +302,21 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
                             className="flex items-center space-x-2"
                           >
                             <Edit className="h-4 w-4" />
-                            <span>편집</span>
+                            <span>{commonT("edit")}</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleCopyMailList(mailList.mailingListId)}
                             className="flex items-center space-x-2"
                           >
                             <Copy className="h-4 w-4" />
-                            <span>복사</span>
+                            <span>{commonT("copy")}</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleDeleteMailList(mailList.mailingListId)}
                             className="flex items-center space-x-2 text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
                           >
                             <Trash2 className="h-4 w-4" />
-                            <span>삭제</span>
+                            <span>{commonT("delete")}</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -334,7 +339,7 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
           "focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2",
           "dark:focus:ring-offset-background"
         )}
-        title="새 메일 리스트 추가"
+        title={t("addMailList")}
       >
         <PlusIcon className="h-6 w-6" />
       </button>

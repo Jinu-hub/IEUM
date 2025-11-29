@@ -1,46 +1,47 @@
 import {
-    ArrowLeft,
-    Calendar,
-    Download,
-    Edit,
-    Mail,
-    MoreVertical,
-    Save,
-    Search,
-    Tag,
-    Trash2,
-    Upload,
-    User,
-    Users,
-    X,
+  ArrowLeft,
+  Calendar,
+  Download,
+  Edit,
+  Mail,
+  MoreVertical,
+  Save,
+  Search,
+  Tag,
+  Trash2,
+  Upload,
+  User,
+  Users,
+  X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { redirect, useFetcher, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
 import {
-    NexBadge,
-    NexButton,
-    NexCard,
-    NexCardContent,
-    NexCardDescription,
-    NexCardTitle,
-    NexInput,
-    NexTextarea,
-    PlusIcon,
+  NexBadge,
+  NexButton,
+  NexCard,
+  NexCardContent,
+  NexCardDescription,
+  NexCardTitle,
+  NexInput,
+  NexTextarea,
+  PlusIcon,
 } from '~/core/components/nex';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "~/core/components/ui/dialog";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "~/core/components/ui/dropdown-menu";
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
@@ -152,6 +153,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 export default function MailListMembersScreen( { loaderData }: Route.ComponentProps ) {
   const { workspaceId, mailingList, members: initialMembers } = loaderData;
+  const { t } = useTranslation("common", { keyPrefix: "mailLists" });
+  const { t: commonT, i18n } = useTranslation("common", { keyPrefix: "common" });
+  const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
+  const { t: searchesT } = useTranslation("common", { keyPrefix: "searches" });
   
   const navigate = useNavigate();
   const isNew = mailingList === null;
@@ -205,7 +210,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
       if (fetcher.data.actionType === 'mailListSave') {
         // 메일 리스트 정보 저장 처리
         if (fetcher.data.status === 'success') {
-          toast.success(fetcher.data.message || '메일 리스트 정보가 저장되었습니다.');
+          toast.success(t("mailListSavedSuccess"));
           setIsEditing(false);
           if (fetcher.data.isNew) {
             navigate(`/settings/mail-list/${fetcher.data.result.mailing_list_id}`);
@@ -217,12 +222,12 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
             } : null);
           }
         } else if (fetcher.data.status === 'error') {
-          toast.error(fetcher.data.message || '메일 리스트 저장에 실패했습니다.');
+          toast.error(t("mailListSavedFailed"));
         }
         } else if (fetcher.data.actionType === 'mailListMemberSave') {
           // 멤버 정보 저장 처리
           if (fetcher.data.status === 'success') {
-            toast.success(fetcher.data.message || '멤버 정보가 저장되었습니다.');
+            toast.success(t("mailListMemberSavedSuccess"));
             
             if (editingMember) {
               // 편집 모드: 기존 멤버 업데이트
@@ -242,17 +247,17 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
               setMailList(prev => prev ? { ...prev, memberCount: (prev.memberCount || 0) + 1 } : null);
             }
           } else if (fetcher.data.status === 'error') {
-            toast.error(fetcher.data.message || '멤버 정보 저장에 실패했습니다.');
+            toast.error(t("mailListMemberSavedFailed"));
           }
         } else if (fetcher.data.actionType === 'mailListMemberDelete') {
         // 멤버 삭제 처리
         if (fetcher.data.status === 'success') {
-          toast.success(fetcher.data.message || '멤버 정보가 삭제되었습니다.');
+          toast.success(t("mailListMemberDeletedSuccess"));
           setSelectedMembers([]);
           setMailList(prev => prev ? { ...prev, memberCount: (prev.memberCount || 0) - fetcher.data.result.length } : null);
           setMembers(prev => prev.filter(member => !fetcher.data.result.some((result: any) => result.email === member.email)));
         } else if (fetcher.data.status === 'error') {
-          toast.error(fetcher.data.message || '멤버 정보 삭제에 실패했습니다.');
+          toast.error(t("mailListMemberDeletedFailed"));
         }
       }
     }
@@ -271,7 +276,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
       navigate('/settings/mail-list');
     } else if (isEditing) {
       // 편집 중이면 확인 후 돌아가기
-      if (confirm('변경사항이 저장되지 않습니다. 계속하시겠습니까?')) {
+      if (confirm(t("confirmCancelContinue"))) {
         navigate('/settings/mail-list');
       }
     } else {
@@ -297,7 +302,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
   // 메일 리스트 정보 저장
   const handleSaveMailList = () => {
     if (!editingName.trim()) {
-      alert('메일 리스트 이름을 입력해주세요.');
+      alert(t("detail.targetNameRequired"));
       return;
     }
 
@@ -356,7 +361,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
   // 선택된 멤버 삭제
   const handleDeleteSelectedMembers = () => {
     console.log('handleDeleteSelectedMembers', selectedMembers);
-    if (selectedMembers.length > 0 && confirm(`선택한 ${selectedMembers.length}명의 멤버를 삭제하시겠습니까?`)) {
+    if (selectedMembers.length > 0 && confirm(t("detail.confirmDeleteSelectedMembers", { count: selectedMembers.length }))) {
       const submitFormData = new FormData();
       submitFormData.append('actionType', 'mailListMemberDelete');
       submitFormData.append('mailingListId', mailList?.mailingListId || '');
@@ -367,7 +372,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
 
   // 단일 멤버 삭제
   const handleDeleteMember = (email: string) => {
-    if (confirm("이 멤버를 삭제하시겠습니까?")) {
+    if (confirm(t("detail.confirmDeleteMember"))) {
       const submitFormData = new FormData();
       submitFormData.append('actionType', 'mailListMemberDelete');
       submitFormData.append('mailingListId', mailList?.mailingListId || '');
@@ -388,12 +393,12 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
   // CSV 내보내기
   const handleExportCSV = () => {
     const csvContent = [
-      ['이메일', '이름', '가입일', '소스', '태그'],
+      [commonT('email'), commonT('name'), commonT('joinedAt'), commonT('source'), commonT('tags')],
       ...filteredMembers.map(member => [
         member.email,
         member.displayName || '',
-        formatDate(member.createdAt),
-        getSourceLabel(member.metaJson.source || ''),
+        formatDate(member.createdAt, timesT, i18n.language),
+        getSourceLabel(member.metaJson.source || '', commonT),
         (member.metaJson.tags || []).join(', ')
       ])
     ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
@@ -418,16 +423,17 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
           <NexCard variant="outlined" className="text-center py-12">
             <NexCardContent>
               <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <NexCardTitle className="mb-2">메일 리스트를 찾을 수 없습니다</NexCardTitle>
+              <NexCardTitle className="mb-2">{t("noMailListFound")}</NexCardTitle>
               <NexCardDescription className="mb-6">
-                요청하신 메일 리스트가 존재하지 않습니다.
+                {t("noMailListFoundDescription")}
               </NexCardDescription>
               <NexButton 
                 variant="primary" 
                 leftIcon={<ArrowLeft />}
                 onClick={handleGoBack}
+                className="cursor-pointer"
               >
-                메일 리스트로 돌아가기
+                {t("goBackToMailList")}
               </NexButton>
             </NexCardContent>
           </NexCard>
@@ -448,17 +454,18 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                 size="sm"
                 leftIcon={<ArrowLeft />}
                 onClick={handleGoBack}
+                className="cursor-pointer"
               >
-                뒤로
+                {commonT("back")}
               </NexButton>
               <div className="space-y-1">
                 <h1 className="text-2xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
-                  {isNew ? '새 메일 리스트' : '메일 리스트 관리'}
+                  {isNew ? t("detail.newMailList") : t("detail.mailListManagement")}
                 </h1>
                 <p className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
                   {isEditing 
-                    ? '메일 리스트 정보를 입력하고 멤버를 관리하세요'
-                    : '메일 리스트 멤버를 관리하세요'
+                    ? t("detail.mailListInputAndMemberManagement")
+                    : t("detail.mailListMemberManagement")
                   }
                 </p>
               </div>
@@ -466,7 +473,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
 
             <div className="flex items-center space-x-3">
               <NexBadge variant="info" size="md">
-                {members.length}명의 멤버
+               {commonT("total")} {members.length} {commonT("numberOfMembers")}
               </NexBadge>
             </div>
           </div>
@@ -480,20 +487,20 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     <>
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">
-                          메일 리스트 이름 *
+                          {t("detail.mailListName")} *
                         </label>
                         <NexInput
-                          placeholder="예: 기술 뉴스레터"
+                          placeholder={t("detail.exampleMailListName")}
                           value={editingName}
                           onChange={(e) => setEditingName(e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">
-                          설명 (선택사항)
+                          {t("detail.description")} ({commonT("optional")})
                         </label>
                         <NexTextarea
-                          placeholder="메일 리스트에 대한 간단한 설명을 입력하세요"
+                          placeholder={t("detail.exampleDescription")}
                           value={editingDescription}
                           onChange={(e) => setEditingDescription(e.target.value)}
                           rows={3}
@@ -504,10 +511,10 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     <>
                       <div>
                         <h2 className="text-xl font-semibold text-foreground">
-                          {mailList.name || '제목 없음'}
+                          {mailList.name || commonT("noTitle")}
                         </h2>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {mailList.description || '설명이 없습니다'}
+                          {mailList.description || commonT("noDescription")}
                         </p>
                       </div>
                     </>
@@ -521,8 +528,9 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                         variant="secondary"
                         size="sm"
                         onClick={handleToggleEdit}
+                        className="cursor-pointer"
                       >
-                        취소
+                        {commonT("cancel")}
                       </NexButton>
                       <NexButton
                         variant="primary"
@@ -530,8 +538,9 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                         leftIcon={<Save />}
                         onClick={handleSaveMailList}
                         disabled={!editingName.trim()}
+                        className="cursor-pointer"
                       >
-                        저장
+                        {commonT("save")}
                       </NexButton>
                     </>
                   ) : (
@@ -540,8 +549,9 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                       size="sm"
                       leftIcon={<Edit />}
                       onClick={handleToggleEdit}
+                      className="cursor-pointer"
                     >
-                      편집
+                      {commonT("edit")}
                     </NexButton>
                   )}
                 </div>
@@ -556,7 +566,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <NexInput
-              placeholder="멤버 검색 (이메일 또는 이름)..."
+              placeholder={searchesT("searchMember")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -571,16 +581,18 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
               leftIcon={<Upload />}
               onClick={handleImportCSV}
               disabled
+              className="cursor-pointer"
             >
-              CSV 업로드 (준비중)
+              {commonT("csvUpload")} ({commonT("comingSoon")})
             </NexButton>
             <NexButton
               variant="secondary"
               size="sm"
               leftIcon={<Download />}
               onClick={handleExportCSV}
+              className="cursor-pointer"
             >
-              CSV 다운로드
+              {commonT("csvDownload")}
             </NexButton>
 
             <Dialog open={isMemberDialogOpen} onOpenChange={setIsMemberDialogOpen}>
@@ -590,38 +602,39 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                   size="sm"
                   leftIcon={<PlusIcon />}
                   disabled={isNew && !mailList?.name}
+                  className="cursor-pointer"
                 >
-                  멤버 추가
+                  {commonT("addMember")}
                 </NexButton>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>{editingMember ? '멤버 편집' : '새 멤버 추가'}</DialogTitle>
+                  <DialogTitle>{editingMember ? commonT("editMember") : commonT("addMember")}</DialogTitle>
                   <DialogDescription>
                     {isNew && !mailList?.name 
-                      ? '메일 리스트 정보를 먼저 저장해주세요.'
+                      ? t("detail.mailListInformationSaveFirst")
                       : editingMember 
-                        ? '멤버 정보를 수정합니다.'
-                        : '메일 리스트에 새로운 멤버를 추가합니다.'
+                        ? t("detail.memberInformationEdit")
+                        : t("detail.newMemberAdd")
                     }
                   </DialogDescription>
                 </DialogHeader>
                 {isNew && !mailList?.name ? (
                   <div className="p-4 bg-muted/50 rounded-lg text-center">
                     <p className="text-sm text-muted-foreground mb-4">
-                      멤버를 추가하기 전에 메일 리스트 이름을 입력하고 저장해주세요.
+                      {t("detail.memberAddBeforeMailListNameSave")}
                     </p>
                     <NexButton
                       variant="primary"
                       onClick={() => setIsMemberDialogOpen(false)}
                     >
-                      확인
+                      {commonT("confirm")}
                     </NexButton>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">이메일 *</label>
+                      <label className="text-sm font-medium">{commonT("email")} *</label>
                       <NexInput
                         type="email"
                         placeholder="member@example.com"
@@ -634,9 +647,9 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">이름 (선택사항)</label>
+                      <label className="text-sm font-medium">{commonT("name")} ({commonT("optional")})</label>
                       <NexInput
-                        placeholder="홍길동"
+                        placeholder="your name"
                         value={memberName}
                         onChange={(e) => setMemberName(e.target.value)}
                       />
@@ -661,7 +674,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                         onClick={handleRegisterMember}
                         disabled={!memberEmail}
                       >
-                        {editingMember ? '저장' : '추가'}
+                        {editingMember ? commonT("save") : commonT("add")}
                       </NexButton>
                     </div>
                   </div>
@@ -680,30 +693,30 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                 {searchTerm ? (
                   <>
                     <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <NexCardTitle className="mb-2">검색 결과가 없습니다</NexCardTitle>
+                    <NexCardTitle className="mb-2">{searchesT("noSearchResult")}</NexCardTitle>
                     <NexCardDescription className="mb-6">
-                      '{searchTerm}'에 대한 멤버를 찾을 수 없습니다.
+                      {searchesT("noSearchResultDescription", { searchTerm: searchTerm })}
                     </NexCardDescription>
                     <NexButton 
                       variant="secondary" 
                       onClick={() => setSearchTerm('')}
                     >
-                      검색 초기화
+                      {searchesT("resetSearch")}
                     </NexButton>
                   </>
                 ) : (
                   <>
                     <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <NexCardTitle className="mb-2">멤버가 없습니다</NexCardTitle>
+                    <NexCardTitle className="mb-2">{commonT("noMembers")}</NexCardTitle>
                     <NexCardDescription className="mb-6">
-                      첫 번째 멤버를 추가해주세요
+                      {commonT("addFirstMember")}
                     </NexCardDescription>
                     <NexButton 
                       variant="primary" 
                       leftIcon={<PlusIcon />}
                       onClick={() => setIsMemberDialogOpen(true)}
                     >
-                      멤버 추가
+                      {commonT("addMember")}
                     </NexButton>
                   </>
                 )}
@@ -725,8 +738,8 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     onClick={toggleSelectAll}
                   >
                     {selectedMembers.length > 0 
-                      ? `${selectedMembers.length}명 선택됨` 
-                      : `전체 ${filteredMembers.length}명`
+                      ? `${t("detail.selectedMemberCount", { count: selectedMembers.length })}` 
+                      : `${commonT("total")} ${filteredMembers.length} ${commonT("numberOfMembers")}`
                     }
                   </span>
                   {selectedMembers.length > 0 && (
@@ -737,7 +750,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                       onClick={handleDeleteSelectedMembers}
                       className="cursor-pointer"
                     >
-                      {selectedMembers.length}명 삭제
+                      {t("detail.deleteSelectedMembers", { count: selectedMembers.length })}
                     </NexButton>
                   )}
                 </div>
@@ -791,7 +804,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                                   variant={getSourceVariant(parseMetaJson(member.metaJson).source)}
                                   size="sm"
                                 >
-                                  {getSourceLabel(parseMetaJson(member.metaJson).source)}
+                                  {getSourceLabel(parseMetaJson(member.metaJson).source, commonT)}
                                 </NexBadge>
                               </div>
                             </div>
@@ -812,12 +825,12 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                               variant={getSourceVariant(parseMetaJson(member.metaJson).source)}
                               size="sm"
                             >
-                              {getSourceLabel(parseMetaJson(member.metaJson).source)}
+                              {getSourceLabel(parseMetaJson(member.metaJson).source, commonT)}
                             </NexBadge>
                             
                             <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                               <Calendar className="h-2.5 w-2.5" />
-                              <span>{formatDate(member.createdAt)}</span>
+                              <span>{formatDate(member.createdAt, timesT, i18n.language)}</span>
                             </div>
                             
                             {parseMetaJson(member.metaJson).tags && parseMetaJson(member.metaJson).tags.length > 0 && (
@@ -837,7 +850,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                             <div className="flex items-center space-x-1.5 text-xs text-muted-foreground">
                               <div className="flex items-center space-x-1">
                                 <Calendar className="h-2.5 w-2.5" />
-                                <span>{formatDate(member.createdAt)}</span>
+                                <span>{formatDate(member.createdAt, timesT, i18n.language)}</span>
                               </div>
                               
                               {parseMetaJson(member.metaJson).tags && parseMetaJson(member.metaJson).tags.length > 0 && (
@@ -857,6 +870,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                           <NexButton
                             variant="ghost"
                             size="sm"
+                            className="cursor-pointer"
                           >
                             <MoreVertical className="h-4 w-4" />
                           </NexButton>
@@ -864,17 +878,17 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                         <DropdownMenuContent align="end" className="w-40">
                           <DropdownMenuItem 
                             onClick={() => handleEditMember(member)}
-                            className="flex items-center space-x-2"
+                            className="flex items-center space-x-2 cursor-pointer"
                           >
                             <Edit className="h-4 w-4" />
-                            <span>편집</span>
+                            <span>{commonT("edit")}</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleDeleteMember(member.email)}
-                            className="flex items-center space-x-2 text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+                            className="flex items-center space-x-2 text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950 cursor-pointer"
                           >
-                            <Trash2 className="h-4 w-4" />
-                            <span>삭제</span>
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                            <span>{commonT("delete")}</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
