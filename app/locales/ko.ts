@@ -355,10 +355,11 @@ const ko: Translation = {
   analytics: {
     title: "분석",
     description: "시스템의 현황을 한눈에 확인 하세요",
-    noData: "데이터 없음",
-    noDataDescription: "데이터 없음",
+    noData: "아직 통계 데이터가 준비되지 않았어요",
+    noDataDescription: "최근 기간에 발송된 메일이 없거나 데이터 수집이 진행중입니다.",
+    noDataDescription2: "뉴스레터를 발송하면 이곳에서 통계를 확인 할 수 있습니다.",
     thisWeekStatistics: "이번 주 통계",
-    checkDataCollectionPeriod: "데이터 수집 기간 확인",
+    checkDataCollectionPeriod: "데이터 수집 기간을 확인하세요",
     githubDevelopmentActivity: "GitHub 개발 활동",
     weeklyCommitStatus: "주간 커밋 현황",
     recent8WeeksCommitStatus: "최근 8주간 커밋 현황",
@@ -548,7 +549,7 @@ const ko: Translation = {
     title: "보낸 메일",
     description: "발송된 이메일의 배송 상태 및 통계를 확인하세요.",
     noSentMail: "보낸 메일이 없습니다",
-    noSentMailDescription: "아직 발송된 이메일이 없습니다",
+    noSentMailDescription: "뉴스레터 발송 후 이곳에서 메일 상세를 확인 할 수 있습니다.",
     detail: {
       noSentMail: "보낸 메일을 찾을 수 없습니다",
       noSentMailDescription: "요청하신 메일을 찾을 수 없습니다",

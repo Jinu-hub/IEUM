@@ -47,6 +47,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
   const { t, i18n } = useTranslation("common", { keyPrefix: "dashboard" });
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { t: tTimes } = useTranslation("common", { keyPrefix: "times" });
+  const { t: targetsT } = useTranslation("common", { keyPrefix: "targets" });
   const { user, workspaceId, integrationsInfo, targets, sentEmails } = loaderData;
   const isConnectedGitHub = integrationsInfo?.find((integration: any) => integration.type === 'github')?.connection_status === 'connected';
   const isConnectedSlack = integrationsInfo?.find((integration: any) => integration.type === 'slack')?.connection_status === 'connected';
@@ -316,7 +317,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                   </svg>
                 </div>
                 <p className="text-muted-foreground text-sm">
-                  {commonT("noTargets")}
+                  {targetsT("noTargets")}
                 </p>
               </NexCardContent>
             </NexCard>

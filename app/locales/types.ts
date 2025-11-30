@@ -356,6 +356,7 @@ export type Translation = {
     description: string;
     noData: string;
     noDataDescription: string;
+    noDataDescription2: string;
     thisWeekStatistics: string;
     checkDataCollectionPeriod: string;
     githubDevelopmentActivity: string;

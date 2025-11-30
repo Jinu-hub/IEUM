@@ -130,6 +130,8 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
               {t("noDataDescription")}
+              <br />
+              {t("noDataDescription2")}
             </p>
           </div>
         </NexCard>
