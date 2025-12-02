@@ -21,8 +21,8 @@ import { createStatusFilters, formatTime, getStatusConfig } from '../lib/common'
 import type { SentEmailData } from '../lib/types';
 import type { Route } from './+types/sent-mail';
 
-export const meta = () => {
-  return [{ title: `보낸 메일 | ${import.meta.env.VITE_APP_NAME}` }];
+export const meta: Route.MetaFunction = () => {
+  return [{ title: `Sent Mail | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {

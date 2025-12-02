@@ -1,5 +1,6 @@
 import { ArrowRight, Play } from 'lucide-react';
 import React from 'react';
+import { useNavigate } from 'react-router';
 import { cn } from '~/core/lib/utils';
 import { NexAvatar, NexAvatarGroup } from './nex-avatar';
 import { NexBadge } from './nex-badge';
@@ -80,12 +81,25 @@ export const NexHero: React.FC<NexHeroProps> = ({
   children,
   ...props
 }) => {
+  const navigate = useNavigate();
+  
   const heroStyles = cn(
     'relative overflow-hidden',
     sizeClasses[size],
     backgroundClasses[background],
     className
   );
+
+  // ボタンのクリックハンドラーを作成
+  const createButtonHandler = (action: { href?: string; onClick?: () => void }) => {
+    return () => {
+      if (action.onClick) {
+        action.onClick();
+      } else if (action.href) {
+        navigate(action.href);
+      }
+    };
+  };
 
   if (variant === 'minimal') {
     return (
@@ -115,8 +129,9 @@ export const NexHero: React.FC<NexHeroProps> = ({
                 <NexButton
                   variant={actions.primary.variant || 'primary'}
                   size="lg"
-                  onClick={actions.primary.onClick}
+                  onClick={createButtonHandler(actions.primary)}
                   rightIcon={actions.primary.icon}
+                  className="cursor-pointer"
                 >
                   {actions.primary.label}
                 </NexButton>
@@ -125,8 +140,9 @@ export const NexHero: React.FC<NexHeroProps> = ({
                 <NexButton
                   variant={actions.secondary.variant || 'secondary'}
                   size="lg"
-                  onClick={actions.secondary.onClick}
+                  onClick={createButtonHandler(actions.secondary)}
                   leftIcon={actions.secondary.icon}
+                  className="cursor-pointer"
                 >
                   {actions.secondary.label}
                 </NexButton>
@@ -183,8 +199,9 @@ export const NexHero: React.FC<NexHeroProps> = ({
                     <NexButton
                       variant={actions.primary.variant || 'primary'}
                       size="lg"
-                      onClick={actions.primary.onClick}
+                      onClick={createButtonHandler(actions.primary)}
                       rightIcon={actions.primary.icon || <ArrowRight className="w-4 h-4" />}
+                      className="cursor-pointer"
                     >
                       {actions.primary.label}
                     </NexButton>
@@ -193,8 +210,9 @@ export const NexHero: React.FC<NexHeroProps> = ({
                     <NexButton
                       variant={actions.secondary.variant || 'secondary'}
                       size="lg"
-                      onClick={actions.secondary.onClick}
+                      onClick={createButtonHandler(actions.secondary)}
                       leftIcon={actions.secondary.icon || <Play className="w-4 h-4" />}
+                      className="cursor-pointer"
                     >
                       {actions.secondary.label}
                     </NexButton>
@@ -313,8 +331,9 @@ export const NexHero: React.FC<NexHeroProps> = ({
               <NexButton
                 variant={actions.primary.variant || 'primary'}
                 size="lg"
-                onClick={actions.primary.onClick}
+                onClick={createButtonHandler(actions.primary)}
                 rightIcon={actions.primary.icon || <ArrowRight className="w-4 h-4" />}
+                className="cursor-pointer"
               >
                 {actions.primary.label}
               </NexButton>
@@ -323,8 +342,9 @@ export const NexHero: React.FC<NexHeroProps> = ({
               <NexButton
                 variant={actions.secondary.variant || 'secondary'}
                 size="lg"
-                onClick={actions.secondary.onClick}
+                onClick={createButtonHandler(actions.secondary)}
                 leftIcon={actions.secondary.icon || <Play className="w-4 h-4" />}
+                className="cursor-pointer"
               >
                 {actions.secondary.label}
               </NexButton>

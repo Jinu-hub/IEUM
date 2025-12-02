@@ -15,30 +15,30 @@
 import type { Route } from "./+types/home";
 
 import {
-    Calendar,
-    CheckCircle,
-    FileText,
-    GitBranch,
-    Mail,
-    MessageCircle,
-    TrendingUp,
-    Users,
-    Zap
+  Calendar,
+  CheckCircle,
+  FileText,
+  GitBranch,
+  Mail,
+  MessageCircle,
+  TrendingUp,
+  Users,
+  Zap
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import {
-    NexBadge,
-    NexButton,
-    NexCard,
-    NexCardContent,
-    NexCardDescription,
-    NexCardHeader,
-    NexCardTitle,
-    NexCarousel,
-    NexCarouselItem,
-    NexHero,
-    NexProgress
+  NexBadge,
+  NexButton,
+  NexCard,
+  NexCardContent,
+  NexCardDescription,
+  NexCardHeader,
+  NexCardTitle,
+  NexCarousel,
+  NexCarouselItem,
+  NexHero,
+  NexProgress
 } from "~/core/components/nex";
 import i18next from "~/core/lib/i18next.server";
 
@@ -159,7 +159,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           primary: { 
             label: "뉴스레터 구독하기", 
             variant: "primary",
-            href: "/subscribe"
+            href: "/join"
           },
           secondary: { 
             label: "샘플 뉴스레터 보기", 

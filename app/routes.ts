@@ -18,6 +18,7 @@ import {
 export default [
   route("/robots.txt", "core/screens/robots.ts"),
   route("/sitemap.xml", "core/screens/sitemap.ts"),
+  route("/samples", "features/home/screens/samples.tsx"),
   ...prefix("/debug", [
     // You should delete this in production.
     route("/sentry", "debug/sentry.tsx"),
@@ -58,7 +59,7 @@ export default [
     route("/auth/confirm", "features/auth/screens/confirm.tsx"),
     index("features/home/screens/home.tsx"),
     route("/error", "core/screens/error.tsx"),
-    route("/samples", "core/components/samples/samples.tsx"),
+    route("/components", "core/components/samples/samples.tsx"),
     layout("core/layouts/public.layout.tsx", [
       // Routes that should only be visible to unauthenticated users.
       route("/login", "features/auth/screens/login.tsx"),

@@ -263,7 +263,7 @@ export function NavigationBar({
         <div className="hidden h-full items-center gap-5 md:flex">
           {/* Main navigation links */}
           <Link
-            to="/samples"
+            to="/components"
             viewTransition
             className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
