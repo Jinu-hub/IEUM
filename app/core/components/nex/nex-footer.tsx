@@ -1,7 +1,9 @@
-import { ExternalLink, Github, Linkedin, Mail, Twitter } from 'lucide-react';
+import { ExternalLink, Mail } from 'lucide-react';
 import React from 'react';
 import { cn } from '~/core/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { NexButton } from './nex-button';
+import { GitHubIcon, LinkedInIcon, TwitterIcon } from './nex-icons';
 import { NexInput } from './nex-input';
 
 export interface NexFooterProps extends React.HTMLAttributes<HTMLElement> {
@@ -16,6 +18,8 @@ export interface NexFooterProps extends React.HTMLAttributes<HTMLElement> {
       label: string;
       href: string;
       external?: boolean;
+      disabled?: boolean;
+      tooltip?: string;
     }[];
   }[];
   social?: {
@@ -48,11 +52,11 @@ const getSocialIcon = (platform: string, customIcon?: React.ReactNode) => {
   
   switch (platform) {
     case 'github':
-      return <Github {...iconProps} />;
+      return <GitHubIcon {...iconProps} />;
     case 'twitter':
-      return <Twitter {...iconProps} />;
+      return <TwitterIcon {...iconProps} />;
     case 'linkedin':
-      return <Linkedin {...iconProps} />;
+      return <LinkedInIcon {...iconProps} />;
     case 'email':
       return <Mail {...iconProps} />;
     default:
@@ -137,64 +141,80 @@ export const NexFooter: React.FC<NexFooterProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
         <div className="py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Brand Section */}
-            {brand && (
-              <div className="lg:col-span-1">
-                <div className="flex items-center space-x-2 mb-4">
-                  {brand.logo}
-                  {brand.name && (
-                    <span className="text-xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
-                      {brand.name}
-                    </span>
-                  )}
-                </div>
-                {brand.description && (
-                  <p className="text-[#8B92B5] dark:text-[#6C6F7E] text-sm leading-relaxed">
-                    {brand.description}
-                  </p>
-                )}
-
-                {/* Social Links */}
-                {social.length > 0 && (
-                  <div className="flex items-center space-x-4 mt-6">
-                    {social.map((item, index) => (
-                      <a
-                        key={index}
-                        href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#8B92B5] dark:text-[#6C6F7E] hover:text-[#5E6AD2] dark:hover:text-[#7C89F9] transition-colors"
-                        aria-label={item.label || item.platform}
-                      >
-                        {getSocialIcon(item.platform, item.icon)}
-                      </a>
-                    ))}
-                  </div>
+          {/* Brand Section - Top Row */}
+          {brand && (
+            <div className="mb-12">
+              <div className="flex items-center space-x-2 mb-4">
+                {brand.logo}
+                {brand.name && (
+                  <span className="text-xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
+                    {brand.name}
+                  </span>
                 )}
               </div>
-            )}
+              {brand.description && (
+                <p className="text-[#8B92B5] dark:text-[#6C6F7E] text-sm leading-relaxed max-w-md">
+                  {brand.description}
+                </p>
+              )}
 
+              {/* Social Links */}
+              {social.length > 0 && (
+                <div className="flex items-center space-x-4 mt-6">
+                  {social.map((item, index) => (
+                    <a
+                      key={index}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#8B92B5] dark:text-[#6C6F7E] hover:text-[#5E6AD2] dark:hover:text-[#7C89F9] transition-colors"
+                      aria-label={item.label || item.platform}
+                    >
+                      {getSocialIcon(item.platform, item.icon)}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Links Sections - Bottom Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {/* Links Sections */}
             {links.map((section, index) => (
-              <div key={index} className="lg:col-span-1">
+              <div key={index}>
                 <h3 className="text-sm font-semibold text-[#0D0E10] dark:text-[#FFFFFF] uppercase tracking-wider mb-4">
                   {section.title}
                 </h3>
                 <ul className="space-y-3">
                   {section.items.map((item, itemIndex) => (
                     <li key={itemIndex}>
-                      <a
-                        href={item.href}
-                        target={item.external ? "_blank" : undefined}
-                        rel={item.external ? "noopener noreferrer" : undefined}
-                        className="text-[#8B92B5] dark:text-[#6C6F7E] hover:text-[#5E6AD2] dark:hover:text-[#7C89F9] transition-colors text-sm flex items-center"
-                      >
-                        {item.label}
-                        {item.external && (
-                          <ExternalLink className="w-3 h-3 ml-1" />
-                        )}
-                      </a>
+                      {item.disabled ? (
+                        <Tooltip delayDuration={200}>
+                          <TooltipTrigger asChild>
+                            <span
+                              className="text-[#8B92B5] dark:text-[#6C6F7E] opacity-50 cursor-not-allowed text-sm flex items-center"
+                            >
+                              {item.label}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" align="start" sideOffset={5}>
+                            <p>{item.tooltip || "지원예정"}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <a
+                          href={item.href}
+                          target={item.external ? "_blank" : undefined}
+                          rel={item.external ? "noopener noreferrer" : undefined}
+                          className="text-[#8B92B5] dark:text-[#6C6F7E] hover:text-[#5E6AD2] dark:hover:text-[#7C89F9] transition-colors text-sm flex items-center"
+                        >
+                          {item.label}
+                          {item.external && (
+                            <ExternalLink className="w-3 h-3 ml-1" />
+                          )}
+                        </a>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -203,7 +223,7 @@ export const NexFooter: React.FC<NexFooterProps> = ({
 
             {/* Newsletter Section */}
             {newsletter && (
-              <div className="lg:col-span-1">
+              <div>
                 <h3 className="text-sm font-semibold text-[#0D0E10] dark:text-[#FFFFFF] uppercase tracking-wider mb-4">
                   {newsletter.title}
                 </h3>

@@ -26,6 +26,7 @@ import {
   Zap
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 
 import {
   NexBadge,
@@ -542,27 +543,27 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
       {/* CTA Section */}
       <section className="text-center py-16">
-        <NexCard variant="gradient" className="p-12">
+        <NexCard variant="elevated" className="p-12 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-50 dark:from-slate-900/50 dark:via-gray-900/30 dark:to-slate-900/50">
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl font-bold text-white mb-4">
+              <h2 className="text-3xl font-bold mb-4">
                 팀의 생산성을 한 단계 높여보세요
               </h2>
-              <p className="text-lg text-white/90 max-w-2xl mx-auto">
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 매주 자동으로 생성되는 뉴스레터로 팀의 성과를 투명하게 공유하고, 
                 놓친 중요한 정보들을 손쉽게 파악할 수 있습니다.
               </p>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <NexButton variant="secondary" size="lg">
+              <Link to="/join" className="inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 h-11 px-8 text-base bg-[#5E6AD2] text-white border-none hover:bg-[#4C566A] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(94,106,210,0.4)] dark:bg-[#7C89F9] dark:hover:bg-[#6B77E6] cursor-pointer">
                 <Calendar className="h-5 w-5 mr-2" />
-                데모 예약하기
-              </NexButton>
-              <NexButton variant="ghost" size="lg" className="text-white border-white hover:bg-white/10">
+                시작하기
+              </Link>
+              <Link to="/samples" className="inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 h-11 px-8 text-base bg-transparent text-[#5E6AD2] border border-[#E1E4E8] hover:bg-[#F8F9FA] hover:border-[#5E6AD2] dark:text-[#7C89F9] dark:border-[#2C2D30] dark:hover:bg-[#1A1B1E] dark:hover:border-[#7C89F9] cursor-pointer">
                 <Mail className="h-5 w-5 mr-2" />
-                무료로 시작하기
-              </NexButton>
+                샘플 뉴스레터 보기
+              </Link>
             </div>
           </div>
         </NexCard>
