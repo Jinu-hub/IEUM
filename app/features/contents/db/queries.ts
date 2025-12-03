@@ -135,7 +135,27 @@ export async function getHighlightsCount(
     console.log('getHighlightsCount error', error);
     throw error;  
   }
-  return count ?? 0;
+
+  if (!count || count === 0) {
+    const { startKey: startKey2 } = getPeriodKeyRange(period, periodNumber + 1);
+    const periodKey2 = startKey2 + '_1';
+    let query2 = client
+      .from('highlights')
+      .select('*', { count: 'exact', head: true })
+      .eq('workspace_id', workspaceId)
+      .eq('period', period as Database["public"]["Enums"]["period"])
+      .eq('period_key', periodKey2)
+    if (source) {
+      query2 = query2.eq('source', source);
+    }
+    const { count: count2, error: error2 } = await query2;
+    if (error2) {
+      console.log('getHighlightsCount error2', error2);
+      return 0;
+    }
+    return count2;
+  }
+  return count;
 }
 
 export async function getSentEmailMetadata(client: SupabaseClient<Database>, 

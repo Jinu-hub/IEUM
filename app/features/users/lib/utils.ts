@@ -550,7 +550,7 @@ export function addColorToGithubCaseData(
 export function createGithubDeveloperCommitData(
   perPeriod: GithubSummaryPeriod[],
   topN: number = 5,
-  weeks: number = 4,
+  weeks: number = 1,
 ) {
   if (perPeriod.length === 0) {
     return [] as Array<{ name: string; desktop: number; mobile: number }>;
@@ -598,10 +598,15 @@ export function createGithubDeveloperCommitData(
   const topWithoutOthers = withoutOthers.slice(0, Math.max(topN - 1, 0));
   const result = [...topWithoutOthers];
 
-  if (othersEntry) {
-    result.push(othersEntry);
-  } else if (withoutOthers.length > topWithoutOthers.length && topN > topWithoutOthers.length) {
-    result.push(withoutOthers[topWithoutOthers.length]);
+  // topN에 들지 못한 개발자들의 커밋 수 합산
+  const remainingDevelopers = withoutOthers.slice(Math.max(topN - 1, 0));
+  const remainingCommits = remainingDevelopers.reduce((sum, dev) => sum + dev.desktop, 0);
+  
+  // Others 커밋 수 + 순위에 들지 못한 개발자들의 커밋 수
+  const othersCommits = (othersEntry?.desktop ?? 0) + remainingCommits;
+  
+  if (othersCommits > 0) {
+    result.push({ name: 'Others', desktop: othersCommits, mobile: 0 });
   }
 
   return result.slice(0, topN);
