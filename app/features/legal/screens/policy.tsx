@@ -17,8 +17,10 @@ import type { Route } from "./+types/policy";
 
 import { bundleMDX } from "mdx-bundler";
 import { getMDXComponent } from "mdx-bundler/client";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { Link, data } from "react-router";
+import i18next from "~/core/lib/i18next.server";
 
 import {
   TypographyBlockquote,
@@ -72,22 +74,60 @@ export const meta: Route.MetaFunction = ({ data }) => {
 };
 
 /**
+ * Placeholder values for legal documents
+ * These values will replace placeholders in the MDX files
+ */
+const PLACEHOLDERS: Record<string, string> = {
+  'YYYY-MM-DD': '2026-01-01',
+  'support email': import.meta.env.VITE_SUPPORT_EMAIL || 'support@nexletter.com',
+  'company name': 'NexLetter',
+  'company address': 'Seoul, South Korea',
+  'service URL': import.meta.env.VITE_SERVICE_URL || 'https://nexletter.com',
+  'company or service provider': 'NexLetter',
+  // Add more placeholders as needed
+};
+
+/**
+ * Replace placeholders in content with actual values
+ * Placeholders are in the format {{placeholder name}}
+ * 
+ * @param content - The content with placeholders
+ * @returns Content with placeholders replaced by actual values
+ */
+function replacePlaceholders(content: string): string {
+  let result = content;
+  
+  for (const [key, value] of Object.entries(PLACEHOLDERS)) {
+    const placeholder = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi');
+    result = result.replace(placeholder, value);
+  }
+  
+  return result;
+}
+
+/**
  * Loader function for fetching and processing MDX content
  * 
  * This function performs several key operations:
  * 1. Constructs the file path to the requested legal document based on URL params
- * 2. Loads and bundles the MDX content using mdx-bundler
- * 3. Extracts frontmatter metadata and compiled code
- * 4. Handles errors with appropriate HTTP status codes
+ * 2. Loads the MDX file and replaces placeholders with actual values
+ * 3. Bundles the processed MDX content
+ * 4. Extracts frontmatter metadata and compiled code
+ * 5. Handles errors with appropriate HTTP status codes
  * 
  * Error handling:
  * - Returns 404 for missing documents (ENOENT errors)
  * - Returns 500 for other processing errors
  * 
+ * @param request - The incoming HTTP request
  * @param params - URL parameters containing the document slug
  * @returns Object with frontmatter metadata and compiled MDX code
  */
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
+  // Get the user's locale from the request (cookie or URL parameter)
+  const locale = await i18next.getLocale(request);
+  const filename = `${params.slug}_${locale}.mdx`;
+  
   // Construct the file path to the requested legal document
   const filePath = path.join(
     process.cwd(),
@@ -95,13 +135,19 @@ export async function loader({ params }: Route.LoaderArgs) {
     "features",
     "legal",
     "docs",
-    `${params.slug}.mdx`, // Use the slug from URL params to find the correct document
+    filename, // Use the slug from URL params to find the correct document
   );
   
   try {
-    // Load and bundle the MDX content
+    // Read the MDX file content
+    const fileContent = await readFile(filePath, 'utf-8');
+    
+    // Replace placeholders with actual values
+    const processedContent = replacePlaceholders(fileContent);
+    
+    // Bundle the processed MDX content
     const { code, frontmatter } = await bundleMDX({
-      file: filePath,
+      source: processedContent,
     });
     
     // Return the compiled code and frontmatter metadata
