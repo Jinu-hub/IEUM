@@ -64,6 +64,30 @@ export const CATEGORY_TYPE = [
   'fun',             // Fun Corner
 ] as const;
 
+export const ONBOARDING_TYPE = [
+  "default",
+  "slack_review",
+] as const;
+
+export const ONBOARDING_STEP = [
+  "welcome",
+  "setup_workspace",
+  "connect_github",
+  "connect_slack",
+  "setup_mailing_list",
+  "setup_targets",
+  "setup_rules",
+  'first_mail_sending',
+  'completed'
+] as const;
+
+export const REVIEW_STEP = [
+  'review_start',
+  'review_connect',
+  'review_setup_channel',
+  'review_collecting_data',
+  'review_completed'
+] as const;
 
 /* =========================================================
    Type Definitions

@@ -30,7 +30,10 @@ import {
   DELIVERY_EVENT_TYPE_EMAIL,
   INTEGRATION_TYPE,
   MAIL_STATUS,
+  ONBOARDING_STEP,
+  ONBOARDING_TYPE,
   PERIOD,
+  REVIEW_STEP,
   RULE_TYPE,
   RUN_STATUS,
   STEP_NAME,
@@ -51,7 +54,10 @@ import {
   export const connectionStatusEnum = pgEnum("connection_status", CONNECTION_STATUS);
   export const period = pgEnum("period", PERIOD);
   export const categoryType = pgEnum("category_type", CATEGORY_TYPE);
-  
+  export const onboardingType = pgEnum("onboarding_type", ONBOARDING_TYPE);
+  export const onboardingStep = pgEnum("onboarding_step", ONBOARDING_STEP);
+  export const reviewStep = pgEnum("review_step", REVIEW_STEP);
+
   // GitHub App 설치 요청 상태
   export const installationRequestStatus = pgEnum("installation_request_status", [
     "pending", 
@@ -614,7 +620,7 @@ import {
   );
 
   /* =========================================================
-     3.16 github_installation_requests (GitHub App 설치 요청 임시 저장)
+     3.19 github_installation_requests (GitHub App 설치 요청 임시 저장)
      ========================================================= */
   export const githubInstallationRequests = pgTable(
     "github_installation_requests", 
@@ -643,6 +649,36 @@ import {
       pgPolicy("gir_delete", { for: "delete", to: [authenticatedRole, serviceRole], using: sql`user_id = auth.uid() OR auth.role() = 'service_role'` }),
      ]
   );
+
+/* =========================================================
+   3.20 onboarding_state
+   ========================================================= */
+export const onboardingStates = pgTable(
+  "onboarding_states", 
+  {
+    workspaceId: uuid("workspace_id")
+      .primaryKey()
+      .references(() => workspace.workspaceId, { onDelete: "cascade" }),
+    onboardingMode: onboardingType("onboarding_mode").notNull().default("default"),
+    onboardingStep: onboardingStep("onboarding_step").notNull().default("welcome"),
+    reviewStep: reviewStep("review_step"),
+    slackConnected: boolean("slack_connected").notNull().default(false),
+    githubConnected: boolean("github_connected").notNull().default(false),
+    targetConfigured: boolean("target_configured").notNull().default(false),
+    firstMailSend: boolean("first_mail_send").notNull().default(false),
+    firstMailRunId: uuid("first_mail_run_id").references(() => newsletterRuns.runId, { onDelete: "set null" }),
+    isCompleted: boolean("is_completed").notNull().default(false),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    pgPolicy("os_select", { for: "select", to: authenticatedRole, using: isMember(table.workspaceId) }),
+    pgPolicy("os_insert", { for: "insert", to: authenticatedRole, withCheck: isAdmin(table.workspaceId) }),
+    pgPolicy("os_update", { for: "update", to: authenticatedRole, using: isAdmin(table.workspaceId), withCheck: isAdmin(table.workspaceId) }),
+    pgPolicy("os_delete", { for: "delete", to: authenticatedRole, using: isAdmin(table.workspaceId) }),
+  ]
+);
 
   /* =========================================================
      Notes & Migration Guide

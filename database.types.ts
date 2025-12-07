@@ -638,6 +638,69 @@ export type Database = {
           },
         ]
       }
+      onboarding_states: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          first_mail_run_id: string | null
+          first_mail_send: boolean
+          github_connected: boolean
+          is_completed: boolean
+          onboarding_mode: Database["public"]["Enums"]["onboarding_type"]
+          onboarding_step: Database["public"]["Enums"]["onboarding_step"]
+          review_step: Database["public"]["Enums"]["review_step"] | null
+          slack_connected: boolean
+          target_configured: boolean
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          first_mail_run_id?: string | null
+          first_mail_send?: boolean
+          github_connected?: boolean
+          is_completed?: boolean
+          onboarding_mode?: Database["public"]["Enums"]["onboarding_type"]
+          onboarding_step?: Database["public"]["Enums"]["onboarding_step"]
+          review_step?: Database["public"]["Enums"]["review_step"] | null
+          slack_connected?: boolean
+          target_configured?: boolean
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          first_mail_run_id?: string | null
+          first_mail_send?: boolean
+          github_connected?: boolean
+          is_completed?: boolean
+          onboarding_mode?: Database["public"]["Enums"]["onboarding_type"]
+          onboarding_step?: Database["public"]["Enums"]["onboarding_step"]
+          review_step?: Database["public"]["Enums"]["review_step"] | null
+          slack_connected?: boolean
+          target_configured?: boolean
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_states_first_mail_run_id_newsletter_runs_run_id_fk"
+            columns: ["first_mail_run_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_runs"
+            referencedColumns: ["run_id"]
+          },
+          {
+            foreignKeyName: "onboarding_states_workspace_id_workspace_workspace_id_fk"
+            columns: ["workspace_id"]
+            isOneToOne: true
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           approved_at: string
@@ -1261,7 +1324,24 @@ export type Database = {
         | "lineworks"
         | "slack_user"
       mail_status: "sending" | "delivered" | "failed"
+      onboarding_step:
+        | "welcome"
+        | "setup_workspace"
+        | "connect_github"
+        | "connect_slack"
+        | "setup_mailing_list"
+        | "setup_targets"
+        | "setup_rules"
+        | "first_mail_sending"
+        | "completed"
+      onboarding_type: "default" | "slack_review"
       period: "daily" | "weekly" | "monthly" | "yearly"
+      review_step:
+        | "review_start"
+        | "review_connect"
+        | "review_setup_channel"
+        | "review_collecting_data"
+        | "review_completed"
       rule_type: "agents" | "tasks"
       run_status: "queued" | "running" | "success" | "failed" | "canceled"
       step_name:
@@ -1448,7 +1528,26 @@ export const Constants = {
         "slack_user",
       ],
       mail_status: ["sending", "delivered", "failed"],
+      onboarding_step: [
+        "welcome",
+        "setup_workspace",
+        "connect_github",
+        "connect_slack",
+        "setup_mailing_list",
+        "setup_targets",
+        "setup_rules",
+        "first_mail_sending",
+        "completed",
+      ],
+      onboarding_type: ["default", "slack_review"],
       period: ["daily", "weekly", "monthly", "yearly"],
+      review_step: [
+        "review_start",
+        "review_connect",
+        "review_setup_channel",
+        "review_collecting_data",
+        "review_completed",
+      ],
       rule_type: ["agents", "tasks"],
       run_status: ["queued", "running", "success", "failed", "canceled"],
       step_name: [
