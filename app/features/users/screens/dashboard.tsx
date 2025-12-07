@@ -128,7 +128,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                 </NexBadge>
               ) : (
                 <NexBadge variant="secondary" size="sm" icon={<XCircleIcon className="w-3 h-3" />}>
-                  {commonT("notConnected")}
+                  {commonT("disconnected")}
                 </NexBadge>
               )}
             </div>
@@ -196,7 +196,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                 </NexBadge>
               ) : (
                 <NexBadge variant="secondary" size="sm" icon={<XCircleIcon className="w-3 h-3" />}>
-                  {commonT("notConnected")}
+                  {commonT("disconnected")}
                 </NexBadge>
               )}
             </div>

@@ -351,6 +351,8 @@ const ko: Translation = {
     goToSettings: "설정으로 이동",
     goToTargets: "타겟 관리로 이동",
     goToSentMail: "발송된 메일로 이동",
+    connectGitHubAccount: "GitHub 계정을 연결해주세요",
+    connectSlackWorkspace: "Slack 워크스페이스를 연결해주세요",
   },
   analytics: {
     title: "분석",

@@ -350,6 +350,8 @@ export type Translation = {
     goToSettings: string;
     goToTargets: string;
     goToSentMail: string;
+    connectGitHubAccount: string;
+    connectSlackWorkspace: string;
   };
   analytics: {
     title: string;

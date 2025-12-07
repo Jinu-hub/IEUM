@@ -218,7 +218,7 @@ const ja: Translation = {
     and: "と",
     privacy: "プライバシーポリシー",
     accountCreated: "アカウントが作成されました！",
-    verifyEmail: "サインインする前に、メールを確認してください。このタブを閉じることができます。",
+    verifyEmail: "メールを確認して認証を完了してください。このタブを閉じることができます。",
   },
   login: {
     title: "サインイン",
@@ -352,6 +352,8 @@ const ja: Translation = {
     goToSettings: "設定に移動",
     goToTargets: "ターゲット管理に移動",
     goToSentMail: "送信済みメールに移動",
+    connectGitHubAccount: "GitHubアカウントを接続してください",
+    connectSlackWorkspace: "Slackワークスペースを接続してください",
   },
   analytics: {
     title: "分析",

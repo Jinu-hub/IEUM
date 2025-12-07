@@ -44,9 +44,8 @@ export default function Footer() {
     {
       title: "제품",
       items: [
-        { label: "홈", href: "/" },
         { label: "샘플", href: "/samples" },
-        { label: "가격", href: "/pricing", disabled: true, tooltip: "추후지원예정" },
+        { label: "가격", href: "/pricing" },
         { label: "사이트맵", href: "/site-map", disabled: true, tooltip: "추후지원예정" },
       ]
     },
@@ -73,7 +72,7 @@ export default function Footer() {
       items: [
         { label: "개인정보처리방침", href: "/legal/privacy-policy" },
         { label: "이용약관", href: "/legal/terms-of-service" },
-        //{ label: "보안", href: "/legal/security" },
+        { label: "보안백서", href: "/legal/security-whitepaper" },
         //{ label: "쿠키 정책", href: "/legal/cookies" }
       ]
     }

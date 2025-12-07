@@ -352,6 +352,8 @@ const en: Translation = {
     goToSettings: "Go to settings",
     goToTargets: "Go to targets",
     goToSentMail: "Go to sent mail",
+    connectGitHubAccount: "Connect your GitHub account",
+    connectSlackWorkspace: "Connect your Slack workspace",
   },
   analytics: {
     title: "Analytics",
