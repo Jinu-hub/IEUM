@@ -756,26 +756,32 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          is_completed_onboarding: boolean
           marketing_consent: boolean
           name: string
           profile_id: string
           updated_at: string
+          user_type: Database["public"]["Enums"]["user_type"]
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          is_completed_onboarding?: boolean
           marketing_consent?: boolean
           name: string
           profile_id: string
           updated_at?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          is_completed_onboarding?: boolean
           marketing_consent?: boolean
           name?: string
           profile_id?: string
           updated_at?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
         }
         Relationships: []
       }
@@ -1351,6 +1357,7 @@ export type Database = {
         | "assemble_data"
         | "send_email"
       step_status: "queued" | "running" | "success" | "failed" | "canceled"
+      user_type: "normal" | "nexletter" | "app_review"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1558,6 +1565,7 @@ export const Constants = {
         "send_email",
       ],
       step_status: ["queued", "running", "success", "failed", "canceled"],
+      user_type: ["normal", "nexletter", "app_review"],
     },
   },
 } as const

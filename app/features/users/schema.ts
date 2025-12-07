@@ -5,10 +5,13 @@
  * Supabase Row Level Security (RLS) policies to control data access.
  */
 import { sql } from "drizzle-orm";
-import { boolean, pgPolicy, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { boolean, pgEnum, pgPolicy, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { authUid, authUsers, authenticatedRole } from "drizzle-orm/supabase";
 
 import { timestamps } from "~/core/db/helpers.server";
+import { USER_TYPE } from "~/core/lib/constants";
+
+export const userType = pgEnum("user_type", USER_TYPE);
 
 /**
  * Profiles Table
@@ -32,6 +35,8 @@ export const profiles = pgTable(
     name: text().notNull(),
     avatar_url: text(),
     marketing_consent: boolean("marketing_consent").notNull().default(false),
+    user_type: userType("user_type").notNull().default("normal"),
+    is_completed_onboarding: boolean("is_completed_onboarding").notNull().default(true),
     // Adds created_at and updated_at timestamp columns
     ...timestamps,
   },

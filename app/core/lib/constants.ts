@@ -5,6 +5,10 @@
    Database Enums
    ========================================================= */
 
+export const USER_TYPE = [
+  "normal", "nexletter", "app_review",
+] as const;
+
 export const RUN_STATUS = [
   "queued", "running", "success", "failed", "canceled",
 ] as const;
