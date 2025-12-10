@@ -80,6 +80,10 @@ BEGIN
     -- Add user as owner of the workspace
     INSERT INTO public.workspace_member (workspace_id, user_id, role)
     VALUES (new_workspace_id, new.id, 'owner');
+
+    -- Create onboarding state record
+    INSERT INTO public.onboarding_states (workspace_id, onboarding_mode, onboarding_step, review_step, slack_connected, github_connected, target_configured, first_mail_send, is_completed)
+    VALUES (new_workspace_id, 'default', 'welcome', null, false, false, false, 'waiting_choice', false);
     
     RETURN NEW; -- Return the user record that triggered this function
 END;

@@ -643,7 +643,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           first_mail_run_id: string | null
-          first_mail_send: boolean
+          first_mail_send: Database["public"]["Enums"]["first_mail_send"]
           github_connected: boolean
           is_completed: boolean
           onboarding_mode: Database["public"]["Enums"]["onboarding_type"]
@@ -658,7 +658,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           first_mail_run_id?: string | null
-          first_mail_send?: boolean
+          first_mail_send?: Database["public"]["Enums"]["first_mail_send"]
           github_connected?: boolean
           is_completed?: boolean
           onboarding_mode?: Database["public"]["Enums"]["onboarding_type"]
@@ -673,7 +673,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           first_mail_run_id?: string | null
-          first_mail_send?: boolean
+          first_mail_send?: Database["public"]["Enums"]["first_mail_send"]
           github_connected?: boolean
           is_completed?: boolean
           onboarding_mode?: Database["public"]["Enums"]["onboarding_type"]
@@ -1141,7 +1141,9 @@ export type Database = {
       workspace: {
         Row: {
           created_at: string
-          kind: string
+          is_default_workspace: boolean
+          is_onboarding_completed: boolean
+          kind: Database["public"]["Enums"]["workspace_kind"]
           name: string
           owner_user_id: string | null
           slug: string | null
@@ -1150,7 +1152,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          kind?: string
+          is_default_workspace?: boolean
+          is_onboarding_completed?: boolean
+          kind?: Database["public"]["Enums"]["workspace_kind"]
           name: string
           owner_user_id?: string | null
           slug?: string | null
@@ -1159,7 +1163,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          kind?: string
+          is_default_workspace?: boolean
+          is_onboarding_completed?: boolean
+          kind?: Database["public"]["Enums"]["workspace_kind"]
           name?: string
           owner_user_id?: string | null
           slug?: string | null
@@ -1318,6 +1324,7 @@ export type Database = {
         | "bounced"
         | "complained"
         | "dropped"
+      first_mail_send: "waiting_choice" | "yes" | "no"
       installation_request_status:
         | "pending"
         | "approved"
@@ -1358,6 +1365,18 @@ export type Database = {
         | "send_email"
       step_status: "queued" | "running" | "success" | "failed" | "canceled"
       user_type: "normal" | "nexletter" | "app_review"
+      workspace_kind:
+        | "org"
+        | "team"
+        | "personal"
+        | "community"
+        | "company"
+        | "school"
+        | "government"
+        | "club"
+        | "nexletter"
+        | "app_review"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1521,6 +1540,7 @@ export const Constants = {
         "complained",
         "dropped",
       ],
+      first_mail_send: ["waiting_choice", "yes", "no"],
       installation_request_status: [
         "pending",
         "approved",
@@ -1566,6 +1586,19 @@ export const Constants = {
       ],
       step_status: ["queued", "running", "success", "failed", "canceled"],
       user_type: ["normal", "nexletter", "app_review"],
+      workspace_kind: [
+        "org",
+        "team",
+        "personal",
+        "community",
+        "company",
+        "school",
+        "government",
+        "club",
+        "nexletter",
+        "app_review",
+        "other",
+      ],
     },
   },
 } as const

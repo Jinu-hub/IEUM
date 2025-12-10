@@ -28,6 +28,7 @@ import {
   CATEGORY_TYPE,
   CONNECTION_STATUS,
   DELIVERY_EVENT_TYPE_EMAIL,
+  FIRST_MAIL_SEND,
   INTEGRATION_TYPE,
   MAIL_STATUS,
   ONBOARDING_STEP,
@@ -37,7 +38,8 @@ import {
   RULE_TYPE,
   RUN_STATUS,
   STEP_NAME,
-  STEP_STATUS
+  STEP_STATUS,
+  WORKSPACE_KIND
 } from "~/core/lib/constants";
   
   /* =========================================================
@@ -57,6 +59,8 @@ import {
   export const onboardingType = pgEnum("onboarding_type", ONBOARDING_TYPE);
   export const onboardingStep = pgEnum("onboarding_step", ONBOARDING_STEP);
   export const reviewStep = pgEnum("review_step", REVIEW_STEP);
+  export const firstMailSend = pgEnum("first_mail_send", FIRST_MAIL_SEND);
+  export const workspaceKind = pgEnum("workspace_kind", WORKSPACE_KIND);
 
   // GitHub App 설치 요청 상태
   export const installationRequestStatus = pgEnum("installation_request_status", [
@@ -86,8 +90,10 @@ import {
       workspaceId: uuid("workspace_id").defaultRandom().primaryKey(),
       name: text("name").notNull(),
       slug: text("slug"),
-      kind: text("kind").notNull().default("org"), // 'org' | 'team' | 'personal'
+      kind: workspaceKind("kind").notNull().default("org"), // 'org' | 'team' | 'personal'
+      isDefaultWorkspace: boolean("is_default_workspace").notNull().default(true),
       ownerUserId: uuid("owner_user_id").references(() => authUsers.id),
+      isOnboardingCompleted: boolean("is_onboarding_completed").notNull().default(false),
       createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
       updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
     },
@@ -665,7 +671,7 @@ export const onboardingStates = pgTable(
     slackConnected: boolean("slack_connected").notNull().default(false),
     githubConnected: boolean("github_connected").notNull().default(false),
     targetConfigured: boolean("target_configured").notNull().default(false),
-    firstMailSend: boolean("first_mail_send").notNull().default(false),
+    firstMailSend: firstMailSend("first_mail_send").notNull().default("waiting_choice"),
     firstMailRunId: uuid("first_mail_run_id").references(() => newsletterRuns.runId, { onDelete: "set null" }),
     isCompleted: boolean("is_completed").notNull().default(false),
     completedAt: timestamp("completed_at", { withTimezone: true }),

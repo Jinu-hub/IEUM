@@ -1,0 +1,1 @@
+ALTER TABLE "workspace" ADD COLUMN "is_default_workspace" boolean DEFAULT true NOT NULL;

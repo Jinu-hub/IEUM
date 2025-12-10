@@ -4,6 +4,10 @@
 /* =========================================================
    Database Enums
    ========================================================= */
+export const WORKSPACE_KIND = [
+  "org", "team", "personal", "community", "company",
+  "school", "government", "club", "nexletter", "app_review", "other",
+] as const;
 
 export const USER_TYPE = [
   "normal", "nexletter", "app_review",
@@ -91,6 +95,12 @@ export const REVIEW_STEP = [
   'review_setup_channel',
   'review_collecting_data',
   'review_completed'
+] as const;
+
+export const FIRST_MAIL_SEND = [
+  'waiting_choice',
+  'yes',
+  'no',
 ] as const;
 
 /* =========================================================
