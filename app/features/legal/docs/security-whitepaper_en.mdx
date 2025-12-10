@@ -1,0 +1,183 @@
+---
+title: Security Whitepaper
+description: This document transparently explains how NexLetter protects and processes customer data.
+---
+
+# **Security Whitepaper**
+
+_Last Updated: {{YYYY-MM-DD}}_
+
+This document transparently explains how NexLetter protects and processes customer data.
+
+---
+
+## 1. Overview
+
+NexLetter is an AI-powered platform that collects and summarizes team activity from collaboration tools such as Slack and GitHub, generating automated newsletters and analytics reports.
+
+This whitepaper explains, in a realistic and transparent manner, how NexLetter processes and protects user data.
+
+---
+
+## 2. Security Principles
+
+NexLetter is built upon the following core principles:
+
+1. **Least Privilege Access**
+
+   Only the minimal required OAuth scopes are requested. No additional data is accessed.
+
+2. **Encrypted Transmission (HTTPS/TLS)**
+
+   All network communication is encrypted via TLS.
+
+3. **Minimal Data Collection**
+
+   We do not store raw content beyond what is needed for summarization and analysis.
+
+4. **No AI Training on Customer Data**
+
+   Customer data is never used for model training or fine-tuning.
+
+5. **Transparent Data Processing**
+
+   We clearly disclose what data is collected, how it is stored, and how it is used.
+
+---
+
+## 3. Authentication & Authorization
+
+### ✔ OAuth-based Login
+
+- GitHub, Google, Slack, and Apple OAuth supported  
+- No passwords are stored by NexLetter
+
+### ✔ Access Control Policies
+
+- Slack DMs and private message content are **not** stored  
+- GitHub repositories are accessible only within the installed scope  
+- Workspace admins manage users and permissions directly  
+
+---
+
+## 4. Data Handling Policy
+
+### 4.1 Types of Data Collected
+
+NexLetter processes data in the following categories:
+
+---
+
+### **① Temporary Data for Summaries and Reports (Processed & discarded or minimally retained)**
+
+- Slack message text (for summarization)
+- GitHub PR/Issue titles and descriptions  
+- Commit messages
+
+> ⚠️ Full raw content is not stored long-term.  
+> Data used for summarization is **not retained** or is minimized as much as possible.
+
+---
+
+### **② Minimal Metadata for Dashboard & Analytics (Essential data only)**
+
+The following metadata is stored to provide dashboards and analytics:
+
+- Timestamp of events/messages  
+- Count data (message counts, commit counts, etc.)  
+- Channel ID / Repository ID  
+- User ID or hashed identifier  
+- Aggregated statistics (Slack message counts, PR counts, commit totals)  
+- Newsletter delivery success/failure logs  
+- Team/user activity trends  
+
+> This metadata enables analytics while **not storing original content**.
+
+---
+
+### **③ Data Not Stored**
+
+- Slack DMs or private message bodies  
+- GitHub source code files  
+- File attachments  
+- Raw content from private repositories (outside allowed scope)  
+- Personal sensitive information  
+
+---
+
+## 5. Data Storage & Encryption
+
+- All data is stored in secure cloud infrastructure  
+- At-rest encryption using cloud-native AES-256  
+- In-transit encryption via HTTPS (TLS 1.2+)  
+- OAuth tokens and secrets stored in secure vault storage  
+
+> NexLetter does **not** currently support BYOK or full end-to-end encryption.  
+> These may be considered in future roadmap discussions.
+
+---
+
+## 6. AI Processing & Privacy
+
+### ✔ No AI Training on Customer Data  
+Customer content such as messages, PRs, and commits is **never** used for LLM training.
+
+### ✔ Session-based Processing  
+Data used for summarization is discarded after the processing session.
+
+### ✔ AI Tone & Style Settings (Upcoming Feature)  
+A future feature will allow teams to define tone/style rules, forbidden words, and branding guidelines to customize AI-generated content.
+
+---
+
+## 7. Access Control
+
+- Workspace-level Admin roles  
+- Only Admins can add/remove integrations  
+- User invitations and removals are fully managed by admins  
+- Members access only the data within the workspace they belong to  
+
+---
+
+## 8. Logging & Monitoring
+
+- System and error logs are collected  
+- Logs exclude message bodies and other sensitive content  
+- Abnormal API requests are automatically blocked  
+
+---
+
+## 9. Data Deletion & Retention
+
+### ✔ When a workspace/account is deleted:  
+→ All related data is permanently deleted and cannot be restored.
+
+### ✔ Analytics metadata  
+→ Can be removed manually upon customer request.
+
+---
+
+## 10. Roadmap (Upcoming Features)
+
+### ⭐ Short-term (2026)
+- Workspace-level data retention settings  
+- Enhanced Slack/GitHub event filtering  
+- Admin approval workflow (2-step approval)  
+- **AI tone & style profile configuration**  
+- Expanded analytics dashboards  
+
+### ⭐ Mid-term (2027+)
+- Data region selection (KR/JP/US)  
+- Advanced RBAC (permission customization)
+
+> ⚠️ Features such as BYOK, HIPAA compliance, and SIEM streaming are not currently planned and may only be considered for long-term enterprise requirements.
+
+---
+
+## 11. Contact
+
+For security inquiries, please contact:
+
+**Email:** {{support email}}  
+**Website:** {{service URL}}  
+**Operator:** {{company or service provider}}  
