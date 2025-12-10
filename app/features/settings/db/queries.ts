@@ -3,12 +3,13 @@ import type { Database } from "database.types";
 
 export const getWorkspace = async (
   client: SupabaseClient<Database>,
-  { userId }: { userId: string },
+  { userId, isDefaultWorkspace = true }: { userId: string, isDefaultWorkspace?: boolean },
 ) => {
   const { data, error } = await client
     .from('workspace')
     .select('*')
-    .eq('owner_user_id', userId);
+    .eq('owner_user_id', userId)
+    .eq('is_default_workspace', isDefaultWorkspace);
   if (error) {
     console.log('getWorkspace error', error);
     throw error;
@@ -51,6 +52,38 @@ export const getUserEmail = async (
     console.log('getUserEmail error', error);
     return null;
   }
+};
+
+export const getUserProfile = async (
+  client: SupabaseClient<Database>,
+  { userId }: { userId: string },
+) => {
+  const { data, error } = await client
+    .from('profiles')
+    .select('*')
+    .eq('profile_id', userId)
+    .single();
+  if (error) {
+    console.log('getUserProfile error', error);
+    throw error;
+  }
+  return data;
+};
+
+export const getWorkspaceOnboardingState = async (
+  client: SupabaseClient<Database>,
+  { workspaceId }: { workspaceId: string },
+) => {
+  const { data, error } = await client
+    .from('onboarding_states')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .single();
+  if (error) {
+    console.log('getWorkspaceOnboardingState error', error);
+    throw error;
+  }
+  return data;
 };
 
 export const getLoginUserWorkspace = async (

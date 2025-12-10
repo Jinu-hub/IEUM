@@ -638,6 +638,57 @@ export const deleteMailingListMember = async (
 /**
  * Slack 채널 멤버십 변경 시 resource_cache_json 업데이트
  */
+/**
+ * レビューステップを更新
+ */
+export const updateReviewStep = async (
+    client: SupabaseClient<Database>,
+    { workspaceId, reviewStep }: { 
+        workspaceId: string, 
+        reviewStep: Database["public"]["Enums"]["review_step"] 
+    }
+) => {
+    const { data, error } = await client
+        .from('onboarding_states')
+        .update({ 
+            review_step: reviewStep,
+            updated_at: new Date().toISOString()
+        })
+        .eq('workspace_id', workspaceId)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('updateReviewStep error', error);
+        throw error;
+    }
+    return data;
+};
+
+export const updateSlackConnectedState = async (
+    client: SupabaseClient<Database>,
+    { workspaceId, slackConnected }: { 
+        workspaceId: string, 
+        slackConnected: boolean 
+    }
+) => {
+    const { data, error } = await client
+        .from('onboarding_states')
+        .update({ 
+            slack_connected: slackConnected,
+            updated_at: new Date().toISOString()
+        })
+        .eq('workspace_id', workspaceId)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('updateSlackConnectedState error', error);
+        throw error;
+    }
+    return data;
+};
+
 export const updateSlackChannelMembership = async (
     client: SupabaseClient<Database>,
     {

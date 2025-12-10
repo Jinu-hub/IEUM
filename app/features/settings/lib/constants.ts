@@ -15,6 +15,7 @@ export interface IntegrationService {
     onConnect: () => void;
     onDisconnect: () => void;
     onConfigure?: () => void;
+    disableConnect?: boolean;
     // DB에서 가져온 추가 정보 (선택적)
     credentialRef?: string;
     connectionStatus?: DBConnectionStatus;

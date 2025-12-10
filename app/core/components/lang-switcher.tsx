@@ -13,7 +13,7 @@
  * - Translated language names in the current language
  */
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
+import { useFetcher, useLocation } from "react-router";
 
 import { Button } from "./ui/button";
 import {
@@ -22,6 +22,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+
+interface LangSwitcherProps {
+  /** Force display a specific language code (disables dropdown) */
+  forcedLanguage?: 'en' | 'ko' | 'ja';
+  /** Disable the language switcher */
+  disabled?: boolean;
+}
 
 /**
  * LangSwitcher component for changing the application language
@@ -36,12 +43,17 @@ import {
  * 
  * @returns A dropdown menu component for switching languages
  */
-export default function LangSwitcher() {
+export default function LangSwitcher({ forcedLanguage, disabled }: LangSwitcherProps = {}) {
   // Get translation function and i18n instance
   const { t, i18n } = useTranslation();
   
   // Get fetcher for making API requests
   const fetcher = useFetcher();
+  
+  // Check if on review page to force English
+  const location = useLocation();
+  const isReviewPage = location.pathname.includes('/integrations-review');
+  const effectiveForcedLanguage = isReviewPage ? 'en' : forcedLanguage;
   
   /**
    * Handle language change by updating both client and server state
@@ -57,6 +69,30 @@ export default function LangSwitcher() {
       action: "/api/settings/locale?locale=" + locale,
     });
   };
+
+  // Get display language (forced or current)
+  const displayLanguage = effectiveForcedLanguage || i18n.language;
+  const displayText = displayLanguage === "en"
+    ? "EN"
+    : displayLanguage === "ko"
+      ? "KR"
+      : displayLanguage === "ja"
+        ? "JP"
+        : "EN";
+
+  // If forced or disabled, render a static button
+  if (effectiveForcedLanguage || disabled) {
+    return (
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="text-lg cursor-not-allowed opacity-70"
+        disabled
+      >
+        {displayText}
+      </Button>
+    );
+  }
   
   return (
     <DropdownMenu>
@@ -68,13 +104,7 @@ export default function LangSwitcher() {
       >
         <Button variant="ghost" size="icon" className="text-lg">
           {/* Conditionally render the appropriate flag based on current language */}
-          {i18n.language === "en"
-            ? "EN" // UK flag for English
-            : i18n.language === "ko"
-              ? "KR" // South Korea flag for Korean
-              : i18n.language === "ja"
-                ? "JP" // Japan flag for Japanese
-                : null}
+          {displayText}
         </Button>
       </DropdownMenuTrigger>
       

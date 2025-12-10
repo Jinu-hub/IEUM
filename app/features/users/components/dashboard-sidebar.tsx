@@ -16,14 +16,15 @@ import {
   SidebarRail,
 } from "~/core/components/ui/sidebar";
 
+import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router";
+
 import LangSwitcher from "~/core/components/lang-switcher";
 import ThemeSwitcher from "~/core/components/theme-switcher";
 
 import SidebarMain from "./sidebar-main";
 import TeamSwitcher from "./sidebar-team-switcher";
 import SidebarUser from "./sidebar-user";
-
-import { useTranslation } from "react-i18next";
 
 const getSidebarData = (
   t: (key: string) => string,
@@ -62,12 +63,6 @@ const getSidebarData = (
         {
           title: t("analytics"),
           url: "/dashboard/analytics",
-        },
-        {
-          title: t("reports"),
-          url: "#",
-          disabled: true,
-          tooltip: commonT("soonMessage"),
         },
         {
           title: t("test"),
@@ -124,6 +119,12 @@ const getSidebarData = (
           title: t("sentMail"),
           url: "/contents/sent-mail",
         },
+        {
+          title: t("reports"),
+          url: "#",
+          disabled: true,
+          tooltip: commonT("soonMessage"),
+        },
         /*
         {
           title: "Opportunities",
@@ -173,6 +174,10 @@ export default function DashboardSidebar({
   const { t } = useTranslation("common", { keyPrefix: "sidebar" });
   const { t: commonT } = useTranslation("common");
   const data = getSidebarData(t, commonT);
+  
+  // Check if on review page to disable all menu items
+  const location = useLocation();
+  const isReviewMode = location.pathname.includes('/integrations-review');
 
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
@@ -180,7 +185,7 @@ export default function DashboardSidebar({
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMain items={data.navMain} />
+        <SidebarMain items={data.navMain} allDisabled={isReviewMode} />
         {/*
         <SidebarProjects projects={data.projects} />
         */}

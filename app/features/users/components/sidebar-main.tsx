@@ -20,6 +20,7 @@ import {
 
 export default function SidebarMain({
   items,
+  allDisabled = false,
 }: {
   items: {
     title: string;
@@ -33,6 +34,8 @@ export default function SidebarMain({
       tooltip?: string;
     }[];
   }[];
+  /** Force all menu items to be disabled (e.g., in review mode) */
+  allDisabled?: boolean;
 }) {
   const { pathname } = useLocation();
   const { t } = useTranslation("common", { keyPrefix: "common" });
@@ -93,14 +96,16 @@ export default function SidebarMain({
                 <CollapsibleContent>
                   <SidebarMenuSub>
                     {item.items?.map((subItem) => {
+                      const isDisabled = allDisabled || subItem.disabled;
                       const isSubItemActive =
-                        !subItem.disabled && isExactRoute(subItem.url);
-                      const tooltipText =
-                        subItem.tooltip ?? t("soonMessage");
+                        !isDisabled && isExactRoute(subItem.url);
+                      const tooltipText = allDisabled 
+                        ? "R_Mode" 
+                        : (subItem.tooltip ?? "Soon");
 
                       return (
                         <SidebarMenuSubItem key={subItem.title}>
-                          {subItem.disabled ? (
+                          {isDisabled ? (
                             <SidebarMenuSubButton
                               asChild
                               aria-disabled
@@ -110,7 +115,7 @@ export default function SidebarMain({
                               <span className="flex w-full cursor-not-allowed items-center justify-between text-muted-foreground">
                                 <span>{subItem.title}</span>
                                 <span className="rounded-full bg-muted-foreground/20 px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                                  Soon
+                                  {tooltipText}
                                 </span>
                               </span>
                             </SidebarMenuSubButton>

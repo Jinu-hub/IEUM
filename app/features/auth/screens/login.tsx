@@ -32,6 +32,7 @@ import { Label } from "~/core/components/ui/label";
 import makeServerClient from "~/core/lib/supa-client.server";
 
 import { useTranslation } from "react-i18next";
+import { getWorkspace } from "~/features/settings/db/queries";
 import FormErrors from "../../../core/components/form-error";
 import { SignInButtons } from "../components/auth-login-buttons";
 
@@ -96,7 +97,7 @@ export async function action({ request }: Route.ActionArgs) {
   const [client, headers] = makeServerClient(request);
 
   // Attempt to sign in with email and password
-  const { error: signInError } = await client.auth.signInWithPassword({
+  const { data: signInData, error: signInError } = await client.auth.signInWithPassword({
     ...validData,
   });
 
@@ -105,8 +106,15 @@ export async function action({ request }: Route.ActionArgs) {
     return data({ error: signInError.message }, { status: 400 });
   }
 
-  // Redirect to home page with authentication cookies in headers
-  return redirect("/dashboard", { headers });
+  const workspaceData = await getWorkspace(client, { userId: signInData.user.id });
+  const workspace = workspaceData[0];
+  const isAppReviewUser = workspace.kind === "app_review";
+  if (isAppReviewUser) {
+    return redirect("/settings/integrations-review", { headers });
+  } else {
+    const isOnboardingCompleted = workspace.is_onboarding_completed;
+    return redirect("/dashboard", { headers });
+  }
 }
 
 /**

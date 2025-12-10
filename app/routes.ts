@@ -35,6 +35,8 @@ export default [
       route("/slack-integration/:credentialRef", "features/settings/api/slack-integration.tsx"), 
       route("/slack-callback", "features/settings/api/slack-callback.tsx"),
       route("/slack-channel-members", "features/settings/api/slack-channel-members.tsx"),
+      route("/update-review-step", "features/settings/api/update-review-step.tsx"),
+      route("/review-sample-data", "features/settings/api/review-sample-data.tsx"),
     ]),
     ...prefix("/users", [
       index("features/users/api/delete-account.tsx"),
@@ -125,6 +127,7 @@ export default [
       ]),
       ...prefix("/settings", [
         route("/integrations", "features/settings/screens/integrations.tsx"),
+        route("/integrations-review", "features/settings/screens/integrations-review.tsx"),
         route("/targets", "features/settings/screens/targets.tsx"),
         route("/target/:targetId", "features/settings/screens/target-detail.tsx"),
         route("/mail-list", "features/settings/screens/mail-list.tsx"),

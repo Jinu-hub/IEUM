@@ -26,6 +26,7 @@ interface UseIntegrationUIOptions {
   handleSlackConnect: () => void;
   handleSlackDisconnect: () => void;
   integrationsInfo?: any[]; // DB에서 가져온 integration 정보
+  disableGitHubConnect?: boolean;
 }
 
 /**
@@ -53,7 +54,8 @@ export function useIntegrationUI({
   handleGitHubDisconnect,
   handleSlackConnect,
   handleSlackDisconnect,
-  integrationsInfo = []
+  integrationsInfo = [],
+  disableGitHubConnect = false
 }: UseIntegrationUIOptions) {
   const { t } = useTranslation("common", { keyPrefix: "integrations" });
 
@@ -117,6 +119,10 @@ export function useIntegrationUI({
    */
   const getActionButton = (integration: IntegrationService) => {
     const { status, onConnect, onDisconnect, onConfigure } = integration;
+    const connectDisabled = integration.disableConnect ?? false;
+    const connectButtonClasses = `flex items-center space-x-2 ${
+      connectDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
+    }`;
     
     if (status === 'connecting') {
       return (
@@ -149,8 +155,10 @@ export function useIntegrationUI({
         <NexButton
           variant="secondary"
           size="sm"
-          onClick={onConnect}
-          className="flex items-center space-x-2 cursor-pointer"
+          onClick={connectDisabled ? undefined : onConnect}
+          className={connectButtonClasses}
+          disabled={connectDisabled}
+          aria-disabled={connectDisabled}
         >
           {t("actions.verify")}
         </NexButton>
@@ -187,8 +195,10 @@ export function useIntegrationUI({
         variant="primary"
         size="sm"
         leftIcon={<PlusIcon className="w-4 h-4" />}
-        onClick={onConnect}
-        className="flex items-center space-x-2 cursor-pointer"
+        onClick={connectDisabled ? undefined : onConnect}
+        className={connectButtonClasses}
+        disabled={connectDisabled}
+        aria-disabled={connectDisabled}
       >
         {t("actions.connect")}
       </NexButton>
@@ -215,6 +225,7 @@ export function useIntegrationUI({
       description: t("github.description"),
       icon: <GitHubIcon className="w-8 h-8" />,
       status: githubStatus,
+      disableConnect: disableGitHubConnect,
       features: [
         t("github.features.commits"),
         t("github.features.pullRequests"),
