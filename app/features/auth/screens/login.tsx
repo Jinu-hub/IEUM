@@ -6,12 +6,12 @@
  * and email verification. It demonstrates form validation, error handling,
  * and Supabase authentication integration.
  */
-import type { Route } from "./+types/login";
-
 import { AlertCircle, Loader2Icon } from "lucide-react";
 import { useRef } from "react";
 import { Form, Link, data, redirect, useFetcher } from "react-router";
 import { z } from "zod";
+import { updateReviewStep } from "~/features/settings/db/mutations";
+import type { Route } from "./+types/login";
 
 import FormButton from "~/core/components/form-button";
 import {
@@ -110,6 +110,7 @@ export async function action({ request }: Route.ActionArgs) {
   const workspace = workspaceData[0];
   const isAppReviewUser = workspace.kind === "app_review";
   if (isAppReviewUser) {
+    updateReviewStep(client, { workspaceId: workspace.workspace_id, reviewStep: 'review_start' });
     return redirect("/settings/integrations-review", { headers });
   } else {
     const isOnboardingCompleted = workspace.is_onboarding_completed;

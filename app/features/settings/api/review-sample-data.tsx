@@ -122,6 +122,7 @@ export async function action({ request }: ActionFunctionArgs) {
         }
         
         const messages = await fetchChannelMessages(slack, channelId, oldestTs);
+        //saveContentToFile(messages, 'output-test', 'messages_', 'json');
         
         // レビュー用なので最大50件に制限
         const limitedMessages = messages.slice(0, 50);

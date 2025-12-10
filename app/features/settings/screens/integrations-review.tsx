@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { data, redirect, useFetcher, useSearchParams, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
 import {
-    BookOpenIcon,
     CheckCircleIcon,
     GitHubIcon,
     HashIcon,
@@ -386,20 +385,23 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
       
       if (response.status === 'success') {
         setSampleDataResult(response.data);
-        updateReviewStep('review_completed');
-        toast.success('Sample data collection completed!');
+        // Only update if not already completed (prevent infinite loop)
+        if (currentReviewStep !== 'review_completed') {
+          updateReviewStep('review_completed');
+          toast.success('Sample data collection completed!');
+        }
       } else {
         toast.error(response.error || 'Data collection failed');
       }
     }
-  }, [sampleDataFetcher.state, sampleDataFetcher.data, updateReviewStep]);
+  }, [sampleDataFetcher.state, sampleDataFetcher.data, updateReviewStep, currentReviewStep]);
 
   // レビューモード: Slack未接続時は review_connect ステップへ
   useEffect(() => {
     if (isReviewMode && currentReviewStep === 'review_start' && slackStatus !== 'connected') {
       const timer = setTimeout(() => {
         updateReviewStep('review_connect');
-      }, 5000);
+      }, 4000);
       return () => clearTimeout(timer);
     }
   }, [isReviewMode, currentReviewStep, slackStatus, updateReviewStep]);
@@ -516,92 +518,37 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
                   {/* 연결된 상태일 때 추가 정보 표시 */}
                   {integration.status === 'connected' && (
                     <div className="bg-[#F8F9FA] dark:bg-[#1A1B1E] rounded-lg p-4 border border-[#E1E4E8] dark:border-[#2C2D30]">
-                      <div className="flex items-center space-x-2 text-sm">
-                        <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                        <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">
-                          {commonT("connectionComplete")}
-                        </span>
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center space-x-2">
+                          <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                          <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">
+                            {commonT("connectionComplete")} 
+                          </span>
+                        </div>
+                        {isReviewMode && (
+                          <ReviewGuideTooltip
+                            currentStep={currentReviewStep}
+                            targetStep="review_collecting_data"
+                            position="left"
+                          >
+                            <NexButton
+                              variant="primary"
+                              size="sm"
+                              onClick={handleCollectSampleData}
+                              loading={isCollectingSampleData}
+                              disabled={
+                                currentReviewStep !== 'review_collecting_data' && 
+                                currentReviewStep !== 'review_completed'
+                              }
+                            >
+                              {isCollectingSampleData ? 'Collecting data...' : '📊 Collect Sample Data'}
+                            </NexButton>
+                          </ReviewGuideTooltip>
+                        )}
                       </div>
                       <p className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mt-1">
                         {integration.name} {t("connectionCompleteDescription")}
                       </p>
-                      
-                      {/* GitHub 연결 정보 */}
-                      {integration.type === 'github' && integration.resourceCache && integration.resourceCache.user && (
-                        <div className="mt-3 pt-3 border-t border-[#E1E4E8] dark:border-[#2C2D30]">
-                          <div className="flex items-center space-x-2 text-xs">
-                            <span className="text-[#8B92B5] dark:text-[#6C6F7E]">{t("connectedAccount")}:</span>
-                            <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">
-                              {integration.resourceCache.user.name || integration.resourceCache.user.login}
-                            </span>
-                          </div>
-                          
-                          {/* 접근 가능한 리포지토리 */}
-                          <div className="mt-3">
-                            <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2">
-                              {t("accessibleRepositories")}
-                            </div>
-                            {integration.resourceCache.repos && integration.resourceCache.repos.length > 0 ? (
-                              <div>
-                                {/* 통합된 통계 정보 */}
-                                <div className="text-xs text-[#0D0E10] dark:text-[#FFFFFF] font-medium mb-2">
-                                  {commonT("total")}: {integration.resourceCache.user.accessible_repos?.total} {commonT("numberOfRepo")} (
-                                  <span >
-                                    {commonT("public")}: {integration.resourceCache.user.accessible_repos?.public}
-                                  </span>
-                                  /
-                                  <span >
-                                    {commonT("private")}: {integration.resourceCache.user.accessible_repos?.private}
-                                  </span>
-                                  )
-                                </div>
-                                
-                                {/* 리포지토리 목록 */}
-                                <div className="flex flex-wrap gap-1">
-                                  {integration.resourceCache.repos
-                                    .sort((a: any, b: any) => {
-                                      // private 리포지토리를 먼저 표시
-                                      if (a.private && !b.private) return -1;
-                                      if (!a.private && b.private) return 1;
-                                      // 같은 타입이면 이름순 정렬
-                                      return a.name.localeCompare(b.name);
-                                    })
-                                    .slice(0, expandedRepos ? integration.resourceCache.repos.length : 10)
-                                    .map((repo: any) => {
-                                      const RepoIcon = repo.private ? LockIcon : BookOpenIcon;
-                                      return (
-                                        <NexBadge
-                                          key={repo.id}
-                                          variant={"success"}
-                                          size="sm"
-                                          className="text-xs flex items-center gap-1"
-                                          icon={<RepoIcon className="w-2.5 h-2.5" />}
-                                        >
-                                          {repo.name}
-                                        </NexBadge>
-                                      );
-                                    })}
-                                  {integration.resourceCache.repos.length > 10 && (
-                                    <button
-                                      onClick={() => setExpandedRepos(!expandedRepos)}
-                                      className="text-xs text-[#5E6AD2] hover:text-[#7C89F9] dark:text-[#7C89F9] dark:hover:text-[#5E6AD2] underline cursor-pointer"
-                                    >
-                                      {expandedRepos ? commonT("collapse") : `+${integration.resourceCache.repos.length - 10} ${commonT("numberOfRepo")} ${commonT("more")}`}
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] italic">
-                                {integration.resourceCache.repos === undefined 
-                                  ? t("loadingRepositories") 
-                                  : t("noAccessibleRepositories")
-                                }
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
                       
                       {/* Slack 연결 정보 */}
                       {integration.type === 'slack' && integration.resourceCache && integration.resourceCache.team && (
@@ -745,25 +692,6 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
                           {/* レビューモード: サンプルデータ収集セクション */}
                           {isReviewMode && (
                             <div className="mt-4 pt-4 border-t border-[#E1E4E8] dark:border-[#2C2D30]">
-                              <ReviewGuideTooltip
-                                currentStep={currentReviewStep}
-                                targetStep="review_collecting_data"
-                                position="top"
-                              >
-                                <NexButton
-                                  variant="primary"
-                                  size="sm"
-                                  onClick={handleCollectSampleData}
-                                  loading={isCollectingSampleData}
-                                  disabled={
-                                    currentReviewStep !== 'review_collecting_data' && 
-                                    currentReviewStep !== 'review_completed'
-                                  }
-                                  className="w-full sm:w-auto"
-                                >
-                                  {isCollectingSampleData ? 'データ収集中...' : '📊 サンプルデータを収集'}
-                                </NexButton>
-                              </ReviewGuideTooltip>
 
                               {/* サンプルデータ結果表示 */}
                               {sampleDataResult && (
@@ -771,21 +699,21 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
                                   <div className="flex items-center gap-2 mb-3">
                                     <span className="text-2xl">✅</span>
                                     <h4 className="font-bold text-green-800 dark:text-green-200">
-                                      サンプルデータ収集完了！
+                                      Sample data collection completed!
                                     </h4>
                                   </div>
                                   
                                   {/* 統計情報 */}
                                   <div className="mb-3 text-sm text-green-700 dark:text-green-300">
-                                    <span className="font-medium">収集結果: </span>
-                                    {sampleDataResult.stats.channelCount}チャンネル / 
-                                    {sampleDataResult.stats.totalMessages}メッセージ
+                                    <span className="font-medium">Collection result: </span>
+                                    {sampleDataResult.stats.channelCount} channels / 
+                                    {sampleDataResult.stats.totalMessages} messages
                                   </div>
                                   
                                   {/* AI要約 */}
                                   <div className="bg-white dark:bg-[#1A1B1E] rounded-lg p-4 border border-green-100 dark:border-green-900">
                                     <h5 className="font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-2 flex items-center gap-2">
-                                      <span>🤖</span> AI要約
+                                      <span>🤖</span> AI Summary
                                     </h5>
                                     <div 
                                       className="text-sm text-[#8B92B5] dark:text-[#B4B5B9] whitespace-pre-wrap"
@@ -831,7 +759,7 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
                 <li>{t("help.githubConnectionDescription1")}</li>
                 <li>{t("help.githubConnectionDescription2")} <br />
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    {t("help.githubConnectionDescription3")} [상세보기]</li>
+                    {t("help.githubConnectionDescription3")}</li>
               </ul>
             </div>
             <div>
