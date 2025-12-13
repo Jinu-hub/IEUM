@@ -123,7 +123,7 @@ const getSidebarData = (
           title: t("reports"),
           url: "#",
           disabled: true,
-          tooltip: commonT("soonMessage"),
+          tooltip: commonT("soon"),
         },
         /*
         {

@@ -18,7 +18,7 @@ import type { Route } from "./+types/mailer";
 
 import * as Sentry from "@sentry/node";
 import { data } from "react-router";
-import WelcomeEmail from "transactional-emails/emails/welcome";
+import WelcomeEmail from "transactional-emails/emails/welcome-user";
 
 import resendClient from "~/core/lib/resend-client.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
@@ -56,6 +56,12 @@ interface EmailMessage {
  * @returns A response with appropriate status code (200 for success, 401 for unauthorized)
  */
 export async function action({ request }: Route.LoaderArgs) {
+  /*
+  console.log("[cron] request received:", {
+    method: request.method,
+    auth: request.headers.get("Authorization"),
+  });
+  */
   // Security check: Verify this is a POST request with the correct secret
   if (
     request.method !== "POST" ||
@@ -65,37 +71,79 @@ export async function action({ request }: Route.LoaderArgs) {
   }
   
   // Pop a message from the Postgres message queue (PGMQ)
-  // Note: Using admin client is necessary to access the queue
-  const { data: message, error } = await adminClient
-    // @ts-expect-error - PGMQ types are not fully defined in the Supabase client
-    .schema("pgmq_public")
-    .rpc("pop", {
-      queue_name: "mailer", // Queue name in Postgres
-    });
-  
+  // Note: Using admin client is necessary to access the queue  
+  const { data: message, error } = await adminClient.rpc("pop_mailer");
+
   // Log any errors that occur when accessing the queue
   if (error) {
+    console.error("[cron] PGMQ error:", error);
     Sentry.captureException(
       error instanceof Error ? error : new Error(String(error)),
     );
+    return data(null, { status: 200 }); // Continue processing even if queue access fails
   }
-  
-  // Process the message if one was retrieved from the queue
+
+  // Log successful message retrieval for debugging
   if (message) {
-    // Extract email details from the message
-    const {
-      message: { to, data: emailData, template },
-    } = message as { message: EmailMessage };
+    console.log("[cron] Retrieved message:", JSON.stringify(message, null, 2));
+  }
+
+  // Process the message if one was retrieved from the queue
+  if (message && typeof message === "object") {
+    // Handle both direct message format and nested message format
+    let messageData: any;
     
+    if ("message" in message && typeof (message as any).message === "object") {
+      // Nested message format (from old pop_mailer)
+      messageData = (message as any).message;
+    } else {
+      // Direct message format (from new pop_mailer)
+      messageData = message;
+    }
+    
+    const { to, data: emailData, template } = messageData;
     // Process different email templates
     if (template === "welcome") {
-      // Send welcome email using the Resend client
+      // Extract username from raw_user_meta_data
+      // For email/phone auth: raw_user_meta_data.name
+      // For OAuth auth: raw_user_meta_data.full_name
+      const rawUserMetaData = (emailData as any)?.raw_user_meta_data;
+      const username = 
+        rawUserMetaData?.name || 
+        rawUserMetaData?.full_name || 
+        "user";
+      
+      // Extract locale from raw_user_meta_data, default to "ko"
+      // Supported locales: "en", "ja", "ko"
+      const locale = (rawUserMetaData?.locale || "ko") as "en" | "ja" | "ko";
+      
+      // Validate locale is supported
+      const validLocale = ["en", "ja", "ko"].includes(locale) ? locale : "ko";
+      
+      // Log for debugging if username fallback is used
+      if (!rawUserMetaData?.name && !rawUserMetaData?.full_name) {
+        console.log("[cron] Username not found in raw_user_meta_data, using fallback:", {
+          rawUserMetaData,
+          email: to,
+        });
+      }
+      
+      // Determine subject based on locale
+      const subjectByLocale = {
+        ko: "NexLetter에 오신 것을 환영합니다!",
+        en: "Welcome to NexLetter!",
+        ja: "NexLetterへようこそ！",
+      };
+      
       const { error } = await resendClient.emails.send({
         // Make sure this domain is the Resend domain.
-        from: "Supaplate <hello@supaplate.com>",
+        from: "LinkVerse <hello@mail.linkverse.app>",
         to: [to],
-        subject: "Welcome to Supaplate!",
-        react: WelcomeEmail({ profile: JSON.stringify(emailData, null, 2) }),
+        subject: subjectByLocale[validLocale],
+        react: WelcomeEmail({
+          username: username,
+          locale: validLocale,
+        }),
       });
       
       // Log any errors that occur during email sending

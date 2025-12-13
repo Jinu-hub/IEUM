@@ -36,6 +36,7 @@ import {
 import { Checkbox } from "~/core/components/ui/checkbox";
 import { Input } from "~/core/components/ui/input";
 import { Label } from "~/core/components/ui/label";
+import i18next from "~/core/lib/i18next.server";
 import makeServerClient from "~/core/lib/supa-client.server";
 
 import { NexHero } from "~/core/components/nex/nex-hero";
@@ -136,6 +137,14 @@ export async function action({ request }: Route.ActionArgs) {
     );
   }
 
+  // Get user's locale preference from request (cookie or Accept-Language header)
+  const locale = await i18next.getLocale(request);
+  // Validate locale is supported, default to "ko" if not
+  const supportedLocales = ["en", "ja", "ko"] as const;
+  const validLocale = supportedLocales.includes(locale as typeof supportedLocales[number]) 
+    ? (locale as typeof supportedLocales[number]) 
+    : "ko";
+
   // Create Supabase client and attempt to sign up the user
   const [client] = makeServerClient(request);
   const { error: signInError } = await client.auth.signUp({
@@ -146,6 +155,7 @@ export async function action({ request }: Route.ActionArgs) {
         name: validData.name,
         display_name: validData.name,
         marketing_consent: validData.marketing,
+        locale: validLocale, // Store user's locale preference for welcome email
       },
     },
   });

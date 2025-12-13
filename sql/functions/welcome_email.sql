@@ -8,7 +8,10 @@
  * The function constructs a JSON message containing:
  * - The email template to use ('welcome')
  * - The recipient's email address (from user metadata)
- * - User data to populate the email template
+ * - User data to populate the email template (includes raw_user_meta_data with locale if available)
+ * 
+ * Note: The email template supports multiple languages (ko, en, ja).
+ * Language is determined from raw_user_meta_data.locale, defaulting to "ko" if not set.
  * 
  * Security considerations:
  * - Uses SECURITY DEFINER to run with the privileges of the function owner

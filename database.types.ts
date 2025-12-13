@@ -1258,6 +1258,7 @@ export type Database = {
       }
     }
     Functions: {
+      pop_mailer: { Args: never; Returns: Json }
       secret_delete: { Args: { p_name: string }; Returns: undefined }
       secret_delete_by_ref: {
         Args: { p_credential_ref: string }
