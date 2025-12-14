@@ -188,6 +188,8 @@ const ko: Translation = {
   errors: {
     saveError: "저장 중 오류가 발생했습니다.",
     targetNameRequired: "타겟 이름을 입력해주세요.",
+    emailRequired: "이메일을 입력해주세요.",
+    invalidEmail: "올바른 이메일 형식이 아닙니다.",
   },
   searches: {
     searchMailList: "메일 리스트 검색...",
@@ -481,7 +483,7 @@ const ko: Translation = {
       addTarget: "새 타겟 추가",
       editTarget: "타겟 편집",
       description: "뉴스레터 발송 타겟의 설정을 구성하세요.",
-      soonSupportOtherCategory: "추후 다른 카테고리를 지원할 예정입니다",
+      soonSupportOtherCategory: "추후 다른 카테고리도 지원할 예정입니다",
       enterTargetName: "타겟 이름을 입력하세요",
       selectMailingList: "메일링 리스트를 선택하세요",
       memberMailStatus: "채널 멤버 메일 발송 여부",
@@ -525,7 +527,6 @@ const ko: Translation = {
     noMailLists: "메일 리스트가 없습니다",
     addFirstMailList: "첫 번째 메일 리스트를 추가해주세요",
     detail: {
-      targetNameRequired: "메일 리스트 이름을 입력해주세요.",
       confirmDeleteMember: "이 멤버를 삭제하시겠습니까?",
       confirmDeleteSelectedMembers: "선택한 {{count}}명의 멤버를 삭제하시겠습니까?",
       noMailListFound: "메일 리스트를 찾을 수 없습니다",

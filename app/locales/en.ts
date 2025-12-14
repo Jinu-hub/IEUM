@@ -189,6 +189,8 @@ const en: Translation = {
   errors: {
     saveError: "An error occurred while saving.",
     targetNameRequired: "Please enter a target name.",
+    emailRequired: "Please enter an email address.",
+    invalidEmail: "Please enter a valid email address.",
   },
   searches: {
     searchMailList: "Search mail list...",
@@ -482,7 +484,7 @@ const en: Translation = {
       addTarget: "Add new target",
       editTarget: "Edit target",
       description: "Configure the settings for newsletter send targets.",
-      soonSupportOtherCategory: "Support coming soon",
+      soonSupportOtherCategory: "Support other categories also will be added soon.",
       enterTargetName: "Enter target name",
       selectMailingList: "Select mailing list",
       memberMailStatus: "Member mail send status",
@@ -526,7 +528,6 @@ const en: Translation = {
     mailListMemberDeletedFailed: "Mail list member deleted failed",
     confirmDeleteMailList: "Are you sure you want to delete this mail list?",
     detail: {
-      targetNameRequired: "Please enter a target name.",
       confirmDeleteMember: "Are you sure you want to delete this member?",
       confirmDeleteSelectedMembers: "Are you sure you want to delete these {{count}} members?",
       noMailListFound: "No mail list found",

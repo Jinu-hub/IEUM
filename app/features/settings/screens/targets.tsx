@@ -180,6 +180,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                   variant="primary" 
                   leftIcon={<PlusIcon />}
                   onClick={handleAddTarget}
+                  className="cursor-pointer"
                 >
                   {t("addTarget")}
                 </NexButton>

@@ -157,7 +157,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
   const { t: commonT, i18n } = useTranslation("common", { keyPrefix: "common" });
   const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
   const { t: searchesT } = useTranslation("common", { keyPrefix: "searches" });
-  
+  const { t: errorsT } = useTranslation("common", { keyPrefix: "errors" });
   const navigate = useNavigate();
   const isNew = mailingList === null;
   const fetcher = useFetcher();
@@ -346,7 +346,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
       metaJson: JSON.stringify({ source: 'manual', tags: [] })
     };
 
-    const validationResult = mailListUserSchema.safeParse(validationData);
+    const validationResult = mailListUserSchema(errorsT).safeParse(validationData);
     if (!validationResult.success) {
       setEmailError(validationResult.error.issues[0].message);
       return;
@@ -715,6 +715,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                       variant="primary" 
                       leftIcon={<PlusIcon />}
                       onClick={() => setIsMemberDialogOpen(true)}
+                      className="cursor-pointer"
                     >
                       {commonT("addMember")}
                     </NexButton>

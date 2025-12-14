@@ -187,6 +187,8 @@ export type Translation = {
   errors: {
     saveError: string;
     targetNameRequired: string;
+    emailRequired: string;
+    invalidEmail: string;
   };
   searches: {
     searchMailList: string;
@@ -530,7 +532,6 @@ export type Translation = {
       memberAddBeforeMailListNameSave: string;
       selectedMemberCount: string;
       deleteSelectedMembers: string;
-      targetNameRequired: string;
       confirmDeleteMember: string;
       confirmDeleteSelectedMembers: string;
       noMailListFound: string;

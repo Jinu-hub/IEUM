@@ -189,6 +189,8 @@ const ja: Translation = {
   errors: {
     saveError: "保存中にエラーが発生しました。",
     targetNameRequired: "ターゲット名を入力してください。",
+    emailRequired: "メールアドレスを入力してください。",
+    invalidEmail: "有効なメールアドレスではありません。",
   },
   searches: {
     searchMailList: "メールリストを検索...",
@@ -482,7 +484,7 @@ const ja: Translation = {
       addTarget: "新しいターゲットを追加",
       editTarget: "ターゲットを編集",
       description: "ニュースレター送信ターゲットの設定を構成してください。",
-      soonSupportOtherCategory: "今後対応予定",
+      soonSupportOtherCategory: "今後他のカテゴリも対応する予定です",
       enterTargetName: "ターゲット名を入力してください",
       selectMailingList: "メールリストを選択してください",
       memberMailStatus: "メンバーメール送信状況",
@@ -532,7 +534,6 @@ const ja: Translation = {
       memberAddBeforeMailListNameSave: "メンバーを追加する前にメールリスト名を入力して保存してください。",
       selectedMemberCount: "{{count}}個のメンバーが選択されました",
       deleteSelectedMembers: "{{count}}個のメンバーを削除します。",
-      targetNameRequired: "ターゲット名を入力してください。",
       confirmDeleteMember: "このメンバーを削除してもよろしいですか？",
       confirmDeleteSelectedMembers: "これらの{{count}}個のメンバーを削除してもよろしいですか？",
       noMailListFound: "メールリストが見つかりません",

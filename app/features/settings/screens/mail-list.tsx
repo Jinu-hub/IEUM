@@ -179,6 +179,7 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
             variant="primary"
             leftIcon={<PlusIcon />}
             onClick={handleAddMailList}
+            className="cursor-pointer"
           >
             {t("addMailList")}
           </NexButton>
@@ -215,6 +216,7 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
                       variant="primary" 
                       leftIcon={<PlusIcon />}
                       onClick={handleAddMailList}
+                      className="cursor-pointer"
                     >
                       {t("addMailList")}
                     </NexButton>

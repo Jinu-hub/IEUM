@@ -153,15 +153,15 @@ export function getCategoryLabel(
 /**
  * Mail List User Schema
  */
-export const mailListUserSchema = z.object({
+export const mailListUserSchema = (errorsT: (key: string) => string) => z.object({ 
   workspaceId: z.string(),
   actionType: z.enum(['mailListMemberSave']),
   mailingListId: z.string(),
   email: z.string()
-  .min(1, "이메일을 입력해주세요")
+  .min(1, errorsT("emailRequired"))
   .refine(
     (email) => email.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
-    { message: "올바른 이메일 형식이 아닙니다" }
+    { message: errorsT("invalidEmail") }
   ),
   displayName: z.string().optional(),
   metaJson: z.string().optional(),

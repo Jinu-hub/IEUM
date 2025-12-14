@@ -166,6 +166,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   const { t } = useTranslation("common", { keyPrefix: "targets" });
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
+  const { t: errorsT } = useTranslation("common", { keyPrefix: "errors" });
   const { workspaceId, target, mailingLists, integrations, targetSources } = loaderData;
   const navigate = useNavigate();
   const submit = useSubmit();
@@ -308,7 +309,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     if (actionData && !isSubmitting && actionData !== processedActionData) {
       if (actionData.error || actionData.status === 'error') {
         // 에러 처리
-        toast.error(actionData.message || commonT("errors.saveError"));
+        toast.error(actionData.message || errorsT("saveError"));
         setIsSaving(false);
         setProcessedActionData(actionData); // 처리 완료 표시
       } else if (actionData.status === 'success') {
@@ -430,7 +431,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   const handleSave = () => {
     // 유효성 검사
     if (!formData.displayName?.trim()) {
-      alert(t("errors.targetNameRequired"));
+      alert(errorsT("targetNameRequired"));
       return;
     }
 
@@ -491,6 +492,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
               onClick={handleSave}
               loading={isSaving}
               disabled={isSaving}
+              className="cursor-pointer"
             >
               {isSaving ? commonT("saving") : commonT("save")}
             </NexButton>
@@ -993,6 +995,20 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
               </div>
             </NexCardContent>
           </NexCard>
+
+          {/* 保存ボタン */}
+          <div className="flex justify-center pt-4">
+            <NexButton
+              variant="primary"
+              size="lg"
+              onClick={handleSave}
+              loading={isSaving}
+              disabled={isSaving}
+              className="cursor-pointer min-w-[180px]"
+            >
+              {isSaving ? commonT("saving") : commonT("save")}
+            </NexButton>
+          </div>
         </div>
       </div>
     </div>
