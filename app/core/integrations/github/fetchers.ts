@@ -9,7 +9,7 @@ const userFetchLimit = pLimit(5);
 
 // throttling/retry 플러그인을 사용하므로 별도 sleep은 불필요
 
-async function fetchUserInfo(octokit: Octokit, username: string): Promise<UserInfo | null> {
+async function fetchUserInfo(octokit: Octokit, username: string, useRestApi: boolean = false): Promise<UserInfo | null> {
   if (userCache.has(username)) {
     return userCache.get(username)!;
   }
@@ -21,7 +21,11 @@ async function fetchUserInfo(octokit: Octokit, username: string): Promise<UserIn
 
   const pending = userFetchLimit(async () => {
     try {
-      const res = await octokit.users.getByUsername({ username });
+      const getUserMethod = useRestApi 
+        ? octokit.rest.users.getByUsername 
+        : octokit.users.getByUsername;
+      
+      const res = await getUserMethod({ username });
       if (res.data) {
         const userInfo: UserInfo = {
           login: res.data.login,
@@ -48,9 +52,14 @@ export async function fetchCommits(
   octokit: Octokit,
   repo: Repo,
   sinceISO: string,
-  untilISO: string
+  untilISO: string,
+  useRestApi: boolean = false
 ): Promise<CommitInfo[]> {
-  const commitsApi = await octokit.paginate(octokit.repos.listCommits, {
+  const listCommitsMethod = useRestApi 
+    ? octokit.rest.repos.listCommits 
+    : octokit.repos.listCommits;
+  
+  const commitsApi = await octokit.paginate(listCommitsMethod, {
     owner: repo.owner,
     repo: repo.name,
     since: sinceISO,
@@ -61,7 +70,7 @@ export async function fetchCommits(
   const commitInfos = await Promise.all(
     commitsApi.map(async (c: any): Promise<CommitInfo> => {
       const authorLogin = c.author?.login || c.commit?.author?.name || "unknown";
-      const userInfo = authorLogin !== "unknown" ? await fetchUserInfo(octokit, authorLogin) : null;
+      const userInfo = authorLogin !== "unknown" ? await fetchUserInfo(octokit, authorLogin, useRestApi) : null;
       return {
         sha: c.sha!,
         message: (c.commit?.message || "").split("\n")[0],
@@ -80,7 +89,8 @@ export async function fetchClosedPullRequests(
   octokit: Octokit,
   repo: Repo,
   sinceISO: string,
-  untilISO: string
+  untilISO: string,
+  useRestApi: boolean = false
 ): Promise<PRInfo[]> {
   const sinceDate = new Date(sinceISO);
   const untilDate = new Date(untilISO);
@@ -123,7 +133,7 @@ export async function fetchClosedPullRequests(
   const prInfos = await Promise.all(
     filteredPRs.map(async (pr: any): Promise<PRInfo> => {
       const userLogin = pr.user?.login || "unknown";
-      const userInfo = userLogin !== "unknown" ? await fetchUserInfo(octokit, userLogin) : null;
+      const userInfo = userLogin !== "unknown" ? await fetchUserInfo(octokit, userLogin, useRestApi) : null;
       return {
         number: pr.number!,
         title: pr.title!,
@@ -143,7 +153,8 @@ export async function fetchOpenedIssues(
   octokit: Octokit,
   repo: Repo,
   sinceISO: string,
-  untilISO: string
+  untilISO: string,
+  useRestApi: boolean = false
 ): Promise<IssueInfo[]> {
   const sinceDate = new Date(sinceISO);
   const untilDate = new Date(untilISO);
@@ -168,7 +179,7 @@ export async function fetchOpenedIssues(
   const openedIssues = await Promise.all(
     opened.map(async (issue: any): Promise<IssueInfo> => {
       const userLogin = issue.user?.login || "unknown";
-      const userInfo = userLogin !== "unknown" ? await fetchUserInfo(octokit, userLogin) : null;
+      const userInfo = userLogin !== "unknown" ? await fetchUserInfo(octokit, userLogin, useRestApi) : null;
       return {
         number: issue.number!,
         title: issue.title!,
@@ -189,7 +200,8 @@ export async function fetchClosedIssues(
   octokit: Octokit,
   repo: Repo,
   sinceISO: string,
-  untilISO: string
+  untilISO: string,
+  useRestApi: boolean = false
 ): Promise<IssueInfo[]> {
   const sinceDate = new Date(sinceISO);
   const untilDate = new Date(untilISO);
@@ -215,7 +227,7 @@ export async function fetchClosedIssues(
   const closedIssues = await Promise.all(
     closed.map(async (issue: any): Promise<IssueInfo> => {
       const userLogin = issue.user?.login || "unknown";
-      const userInfo = userLogin !== "unknown" ? await fetchUserInfo(octokit, userLogin) : null;
+      const userInfo = userLogin !== "unknown" ? await fetchUserInfo(octokit, userLogin, useRestApi) : null;
       return {
         number: issue.number!,
         title: issue.title!,

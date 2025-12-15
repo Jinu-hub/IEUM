@@ -1,6 +1,6 @@
 import { run } from "@openai/agents";
 import { logger } from "../lib/logger";
-import type { CreateContentsInput } from "../lib/types";
+import type { CreateContentsInput, EnableCreateContents } from "../lib/types";
 import { createConvertToHTMLAgent, createFinalContentsAgent } from "../openai/agents/reporting-agents";
 import type { SupportedLanguage } from "../openai/config/style-guide";
 import { CommonInput } from "../openai/models";
@@ -101,5 +101,24 @@ export async function convertToHTML(language: SupportedLanguage, sections: Divid
     });
     const result = await run(agent, JSON.stringify(inputData));
     logger.info('📝 Converting to HTML completed');
+    return result.finalOutput;
+}
+
+/**
+ * 최종 KPI 콘텐츠를 HTML로 변환(Convert to HTML Only KPI)
+ * @param language language
+ * @param finalContents final contents (markdown)
+ * @param enableCreateContents enable create contents
+ * @returns 
+ */
+export async function convertToHTMLOnlyKpi(language: SupportedLanguage, finalContents: string, enableCreateContents: EnableCreateContents) {
+    logger.info('📝 Converting to HTML Only KPI started');
+    const agent = createConvertToHTMLAgent(language, enableCreateContents);
+    const inputData = CommonInput.parse({
+        project: 'all',
+        contents: finalContents,
+    });
+    const result = await run(agent, JSON.stringify(inputData));
+    logger.info('📝 Converting to HTML Only KPI completed');
     return result.finalOutput;
 }

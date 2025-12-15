@@ -125,7 +125,7 @@ import {
       }
   
       // merged PRs
-      for (const pr of repo.mergedPRs ?? []) {
+      for (const pr of repo.closedPRs ?? []) {
         const refs: Reference[] = [];
   
         // "closes|fixes #num" 파싱 결과(ingestor가 넣었거나 여기서 추가로 잡음)

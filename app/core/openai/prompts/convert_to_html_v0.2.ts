@@ -352,7 +352,7 @@ Use the markdown content from the input \`sections\` object to generate the foll
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[Newsletter Title]</title>
+    <title>[Newsletter Title with date range — e.g., "Weekly Newsletter — 2025-12-8 ~ 2025-12-15" (en), "週次Newsletter — 2025-12-8 ~ 2025-12-15" (ja), "주간 뉴스레터 — 2025-12-8 ~ 2025-12-15" (ko)]</title>
     <style>
         [Include ALL CSS styles from section 1]
     </style>
@@ -361,9 +361,19 @@ Use the markdown content from the input \`sections\` object to generate the foll
     <div class="email-wrap">
         <div class="inner">
             <!-- Use sections.header → Convert to: 
+                 Extract the main title from markdown (usually # Title format).
+                 The title should include emoji and text (e.g., "Weekly Newsletter" (en), "週次Newsletter" (ja), "주간 뉴스레터" (ko)).
+                 Remove any date range or timeframe text from the title for <h1>.
+                 Extract date range separately for <h3 class="date">.
+                 
+                 Examples:
+                 - EN: "# Weekly Newsletter — 2025-12-8 ~ 2025-12-15" → <h1>Weekly Newsletter</h1> + <h3 class="date">2025-12-8 ~ 2025-12-15</h3>
+                 - JA: "# 👋 週次Newsletter — 2025-12-8 ~ 2025-12-15" → <h1>👋 週次Newsletter</h1> + <h3 class="date">2025-12-8 ~ 2025-12-15</h3>
+                 - KO: "# 주간 뉴스레터 — 2025-12-8 ~ 2025-12-15" → <h1>주간 뉴스레터</h1> + <h3 class="date">2025-12-8 ~ 2025-12-15</h3>
+                 
                  <div class="header">
-                   <h1>[Title with emoji only — strip any date range or timeframe text]</h1>
-                   <h3 class="date">[Date range]</h3>
+                   <h1>[Full title with emoji and text — date range removed]</h1>
+                   <h3 class="date">[Date range extracted separately]</h3>
                  </div>
             -->
             
@@ -471,6 +481,12 @@ Use the markdown content from the input \`sections\` object to generate the foll
 
 **Headers:**
 - \`# Title\` → \`<h1>\` (in header section)
+  - **Important for header section**: Extract the main title text (including emoji) from the markdown header, but remove any date range or timeframe text (e.g., "— 2025-12-8 ~ 2025-12-15", "~ 2025-12-15", etc.)
+  - The date range should be extracted separately and placed in \`<h3 class="date">\`
+  - Examples:
+    - EN: \`# Weekly Newsletter — 2025-12-8 ~ 2025-12-15\` → \`<h1>Weekly Newsletter</h1>\` + \`<h3 class="date">2025-12-8 ~ 2025-12-15</h3>\`
+    - JA: \`# 👋 週次Newsletter — 2025-12-8 ~ 2025-12-15\` → \`<h1>👋 週次Newsletter</h1>\` + \`<h3 class="date">2025-12-8 ~ 2025-12-15</h3>\`
+    - KO: \`# 주간 뉴스레터 — 2025-12-8 ~ 2025-12-15\` → \`<h1>주간 뉴스레터</h1>\` + \`<h3 class="date">2025-12-8 ~ 2025-12-15</h3>\`
 - \`## Section\` → \`<h2 class="section-title">\`
 - \`### Subsection\` → \`<h3>\`
 
@@ -492,20 +508,28 @@ Use the markdown content from the input \`sections\` object to generate the foll
 - Keep all emojis as Unicode characters
 
 **Progress Bars:**
-- When markdown contains progress percentage (e.g., "進捗率: 65%", "Progress: 65%", "진행률: 65%"):
+- When markdown contains progress percentage, extract and display it:
+  - EN: "Progress: 65%", "Progress Rate: 65%"
+  - JA: "進捗率: 65%", "進捗: 65%"
+  - KO: "진행률: 65%", "진행: 65%"
+- Example conversion:
 \`\`\`html
 <div class="nl-progress-bar">
     <div class="nl-progress-fill" style="width: 65%;"></div>
 </div>
 <div class="road-meta">[Progress label]: 65% — [Date label]: [Date]</div>
 \`\`\`
+- Examples of progress labels by language:
+  - EN: "Progress: 65% — Due Date: 2025-12-20"
+  - JA: "進捗率: 65% — 完了予定: 2025-12-20"
+  - KO: "진행률: 65% — 완료예정: 2025-12-20"
 - If no progress percentage in markdown, omit progress bar and show only date:
 \`\`\`html
 <div class="road-meta">[Date label]: [Date]</div>
 \`\`\`
 - Use \`nl-progress-bar\` for container, \`nl-progress-fill\` for fill
 - Always include progress percentage text in \`road-meta\` when progress bar exists
-- Keep original language labels from markdown (進捗率/Progress/진행률, 完了予定/Due Date/완료예정, etc.)
+- Keep original language labels from markdown (Progress/進捗率/진행률, Due Date/完了予定/완료예정, etc.)
 - Set width as inline style for email client compatibility
 
 ## 🌐 Language Support

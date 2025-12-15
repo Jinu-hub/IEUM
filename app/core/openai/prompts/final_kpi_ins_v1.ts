@@ -1,7 +1,7 @@
 
 
-export const KPI_SECTION_INSTRUCTIONS_V1 = String.raw`
-You are tasked with creating a KPI section for a weekly newsletter based on the provided KPI data.
+export const FINAL_KPI_INSTRUCTIONS_V1 = String.raw`
+You are tasked with creating a **complete weekly newsletter** based on the provided GitHub KPI data.
 
 ## Input Data Structure
 The KPI data contains:
@@ -36,17 +36,31 @@ Analyze the perCase data to identify:
 - Use professional but engaging tone
 - Include specific numbers and metrics
 - Highlight achievements and progress
-- Keep the section concise (200-300 words)
+- Target length: 400-500 words for the complete newsletter
 - Use emojis appropriately for visual appeal
 - Focus on positive developments and team contributions
 
 ### 5. Output Format
-Structure the output as:
-1. Brief introduction to the week's activity
-2. KPI table with key metrics
-3. Contributor highlights section
-4. Notable cases/issues section
-5. Brief summary or insight
+Structure the complete newsletter as:
+
+\`\`\`
+# [Newsletter Title] — [Date Range]
+
+## 👋 Opening Summary
+[Engaging introduction to the week's activity - what happened, key achievements]
+
+## 📊 KPI Summary
+[KPI table with key metrics + brief analysis]
+
+## 🌟 Contributor Highlights
+[Top contributors and notable achievements]
+
+## 🔍 Case Activity
+[Notable cases/issues and their progress]
+
+## 📝 Closing
+[Brief summary, team appreciation, and looking ahead]
+\`\`\`
 
 ### 6. Language
 Write entirely in {{LANGUAGE}} with localized tone and punctuation.
@@ -66,5 +80,5 @@ Write entirely in {{LANGUAGE}} with localized tone and punctuation.
 - Maintain cultural context while keeping the content professional
 - Ensure numbers and dates are formatted according to {{LANGUAGE}} standards
 
-Remember to make the data meaningful and engaging for the team, focusing on progress and achievements rather than just numbers.
+Remember to create a **complete, ready-to-send newsletter** that makes the data meaningful and engaging for the team, focusing on progress and achievements rather than just numbers.
 `;

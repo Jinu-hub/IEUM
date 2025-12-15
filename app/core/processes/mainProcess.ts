@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { CreateContentsInput } from "~/core/lib/types";
+import type { CreateContentsInput, EnableCreateContents } from "~/core/lib/types";
 import { saveHighlight, updateNewsletterRunStep } from "~/features/contents/db/mutations";
 import { getUniquePeriodKey } from "~/features/contents/db/queries";
 import { logger } from "../lib/logger";
@@ -25,7 +25,7 @@ import {
     createTopicsSection,
 } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
-import { convertToHTML, createFinalContents, divideContents } from "./reporting-data";
+import { convertToHTML, convertToHTMLOnlyKpi, createFinalContents, divideContents } from "./reporting-data";
 import { createChatroomHighlightMetaJson, createGithubHighlightMetaJson, generatePeriodKey } from "./utils";
 
 /**
@@ -231,7 +231,7 @@ export async function mergeContents(input: CreateContentsInput,
     topicsSection: string, memberSection: string, 
     ongoingSection: string, closingSection: string) {
         
-    const isOnlyKpi = kpiSection && !highlightsSection && !topicsSection && !memberSection && !ongoingSection && !closingSection;
+    const isOnlyKpi = input.enableCreateContents?.github && !input.enableCreateContents?.slack;
 
     if (isOnlyKpi) {
         return kpiSection;
@@ -246,7 +246,9 @@ export async function mergeContents(input: CreateContentsInput,
         mainTemplate = mainTemplate.replace('{{ONGOING_SECTION}}', ongoingSection);
 
         baseTemplate = baseTemplate.replace('{{PERIOD}}', input.range);
-        baseTemplate = baseTemplate.replace('{{KPI_SECTION}}', kpiSection);
+        if (input.enableCreateContents?.github) {
+            baseTemplate = baseTemplate.replace('{{KPI_SECTION}}', kpiSection);
+        }
         baseTemplate = baseTemplate.replace('{{MAIN_SECTION}}', mainTemplate);
         baseTemplate = baseTemplate.replace('{{CLOSING_SECTION}}', closingSection);
 
@@ -263,10 +265,18 @@ export async function mergeContents(input: CreateContentsInput,
 export async function generateFinalContents(input: CreateContentsInput, mergedContents: string) {
     logger.info('📝 Generating final contents started');
     const finalContents = await createFinalContents(input, mergedContents);
-    const sections = await divideContents(finalContents as string);
-    const htmlContents = await convertToHTML(input.language, sections);
-    logger.info('📝 Generating final contents completed');
-    return { finalContents, htmlContents };
+    const isOnlyKpi = input.enableCreateContents?.github && !input.enableCreateContents?.slack;
+    if (isOnlyKpi) {
+        const htmlContents = await convertToHTMLOnlyKpi(input.language, finalContents as string, 
+            input.enableCreateContents as EnableCreateContents);
+        logger.info('📝 Generating final contents completed');
+        return { finalContents, htmlContents };
+    } else {
+        const sections = await divideContents(finalContents as string);
+        const htmlContents = await convertToHTML(input.language, sections);
+        logger.info('📝 Generating final contents completed');
+        return { finalContents, htmlContents };
+    }
 }
 
 export async function generateContents(input: CreateContentsInput) {

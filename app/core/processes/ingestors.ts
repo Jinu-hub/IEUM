@@ -47,10 +47,10 @@ function sanitizeRepoIdentity(repo: FetchedRepoData["repo"]) {
 function sanitizeRepoBlock(r: FetchedRepoData): FetchedRepoData {
   const repo = sanitizeRepoIdentity(r.repo);
   const commits = Array.isArray(r.commits) ? r.commits : [];
-  const mergedPRs = Array.isArray(r.mergedPRs) ? r.mergedPRs : [];
+  const closedPRs = Array.isArray(r.closedPRs) ? r.closedPRs : [];
   const openedIssues = Array.isArray(r.openedIssues) ? r.openedIssues : [];
   const closedIssues = Array.isArray(r.closedIssues) ? r.closedIssues : [];
-  return { repo, commits, mergedPRs, openedIssues, closedIssues };
+  return { repo, commits, closedPRs, openedIssues, closedIssues };
 }
 
 export async function githubIngestor(
@@ -73,7 +73,7 @@ export async function githubIngestor(
       byRepo.set(repoKey, {
         repo: r.repo,
         commits: dedupeBy(r.commits, commitKey),
-        mergedPRs: dedupeBy(r.mergedPRs, prKey),
+        closedPRs: dedupeBy(r.closedPRs, prKey),
         openedIssues: dedupeBy(r.openedIssues, issueKey),
         closedIssues: dedupeBy(r.closedIssues, issueKey),
       });
@@ -81,7 +81,7 @@ export async function githubIngestor(
       const merged: FetchedRepoData = {
         repo: prev.repo,
         commits: dedupeBy([...prev.commits, ...r.commits], commitKey),
-        mergedPRs: dedupeBy([...prev.mergedPRs, ...r.mergedPRs], prKey),
+        closedPRs: dedupeBy([...prev.closedPRs, ...r.closedPRs], prKey),
         openedIssues: dedupeBy([...prev.openedIssues, ...r.openedIssues], issueKey),
         closedIssues: dedupeBy([...prev.closedIssues, ...r.closedIssues], issueKey),
       };

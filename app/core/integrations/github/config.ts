@@ -1,7 +1,8 @@
 import type { Repo } from "./types";
 
 export type GithubConfig = {
-  token: string;
+  token?: string;
+  installationId?: string;
   days: number;
   targetRepos: Repo[];
   outDir: string;
@@ -22,7 +23,8 @@ export function parseRepos(envValue: string | undefined): Repo[] {
 }
 
 type ConfigOverrides = Partial<{
-  token: string;
+  token?: string;
+  installationId?: string;
   days: number;
   outDir: string;
   repos: string; // comma separated owner/name
@@ -34,8 +36,11 @@ export function getGithubConfig(
   overrides: ConfigOverrides = {}
 ): GithubConfig {
   const token = overrides.token ?? env.GITHUB_TOKEN;
-  if (!token) {
-    throw new Error("Missing GITHUB_TOKEN");
+  const installationId = overrides.installationId ?? env.GITHUB_INSTALLATION_ID;
+  
+  // tokenまたはinstallationIdのいずれかが必要
+  if (!token && !installationId) {
+    throw new Error("Missing GITHUB_TOKEN or GITHUB_INSTALLATION_ID");
   }
 
   const daysRaw = overrides.days ?? env.FETCH_DAYS ?? "7";
@@ -49,7 +54,7 @@ export function getGithubConfig(
     : parseRepos(overrides.repos ?? env.GITHUB_REPOS);
   const outDir = overrides.outDir ?? (env.OUT_DIR || "output");
 
-  return { token, days, targetRepos, outDir };
+  return { token, installationId, days, targetRepos, outDir };
 }
 
 

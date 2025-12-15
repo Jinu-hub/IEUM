@@ -3,6 +3,12 @@ import type { FetchedRepoData } from "~/core/integrations/github/types";
 import type { FetchedMessage } from "~/core/integrations/slack/types";
 import type { Cluster } from "../openai/models";
 
+export type EnableCreateContents = {
+  slack : boolean;
+  github : boolean;
+  discord : boolean;
+}
+
 /**
  * コンテンツ生成用のデータ型
  */
@@ -20,6 +26,7 @@ export type CreateContentsInput = {
   language: 'en' | 'ko' | 'ja';
   source: string;
   timezone?: string;
+  enableCreateContents?: EnableCreateContents;
 };
 
 /** 파이프라인 공용 루트 문서 */
