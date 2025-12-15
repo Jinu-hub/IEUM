@@ -19,9 +19,10 @@ import { bundleMDX } from "mdx-bundler";
 import { getMDXComponent } from "mdx-bundler/client";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { Link, data } from "react-router";
+import { data, useNavigate } from "react-router";
 import i18next from "~/core/lib/i18next.server";
 
+import { useTranslation } from "react-i18next";
 import {
   TypographyBlockquote,
   TypographyH1,
@@ -186,14 +187,14 @@ export default function Policy({
 }: Route.ComponentProps) {
   // Convert the compiled MDX code into a React component
   const MDXContent = getMDXComponent(code);
+  const navigate = useNavigate();
+  const { t } = useTranslation("common", { keyPrefix: "common" });
   
   return (
     <div className="mx-auto w-full max-w-screen-xl space-y-10 px-5 py-10 md:px-10 md:py-20">
-      {/* Navigation button to return to home page */}
-      <Button variant="outline" asChild>
-        <Link to="/" viewTransition>
-          &larr; Go home
-        </Link>
+      {/* Navigation button to go back */}
+      <Button variant="outline" onClick={() => navigate(-1)}>
+        &larr; {t("back")}
       </Button>
       
       {/* MDX content container */}
