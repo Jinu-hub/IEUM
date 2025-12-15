@@ -43,6 +43,7 @@ export interface NexFooterProps extends React.HTMLAttributes<HTMLElement> {
     }[];
   };
   variant?: 'default' | 'minimal' | 'rich';
+  actions?: React.ReactNode;
 }
 
 const getSocialIcon = (platform: string, customIcon?: React.ReactNode) => {
@@ -71,6 +72,7 @@ export const NexFooter: React.FC<NexFooterProps> = ({
   newsletter,
   legal,
   variant = 'default',
+  actions,
   className,
   ...props
 }) => {
@@ -93,43 +95,54 @@ export const NexFooter: React.FC<NexFooterProps> = ({
     return (
       <footer className={footerStyles} {...props}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            {/* Brand */}
-            {brand && (
-              <div className="flex items-center space-x-2">
-                {brand.logo}
-                {brand.name && (
-                  <span className="text-lg font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
-                    {brand.name}
-                  </span>
-                )}
-              </div>
-            )}
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+              {/* Brand */}
+              {brand && (
+                <div className="flex items-center space-x-2">
+                  {brand.logo}
+                  {brand.name && (
+                    <span className="text-lg font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
+                      {brand.name}
+                    </span>
+                  )}
+                </div>
+              )}
 
-            {/* Social Links */}
-            {social.length > 0 && (
-              <div className="flex items-center space-x-4">
-                {social.map((item, index) => (
-                  <a
-                    key={index}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#8B92B5] dark:text-[#6C6F7E] hover:text-[#5E6AD2] dark:hover:text-[#7C89F9] transition-colors"
-                    aria-label={item.label || item.platform}
-                  >
-                    {getSocialIcon(item.platform, item.icon)}
-                  </a>
-                ))}
-              </div>
-            )}
+              {/* Social Links */}
+              {social.length > 0 && (
+                <div className="flex items-center space-x-4">
+                  {social.map((item, index) => (
+                    <a
+                      key={index}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#8B92B5] dark:text-[#6C6F7E] hover:text-[#5E6AD2] dark:hover:text-[#7C89F9] transition-colors"
+                      aria-label={item.label || item.platform}
+                    >
+                      {getSocialIcon(item.platform, item.icon)}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {/* Copyright */}
-            {legal?.copyright && (
-              <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
-                {legal.copyright}
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              {/* Copyright */}
+              {legal?.copyright && (
+                <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
+                  {legal.copyright}
+                </div>
+              )}
+
+              {/* Actions (e.g. theme / language switchers) */}
+              {actions && (
+                <div className="flex items-center gap-3 border-l border-[#E1E4E8] dark:border-[#2C2D30] pl-4">
+                  {actions}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </footer>
@@ -254,26 +267,35 @@ export const NexFooter: React.FC<NexFooterProps> = ({
 
         {/* Bottom Section */}
         <div className="border-t border-[#E1E4E8] dark:border-[#2C2D30] py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            {/* Copyright */}
-            {legal?.copyright && (
-              <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
-                {legal.copyright}
-              </div>
-            )}
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Copyright */}
+              {legal?.copyright && (
+                <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
+                  {legal.copyright}
+                </div>
+              )}
 
-            {/* Legal Links */}
-            {legal?.links && legal.links.length > 0 && (
-              <div className="flex items-center space-x-6">
-                {legal.links.map((item, index) => (
-                  <a
-                    key={index}
-                    href={item.href}
-                    className="text-sm text-[#8B92B5] dark:text-[#6C6F7E] hover:text-[#5E6AD2] dark:hover:text-[#7C89F9] transition-colors"
-                  >
-                    {item.label}
-                  </a>
-                ))}
+              {/* Legal Links */}
+              {legal?.links && legal.links.length > 0 && (
+                <div className="flex flex-wrap items-center gap-4">
+                  {legal.links.map((item, index) => (
+                    <a
+                      key={index}
+                      href={item.href}
+                      className="text-sm text-[#8B92B5] dark:text-[#6C6F7E] hover:text-[#5E6AD2] dark:hover:text-[#7C89F9] transition-colors"
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Actions (e.g. theme / language switchers) */}
+            {actions && (
+              <div className="flex items-center gap-3 border-l border-[#E1E4E8] dark:border-[#2C2D30] pl-4">
+                {actions}
               </div>
             )}
           </div>

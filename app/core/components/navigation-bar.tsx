@@ -172,7 +172,7 @@ function AuthButtons() {
  * 
  * @returns Fragment containing settings dropdown, theme switcher, and language switcher
  */
-function Actions() {
+export function Actions() {
   return (
     <>
       {/* Settings/debug dropdown menu */}

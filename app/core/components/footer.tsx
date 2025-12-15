@@ -13,11 +13,9 @@
  * - Company branding and information
  * - Legal compliance links
  */
-import {
-  Mail,
-  MessageSquare,
-} from "lucide-react";
+import { Mail, MessageSquare } from "lucide-react";
 import { GitHubIcon, NexFooter, SlackIcon } from "~/core/components/nex";
+import { Actions } from "./navigation-bar";
 
 /**
  * Newsletter System Footer Component
@@ -116,6 +114,10 @@ export default function Footer() {
       }}
       links={footerLinks}
       social={socialLinks}
+      legal={{
+        copyright: "© 2026 LinkVerse. All rights reserved.",
+      }}
+      actions={<Actions />}
       /*
       newsletter={{
         title: "뉴스레터 구독",
