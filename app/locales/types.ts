@@ -559,4 +559,188 @@ export type Translation = {
       previewEmailDescription: string;
     };
   };
+  faq: {
+    title: string;
+    subtitle: string;
+    description: string;
+    heroDescription: string;
+    contactButton: string;
+    startTrialButton: string;
+    quickStats: {
+      fastResponse: {
+        value: string;
+        label: string;
+        description: string;
+      };
+      realQuestions: {
+        value: string;
+        label: string;
+        description: string;
+      };
+      earlyUsers: {
+        value: string;
+        label: string;
+        description: string;
+      };
+    };
+    categoryBadge: string;
+    categoryTitle: string;
+    categoryDescription: string;
+    questionsCount: string;
+    recommendedResources: {
+      title: string;
+      description: string;
+      links: {
+        pricing: {
+          title: string;
+          description: string;
+        };
+        security: {
+          title: string;
+          description: string;
+        };
+        samples: {
+          title: string;
+          description: string;
+        };
+      };
+    };
+    cta: {
+      badge: string;
+      title: string;
+      description: string;
+      startButton: string;
+      contactButton: string;
+    };
+    categories: {
+      onboarding: {
+        name: string;
+        description: string;
+        questions: {
+          service: {
+            question: string;
+            answer: string;
+          };
+          trial: {
+            question: string;
+            answer: string;
+          };
+          duration: {
+            question: string;
+            answer: string;
+          };
+          usage: {
+            question: string;
+            answer: string;
+          };
+        };
+      };
+      integration: {
+        name: string;
+        description: string;
+        questions: {
+          dataCollection: {
+            question: string;
+            answer: string;
+          };
+          dataStorage: {
+            question: string;
+            answer: string;
+          };
+          sensitiveData: {
+            question: string;
+            answer: string;
+          };
+        };
+      };
+      ai: {
+        name: string;
+        description: string;
+        questions: {
+          summary: {
+            question: string;
+            answer: string;
+          };
+          delivery: {
+            question: string;
+            answer: string;
+          };
+          dashboard: {
+            question: string;
+            answer: string;
+          };
+        };
+      };
+      security: {
+        name: string;
+        description: string;
+        questions: {
+          protection: {
+            question: string;
+            answer: string;
+          };
+          externalTransfer: {
+            question: string;
+            answer: string;
+          };
+        };
+      };
+      pricing: {
+        name: string;
+        description: string;
+        questions: {
+          plans: {
+            question: string;
+            answer: string;
+          };
+          recipients: {
+            question: string;
+            answer: string;
+          };
+        };
+      };
+      automation: {
+        name: string;
+        description: string;
+        questions: {
+          schedule: {
+            question: string;
+            answer: string;
+          };
+          filtering: {
+            question: string;
+            answer: string;
+          };
+        };
+      };
+      support: {
+        name: string;
+        description: string;
+        questions: {
+          help: {
+            question: string;
+            answer: string;
+          };
+          feedback: {
+            question: string;
+            answer: string;
+          };
+        };
+      };
+      advanced: {
+        name: string;
+        description: string;
+        questions: {
+          dataSources: {
+            question: string;
+            answer: string;
+          };
+          features: {
+            question: string;
+            answer: string;
+          };
+        };
+      };
+    };
+  };
 };

@@ -561,6 +561,190 @@ const en: Translation = {
       previewEmailDescription: "Click the button to preview the email or check the HTML code.",
     },
   },
+  faq: {
+    title: "Frequently Asked Questions",
+    subtitle: "Quickly resolve questions about adoption, security, and billing.",
+    description: "Check the most frequently asked questions before adoption in one place.",
+    heroDescription: "We've categorized information to help you quickly find what you need based on team size, security policies, and billing methods. If you still can't find an answer, we'll respond within 2 hours.",
+    contactButton: "Contact Us",
+    startTrialButton: "Start Free Trial",
+    quickStats: {
+      fastResponse: {
+        value: "Fast Response",
+        label: "All inquiries are checked by humans",
+        description: "Average response target: within 2 hours",
+      },
+      realQuestions: {
+        value: "Real Question-Based FAQ",
+        label: "Continuously updated based on actual inquiries, not documentation FAQs",
+        description: "",
+      },
+      earlyUsers: {
+        value: "Improve with Early Users",
+        label: "Feedback is immediately reflected in the product",
+        description: "",
+      },
+    },
+    categoryBadge: "FAQ by Category",
+    categoryTitle: "Find the answers you need right away",
+    categoryDescription: "We've categorized {{count}} of the latest questions.",
+    questionsCount: "questions",
+    recommendedResources: {
+      title: "Recommended Resources",
+      description: "Prepare for faster adoption with in-depth materials and guides.",
+      links: {
+        pricing: {
+          title: "View Pricing Details",
+          description: "Compare plans that fit your team size and estimate your budget.",
+        },
+        security: {
+          title: "View Security & Data Processing Details",
+          description: "Check security policies, encryption, permission models, and AI data protection guides.",
+        },
+        samples: {
+          title: "View Actual Newsletter Examples",
+          description: "Check samples of newsletters that are actually sent.",
+        },
+      },
+    },
+    cta: {
+      badge: "Average onboarding within 1 hour",
+      title: "Get started quickly with an onboarding session within 1 hour.",
+      description: "We'll set up only the essentials together, without complicated configurations.",
+      startButton: "Get Started",
+      contactButton: "Contact Us",
+    },
+    categories: {
+      onboarding: {
+        name: "Getting Started & Onboarding",
+        description: "Guidance on adopting NexLetter and setting up the initial environment.",
+        questions: {
+          service: {
+            question: "What does NexLetter do?",
+            answer: "NexLetter is an AI-based internal and external newsletter automation platform that automatically collects and organizes team activity data from GitHub, Slack, etc.,<br />and automatically generates weekly engineering reports, highlights, and KPI summaries.<br />Administrators only need minimal setup, and after that, the system and AI agents operate automatically.",
+          },
+          trial: {
+            question: "What is the free trial period?",
+            answer: "Yes. A 4-week free trial is provided by default.<br />In the free trial, you can receive up to 4 weekly newsletters.<br />After the 4-week trial ends, if you want to continue using it, you can choose the Starter plan.",
+          },
+          duration: {
+            question: "How long does the onboarding process take?",
+            answer: "Standard onboarding consists of 3 sessions (integration setup, mailing list setup, target setup).<br />It is completed within an average of 1 hour, and may finish faster depending on the team environment.",
+          },
+          usage: {
+            question: "Can it be used by teams other than development?",
+            answer: "At this point, we provide newsletters based on engineering activities.<br />We are preparing to expand to analyze various organizational activities such as product/design/data teams in the future.",
+          },
+        },
+      },
+      integration: {
+        name: "Integration & Data Collection",
+        description: "Guidance on connecting with external services such as GitHub and Slack and how data is collected.",
+        questions: {
+          dataCollection: {
+            question: "How is GitHub and Slack data collected?",
+            answer: "We collect key activities such as commits, PRs, issues, threads, and reactions in real-time by delegating permissions through GitHub App and Slack Bot OAuth.<br />We do not require personal Access Tokens and read data in a secure manner.",
+          },
+          dataStorage: {
+            question: "What data is stored?",
+            answer: "Commit/PR metadata, issue status changes, Slack thread content, team activity metrics (KPI), AI-generated summaries and highlights, etc. are stored.<br />All data is isolated by Workspace.",
+          },
+          sensitiveData: {
+            question: "Is sensitive code or private documents stored?",
+            answer: "No. NexLetter does not store the entire original code and only collects summary metadata provided by GitHub, Slack, etc.<br />Sensitive text is automatically filtered and processed.",
+          },
+        },
+      },
+      ai: {
+        name: "AI-Generated Content & Newsletter",
+        description: "Guidance on how AI generates reports and newsletter-related settings.",
+        questions: {
+          summary: {
+            question: "How does AI generate summaries?",
+            answer: "Collected data goes through a pipeline of deduplication → document linking → topic clustering → highlight extraction → KPI calculation → team-specific content generation.<br />All processes are automatically handled by NexLetter's dedicated OpenAI Agent.<br /><br />As a result, it turns a team's week of activities into a story that's easy for humans to read.",
+          },
+          delivery: {
+            question: "How are newsletters delivered?",
+            answer: "We provide HTML emails by default.<br />We plan to support various outputs such as dashboards, widgets, and API endpoints in the future.",
+          },
+          dashboard: {
+            question: "What about the dashboard viewer?",
+            answer: "The dashboard viewer is a viewer that allows you to visually check generated highlights, KPIs, progress, etc.<br />We plan to provide more diverse viewers in the future.",
+          },
+        },
+      },
+      security: {
+        name: "Security & Privacy",
+        description: "Guidance on NexLetter's data protection policies and security structure.",
+        questions: {
+          protection: {
+            question: "How does NexLetter protect data?",
+            answer: "We protect data through Supabase Row Level Security, JWT-based access control, data encryption, and Vault-based API Key storage.<br />We have adopted a strong isolation structure by Workspace.",
+          },
+          externalTransfer: {
+            question: "Is sensitive information transferred externally?",
+            answer: "All external transfers, including the OpenAI API, are encrypted and not used for training data.<br />Sensitive text is automatically filtered and processed.",
+          },
+        },
+      },
+      pricing: {
+        name: "Pricing & Plans",
+        description: "Explanation of pricing structure and features provided by plan.",
+        questions: {
+          plans: {
+            question: "How are the pricing plans structured?",
+            answer: "It consists of Free Trial, Starter, and Pro plans.<br />The Pro plan will be available in the future.",
+          },
+          recipients: {
+            question: "Is there a limit on the number of recipients?",
+            answer: "The sending frequency and the number of recipients allowed are set by plan.<br />If the number of recipients exceeds the plan limit, newsletters will not be sent to the excess recipients,<br />and the sending results can be checked on the sent mail detail screen.",
+          },
+        },
+      },
+      automation: {
+        name: "Operations Automation",
+        description: "Guidance on how to automate newsletter generation and sending schedules.",
+        questions: {
+          schedule: {
+            question: "Can I automatically set when newsletters are sent?",
+            answer: "Yes. At this point, we automatically generate and send weekly newsletters by default.<br />The sending time can be set per target.<br />We plan to support monthly newsletters in the future.",
+          },
+          filtering: {
+            question: "Can I create reports for specific teams or projects only?",
+            answer: "Yes. We support detailed filter settings such as specific GitHub Repositories and Slack Channels per target.<br />At this point, you can set 1 GitHub Repository and 3 Slack Channels per target.<br />(Example) target1 ==> gitrepo: nexletter-dev, slackchannel: (@nexletter-dev, @nexletter-test, @nexletter-prod)<br />We plan to support more diverse filtering conditions in the future.",
+          },
+        },
+      },
+      support: {
+        name: "Customer Support & Technical Support",
+        description: "Support guidance provided when you need help while using NexLetter.",
+        questions: {
+          help: {
+            question: "Can I get help if initial setup is difficult?",
+            answer: "After signing up, an onboarding session begins, and you can get help with initial setup.<br />For other inquiries, please contact us and we will respond within an average of 2 hours.",
+          },
+          feedback: {
+            question: "Where do I submit feature requests or bug reports?",
+            answer: "You can report them via email (support@nexletter.app) or through the Contact page in the product.",
+          },
+        },
+      },
+      advanced: {
+        name: "Advanced Features",
+        description: "Guidance on advanced features or features to be provided in the future.",
+        questions: {
+          dataSources: {
+            question: "What data sources are planned to be added in the future?",
+            answer: "We plan to add Discord first.<br />More diverse data sources will be added in the future.",
+          },
+          features: {
+            question: "What features are planned to be added in the future?",
+            answer: "Multi-workspace, template-based customization, AI agent output story tone customization, integrated report viewer provision, etc. are planned.",
+          },
+        },
+      },
+    },
+  },
 };
 
 export default en;

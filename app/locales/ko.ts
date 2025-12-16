@@ -560,6 +560,190 @@ const ko: Translation = {
       previewEmailDescription: "버튼을 클릭하여 이메일을 확인 하거나 HTML 코드를 확인 하세요",
     },
   },
+  faq: {
+    title: "자주 묻는 질문",
+    subtitle: "도입·보안·청구 관련 궁금증을 빠르게 해결하세요.",
+    description: "도입 전에 가장 자주 묻는 질문들을 한 곳에서 확인하세요.",
+    heroDescription: "팀 규모, 보안 정책, 청구 방식에 따라 필요한 정보를 빠르게 찾을 수 있도록 분류했습니다. 그래도 답을 못 찾았다면 2시간 이내에 답변해 드릴게요.",
+    contactButton: "문의하기",
+    startTrialButton: "무료 체험 시작하기",
+    quickStats: {
+      fastResponse: {
+        value: "빠른 응답",
+        label: "모든 문의는 사람이 직접 확인합니다",
+        description: "평균 응답 목표: 2시간 이내",
+      },
+      realQuestions: {
+        value: "실제 질문 기반 FAQ",
+        label: "문서용 FAQ가 아닌 실제 문의를 기반으로 계속 업데이트합니다",
+        description: "",
+      },
+      earlyUsers: {
+        value: "초기 사용자와 함께 개선",
+        label: "피드백을 제품에 바로 반영합니다",
+        description: "",
+      },
+    },
+    categoryBadge: "카테고리별 FAQ",
+    categoryTitle: "필요한 답변을 바로 찾으세요",
+    categoryDescription: "총 {{count}}개의 최신 질문을 분류해 두었습니다.",
+    questionsCount: "개 질문",
+    recommendedResources: {
+      title: "추천 리소스",
+      description: "심화 자료와 가이드로 더 빠르게 도입을 준비하세요.",
+      links: {
+        pricing: {
+          title: "요금제 자세히 보기",
+          description: "팀 규모에 맞는 플랜을 비교하고 예산을 산정하세요.",
+        },
+        security: {
+          title: "보안·데이터 처리 상세 보기",
+          description: "보안 정책, 암호화, 권한 모델, AI 데이터 보호 가이드를 확인하세요.",
+        },
+        samples: {
+          title: "실제 뉴스레터 예시 확인",
+          description: "실제로 발송되는 뉴스레터 샘플을 확인하세요.",
+        },
+      },
+    },
+    cta: {
+      badge: "평균 1시간 이내 온보딩",
+      title: "1시간 이내의 온보딩 세션을 통해 빠르게 시작해보세요.",
+      description: "복잡한 설정 없이, 핵심만 함께 설정합니다.",
+      startButton: "시작하기",
+      contactButton: "문의하기",
+    },
+    categories: {
+      onboarding: {
+        name: "시작하기 & 온보딩",
+        description: "NexLetter를 도입하고 초기 환경을 구축하는 과정에 대한 안내입니다.",
+        questions: {
+          service: {
+            question: "NexLetter는 무엇을 하는 서비스인가요?",
+            answer: "NexLetter는 GitHub·Slack 등 팀의 활동 데이터를 자동으로 수집·정리하여<br />주간 엔지니어링 리포트, 하이라이트, KPI 요약을 자동 생성하는 AI 기반 내·외부 뉴스레터 자동화 플랫폼입니다. <br />관리자는 최소한의 설정만 하면 그 이후는 시스템과 AI 에이전트가 자동으로 운영합니다.",
+          },
+          trial: {
+            question: "무료 체험 기간은 어떻게 되나요?",
+            answer: "네. 기본적으로 4주 무료 체험이 제공됩니다. <br />무료 체험에서는 주간 뉴스레터를 최대 4회까지 받아보실 수 있습니다. <br />4주간의 체험이 끝난 뒤, 계속 이용을 원하시면 Starter 플랜을 선택하시면 됩니다.",
+          },
+          duration: {
+            question: "온보딩 과정은 얼마나 걸리나요?",
+            answer: "표준 온보딩은 3개의 세션(통합 설정, 메일링 리스트 설정, 타깃 설정)으로 구성됩니다. <br />평균 1시간 이내에 완료되며, 팀 환경에 따라 더 빠르게 끝날 수도 있습니다.",
+          },
+          usage: {
+            question: "개발팀 외에도 사용할 수 있나요?",
+            answer: "현 시점에는 엔지니어링 활동 기반 뉴스레터를 제공하고 있습니다. <br />추후 프로덕트/디자인/데이터 팀 등 다양한 조직 활동도 분석할 수 있도록 확장 준비 중입니다.",
+          },
+        },
+      },
+      integration: {
+        name: "통합(Integration) & 데이터 수집",
+        description: "GitHub, Slack 등 외부 서비스와의 연결 및 데이터 수집 방식에 대한 안내입니다.",
+        questions: {
+          dataCollection: {
+            question: "GitHub과 Slack 데이터는 어떻게 수집되나요?",
+            answer: "GitHub App과 Slack Bot OAuth를 통해 권한을 위임받아 커밋, PR, 이슈, 스레드, 리액션 등 주요 활동을 실시간으로 수집합니다. <br />개인 Access Token을 요구하지 않으며 안전한 방식으로 데이터를 읽어옵니다.",
+          },
+          dataStorage: {
+            question: "어떤 데이터를 저장하나요?",
+            answer: "커밋/PR 메타데이터, 이슈 상태 변경, Slack 스레드 내용, 팀별 활동 지표(KPI), AI가 생성한 요약 및 하이라이트 등이 저장됩니다. <br />모든 데이터는 Workspace 단위로 격리됩니다.",
+          },
+          sensitiveData: {
+            question: "민감한 코드나 비공개 문서가 저장되나요?",
+            answer: "아닙니다. NexLetter는 원본 코드 전체를 저장하지 않으며 GitHub, Slack 등이 제공하는 요약 메타데이터만 수집합니다. <br />민감한 텍스트는 자동 필터링 후 처리됩니다.",
+          },
+        },
+      },
+      ai: {
+        name: "AI 생성 콘텐츠 & 뉴스레터",
+        description: "AI가 리포트를 생성하는 방식과 뉴스레터 관련 설정 안내입니다.",
+        questions: {
+          summary: {
+            question: "AI는 어떻게 요약을 생성하나요?",
+            answer: "수집된 데이터는 중복 제거 → 문서 연결 → 토픽 클러스터링 → 하이라이트 추출 → KPI 계산 → 팀별 맞춤 콘텐츠 생성의 파이프라인을 거칩니다. <br />모든 과정은 NexLetter 전용 OpenAI Agent가 자동 처리합니다.<br /><br />결과적으로 팀의 한 주 활동을 사람이 읽기 쉬운 이야기로 만들어 줍니다.",
+          },
+          delivery: {
+            question: "뉴스레터는 어떤 방식으로 발송되나요?",
+            answer: "기본적으로 HTML 이메일을 제공합니다. <br />향후 대시보드·위젯·API 엔드포인트 등 다양한 아웃풋을 지원할 예정입니다.",
+          },
+          dashboard: {
+            question: "대시보드 뷰어는 어떻게 되나요?",
+            answer: "대시보드 뷰어는 생성된 하이라이트, KPI, 진행 상황 등을 시각적으로 확인할 수 있는 뷰어입니다. <br />향후 더 다양한 뷰어를 제공할 예정입니다.",
+          },
+        },
+      },
+      security: {
+        name: "보안 & 개인정보 보호",
+        description: "NexLetter의 데이터 보호 정책과 보안 구조에 대한 안내입니다.",
+        questions: {
+          protection: {
+            question: "NexLetter는 어떤 방식으로 데이터를 보호하나요?",
+            answer: "Supabase Row Level Security, JWT 기반 접근 통제, 데이터 암호화, Vault 기반 API Key 보관 등으로 데이터를 보호합니다. <br />Workspace 단위 강력한 격리 구조를 채택했습니다.",
+          },
+          externalTransfer: {
+            question: "민감한 정보가 외부로 전송되나요?",
+            answer: "OpenAI API를 포함한 외부 전송은 모두 암호화되며 학습 데이터에 사용되지 않습니다. <br />민감한 텍스트는 자동 필터링되어 처리됩니다.",
+          },
+        },
+      },
+      pricing: {
+        name: "가격 및 플랜",
+        description: "요금제 구성과 플랜별 제공 기능에 대한 설명입니다.",
+        questions: {
+          plans: {
+            question: "요금제는 어떻게 구성되어 있나요?",
+            answer: "Free Trial, Starter, Pro 플랜으로 구성됩니다. <br />Pro 플랜은 향후 제공 예정입니다.",
+          },
+          recipients: {
+            question: "발송 인원이 정해져 있나요?",
+            answer: "Plan별 발송 빈도와 발송 가능 인원이 정해져 있습니다. <br />발송 인원이 플랜 한도를 초과할 경우, 초과된 인원에게는 뉴스레터가 발송되지 않으며, <br />발송 결과는 보낸 메일 상세 화면에서 확인할 수 있습니다.",
+          },
+        },
+      },
+      automation: {
+        name: "운영 자동화",
+        description: "뉴스레터 생성과 발송 스케줄을 자동화하는 방법을 안내합니다.",
+        questions: {
+          schedule: {
+            question: "뉴스레터 발송 시점을 자동 설정할 수 있나요?",
+            answer: "네. 현 시점에서는 기본적으로 주간 뉴스레터를 자동 생성하고 발송합니다. <br />발송 시점은 타깃별로 설정할 수 있습니다. <br />추후 월간 뉴스레터도 지원할 예정입니다.",
+          },
+          filtering: {
+            question: "특정 팀 또는 프로젝트만 골라서 리포트를 만들 수 있나요?",
+            answer: "가능합니다. 타깃별로 특정 GitHub Repository, Slack Channel 등 세부 필터 설정을 지원합니다.<br />현 시점에서는 타깃별로 1개의 GitHub Repository와 3개의 Slack Channel을 설정할 수 있습니다.<br />(예) target1 ==> gitrepo: nexletter-dev, slackchannel: (@nexletter-dev, @nexletter-test, @nexletter-prod) <br />향후 더 다양한 필터링 조건을 지원할 예정입니다.",
+          },
+        },
+      },
+      support: {
+        name: "고객지원 & 기술지원",
+        description: "NexLetter 사용 중 도움이 필요할 때 제공되는 지원 안내입니다.",
+        questions: {
+          help: {
+            question: "초기 설정이 어려우면 도움 받을 수 있나요?",
+            answer: "회원 가입후 온보딩 셋션이 시작되며, 초기 설정 도움을 받을 수 있습니다. <br /> 그외에는 문의 주시면 평균 2시간 이내에 답변 드립니다.",
+          },
+          feedback: {
+            question: "기능 요청 또는 버그 신고는 어디로 하나요?",
+            answer: "이메일(support@nexletter.app) 또는 제품 내 Contact페이지를 통해 제보할 수 있습니다.",
+          },
+        },
+      },
+      advanced: {
+        name: "확장 기능(Advanced)",
+        description: "고급 기능 또는 향후 제공될 기능에 대한 안내입니다.",
+        questions: {
+          dataSources: {
+            question: "향후 어떤 데이터 소스가 추가될 예정인가요?",
+            answer: "우선은 Discord를 추가할 예정입니다. <br />향후 더 다양한 데이터 소스가 추가될 예정입니다.",
+          },
+          features: {
+            question: "향후 어떤 기능들이 추가될 예정인가요?",
+            answer: "멀티 워크스페이스, 템플릿 기반 커스터마이징, AI 에이전트 출력 이야기 톤 커스터마이징, 통합 리포트 뷰어 제공 등이 예정되어 있습니다.",
+          },
+        },
+      },
+    },
+  },
 };
 
 export default ko;
