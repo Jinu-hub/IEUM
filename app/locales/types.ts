@@ -743,4 +743,149 @@ export type Translation = {
       };
     };
   };
+  pricing: {
+    title: string;
+    subtitle: string;
+    description: string;
+    hero: {
+      title: string;
+      subtitle: string;
+      description: string;
+      primaryButton: string;
+      secondaryButton: string;
+    };
+    badge: string;
+    billing: {
+      toggleLabel: string;
+      monthlyLabel: string;
+      annualLabel: string;
+      monthlyPayment: string;
+      annualPayment: string;
+      perMonth: string;
+    };
+    plans: {
+      free: {
+        name: string;
+        description: string;
+        seats: string;
+        bestFor: string;
+        features: string[];
+        cta: string;
+      };
+      starter: {
+        name: string;
+        description: string;
+        seats: string;
+        bestFor: string;
+        badge: string;
+        features: string[];
+        cta: string;
+      };
+      pro: {
+        name: string;
+        description: string;
+        seats: string;
+        bestFor: string;
+        badge: string;
+        features: string[];
+        cta: string;
+      };
+    };
+    comparison: {
+      title: string;
+      description: string;
+      feature: string;
+      free: string;
+      starter: string;
+      pro: string;
+      rows: {
+        duration: {
+          label: string;
+          free: string;
+          starter: string;
+          pro: string;
+        };
+        services: {
+          label: string;
+          free: string;
+          starter: string;
+          pro: string;
+        };
+        targets: {
+          label: string;
+          free: string;
+          starter: string;
+          pro: string;
+        };
+        dataSources: {
+          label: string;
+          free: string;
+          starter: string;
+          pro: string;
+        };
+        tone: {
+          label: string;
+          free: string;
+          starter: string;
+          pro: string;
+        };
+        template: {
+          label: string;
+          free: string;
+          starter: string;
+          pro: string;
+        };
+        recipients: {
+          label: string;
+          free: string;
+          starter: string;
+          pro: string;
+        };
+      };
+    };
+    roi: {
+      title: string;
+      description: string;
+      stats: {
+        timeSaving: string;
+        reach: string;
+        satisfaction: string;
+      };
+    };
+    enterprise: {
+      title: string;
+      description: string;
+      features: string[];
+      cta: string;
+    };
+    faq: {
+      title: string;
+      description: string;
+      questions: {
+        trial: {
+          question: string;
+          answer: string;
+        };
+        overage: {
+          question: string;
+          answer: string;
+        };
+        frequency: {
+          question: string;
+          answer: string;
+        };
+        change: {
+          question: string;
+          answer: string;
+        };
+      };
+    };
+    cta: {
+      badge: string;
+      title: string;
+      description: string;
+      startButton: string;
+      contactButton: string;
+    };
+  };
 };
