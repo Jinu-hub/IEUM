@@ -19,18 +19,18 @@ export default function DeleteAccountForm() {
   const { t } = useTranslation("common", { keyPrefix: "deleteAccount" });
   const fetcher = useFetcher<Route.ComponentProps["actionData"]>();
   return (
-    <NexCard 
-      variant="default" 
-      padding="lg" 
-      className="w-full max-w-screen-md border-2 border-pink-200 dark:border-pink-700 bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/30"
+    <NexCard
+      variant="default"
+      padding="lg"
+      className="w-full max-w-screen-md border-2 border-red-200 dark:border-red-600 bg-gradient-to-br from-red-50 to-rose-50 dark:from-gray-950/60 dark:via-gray-900/60 dark:to-gray-950/50"
     >
       <NexCardHeader>
         <div className="flex items-center gap-3">
-          <div className="rounded-full bg-gradient-to-r from-pink-400 to-rose-400 p-3 shadow-lg animate-pulse">
+          <div className="rounded-full bg-gradient-to-r from-red-500 to-rose-500 dark:from-red-500/80 dark:to-rose-500/80 p-3 shadow-lg animate-pulse">
             <AlertTriangle className="size-6 text-white" />
           </div>
           <div>
-            <NexCardTitle className="text-pink-800 dark:text-pink-200">
+            <NexCardTitle className="text-red-800 dark:text-red-100">
               {t("title")}
             </NexCardTitle>
           </div>
@@ -39,20 +39,20 @@ export default function DeleteAccountForm() {
       <NexCardContent>
         <fetcher.Form method="delete" className="space-y-6" action="/api/users">
           {/* Warning Box */}
-          <div className="rounded-lg bg-pink-50 dark:bg-pink-900/20 p-4 border-l-4 border-pink-400">
-            <p className="text-sm font-medium text-pink-800 dark:text-pink-200">
+          <div className="rounded-lg bg-red-50 dark:bg-red-900/25 p-4 border-l-4 border-red-500 dark:border-red-600">
+            <p className="text-sm font-medium text-red-800 dark:text-red-100">
               {t("warning")}
             </p>
           </div>
 
           {/* Checkboxes */}
           <div className="space-y-4">
-            <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-pink-100 dark:border-pink-700 hover:border-pink-300 dark:hover:border-pink-500 transition-colors bg-white dark:bg-gray-900">
+            <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-red-100 dark:border-red-600 hover:border-red-300 dark:hover:border-red-500 transition-colors bg-white dark:bg-gray-900/70">
               <Checkbox
                 id="confirm-delete"
                 name="confirm-delete"
                 required
-                className="border-pink-400 dark:border-pink-400 mt-1"
+                className="border-red-500 dark:border-red-300 mt-1"
               />
               <Label 
                 htmlFor="confirm-delete" 
@@ -62,12 +62,12 @@ export default function DeleteAccountForm() {
               </Label>
             </div>
 
-            <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-pink-100 dark:border-pink-700 hover:border-pink-300 dark:hover:border-pink-500 transition-colors bg-white dark:bg-gray-900">
+            <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-red-100 dark:border-red-600 hover:border-red-300 dark:hover:border-red-500 transition-colors bg-white dark:bg-gray-900/70">
               <Checkbox
                 id="confirm-irreversible"
                 name="confirm-irreversible"
                 required
-                className="border-pink-400 dark:border-pink-400 mt-1"
+                className="border-red-500 dark:border-red-300 mt-1"
               />
               <Label 
                 htmlFor="confirm-irreversible" 
@@ -83,7 +83,7 @@ export default function DeleteAccountForm() {
             type="submit"
             variant="primary"
             size="lg"
-            className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 dark:from-pink-600 dark:to-rose-600 dark:hover:from-pink-700 dark:hover:to-rose-700 shadow-lg cursor-pointer"
+            className="w-full bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 dark:from-red-500/85 dark:to-rose-500/85 dark:hover:from-red-500 dark:hover:to-rose-500 shadow-lg cursor-pointer"
             loading={fetcher.state === "submitting"}
             disabled={fetcher.state === "submitting"}
             leftIcon={<Trash2 className="size-5" />}

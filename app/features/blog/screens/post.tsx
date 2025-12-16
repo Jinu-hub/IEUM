@@ -29,6 +29,17 @@ import {
 } from "~/core/components/mdx-typography";
 import { Badge } from "~/core/components/ui/badge";
 
+interface PostFrontmatter {
+  title: string;
+  description: string;
+  date: string;
+  category: string;
+  author: string;
+  slug: string;
+  image?: string;
+  imageAlt?: string;
+}
+
 /**
  * Meta function for the blog post page
  * 
@@ -117,7 +128,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 
     // Return both the compiled MDX code and the frontmatter metadata
     return {
-      frontmatter,
+      frontmatter: frontmatter as PostFrontmatter,
       code,
     };
   } catch (error) {
@@ -168,9 +179,10 @@ export default function Post({
       
       {/* Featured image for the post */}
       <img
-        src={`/blog/${frontmatter.slug}.jpg`}
-        alt={frontmatter.title}
+        src={frontmatter.image ?? `/blog/${frontmatter.slug}.jpg`}
+        alt={frontmatter.imageAlt ?? frontmatter.title}
         className="aspect-square w-full rounded-xl object-cover object-center"
+        loading="lazy"
       />
       
       {/* Render the MDX content with custom typography components */}

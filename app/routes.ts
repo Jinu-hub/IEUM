@@ -62,6 +62,9 @@ export default [
     index("features/home/screens/home.tsx"),
     route("/error", "core/screens/error.tsx"),
     route("/components", "core/components/samples/samples.tsx"),
+    route("/pricing", "features/home/screens/pricing.tsx"),
+    route("/faq", "features/home/screens/faq.tsx"),
+    route("/about", "features/home/screens/about.tsx"),
     layout("core/layouts/public.layout.tsx", [
       // Routes that should only be visible to unauthenticated users.
       route("/login", "features/auth/screens/login.tsx"),

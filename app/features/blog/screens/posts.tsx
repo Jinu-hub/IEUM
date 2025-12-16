@@ -51,6 +51,8 @@ interface Frontmatter {
   category: string;
   author: string;
   slug: string;
+  image?: string;
+  imageAlt?: string;
 }
 
 /**
@@ -141,9 +143,10 @@ export default function Posts({
           >
             {/* Post featured image */}
             <img
-              src={`/blog/${frontmatter.slug}.jpg`}
-              alt={frontmatter.title}
+              src={frontmatter.image ?? `/blog/${frontmatter.slug}.jpg`}
+              alt={frontmatter.imageAlt ?? frontmatter.title}
               className="aspect-square w-full rounded-xl object-cover object-center"
+              loading="lazy"
             />
             {/* Category badge */}
             <Badge variant="secondary" className="text-sm">
