@@ -912,6 +912,217 @@ const ko: Translation = {
       contactButton: "문의하기",
     },
   },
+  about: {
+    title: "About Us",
+    subtitle: "팀의 흐름을 기록하는 새로운 방식",
+    description: "팀의 흐름을 기록하는 새로운 방식",
+    hero: {
+      description: "당신의 팀이 움직이는 순간들. 우리는 그 흐름이 사라지지 않도록 만듭니다. NexLetter는 일상의 활동 속에서 남기는 수많은 움직임 사이에서 의미를 발견하고, 흩어진 기록을 하나의 이야기로 엮어 팀의 문화와 성과를 자동으로 남깁니다.",
+      primaryButton: "시작하기",
+      secondaryButton: "샘플 보기",
+    },
+    highlights: {
+      story: {
+        title: "팀의 순간을 한데 묶는 스토리",
+        description: "Slack과 GitHub에 흩어진 수많은 움직임을 하나의 흐름으로 엮어, 팀이 지나온 과정을 이야기로 남깁니다.",
+      },
+      ai: {
+        title: "AI 기반 뉴스레터 엔진",
+        description: "주간 하이라이트와 KPI를 자동으로 정리해, 개인이 아닌 조직 전체가 같은 맥락을 공유하게 만듭니다.",
+      },
+      space: {
+        title: "흩어진 데이터의 사이 공간",
+        description: "숫자와 로그 사이에 사라지던 맥락을 기록으로 보존해, 팀의 문화와 의사결정을 이어줍니다.",
+      },
+    },
+    painPoints: {
+      badge: "🔍 우리가 바라본 현실",
+      title: "우리가 이 문제를 그냥 둘 수 없었던 이유",
+      description: "프로젝트 팀은 누구보다 빠르게 움직입니다. 하지만 그 흐름을 정리하고 전달하는 일은, 여전히 '누군가의 몫'으로 남아 있습니다.",
+      items: {
+        tracking: {
+          title: "팀이 무엇을 이루는지 파악이 어렵습니다",
+          description: "속도는 빨라지지만 기록은 늘 뒤로 밀립니다.",
+          detail: "코드, 대화, 결정, 작은 고민들이 흩어져 있어 핵심 흐름을 놓치기 쉽습니다.",
+        },
+        scattered: {
+          title: "데이터는 여러 도구에 나뉘어 있습니다",
+          description: "Slack·GitHub·문서 툴을 오가며 맥락이 분산됩니다.",
+          detail: "중요한 순간을 모으기 위해 매주 시간과 에너지가 불필요하게 소모됩니다.",
+        },
+        manual: {
+          title: "리포트 작성은 여전히 수작업입니다",
+          description: "가장 똑똑한 팀조차 직접 복붙하며 주간 보고를 만듭니다.",
+          detail: "우리는 \"기록은 왜 아직도 사람이 해야 하는가?\"라는 질문에서 출발했습니다.",
+        },
+        context: {
+          title: "성과와 맥락이 조직 전체에 닿지 않습니다",
+          description: "스토리가 없으면 성과는 금방 잊힙니다.",
+          detail: "팀 내부뿐 아니라 조직 외부에서는 흐름을 읽기 어려워, 신뢰와 영향력이 자연스럽게 약해집니다.",
+        },
+      },
+    },
+    solution: {
+      badge: "💡 우리의 해답",
+      title: "팀이 일하면, NexLetter가 이야기로 만들어드립니다.",
+      description: "흩어지는 데이터를 잇고 의미를 만들며 팀의 스토리를 자동으로 기록하는 AI 기반 뉴스레터 플랫폼입니다.",
+      intro: "NexLetter는 \"사이 공간\"을 메우기 위해 탄생했습니다.",
+      points: [
+        "팀의 활동을 실시간으로 감지하고",
+        "의미 있는 흐름으로 재구성하며",
+        "누구나 읽을 수 있는 내러티브로 전달합니다.",
+      ],
+      conclusion: "팀의 움직임은 더 이상 사라지지 않고 기록으로 남습니다.",
+    },
+    storytelling: {
+      title: "데이터에서 스토리까지",
+      description: "AI 파이프라인이 팀의 흐름을 잇는 방법입니다.",
+      steps: {
+        collect: {
+          title: "데이터를 수집하고",
+          description: "Slack과 GitHub에서 팀의 움직임을 실시간으로 모읍니다.",
+        },
+        meaning: {
+          title: "의미를 찾아내고",
+          description: "NexLetter AI 엔진이 활동을 정리·분류·클러스터링해 맥락을 세웁니다.",
+        },
+        summarize: {
+          title: "핵심을 요약하고",
+          description: "노이즈를 걷어내고 팀이 알아야 할 하이라이트와 KPI만 남깁니다.",
+        },
+        reconstruct: {
+          title: "하나의 리포트로 재구성합니다",
+          description: "모두가 이해할 수 있는 내러티브로 정리해 자동 배포합니다.",
+        },
+      },
+    },
+    value: {
+      badge: "🎯 NexLetter가 제공하는 가치",
+      title: "우리가 만드는 것은 문서가 아니라 명확한 내러티브입니다",
+      description: "팀의 흐름을 누구나 따라갈 수 있게 만드는 다섯 가지 약속.",
+      items: {
+        time: {
+          title: "리포트 작성 시간을 극적으로 줄입니다",
+          description: "AI가 데이터를 읽고 요약하고, 팀은 설정만 해 두면 됩니다.",
+        },
+        flow: {
+          title: "팀의 흐름을 누구나 따라가게 합니다",
+          description: "명확한 스토리텔링과 시각 언어로 조직 전체가 같은 그림을 봅니다.",
+        },
+        risk: {
+          title: "프로젝트 리스크를 조기에 드러냅니다",
+          description: "흐름을 끊는 신호를 자동으로 포착해 문제가 커지기 전에 대응할 수 있게 돕습니다.",
+        },
+        spread: {
+          title: "성과를 자연스럽게 확산시킵니다",
+          description: "뉴스레터·하이라이트·KPI를 팀과 조직이 쓰는 채널로 자연스럽게 전달합니다.",
+        },
+        free: {
+          title: "반복되는 기록 업무에서 팀을 해방합니다",
+          description: "사람은 창의적인 문제와 중요한 결정에 집중할 수 있습니다.",
+        },
+      },
+    },
+    howItWorks: {
+      badge: "⚙️ 어떻게 작동하나요",
+      title: "4단계 자동 리포트 파이프라인",
+      description: "연결 → 이해 → 생성 → 공유. 마치 팀에 전담 리포터가 생긴 듯한 경험을 제공합니다.",
+      steps: {
+        connect: {
+          step: "01",
+          title: "연결",
+          description: "Slack/GitHub를 연결하는 순간, 팀의 활동 수집이 자동으로 가능해 집니다.",
+          detail: "최소한의 OAuth 권한으로 팀 활동이 자동 동기화됩니다.",
+        },
+        understand: {
+          step: "02",
+          title: "이해",
+          description: "AI 엔진이 활동을 정리·분류·클러스터링합니다.",
+          detail: "토픽별 묶음과 맥락 분석으로 사람이 놓치기 쉬운 의미를 잃지 않습니다.",
+        },
+        generate: {
+          step: "03",
+          title: "생성",
+          description: "제품 수준의 주간 리포트·하이라이트·KPI를 만듭니다.",
+          detail: "팀별 톤과 선호에 맞춘 자동화 템플릿을 제공합니다.",
+        },
+        share: {
+          step: "04",
+          title: "공유",
+          description: "이메일·Slack·웹 등 원하는 채널로 바로 전달됩니다.",
+          detail: "한 번 설정하면 NexLetter가 흐름을 놓치지 않고 자동으로 배포합니다.",
+        },
+      },
+    },
+    security: {
+      badge: "🛡 보안에 대한 우리의 약속",
+      title: "신뢰는 기능이 아니라 태도라고 믿습니다",
+      description: "당신의 팀 데이터는 무엇보다 소중합니다. 기본 원칙부터 투명하게 공유합니다.",
+      footer: "이 원칙들은 기능이 아니라, 우리가 제품을 만드는 태도입니다.",
+      promises: {
+        oauth: {
+          title: "최소한의 OAuth 권한만 사용",
+          description: "필수 범위만 요청해 Workspace 보안 정책을 지킵니다.",
+        },
+        tls: {
+          title: "모든 데이터 전송은 TLS로 암호화",
+          description: "이동 구간 전체를 보호해 외부 노출을 차단합니다.",
+        },
+        vault: {
+          title: "민감 데이터는 Supabase Vault에 보관",
+          description: "접근 제어 및 감사를 기본값으로 채택했습니다.",
+        },
+        minimal: {
+          title: "불필요한 정보는 저장하지 않습니다",
+          description: "목적을 벗어나는 데이터는 자동으로 폐기합니다.",
+        },
+        privacy: {
+          title: "사용자 데이터는 학습에 활용하지 않습니다",
+          description: "모델 튜닝 없이도 프라이버시를 최우선으로 합니다.",
+        },
+      },
+    },
+    philosophy: {
+      badge: "🚀 우리의 철학",
+      intro: "우리는 이렇게 믿습니다.",
+      statements: [
+        "팀의 지식은 사라지지 않아야 합니다.",
+        "기록은 업무가 아니라 자연스러운 결과여야 한다고 생각합니다.",
+        "좋은 팀은 잘 기록하는 팀이라고 믿습니다.",
+        "AI가 반복 작업을 대신할 때 사람은 더 중요한 결정을 다룰 수 있습니다.",
+      ],
+      conclusion: "NexLetter는 \"일하는 방식에서 가장 귀찮았던 부분\"을 가장 먼저 바꿉니다.",
+    },
+    team: {
+      title: "NexLetter 팀",
+      description: "우리는 개발자가 문서 작성에 시간을 빼앗기는 순간을 가장 싫어했습니다.",
+      intro: "그래서 스스로 해결책을 만들기 시작했고, 그 결과가 오늘의 NexLetter입니다.",
+      points: [
+        "작지만 깊이 있게 문제를 파고드는 팀",
+        "현실적인 문제를 끝까지 해결하려는 팀",
+        "더 나은 일하는 방식을 위해 계속 실험하는 팀",
+      ],
+    },
+    roadmap: {
+      title: "앞으로의 여정",
+      description: "우리는 아직 시작에 불과합니다. 하지만 방향은 분명합니다.",
+      items: [
+        "데이터 소스를 확장 (Discord, Telegram 등 더 많은 협업 커뮤니케이션 도구)",
+        "더 적은 설정으로 더 많은 자동화 (Zero-Input Automation)",
+        "템플릿 기반 커스터마이징 확장",
+        "AI 에이전트 출력 이야기 톤 커스터마이징",
+        "통합 리포트 뷰어 제공",
+      ],
+    },
+    cta: {
+      badge: "🚀 시작해보세요",
+      title: "팀이 일하는 모든 순간을 명확한 스토리로.",
+      description: "지금 바로 NexLetter를 경험하고, 흐름을 기록하는 새로운 방식을 만나보세요.",
+      startButton: "시작하기",
+      loginButton: "로그인",
+      samplesButton: "샘플 보기",
+    },
+  },
 };
 
 export default ko;

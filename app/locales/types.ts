@@ -888,4 +888,196 @@ export type Translation = {
       contactButton: string;
     };
   };
+  about: {
+    title: string;
+    subtitle: string;
+    description: string;
+    hero: {
+      description: string;
+      primaryButton: string;
+      secondaryButton: string;
+    };
+    highlights: {
+      story: {
+        title: string;
+        description: string;
+      };
+      ai: {
+        title: string;
+        description: string;
+      };
+      space: {
+        title: string;
+        description: string;
+      };
+    };
+    painPoints: {
+      badge: string;
+      title: string;
+      description: string;
+      items: {
+        tracking: {
+          title: string;
+          description: string;
+          detail: string;
+        };
+        scattered: {
+          title: string;
+          description: string;
+          detail: string;
+        };
+        manual: {
+          title: string;
+          description: string;
+          detail: string;
+        };
+        context: {
+          title: string;
+          description: string;
+          detail: string;
+        };
+      };
+    };
+    solution: {
+      badge: string;
+      title: string;
+      description: string;
+      intro: string;
+      points: string[];
+      conclusion: string;
+    };
+    storytelling: {
+      title: string;
+      description: string;
+      steps: {
+        collect: {
+          title: string;
+          description: string;
+        };
+        meaning: {
+          title: string;
+          description: string;
+        };
+        summarize: {
+          title: string;
+          description: string;
+        };
+        reconstruct: {
+          title: string;
+          description: string;
+        };
+      };
+    };
+    value: {
+      badge: string;
+      title: string;
+      description: string;
+      items: {
+        time: {
+          title: string;
+          description: string;
+        };
+        flow: {
+          title: string;
+          description: string;
+        };
+        risk: {
+          title: string;
+          description: string;
+        };
+        spread: {
+          title: string;
+          description: string;
+        };
+        free: {
+          title: string;
+          description: string;
+        };
+      };
+    };
+    howItWorks: {
+      badge: string;
+      title: string;
+      description: string;
+      steps: {
+        connect: {
+          step: string;
+          title: string;
+          description: string;
+          detail: string;
+        };
+        understand: {
+          step: string;
+          title: string;
+          description: string;
+          detail: string;
+        };
+        generate: {
+          step: string;
+          title: string;
+          description: string;
+          detail: string;
+        };
+        share: {
+          step: string;
+          title: string;
+          description: string;
+          detail: string;
+        };
+      };
+    };
+    security: {
+      badge: string;
+      title: string;
+      description: string;
+      footer: string;
+      promises: {
+        oauth: {
+          title: string;
+          description: string;
+        };
+        tls: {
+          title: string;
+          description: string;
+        };
+        vault: {
+          title: string;
+          description: string;
+        };
+        minimal: {
+          title: string;
+          description: string;
+        };
+        privacy: {
+          title: string;
+          description: string;
+        };
+      };
+    };
+    philosophy: {
+      badge: string;
+      intro: string;
+      statements: string[];
+      conclusion: string;
+    };
+    team: {
+      title: string;
+      description: string;
+      intro: string;
+      points: string[];
+    };
+    roadmap: {
+      title: string;
+      description: string;
+      items: string[];
+    };
+    cta: {
+      badge: string;
+      title: string;
+      description: string;
+      startButton: string;
+      loginButton: string;
+      samplesButton: string;
+    };
+  };
 };

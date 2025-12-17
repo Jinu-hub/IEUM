@@ -913,6 +913,217 @@ const en: Translation = {
       contactButton: "Contact Us",
     },
   },
+  about: {
+    title: "About Us",
+    subtitle: "A new way to record your team's flow",
+    description: "A new way to record your team's flow",
+    hero: {
+      description: "The moments your team moves. We make sure that flow doesn't disappear. NexLetter discovers meaning among the countless movements left in daily activities, weaves scattered records into a single story, and automatically preserves your team's culture and achievements.",
+      primaryButton: "Get Started",
+      secondaryButton: "View Samples",
+    },
+    highlights: {
+      story: {
+        title: "Stories that bind team moments together",
+        description: "We weave countless movements scattered across Slack and GitHub into a single flow, leaving the process your team has gone through as a story.",
+      },
+      ai: {
+        title: "AI-based newsletter engine",
+        description: "Automatically organizes weekly highlights and KPIs, enabling the entire organization, not just individuals, to share the same context.",
+      },
+      space: {
+        title: "The space between scattered data",
+        description: "Preserves context that was disappearing between numbers and logs as records, connecting your team's culture and decision-making.",
+      },
+    },
+    painPoints: {
+      badge: "🔍 The reality we saw",
+      title: "Why we couldn't leave this problem alone",
+      description: "Project teams move faster than anyone. But organizing and delivering that flow still remains 'someone's job'.",
+      items: {
+        tracking: {
+          title: "It's hard to understand what the team is achieving",
+          description: "Speed increases but records always fall behind.",
+          detail: "Code, conversations, decisions, and small concerns are scattered, making it easy to miss the core flow.",
+        },
+        scattered: {
+          title: "Data is divided across multiple tools",
+          description: "Context is dispersed as you move between Slack, GitHub, and document tools.",
+          detail: "Time and energy are unnecessarily consumed every week to gather important moments.",
+        },
+        manual: {
+          title: "Report writing is still manual work",
+          description: "Even the smartest teams copy and paste to create weekly reports.",
+          detail: "We started from the question, 'Why do people still have to do recording?'",
+        },
+        context: {
+          title: "Achievements and context don't reach the entire organization",
+          description: "Without a story, achievements are quickly forgotten.",
+          detail: "It's difficult to read the flow not only within the team but also outside the organization, so trust and influence naturally weaken.",
+        },
+      },
+    },
+    solution: {
+      badge: "💡 Our solution",
+      title: "When your team works, NexLetter turns it into a story.",
+      description: "An AI-based newsletter platform that automatically connects scattered data, creates meaning, and records your team's story.",
+      intro: "NexLetter was born to fill the 'space between'.",
+      points: [
+        "Detects team activities in real-time",
+        "Reconstructs them into meaningful flows",
+        "Delivers them as narratives that anyone can read.",
+      ],
+      conclusion: "Team movements no longer disappear and remain as records.",
+    },
+    storytelling: {
+      title: "From data to story",
+      description: "How the AI pipeline connects your team's flow.",
+      steps: {
+        collect: {
+          title: "Collect data",
+          description: "Gathers your team's movements in real-time from Slack and GitHub.",
+        },
+        meaning: {
+          title: "Find meaning",
+          description: "The NexLetter AI engine organizes, categorizes, and clusters activities to establish context.",
+        },
+        summarize: {
+          title: "Summarize the essentials",
+          description: "Removes noise and leaves only the highlights and KPIs your team needs to know.",
+        },
+        reconstruct: {
+          title: "Reconstruct into a single report",
+          description: "Organizes into a narrative that everyone can understand and automatically deploys.",
+        },
+      },
+    },
+    value: {
+      badge: "🎯 The value NexLetter provides",
+      title: "What we create is not documents, but clear narratives",
+      description: "Five promises that make your team's flow accessible to everyone.",
+      items: {
+        time: {
+          title: "Dramatically reduces report writing time",
+          description: "AI reads and summarizes data, and your team just needs to set it up.",
+        },
+        flow: {
+          title: "Makes your team's flow accessible to everyone",
+          description: "Clear storytelling and visual language enable the entire organization to see the same picture.",
+        },
+        risk: {
+          title: "Reveals project risks early",
+          description: "Automatically captures signals that break the flow, helping you respond before problems grow.",
+        },
+        spread: {
+          title: "Naturally spreads achievements",
+          description: "Naturally delivers newsletters, highlights, and KPIs through channels your team and organization use.",
+        },
+        free: {
+          title: "Frees your team from repetitive recording tasks",
+          description: "People can focus on creative problems and important decisions.",
+        },
+      },
+    },
+    howItWorks: {
+      badge: "⚙️ How it works",
+      title: "4-step automated report pipeline",
+      description: "Connect → Understand → Generate → Share. Provides an experience as if your team has a dedicated reporter.",
+      steps: {
+        connect: {
+          step: "01",
+          title: "Connect",
+          description: "The moment you connect Slack/GitHub, team activity collection becomes automatic.",
+          detail: "Team activities are automatically synchronized with minimal OAuth permissions.",
+        },
+        understand: {
+          step: "02",
+          title: "Understand",
+          description: "The AI engine organizes, categorizes, and clusters activities.",
+          detail: "Topic-based grouping and context analysis ensure we don't lose meaning that people might miss.",
+        },
+        generate: {
+          step: "03",
+          title: "Generate",
+          description: "Creates product-level weekly reports, highlights, and KPIs.",
+          detail: "Provides automation templates tailored to each team's tone and preferences.",
+        },
+        share: {
+          step: "04",
+          title: "Share",
+          description: "Immediately delivered to your preferred channels such as email, Slack, and web.",
+          detail: "Once set up, NexLetter automatically deploys without missing the flow.",
+        },
+      },
+    },
+    security: {
+      badge: "🛡 Our promise on security",
+      title: "We believe trust is not a feature, but an attitude",
+      description: "Your team's data is more precious than anything. We share our fundamental principles transparently.",
+      footer: "These principles are not features, but the attitude with which we build our product.",
+      promises: {
+        oauth: {
+          title: "Uses only minimal OAuth permissions",
+          description: "Requests only essential scope to comply with Workspace security policies.",
+        },
+        tls: {
+          title: "All data transfers are encrypted with TLS",
+          description: "Protects the entire transmission path to block external exposure.",
+        },
+        vault: {
+          title: "Sensitive data is stored in Supabase Vault",
+          description: "Access control and auditing are adopted as defaults.",
+        },
+        minimal: {
+          title: "We don't store unnecessary information",
+          description: "Data that goes beyond the purpose is automatically discarded.",
+        },
+        privacy: {
+          title: "User data is not used for training",
+          description: "Privacy is our top priority even without model tuning.",
+        },
+      },
+    },
+    philosophy: {
+      badge: "🚀 Our philosophy",
+      intro: "We believe this.",
+      statements: [
+        "Team knowledge should not disappear.",
+        "We think recording should be a natural result, not work.",
+        "We believe good teams are teams that record well.",
+        "When AI takes over repetitive tasks, people can handle more important decisions.",
+      ],
+      conclusion: "NexLetter changes the 'most annoying part of how we work' first.",
+    },
+    team: {
+      title: "NexLetter Team",
+      description: "We hated the moment developers had their time taken away by document writing.",
+      intro: "So we started creating our own solution, and that result is today's NexLetter.",
+      points: [
+        "A team that digs deep into problems, even if small",
+        "A team that tries to solve real problems to the end",
+        "A team that continues to experiment for better ways of working",
+      ],
+    },
+    roadmap: {
+      title: "The journey ahead",
+      description: "We are still just at the beginning. But the direction is clear.",
+      items: [
+        "Expand data sources (more collaboration communication tools like Discord, Telegram)",
+        "More automation with less setup (Zero-Input Automation)",
+        "Expand template-based customization",
+        "Customize AI agent output story tone",
+        "Provide integrated report viewer",
+      ],
+    },
+    cta: {
+      badge: "🚀 Get started",
+      title: "Every moment your team works, as a clear story.",
+      description: "Experience NexLetter now and discover a new way to record flow.",
+      startButton: "Get Started",
+      loginButton: "Login",
+      samplesButton: "View Samples",
+    },
+  },
 };
 
 export default en;
