@@ -22,8 +22,10 @@ import {
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
 import { deleteMailingList } from '../db/mutations';
-import { getMailingList, getMailingListMemberCount, getWorkspace } from '../db/queries';
+import { getMailingList, getMailingListMemberCount, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { formatDate } from '../lib/common';
+import { useOnboarding } from '../hooks/useOnboarding';
+import { OnboardingModeBanner, OnboardingGuideTooltip } from '../components/onboarding-guide';
 import type { MailListData } from '../lib/types';
 import type { Route } from "./+types/mail-list";
 
@@ -78,7 +80,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   for (const mailList of mailLists) {
     mailList.memberCount = await getMailingListMemberCount(client, { mailingListId: mailList.mailingListId });
   }
-  return { workspaceId, mailListsData: mailLists };
+  
+  // Get onboarding state
+  let onboardingState = null;
+  try {
+    onboardingState = await getWorkspaceOnboardingState(client, { workspaceId });
+  } catch (error) {
+    // Onboarding state not found, continue without it
+  }
+  
+  return { workspaceId, mailListsData: mailLists, onboardingState };
 };
 
 export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
@@ -86,11 +97,18 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { t: timesT, i18n } = useTranslation("common", { keyPrefix: "times" });
   const { t: searchesT } = useTranslation("common", { keyPrefix: "searches" });
-  const { workspaceId, mailListsData } = loaderData;
+  const { t: onboardingT } = useTranslation("common", { keyPrefix: "onboarding" });
+  const { workspaceId, mailListsData, onboardingState } = loaderData;
   const [mailLists, setMailLists] = useState<MailListData[]>(mailListsData);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const fetcher = useFetcher();
+  
+  // Onboarding hook
+  const { isOnboardingActive, currentStep } = useOnboarding({ 
+    workspaceId, 
+    onboardingState 
+  });
 
   // 검색 필터링
   const filteredMailLists = mailLists.filter(mailList =>
@@ -148,6 +166,14 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
       <div className="max-w-4xl mx-auto space-y-8">
+        {/* Onboarding Banner */}
+        {isOnboardingActive && currentStep === 'setup_mailing_list' && (
+          <OnboardingModeBanner
+            currentStep={currentStep}
+            workspaceId={workspaceId}
+          />
+        )}
+        
         {/* 헤더 섹션 */}
         <div className="flex items-start justify-between">
           <div className="space-y-2">

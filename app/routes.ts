@@ -36,6 +36,7 @@ export default [
       route("/slack-callback", "features/settings/api/slack-callback.tsx"),
       route("/slack-channel-members", "features/settings/api/slack-channel-members.tsx"),
       route("/update-review-step", "features/settings/api/update-review-step.tsx"),
+      route("/update-onboarding-step", "features/settings/api/update-onboarding-step.tsx"),
       route("/review-sample-data", "features/settings/api/review-sample-data.tsx"),
     ]),
     ...prefix("/users", [

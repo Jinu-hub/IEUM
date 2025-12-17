@@ -1,7 +1,7 @@
 import type { Database } from 'database.types';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { data, redirect, useFetcher, useSearchParams, type LoaderFunctionArgs } from 'react-router';
+import { data, redirect, useFetcher, useNavigate, useSearchParams, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
 import {
   BookOpenIcon,
@@ -10,6 +10,7 @@ import {
   HashIcon,
   LockIcon,
   NexBadge,
+  NexButton,
   NexCard,
   NexCardContent,
   NexCardDescription,
@@ -19,10 +20,12 @@ import {
 } from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
-import { getIntegrationsInfo, getWorkspace } from '../db/queries';
+import { OnboardingProgress, StepSelectionCard } from '../components/onboarding-guide';
+import { getIntegrationsInfo, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useIntegrationActions } from '../hooks/useIntegrationActions';
 import { useIntegrationResponse } from '../hooks/useIntegrationResponse';
 import { useIntegrationUI } from '../hooks/useIntegrationUI';
+import { useOnboarding } from '../hooks/useOnboarding';
 import type { ConnectionStatus } from '../lib/types';
 import type { Route } from "./+types/integrations";
 
@@ -56,13 +59,40 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
   const integrationsInfo = await getIntegrationsInfo(client, { workspaceId: workspaceId });
-  return data({ user, workspaceId, integrationsInfo });
+  
+  // Get onboarding state
+  let onboardingState = null;
+  try {
+    onboardingState = await getWorkspaceOnboardingState(client, { workspaceId });
+  } catch (error) {
+    // Onboarding state not found, continue without it
+  }
+  
+  return data({ user, workspaceId, integrationsInfo, onboardingState });
 };
 
 export default function IntegrationsScreen( { loaderData }: Route.ComponentProps ) {
   const { t, i18n } = useTranslation("common", { keyPrefix: "integrations" });
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
-  const { workspaceId, integrationsInfo } = loaderData;
+  const { t: onboardingT } = useTranslation("common", { keyPrefix: "onboarding" });
+  const navigate = useNavigate();
+  const { workspaceId, integrationsInfo, onboardingState } = loaderData;
+  
+  // Onboarding hook
+  const { 
+    isOnboardingActive, 
+    currentStep, 
+    updateStep,
+    setGithubConnected,
+    setSlackConnected
+  } = useOnboarding({ 
+    workspaceId, 
+    onboardingState 
+  });
+  
+  // Show step selection after completing connect_slack step
+  const [showStepSelection, setShowStepSelection] = useState(false);
+  
   const githubCredentialRef = integrationsInfo.find((integration: any) => integration.type === 'github')?.credential_ref;
   const slackCredentialRef = integrationsInfo.find((integration: any) => integration.type === 'slack')?.credential_ref;
   const isConnectedGitHub = integrationsInfo.find((integration: any) => integration.type === 'github')?.connection_status === 'connected';
@@ -304,9 +334,80 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
     integrationsInfo
   });
 
+  // Handle step selection for setup_integrations step
+  const handleStepSelection = (step: 'setup_mailing_list' | 'setup_targets') => {
+    updateStep(step);
+    navigate(step === 'setup_mailing_list' ? '/settings/mail-list' : '/settings/targets');
+  };
+
+  // Handle continue to next step (show step selection)
+  const handleContinueToNextStep = () => {
+    setShowStepSelection(true);
+  };
+
+  // Check if should show step selection (after integrations setup or skip)
+  const shouldShowStepSelection = isOnboardingActive && 
+    currentStep === 'setup_integrations' && showStepSelection;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
       <div className="max-w-4xl mx-auto space-y-8">
+        {/* Onboarding Banner for setup_integrations step */}
+        {isOnboardingActive && currentStep === 'setup_integrations' && !shouldShowStepSelection && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-2 border-blue-300 dark:border-blue-600 rounded-xl p-6 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="flex items-start gap-4">
+              <span className="text-3xl">🔗</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded">
+                    {onboardingT('badge')}
+                  </span>
+                  <h3 className="font-bold text-lg text-blue-900 dark:text-blue-100">
+                    {onboardingT('steps.setup_integrations.title')}
+                  </h3>
+                </div>
+                <p className="text-sm text-blue-800 dark:text-blue-200 mb-4">
+                  {onboardingT('steps.setup_integrations.description')}
+                </p>
+                
+                {/* Progress indicator */}
+                <div className="mb-4">
+                  <OnboardingProgress currentStep={currentStep} />
+                </div>
+                
+                <NexButton
+                  variant="primary"
+                  onClick={handleContinueToNextStep}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {onboardingT('integrations.continueToNextStep')}
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </NexButton>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Step Selection after integrations setup */}
+        {shouldShowStepSelection && (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border-2 border-green-300 dark:border-green-600 rounded-xl p-6 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="flex items-start gap-4 mb-4">
+              <span className="text-3xl">🎉</span>
+              <div>
+                <h3 className="font-bold text-lg text-green-900 dark:text-green-100">
+                  {onboardingT('integrations.selectNextStep')}
+                </h3>
+              </div>
+            </div>
+            <StepSelectionCard
+              workspaceId={workspaceId}
+              onSelect={handleStepSelection}
+            />
+          </div>
+        )}
+
         {/* 헤더 섹션 */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">

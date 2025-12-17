@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { redirect, useFetcher, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
+import { Link, redirect, useFetcher, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
 import {
   NexBadge,
@@ -46,10 +46,12 @@ import {
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
 import { deleteMailingListMember, upsertMailingList, upsertMailingListMember } from '../db/mutations';
-import { getMailingList, getMailingListMembers, getWorkspace } from '../db/queries';
+import { getMailingList, getMailingListMembers, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { formatDate, getSourceLabel, getSourceVariant } from '../lib/common';
 import { mailListUserSchema } from '../lib/constants';
 import { parseMetaJson } from '../lib/JsonUtils';
+import { useOnboarding } from '../hooks/useOnboarding';
+import { OnboardingModeBanner, NextStepLink } from '../components/onboarding-guide';
 import type { MailListData, MailListMemberData } from '../lib/types';
 import type { Route } from "./+types/mail-list-members";
 
@@ -66,14 +68,23 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const workspace = await getWorkspace(client, { userId: user.id });
   const workspaceId = workspace[0].workspace_id;
   const mailingListId = params.mailListId;
+  
+  // Get onboarding state
+  let onboardingState = null;
+  try {
+    onboardingState = await getWorkspaceOnboardingState(client, { workspaceId });
+  } catch (error) {
+    // Onboarding state not found, continue without it
+  }
+  
   if (mailingListId && mailingListId !== 'new') {
     const mailingList = await getMailingList(client, { workspaceId: workspaceId, mailingListId: mailingListId });
     const members = await getMailingListMembers(client, { mailingListId: mailingListId });
     let mailList = mailingList?.[0];
     mailList.memberCount = members.length;
-    return { workspaceId, mailingList: mailList, members: members };
+    return { workspaceId, mailingList: mailList, members: members, onboardingState };
   } else {
-    return { workspaceId, mailingList: null, members: [] };
+    return { workspaceId, mailingList: null, members: [], onboardingState };
   }
 };
 
@@ -152,15 +163,22 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 };
 
 export default function MailListMembersScreen( { loaderData }: Route.ComponentProps ) {
-  const { workspaceId, mailingList, members: initialMembers } = loaderData;
+  const { workspaceId, mailingList, members: initialMembers, onboardingState } = loaderData;
   const { t } = useTranslation("common", { keyPrefix: "mailLists" });
   const { t: commonT, i18n } = useTranslation("common", { keyPrefix: "common" });
   const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
   const { t: searchesT } = useTranslation("common", { keyPrefix: "searches" });
   const { t: errorsT } = useTranslation("common", { keyPrefix: "errors" });
+  const { t: onboardingT } = useTranslation("common", { keyPrefix: "onboarding" });
   const navigate = useNavigate();
   const isNew = mailingList === null;
   const fetcher = useFetcher();
+  
+  // Onboarding hook
+  const { isOnboardingActive, currentStep, updateStep } = useOnboarding({ 
+    workspaceId, 
+    onboardingState 
+  });
   
   // 상태
   const [mailList, setMailList] = useState<MailListData | null>(mailingList || null);
@@ -442,9 +460,51 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
     );
   }
 
+  // Handle go to targets
+  const handleGoToTargets = () => {
+    if (isOnboardingActive && currentStep === 'setup_mailing_list') {
+      updateStep('setup_targets');
+    }
+    navigate('/settings/targets');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
       <div className="max-w-6xl mx-auto space-y-8">
+        {/* Onboarding Banner */}
+        {isOnboardingActive && currentStep === 'setup_mailing_list' && (
+          <OnboardingModeBanner
+            currentStep={currentStep}
+            workspaceId={workspaceId}
+          />
+        )}
+        
+        {/* Onboarding: Go to Targets link after adding members */}
+        {isOnboardingActive && currentStep === 'setup_mailing_list' && !isNew && members.length > 0 && (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-200 dark:border-green-700 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">✅</span>
+                <div>
+                  <p className="font-medium text-green-900 dark:text-green-100">
+                    {onboardingT('mailList.afterSavePrompt')}
+                  </p>
+                </div>
+              </div>
+              <NexButton
+                variant="primary"
+                onClick={handleGoToTargets}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {onboardingT('mailList.goToTargets')}
+                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </NexButton>
+            </div>
+          </div>
+        )}
+
         {/* 헤더 섹션 */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">

@@ -1124,6 +1124,90 @@ const en: Translation = {
       samplesButton: "View Samples",
     },
   },
+  onboarding: {
+    badge: "Onboarding",
+    skip: "Skip this step",
+    steps: {
+      welcome: {
+        title: "Start NexLetter Setup",
+        description: "Let's set up your newsletter. Click the button to go to settings.",
+      },
+      setup_integrations: {
+        title: "Setup Integrations",
+        description: "Connect GitHub and Slack to fetch data. Continue to the next step when done.",
+      },
+      setup_mailing_list: {
+        title: "Setup Mailing List",
+        description: "Group email addresses for delivery. Can be selected in targets.",
+      },
+      setup_targets: {
+        title: "Setup Targets",
+        description: "Configure data sources (GitHub repos, Slack channels) and email delivery schedule.",
+      },
+      first_mail_sending: {
+        title: "Send First Newsletter",
+        description: "Ready to collect data from the past 7 days and send your newsletter.",
+      },
+      completed: {
+        title: "Setup Complete!",
+        description: "Congratulations! Your NexLetter setup is complete.",
+      },
+    },
+    progressSteps: {
+      welcome: "Start",
+      setup_integrations: "Integrations",
+      setup_mailing_list: "Mail List",
+      setup_targets: "Targets",
+      first_mail_sending: "First Mail",
+      completed: "Complete",
+    },
+    selection: {
+      title: "What would you like to do next?",
+      mailingList: {
+        title: "Set Up Mailing List",
+        description: "Group email addresses. Can be done later.",
+      },
+      targets: {
+        title: "Set Up Targets",
+        description: "Configure data sources and delivery schedule.",
+      },
+    },
+    firstMail: {
+      title: "Send Your First Newsletter?",
+      description: "We will collect data from the past 7 days for your targets and send the newsletter now.",
+      sendNow: "Yes, Send Now",
+      waitSchedule: "No, Wait for Schedule",
+      scheduleInfo: "Next scheduled delivery: {{schedule}}",
+    },
+    goTo: {
+      welcome: "Go to Start",
+      setup_integrations: "Go to Integrations",
+      setup_mailing_list: "Go to Mailing List",
+      setup_targets: "Go to Targets",
+      first_mail_sending: "Go to First Mail",
+      completed: "Complete",
+    },
+    dashboard: {
+      welcomeBanner: "Welcome to NexLetter! Let's get started with setup.",
+      goToSettings: "Go to Settings",
+    },
+    integrations: {
+      connectGithubPrompt: "Connect GitHub to track repository activity",
+      connectSlackPrompt: "Connect Slack to track channel activity",
+      skipAndContinue: "Skip and Continue",
+      selectNextStep: "Integration setup complete! Select your next step",
+      continueToNextStep: "Continue to Next Step",
+    },
+    mailList: {
+      addListPrompt: "Add a new list to group email addresses",
+      afterSavePrompt: "Mailing list setup complete. Next, let's set up targets.",
+      goToTargets: "Go to Targets",
+    },
+    targets: {
+      addTargetPrompt: "Add a new target to complete your newsletter setup",
+      afterSavePrompt: "Target setup complete!",
+    },
+  },
 };
 
 export default en;

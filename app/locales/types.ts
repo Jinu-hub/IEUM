@@ -1080,4 +1080,88 @@ export type Translation = {
       samplesButton: string;
     };
   };
+  onboarding: {
+    badge: string;
+    skip: string;
+    steps: {
+      welcome: {
+        title: string;
+        description: string;
+      };
+      setup_integrations: {
+        title: string;
+        description: string;
+      };
+      setup_mailing_list: {
+        title: string;
+        description: string;
+      };
+      setup_targets: {
+        title: string;
+        description: string;
+      };
+      first_mail_sending: {
+        title: string;
+        description: string;
+      };
+      completed: {
+        title: string;
+        description: string;
+      };
+    };
+    progressSteps: {
+      welcome: string;
+      setup_integrations: string;
+      setup_mailing_list: string;
+      setup_targets: string;
+      first_mail_sending: string;
+      completed: string;
+    };
+    selection: {
+      title: string;
+      mailingList: {
+        title: string;
+        description: string;
+      };
+      targets: {
+        title: string;
+        description: string;
+      };
+    };
+    firstMail: {
+      title: string;
+      description: string;
+      sendNow: string;
+      waitSchedule: string;
+      scheduleInfo: string;
+    };
+    goTo: {
+      welcome: string;
+      setup_integrations: string;
+      setup_mailing_list: string;
+      setup_targets: string;
+      first_mail_sending: string;
+      completed: string;
+    };
+    dashboard: {
+      welcomeBanner: string;
+      goToSettings: string;
+    };
+    integrations: {
+      connectGithubPrompt: string;
+      connectSlackPrompt: string;
+      skipAndContinue: string;
+      selectNextStep: string;
+      continueToNextStep: string;
+    };
+    mailList: {
+      addListPrompt: string;
+      afterSavePrompt: string;
+      goToTargets: string;
+    };
+    targets: {
+      addTargetPrompt: string;
+      afterSavePrompt: string;
+    };
+  };
 };

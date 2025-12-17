@@ -21,8 +21,10 @@ import {
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
 import { switchTargetActive } from '../db/mutations';
-import { getMailingList, getTargetLastSentAt, getTargets, getWorkspace } from '../db/queries';
+import { getMailingList, getTargetLastSentAt, getTargets, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
+import { useOnboarding } from '../hooks/useOnboarding';
+import { OnboardingModeBanner, FirstMailConfirmation } from '../components/onboarding-guide';
 import type { TargetData } from '../lib/types';
 import type { Route } from "./+types/targets";
 
@@ -55,7 +57,15 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     })
   );
   
-  return { workspaceId, targetData: mergedTargetData };
+  // Get onboarding state
+  let onboardingState = null;
+  try {
+    onboardingState = await getWorkspaceOnboardingState(client, { workspaceId });
+  } catch (error) {
+    // Onboarding state not found, continue without it
+  }
+  
+  return { workspaceId, targetData: mergedTargetData, onboardingState };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -97,10 +107,22 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
   const { t } = useTranslation("common", { keyPrefix: "targets" });
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
-  const { workspaceId, targetData } = loaderData;
+  const { t: onboardingT } = useTranslation("common", { keyPrefix: "onboarding" });
+  const { workspaceId, targetData, onboardingState } = loaderData;
   const [targets, setTargets] = useState<TargetData[]>(targetData);
   const navigate = useNavigate();
   const submit = useSubmit();
+  
+  // Onboarding hook
+  const { isOnboardingActive, currentStep, updateStep } = useOnboarding({ 
+    workspaceId, 
+    onboardingState 
+  });
+  
+  // First mail confirmation state
+  const [showFirstMailConfirmation, setShowFirstMailConfirmation] = useState(
+    isOnboardingActive && currentStep === 'first_mail_sending'
+  );
 
   // 활성 상태 토글
   const toggleTargetActive = (targetId: string) => {
@@ -146,9 +168,56 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
     console.log("타겟 복사:", targetId);
   };
 
+  // Handle first mail confirmation
+  const handleFirstMailConfirm = (sendNow: boolean) => {
+    if (sendNow) {
+      // YES: Just update the step to completed (implementation will be added later)
+      updateStep('completed');
+      toast.success(onboardingT('steps.completed.title'));
+    } else {
+      // NO: Show next schedule and complete onboarding
+      updateStep('completed');
+      toast.success(onboardingT('steps.completed.title'));
+    }
+    setShowFirstMailConfirmation(false);
+  };
+  
+  // Get next scheduled send time for first mail confirmation
+  const getNextScheduleInfo = () => {
+    const activeTarget = targets.find(t => t.isActive && t.scheduleCron);
+    if (!activeTarget) return undefined;
+    // Simple date formatting - could be enhanced with proper cron parsing
+    const nextDate = new Date();
+    nextDate.setDate(nextDate.getDate() + 1);
+    nextDate.setHours(7, 0, 0, 0);
+    return nextDate.toLocaleString('ja-JP', {
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
       <div className="max-w-4xl mx-auto space-y-8">
+        {/* Onboarding Banner for setup_targets step */}
+        {isOnboardingActive && currentStep === 'setup_targets' && (
+          <OnboardingModeBanner
+            currentStep={currentStep}
+            workspaceId={workspaceId}
+          />
+        )}
+        
+        {/* First Mail Confirmation for first_mail_sending step */}
+        {showFirstMailConfirmation && (
+          <FirstMailConfirmation
+            workspaceId={workspaceId}
+            nextSchedule={getNextScheduleInfo()}
+            onConfirm={handleFirstMailConfirm}
+          />
+        )}
+        
         {/* 헤더 섹션 */}
         <div className="flex items-start justify-between">
           <div className="space-y-2">

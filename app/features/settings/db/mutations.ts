@@ -763,3 +763,60 @@ export const updateSlackChannelMembership = async (
         return { success: false, error: `Unexpected error: ${error.message}` };
     }
 };
+
+/**
+ * オンボーディングステップを更新
+ */
+export const updateOnboardingStep = async (
+    client: SupabaseClient<Database>,
+    { workspaceId, onboardingStep }: { 
+        workspaceId: string, 
+        onboardingStep: Database["public"]["Enums"]["onboarding_step"] 
+    }
+) => {
+    const isCompleted = onboardingStep === 'completed';
+    const { data, error } = await client
+        .from('onboarding_states')
+        .update({ 
+            onboarding_step: onboardingStep,
+            is_completed: isCompleted,
+            completed_at: isCompleted ? new Date().toISOString() : null,
+            updated_at: new Date().toISOString()
+        })
+        .eq('workspace_id', workspaceId)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('updateOnboardingStep error', error);
+        throw error;
+    }
+    return data;
+};
+
+/**
+ * GitHub連携状態を更新
+ */
+export const updateGithubConnectedState = async (
+    client: SupabaseClient<Database>,
+    { workspaceId, githubConnected }: { 
+        workspaceId: string, 
+        githubConnected: boolean 
+    }
+) => {
+    const { data, error } = await client
+        .from('onboarding_states')
+        .update({ 
+            github_connected: githubConnected,
+            updated_at: new Date().toISOString()
+        })
+        .eq('workspace_id', workspaceId)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('updateGithubConnectedState error', error);
+        throw error;
+    }
+    return data;
+};

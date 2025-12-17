@@ -26,8 +26,10 @@ import {
 import { CATEGORY_TYPE } from '~/core/lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { createTargetWithSources } from '../db/mutations';
-import { getIntegrationsInfo, getMailingList, getTarget, getTargetSources, getWorkspace } from '../db/queries';
+import { getIntegrationsInfo, getMailingList, getTarget, getTargetSources, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useIntegrationSources } from '../hooks/useIntegrationSources';
+import { useOnboarding } from '../hooks/useOnboarding';
+import { OnboardingModeBanner } from '../components/onboarding-guide';
 import {
   getNonMemberSlackChannels,
   getSourceTypeLabel,
@@ -57,13 +59,21 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const mailingLists = await getMailingList(client, { workspaceId: workspaceId });
   const integrations = await getIntegrationsInfo(client, { workspaceId: workspaceId });
 
+  // Get onboarding state
+  let onboardingState = null;
+  try {
+    onboardingState = await getWorkspaceOnboardingState(client, { workspaceId });
+  } catch (error) {
+    // Onboarding state not found, continue without it
+  }
+
   const targetId = params.targetId;
   if (targetId && targetId !== 'new') {
     const target = await getTarget(client, { targetId: targetId || '' });
     const targetSources = await getTargetSources(client, { workspaceId: workspaceId, targetId: targetId });
-    return { workspaceId, target, mailingLists, integrations, targetSources };
+    return { workspaceId, target, mailingLists, integrations, targetSources, onboardingState };
   } else {
-    return { workspaceId, target: null, mailingLists, integrations, targetSources: [] };
+    return { workspaceId, target: null, mailingLists, integrations, targetSources: [], onboardingState };
   }
 };
 
@@ -167,13 +177,20 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
   const { t: errorsT } = useTranslation("common", { keyPrefix: "errors" });
-  const { workspaceId, target, mailingLists, integrations, targetSources } = loaderData;
+  const { t: onboardingT } = useTranslation("common", { keyPrefix: "onboarding" });
+  const { workspaceId, target, mailingLists, integrations, targetSources, onboardingState } = loaderData;
   const navigate = useNavigate();
   const submit = useSubmit();
   const actionData = useActionData();
   const navigation = useNavigation();
   const { targetId } = useParams();
   const isNew = targetId === 'new';
+  
+  // Onboarding hook
+  const { isOnboardingActive, currentStep, updateStep } = useOnboarding({ 
+    workspaceId, 
+    onboardingState 
+  });
 
   // i18n対応のオプション配列
   const scheduleTypes = getScheduleTypes(timesT);
@@ -326,6 +343,11 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
             </div>
           );
           
+          // Onboarding: Update step to first_mail_sending after target save
+          if (isOnboardingActive && currentStep === 'setup_targets') {
+            updateStep('first_mail_sending');
+          }
+          
           // 딜레이된 리다이렉트
           if (actionData.redirectTo) {
             setTimeout(() => {
@@ -460,6 +482,14 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
       <div className="max-w-4xl mx-auto space-y-8">
+        {/* Onboarding Banner for setup_targets step */}
+        {isOnboardingActive && currentStep === 'setup_targets' && (
+          <OnboardingModeBanner
+            currentStep={currentStep}
+            workspaceId={workspaceId}
+          />
+        )}
+        
         {/* 헤더 섹션 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">

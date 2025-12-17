@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { data, redirect } from 'react-router';
+import { data, redirect, useNavigate } from 'react-router';
 import {
   BookOpenIcon,
   CheckCircleIcon,
@@ -18,7 +18,8 @@ import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
 import { getSentEmailList } from '~/features/contents/db/queries';
 import { getStatusConfig } from '~/features/contents/lib/common';
-import { getIntegrationsInfo, getTargets, getWorkspace } from '~/features/settings/db/queries';
+import { getIntegrationsInfo, getTargets, getWorkspace, getWorkspaceOnboardingState } from '~/features/settings/db/queries';
+import { useOnboarding } from '~/features/settings/hooks/useOnboarding';
 import { formatTimeUntil, getNextScheduledTime } from '~/features/settings/lib/scheduleUtils';
 import type { Route } from "./+types/dashboard";
 
@@ -39,7 +40,16 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const integrationsInfo = await getIntegrationsInfo(client, { workspaceId: workspaceId });
   const targets = await getTargets(client, { workspaceId: workspaceId });
   const sentEmails = await getSentEmailList(client, { workspaceId: workspaceId });
-  return data({ user, workspaceId, integrationsInfo, targets, sentEmails });
+  
+  // Get onboarding state
+  let onboardingState = null;
+  try {
+    onboardingState = await getWorkspaceOnboardingState(client, { workspaceId });
+  } catch (error) {
+    // Onboarding state not found, continue without it
+  }
+  
+  return data({ user, workspaceId, integrationsInfo, targets, sentEmails, onboardingState });
 };
 
 
@@ -48,7 +58,16 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { t: tTimes } = useTranslation("common", { keyPrefix: "times" });
   const { t: targetsT } = useTranslation("common", { keyPrefix: "targets" });
-  const { user, workspaceId, integrationsInfo, targets, sentEmails } = loaderData;
+  const { t: onboardingT } = useTranslation("common", { keyPrefix: "onboarding" });
+  const navigate = useNavigate();
+  const { user, workspaceId, integrationsInfo, targets, sentEmails, onboardingState } = loaderData;
+  
+  // Onboarding hook
+  const { isOnboardingActive, currentStep, updateStep } = useOnboarding({ 
+    workspaceId, 
+    onboardingState 
+  });
+  
   const isConnectedGitHub = integrationsInfo?.find((integration: any) => integration.type === 'github')?.connection_status === 'connected';
   const isConnectedSlack = integrationsInfo?.find((integration: any) => integration.type === 'slack')?.connection_status === 'connected';
   const githubData = integrationsInfo?.find((integration: any) => integration.type === 'github')?.resource_cache_json as any;
@@ -62,8 +81,53 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
     failed: sentEmails.filter(email => email.status === 'failed').length,
   };
 
+  // Handle onboarding navigation
+  const handleGoToSettings = () => {
+    if (isOnboardingActive && currentStep === 'welcome') {
+      updateStep('setup_integrations');
+    }
+    navigate('/settings/integrations');
+  };
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0 space-y-6">
+      {/* Onboarding Banner for Welcome Step */}
+      {isOnboardingActive && currentStep === 'welcome' && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-2 border-blue-300 dark:border-blue-600 rounded-xl p-6 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-start gap-4">
+            <div className="text-4xl">👋</div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded">
+                  {onboardingT('badge')}
+                </span>
+                <h3 className="font-bold text-lg text-blue-900 dark:text-blue-100">
+                  {onboardingT('dashboard.welcomeBanner')}
+                </h3>
+              </div>
+              <p className="text-sm text-blue-800 dark:text-blue-200 mb-4">
+                {onboardingT('steps.welcome.description')}
+              </p>
+              <NexButton
+                variant="primary"
+                size="md"
+                onClick={handleGoToSettings}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <span>{onboardingT('dashboard.goToSettings')}</span>
+                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </NexButton>
+            </div>
+            <div className="flex items-center justify-center w-3 h-3">
+              <span className="absolute w-3 h-3 rounded-full bg-blue-500 opacity-75 animate-ping" />
+              <span className="w-3 h-3 rounded-full bg-blue-600" />
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* 대시보드 헤더 */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#667eea] to-[#764ba2] p-8 text-white ">
         <div className="relative z-10">

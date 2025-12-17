@@ -1123,6 +1123,90 @@ const ko: Translation = {
       samplesButton: "샘플 보기",
     },
   },
+  onboarding: {
+    badge: "온보딩",
+    skip: "이 단계 건너뛰기",
+    steps: {
+      welcome: {
+        title: "NexLetter 설정 시작",
+        description: "뉴스레터 설정을 시작합니다. 설정 버튼을 클릭하세요.",
+      },
+      setup_integrations: {
+        title: "외부 연동 설정",
+        description: "GitHub와 Slack을 연동하여 데이터를 가져옵니다. 완료되면 다음 단계로 진행하세요.",
+      },
+      setup_mailing_list: {
+        title: "메일 리스트 설정",
+        description: "이메일 주소를 그룹화합니다. 타겟에서 선택할 수 있습니다.",
+      },
+      setup_targets: {
+        title: "타겟 설정",
+        description: "정보 수집 대상(GitHub 저장소, Slack 채널)과 메일 발송 스케줄을 설정합니다.",
+      },
+      first_mail_sending: {
+        title: "첫 뉴스레터 발송",
+        description: "지난 7일간의 데이터를 수집하여 뉴스레터를 발송할 준비가 되었습니다.",
+      },
+      completed: {
+        title: "설정 완료!",
+        description: "축하합니다! NexLetter 설정이 완료되었습니다.",
+      },
+    },
+    progressSteps: {
+      welcome: "시작",
+      setup_integrations: "외부 연동",
+      setup_mailing_list: "메일 리스트",
+      setup_targets: "타겟",
+      first_mail_sending: "첫 발송",
+      completed: "완료",
+    },
+    selection: {
+      title: "다음으로 무엇을 하시겠습니까?",
+      mailingList: {
+        title: "메일 리스트 설정",
+        description: "이메일 주소를 그룹화합니다. 나중에 해도 됩니다.",
+      },
+      targets: {
+        title: "타겟 설정",
+        description: "정보 수집 대상과 발송 스케줄을 설정합니다.",
+      },
+    },
+    firstMail: {
+      title: "첫 뉴스레터를 발송하시겠습니까?",
+      description: "설정한 타깃으로 부터 지난 7일간의 데이터를 수집하여 지금 바로 뉴스레터를 발송합니다.",
+      sendNow: "네, 지금 발송",
+      waitSchedule: "아니오, 스케줄 대기",
+      scheduleInfo: "다음 발송 예정: {{schedule}}",
+    },
+    goTo: {
+      welcome: "시작으로",
+      setup_integrations: "외부 연동 설정으로",
+      setup_mailing_list: "메일 리스트 설정으로",
+      setup_targets: "타겟 설정으로",
+      first_mail_sending: "첫 발송으로",
+      completed: "완료",
+    },
+    dashboard: {
+      welcomeBanner: "NexLetter에 오신 것을 환영합니다! 설정을 시작해봅시다.",
+      goToSettings: "설정으로 이동",
+    },
+    integrations: {
+      connectGithubPrompt: "GitHub를 연동하여 저장소 활동을 추적하세요",
+      connectSlackPrompt: "Slack을 연동하여 채널 활동을 추적하세요",
+      skipAndContinue: "건너뛰고 계속",
+      selectNextStep: "외부 연동 설정 완료! 다음 단계를 선택하세요",
+      continueToNextStep: "다음 단계로 진행",
+    },
+    mailList: {
+      addListPrompt: "새 리스트를 추가하여 이메일 주소를 그룹화하세요",
+      afterSavePrompt: "메일 리스트 설정 완료. 다음으로 타겟을 설정하세요.",
+      goToTargets: "타겟 설정으로",
+    },
+    targets: {
+      addTargetPrompt: "새 타겟을 추가하여 뉴스레터 설정을 완료하세요",
+      afterSavePrompt: "타겟 설정 완료!",
+    },
+  },
 };
 
 export default ko;

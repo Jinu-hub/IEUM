@@ -1124,6 +1124,90 @@ const ja: Translation = {
       samplesButton: "サンプルを見る",
     },
   },
+  onboarding: {
+    badge: "オンボーディング",
+    skip: "このステップをスキップ",
+    steps: {
+      welcome: {
+        title: "NexLetterセットアップ開始",
+        description: "ニュースレターの設定を始めましょう。設定ボタンをクリックしてください。",
+      },
+      setup_integrations: {
+        title: "外部連携設定",
+        description: "GitHubやSlackを連携してデータを取得します。連携が完了したら次のステップへ進みましょう。",
+      },
+      setup_mailing_list: {
+        title: "メールリスト設定",
+        description: "配信先のメールアドレスをグループ化します。ターゲットで選択可能です。",
+      },
+      setup_targets: {
+        title: "ターゲット設定",
+        description: "情報収集対象（GitHubリポジトリ、Slackチャンネル）とメール発送スケジュールを設定します。",
+      },
+      first_mail_sending: {
+        title: "初回メール発送",
+        description: "過去7日間のデータを収集してニュースレターを発送する準備ができました。",
+      },
+      completed: {
+        title: "セットアップ完了！",
+        description: "おめでとうございます！NexLetterのセットアップが完了しました。",
+      },
+    },
+    progressSteps: {
+      welcome: "開始",
+      setup_integrations: "外部連携",
+      setup_mailing_list: "メールリスト",
+      setup_targets: "ターゲット",
+      first_mail_sending: "初回発送",
+      completed: "完了",
+    },
+    selection: {
+      title: "次に何をしますか？",
+      mailingList: {
+        title: "メールリストを設定",
+        description: "メールアドレスをグループ化します。後からでも設定可能です。",
+      },
+      targets: {
+        title: "ターゲットを設定",
+        description: "情報収集対象と発送スケジュールを設定します。",
+      },
+    },
+    firstMail: {
+      title: "初回のニュースレターを発送しますか？",
+      description: "設定したターゲットから過去7日間のデータを収集して、今すぐニュースレターを発送します。",
+      sendNow: "はい、今すぐ発送",
+      waitSchedule: "いいえ、スケジュールを待つ",
+      scheduleInfo: "次回の発送予定: {{schedule}}",
+    },
+    goTo: {
+      welcome: "開始へ",
+      setup_integrations: "外部連携設定へ",
+      setup_mailing_list: "メールリスト設定へ",
+      setup_targets: "ターゲット設定へ",
+      first_mail_sending: "初回発送へ",
+      completed: "完了",
+    },
+    dashboard: {
+      welcomeBanner: "NexLetterへようこそ！設定を始めましょう。",
+      goToSettings: "設定へ移動",
+    },
+    integrations: {
+      connectGithubPrompt: "GitHubを連携してリポジトリ活動を追跡しましょう",
+      connectSlackPrompt: "Slackを連携してチャンネル活動を追跡しましょう",
+      skipAndContinue: "スキップして次へ",
+      selectNextStep: "外部連携が完了しました！次のステップを選択してください",
+      continueToNextStep: "次のステップへ進む",
+    },
+    mailList: {
+      addListPrompt: "新しいリストを追加してメールアドレスをグループ化しましょう",
+      afterSavePrompt: "メールリストの設定が完了しました。次はターゲットを設定しましょう。",
+      goToTargets: "ターゲット設定へ",
+    },
+    targets: {
+      addTargetPrompt: "新しいターゲットを追加してニュースレターの設定を完了しましょう",
+      afterSavePrompt: "ターゲットの設定が完了しました！",
+    },
+  },
 };
 
 export default ja;
