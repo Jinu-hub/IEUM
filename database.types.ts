@@ -649,6 +649,9 @@ export type Database = {
           onboarding_mode: Database["public"]["Enums"]["onboarding_type"]
           onboarding_step: Database["public"]["Enums"]["onboarding_step"]
           review_step: Database["public"]["Enums"]["review_step"] | null
+          setup_integrations: Database["public"]["Enums"]["setup_integrations"]
+          setup_mailing_list: Database["public"]["Enums"]["setup_mailing_list"]
+          setup_targets: Database["public"]["Enums"]["setup_targets"]
           slack_connected: boolean
           target_configured: boolean
           updated_at: string
@@ -664,6 +667,9 @@ export type Database = {
           onboarding_mode?: Database["public"]["Enums"]["onboarding_type"]
           onboarding_step?: Database["public"]["Enums"]["onboarding_step"]
           review_step?: Database["public"]["Enums"]["review_step"] | null
+          setup_integrations?: Database["public"]["Enums"]["setup_integrations"]
+          setup_mailing_list?: Database["public"]["Enums"]["setup_mailing_list"]
+          setup_targets?: Database["public"]["Enums"]["setup_targets"]
           slack_connected?: boolean
           target_configured?: boolean
           updated_at?: string
@@ -679,6 +685,9 @@ export type Database = {
           onboarding_mode?: Database["public"]["Enums"]["onboarding_type"]
           onboarding_step?: Database["public"]["Enums"]["onboarding_step"]
           review_step?: Database["public"]["Enums"]["review_step"] | null
+          setup_integrations?: Database["public"]["Enums"]["setup_integrations"]
+          setup_mailing_list?: Database["public"]["Enums"]["setup_mailing_list"]
+          setup_targets?: Database["public"]["Enums"]["setup_targets"]
           slack_connected?: boolean
           target_configured?: boolean
           updated_at?: string
@@ -1337,15 +1346,12 @@ export type Database = {
         | "discord"
         | "lineworks"
         | "slack_user"
-      mail_status: "sending" | "delivered" | "failed"
+      mail_status: "sending" | "delivered" | "partial" | "failed"
       onboarding_step:
         | "welcome"
-        | "setup_workspace"
-        | "connect_github"
-        | "connect_slack"
+        | "setup_integrations"
         | "setup_mailing_list"
         | "setup_targets"
-        | "setup_rules"
         | "first_mail_sending"
         | "completed"
       onboarding_type: "default" | "slack_review"
@@ -1358,6 +1364,14 @@ export type Database = {
         | "review_completed"
       rule_type: "agents" | "tasks"
       run_status: "queued" | "running" | "success" | "failed" | "canceled"
+      setup_integrations: "start" | "connect_github" | "connect_slack" | "end"
+      setup_mailing_list: "start" | "regist_basic" | "regist_address" | "end"
+      setup_targets:
+        | "start"
+        | "regist_basic"
+        | "regist_schedule"
+        | "regist_sourses"
+        | "end"
       step_name:
         | "queued"
         | "collect_data"
@@ -1555,15 +1569,12 @@ export const Constants = {
         "lineworks",
         "slack_user",
       ],
-      mail_status: ["sending", "delivered", "failed"],
+      mail_status: ["sending", "delivered", "partial", "failed"],
       onboarding_step: [
         "welcome",
-        "setup_workspace",
-        "connect_github",
-        "connect_slack",
+        "setup_integrations",
         "setup_mailing_list",
         "setup_targets",
-        "setup_rules",
         "first_mail_sending",
         "completed",
       ],
@@ -1578,6 +1589,15 @@ export const Constants = {
       ],
       rule_type: ["agents", "tasks"],
       run_status: ["queued", "running", "success", "failed", "canceled"],
+      setup_integrations: ["start", "connect_github", "connect_slack", "end"],
+      setup_mailing_list: ["start", "regist_basic", "regist_address", "end"],
+      setup_targets: [
+        "start",
+        "regist_basic",
+        "regist_schedule",
+        "regist_sourses",
+        "end",
+      ],
       step_name: [
         "queued",
         "collect_data",

@@ -26,7 +26,7 @@ export const STEP_STATUS = [
 ] as const;
 
 export const MAIL_STATUS = [
-  "sending", "delivered", "failed",
+  "sending", "delivered", "partial", "failed",
 ] as const;
 
 export const INTEGRATION_TYPE = [
@@ -79,14 +79,34 @@ export const ONBOARDING_TYPE = [
 
 export const ONBOARDING_STEP = [
   "welcome",
-  "setup_workspace",
-  "connect_github",
-  "connect_slack",
+  "setup_integrations",
   "setup_mailing_list",
   "setup_targets",
-  "setup_rules",
   'first_mail_sending',
   'completed'
+] as const;
+
+
+export const SETUP_INTEGRATIONS = [
+  "start",
+  "connect_github",
+  "connect_slack",
+  "end",
+] as const;
+
+export const SETUP_MAILING_LIST = [
+  "start",
+  "regist_basic",
+  "regist_address",
+  "end",
+] as const;
+
+export const SETUP_TARGETS = [
+  "start",
+  "regist_basic",
+  "regist_schedule",
+  "regist_sourses",
+  "end",
 ] as const;
 
 export const REVIEW_STEP = [

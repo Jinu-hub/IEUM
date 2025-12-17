@@ -37,6 +37,9 @@ import {
   REVIEW_STEP,
   RULE_TYPE,
   RUN_STATUS,
+  SETUP_INTEGRATIONS,
+  SETUP_MAILING_LIST,
+  SETUP_TARGETS,
   STEP_NAME,
   STEP_STATUS,
   WORKSPACE_KIND
@@ -58,6 +61,9 @@ import {
   export const categoryType = pgEnum("category_type", CATEGORY_TYPE);
   export const onboardingType = pgEnum("onboarding_type", ONBOARDING_TYPE);
   export const onboardingStep = pgEnum("onboarding_step", ONBOARDING_STEP);
+  export const setupIntegrations = pgEnum("setup_integrations", SETUP_INTEGRATIONS);
+  export const setupMailingList = pgEnum("setup_mailing_list", SETUP_MAILING_LIST);
+  export const setupTargets = pgEnum("setup_targets", SETUP_TARGETS);
   export const reviewStep = pgEnum("review_step", REVIEW_STEP);
   export const firstMailSend = pgEnum("first_mail_send", FIRST_MAIL_SEND);
   export const workspaceKind = pgEnum("workspace_kind", WORKSPACE_KIND);
@@ -667,6 +673,9 @@ export const onboardingStates = pgTable(
       .references(() => workspace.workspaceId, { onDelete: "cascade" }),
     onboardingMode: onboardingType("onboarding_mode").notNull().default("default"),
     onboardingStep: onboardingStep("onboarding_step").notNull().default("welcome"),
+    setupIntegrations: setupIntegrations("setup_integrations").notNull().default("start"),
+    setupMailingList: setupMailingList("setup_mailing_list").notNull().default("start"),
+    setupTargets: setupTargets("setup_targets").notNull().default("start"),
     reviewStep: reviewStep("review_step"),
     slackConnected: boolean("slack_connected").notNull().default(false),
     githubConnected: boolean("github_connected").notNull().default(false),
