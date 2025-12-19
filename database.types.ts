@@ -1364,7 +1364,12 @@ export type Database = {
         | "review_completed"
       rule_type: "agents" | "tasks"
       run_status: "queued" | "running" | "success" | "failed" | "canceled"
-      setup_integrations: "start" | "connect_github" | "connect_slack" | "end"
+      setup_integrations:
+        | "start"
+        | "connect_github"
+        | "connect_slack"
+        | "setup_slack_channel"
+        | "end"
       setup_mailing_list: "start" | "regist_basic" | "regist_address" | "end"
       setup_targets:
         | "start"
@@ -1589,7 +1594,13 @@ export const Constants = {
       ],
       rule_type: ["agents", "tasks"],
       run_status: ["queued", "running", "success", "failed", "canceled"],
-      setup_integrations: ["start", "connect_github", "connect_slack", "end"],
+      setup_integrations: [
+        "start",
+        "connect_github",
+        "connect_slack",
+        "setup_slack_channel",
+        "end",
+      ],
       setup_mailing_list: ["start", "regist_basic", "regist_address", "end"],
       setup_targets: [
         "start",

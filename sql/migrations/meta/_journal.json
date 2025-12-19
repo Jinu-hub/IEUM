@@ -155,6 +155,13 @@
       "when": 1765963942033,
       "tag": "0021_brave_hammerhead",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1766064426129,
+      "tag": "0022_third_trauma",
+      "breakpoints": true
     }
   ]
 }

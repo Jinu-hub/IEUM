@@ -10,7 +10,6 @@ import {
   HashIcon,
   LockIcon,
   NexBadge,
-  NexButton,
   NexCard,
   NexCardContent,
   NexCardDescription,
@@ -20,7 +19,7 @@ import {
 } from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
-import { OnboardingProgress, StepSelectionCard } from '../components/onboarding-guide';
+import { IntegrationsCompleteCard, IntegrationsGuideTooltip, IntegrationsSubProgress, OnboardingProgress } from '../components/onboarding-guide';
 import { getIntegrationsInfo, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useIntegrationActions } from '../hooks/useIntegrationActions';
 import { useIntegrationResponse } from '../hooks/useIntegrationResponse';
@@ -81,8 +80,10 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   // Onboarding hook
   const { 
     isOnboardingActive, 
-    currentStep, 
+    currentStep,
+    currentIntegrationsSubStep,
     updateStep,
+    updateIntegrationsSubStep,
     setGithubConnected,
     setSlackConnected
   } = useOnboarding({ 
@@ -108,6 +109,36 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   // URL 파라미터에서 상태 메시지 확인
   const [searchParams] = useSearchParams();
   const [statusMessage, setStatusMessage] = useState<{type: 'success' | 'error' | 'info', message: string} | null>(null);
+  
+  // Track previous connection states for onboarding sub-step updates
+  const [prevGithubConnected, setPrevGithubConnected] = useState(isConnectedGitHub);
+  const [prevSlackConnected, setPrevSlackConnected] = useState(isConnectedSlack);
+  
+  // Update onboarding sub-step when connection status changes
+  useEffect(() => {
+    if (!isOnboardingActive || currentStep !== 'setup_integrations') return;
+    
+    // GitHub just connected
+    if (isConnectedGitHub && !prevGithubConnected && currentIntegrationsSubStep === 'connect_github') {
+      setGithubConnected(true);
+      updateIntegrationsSubStep('connect_slack');
+    }
+    setPrevGithubConnected(isConnectedGitHub);
+    
+    // Slack just connected
+    if (isConnectedSlack && !prevSlackConnected && currentIntegrationsSubStep === 'connect_slack') {
+      setSlackConnected(true);
+      // Check if there are channels to set up
+      const slackIntegration = integrationsInfo.find((i: any) => i.type === 'slack') as any;
+      const hasChannels = slackIntegration?.resourceCache?.channels?.length > 0;
+      if (hasChannels) {
+        updateIntegrationsSubStep('setup_slack_channel');
+      } else {
+        updateIntegrationsSubStep('end');
+      }
+    }
+    setPrevSlackConnected(isConnectedSlack);
+  }, [isConnectedGitHub, isConnectedSlack, isOnboardingActive, currentStep, currentIntegrationsSubStep, prevGithubConnected, prevSlackConnected, integrationsInfo]);
   
   useEffect(() => {
     const status = searchParams.get('status');
@@ -291,6 +322,11 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
           // 성공 시 로딩 상태 해제
           setLoadingChannels(prev => ({ ...prev, [currentLoadingChannel]: false }));
           toast.success(response.message);
+          
+          // If in onboarding setup_slack_channel step, move to 'end'
+          if (isOnboardingActive && currentStep === 'setup_integrations' && currentIntegrationsSubStep === 'setup_slack_channel') {
+            updateIntegrationsSubStep('end');
+          }
 
         } else if (response.status === 'error') {
           // 실패 시 상태 롤백
@@ -345,9 +381,9 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
     setShowStepSelection(true);
   };
 
-  // Check if should show step selection (after integrations setup or skip)
+  // Check if should show step selection (when sub-step is 'end')
   const shouldShowStepSelection = isOnboardingActive && 
-    currentStep === 'setup_integrations' && showStepSelection;
+    currentStep === 'setup_integrations' && currentIntegrationsSubStep === 'end';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
@@ -370,42 +406,26 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                   {onboardingT('steps.setup_integrations.description')}
                 </p>
                 
-                {/* Progress indicator */}
+                {/* Main Progress indicator */}
                 <div className="mb-4">
                   <OnboardingProgress currentStep={currentStep} />
                 </div>
                 
-                <NexButton
-                  variant="primary"
-                  onClick={handleContinueToNextStep}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {onboardingT('integrations.continueToNextStep')}
-                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </NexButton>
+                {/* Sub Progress indicator for integrations */}
+                <div className="mb-4 p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mb-2 font-medium">연동 진행 상황</p>
+                  <IntegrationsSubProgress currentSubStep={currentIntegrationsSubStep} />
+                </div>
               </div>
             </div>
           </div>
         )}
         
-        {/* Step Selection after integrations setup */}
+        {/* Step Selection when sub-step is 'end' */}
         {shouldShowStepSelection && (
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border-2 border-green-300 dark:border-green-600 rounded-xl p-6 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="flex items-start gap-4 mb-4">
-              <span className="text-3xl">🎉</span>
-              <div>
-                <h3 className="font-bold text-lg text-green-900 dark:text-green-100">
-                  {onboardingT('integrations.selectNextStep')}
-                </h3>
-              </div>
-            </div>
-            <StepSelectionCard
-              workspaceId={workspaceId}
-              onSelect={handleStepSelection}
-            />
-          </div>
+          <IntegrationsCompleteCard
+            onSelectNext={handleStepSelection}
+          />
         )}
 
         {/* 헤더 섹션 */}
@@ -474,7 +494,31 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                     </div>
                   </div>
                   <div className="flex items-center">
-                    {getActionButton(integration)}
+                    {/* Onboarding tooltips for integration buttons */}
+                    {isOnboardingActive && currentStep === 'setup_integrations' && (
+                      (integration.type === 'github' && currentIntegrationsSubStep === 'connect_github') ||
+                      (integration.type === 'slack' && currentIntegrationsSubStep === 'connect_slack')
+                    ) ? (
+                      <IntegrationsGuideTooltip
+                        currentSubStep={currentIntegrationsSubStep}
+                        targetSubStep={integration.type === 'github' ? 'connect_github' : 'connect_slack'}
+                        position="left"
+                        showSkip
+                        onSkip={() => {
+                          if (integration.type === 'github') {
+                            // Skip GitHub → move to connect_slack
+                            updateIntegrationsSubStep('connect_slack');
+                          } else {
+                            // Skip Slack → move to end (no channel setup needed)
+                            updateIntegrationsSubStep('end');
+                          }
+                        }}
+                      >
+                        {getActionButton(integration)}
+                      </IntegrationsGuideTooltip>
+                    ) : (
+                      getActionButton(integration)
+                    )}
                   </div>
                 </div>
               </NexCardHeader>
@@ -613,13 +657,31 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                           
                           {/* 접근 가능한 채널 */}
                           <div className="mt-3">
-                            <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2">
-                              <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">{t("channelList")}</span>  
-                              <br />
-                              <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription1")}</span>
-                              <br />
-                              <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription2")}</span>
-                            </div>
+                            {isOnboardingActive && currentStep === 'setup_integrations' && currentIntegrationsSubStep === 'setup_slack_channel' ? (
+                              <IntegrationsGuideTooltip
+                                currentSubStep={currentIntegrationsSubStep}
+                                targetSubStep="setup_slack_channel"
+                                position="top"
+                                showSkip
+                                onSkip={() => updateIntegrationsSubStep('end')}
+                              >
+                                <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2 inline-block">
+                                  <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">{t("channelList")}</span>  
+                                  <br />
+                                  <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription1")}</span>
+                                  <br />
+                                  <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription2")}</span>
+                                </div>
+                              </IntegrationsGuideTooltip>
+                            ) : (
+                              <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2">
+                                <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">{t("channelList")}</span>  
+                                <br />
+                                <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription1")}</span>
+                                <br />
+                                <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription2")}</span>
+                              </div>
+                            )}
                             {integration.resourceCache.channels && integration.resourceCache.channels.length > 0 ? (
                               <div>
                                 {/* 통합된 통계 정보 */}

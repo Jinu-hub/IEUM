@@ -820,3 +820,30 @@ export const updateGithubConnectedState = async (
     }
     return data;
 };
+
+/**
+ * setup_integrationsサブステップを更新
+ */
+export const updateSetupIntegrationsStep = async (
+    client: SupabaseClient<Database>,
+    { workspaceId, setupIntegrationsStep }: { 
+        workspaceId: string, 
+        setupIntegrationsStep: Database["public"]["Enums"]["setup_integrations"] 
+    }
+) => {
+    const { data, error } = await client
+        .from('onboarding_states')
+        .update({ 
+            setup_integrations: setupIntegrationsStep,
+            updated_at: new Date().toISOString()
+        })
+        .eq('workspace_id', workspaceId)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('updateSetupIntegrationsStep error', error);
+        throw error;
+    }
+    return data;
+};

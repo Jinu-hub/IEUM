@@ -91,6 +91,7 @@ export const SETUP_INTEGRATIONS = [
   "start",
   "connect_github",
   "connect_slack",
+  "setup_slack_channel",
   "end",
 ] as const;
 

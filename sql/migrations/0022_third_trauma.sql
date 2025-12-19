@@ -1,0 +1,1 @@
+ALTER TYPE "public"."setup_integrations" ADD VALUE 'setup_slack_channel' BEFORE 'end';

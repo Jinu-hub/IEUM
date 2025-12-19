@@ -13,6 +13,7 @@ import { NexButton } from '~/core/components/nex';
 import { cn } from '~/core/lib/utils';
 
 type OnboardingStep = Database["public"]["Enums"]["onboarding_step"];
+type SetupIntegrationsStep = Database["public"]["Enums"]["setup_integrations"];
 
 interface OnboardingGuideTooltipProps {
   /** Current onboarding step */
@@ -508,6 +509,295 @@ export function NextStepLink({ nextStep, href, children, className }: NextStepLi
       <span>{children || t(`goTo.${nextStep}`, `Go to ${defaultMessage.title}`)}</span>
       <span>→</span>
     </Link>
+  );
+}
+
+/* =========================================================
+   Integrations Sub-Step Components
+   ========================================================= */
+
+/**
+ * Default messages for integrations sub-steps
+ */
+const INTEGRATIONS_SUB_STEP_MESSAGES: Record<SetupIntegrationsStep, { title: string; description: string; icon: string }> = {
+  'start': {
+    title: 'Starting Integrations Setup',
+    description: 'Let\'s connect your services. We\'ll guide you through GitHub and Slack.',
+    icon: '🚀'
+  },
+  'connect_github': {
+    title: 'Connect GitHub',
+    description: 'Click the Connect button to link your GitHub account and select repositories.',
+    icon: '🐙'
+  },
+  'connect_slack': {
+    title: 'Connect Slack',
+    description: 'Click the Connect button to link your Slack workspace.',
+    icon: '💬'
+  },
+  'setup_slack_channel': {
+    title: 'Select Slack Channels',
+    description: 'Choose which Slack channels to monitor for your newsletter.',
+    icon: '📢'
+  },
+  'end': {
+    title: 'Integrations Complete!',
+    description: 'Great job! Your integrations are set up. Choose what to do next.',
+    icon: '✅'
+  }
+};
+
+const INTEGRATIONS_SUB_STEP_ORDER: SetupIntegrationsStep[] = [
+  'start',
+  'connect_github',
+  'connect_slack',
+  'setup_slack_channel',
+  'end'
+];
+
+/**
+ * Integrations Sub-Progress Indicator
+ * Shows progress within the setup_integrations step
+ */
+interface IntegrationsSubProgressProps {
+  currentSubStep: SetupIntegrationsStep | null;
+  className?: string;
+}
+
+export function IntegrationsSubProgress({ currentSubStep, className }: IntegrationsSubProgressProps) {
+  const { t } = useTranslation("common", { keyPrefix: "onboarding.integrationsSubSteps" });
+  
+  const SUB_STEP_LABELS: Record<SetupIntegrationsStep, string> = {
+    'start': t('start', 'Start'),
+    'connect_github': t('connect_github', 'GitHub'),
+    'connect_slack': t('connect_slack', 'Slack'),
+    'setup_slack_channel': t('setup_slack_channel', 'Channels'),
+    'end': t('end', 'Done')
+  };
+  
+  const currentIndex = currentSubStep ? INTEGRATIONS_SUB_STEP_ORDER.indexOf(currentSubStep) : -1;
+  
+  return (
+    <div className={cn('w-full', className)}>
+      <div className="flex items-center justify-between relative">
+        {/* Progress line */}
+        <div className="absolute top-3 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-700" />
+        <div 
+          className="absolute top-3 left-0 h-0.5 bg-amber-500 transition-all duration-500"
+          style={{ width: `${Math.max(0, (currentIndex / (INTEGRATIONS_SUB_STEP_ORDER.length - 1)) * 100)}%` }}
+        />
+        
+        {/* Steps */}
+        {INTEGRATIONS_SUB_STEP_ORDER.map((step, index) => {
+          const isCompleted = index < currentIndex;
+          const isCurrent = index === currentIndex;
+          const isPending = index > currentIndex;
+          
+          return (
+            <div key={step} className="relative flex flex-col items-center z-10">
+              <div
+                className={cn(
+                  'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium transition-all duration-300',
+                  isCompleted && 'bg-amber-500 text-white',
+                  isCurrent && 'bg-amber-500 text-white ring-2 ring-amber-200 dark:ring-amber-800',
+                  isPending && 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                )}
+              >
+                {isCompleted ? '✓' : index + 1}
+              </div>
+              <span
+                className={cn(
+                  'mt-1 text-[10px] font-medium whitespace-nowrap',
+                  isCurrent && 'text-amber-600 dark:text-amber-400',
+                  !isCurrent && 'text-gray-500 dark:text-gray-400'
+                )}
+              >
+                {SUB_STEP_LABELS[step]}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Integrations Guide Tooltip
+ * Similar to ReviewGuideTooltip but for integrations sub-steps
+ */
+interface IntegrationsGuideTooltipProps {
+  /** Current integrations sub-step */
+  currentSubStep: SetupIntegrationsStep | null;
+  /** Target sub-step this tooltip corresponds to */
+  targetSubStep: SetupIntegrationsStep;
+  /** Tooltip position */
+  position?: 'top' | 'bottom' | 'left' | 'right';
+  /** Child elements (anchor element) */
+  children: ReactNode;
+  /** Custom class name */
+  className?: string;
+  /** Callback when tooltip visibility changes */
+  onVisibilityChange?: (visible: boolean) => void;
+  /** Skip button callback */
+  onSkip?: () => void;
+  /** Whether to show skip option */
+  showSkip?: boolean;
+}
+
+function getIntegrationsTooltipPositionStyles(position: 'top' | 'bottom' | 'left' | 'right') {
+  const baseArrowStyles = 'absolute w-3 h-3 bg-amber-100 dark:bg-amber-900/90 rotate-45';
+  
+  switch (position) {
+    case 'top':
+      return {
+        tooltip: 'bottom-full mb-3 left-1/2 -translate-x-1/2',
+        arrow: `${baseArrowStyles} -bottom-1.5 left-1/2 -translate-x-1/2`
+      };
+    case 'bottom':
+      return {
+        tooltip: 'top-full mt-3 left-1/2 -translate-x-1/2',
+        arrow: `${baseArrowStyles} -top-1.5 left-1/2 -translate-x-1/2`
+      };
+    case 'left':
+      return {
+        tooltip: 'right-full mr-3 top-1/2 -translate-y-1/2',
+        arrow: `${baseArrowStyles} -right-1.5 top-1/2 -translate-y-1/2`
+      };
+    case 'right':
+      return {
+        tooltip: 'left-full ml-3 top-1/2 -translate-y-1/2',
+        arrow: `${baseArrowStyles} -left-1.5 top-1/2 -translate-y-1/2`
+      };
+  }
+}
+
+export function IntegrationsGuideTooltip({
+  currentSubStep,
+  targetSubStep,
+  position = 'bottom',
+  children,
+  className,
+  onVisibilityChange,
+  onSkip,
+  showSkip = false
+}: IntegrationsGuideTooltipProps) {
+  const { t } = useTranslation("common", { keyPrefix: "onboarding.integrationsSubSteps" });
+  const [isVisible, setIsVisible] = useState(false);
+  
+  // Show tooltip when current sub-step matches target sub-step
+  useEffect(() => {
+    const shouldShow = currentSubStep === targetSubStep;
+    setIsVisible(shouldShow);
+    onVisibilityChange?.(shouldShow);
+  }, [currentSubStep, targetSubStep, onVisibilityChange]);
+  
+  const defaultMessage = INTEGRATIONS_SUB_STEP_MESSAGES[targetSubStep];
+  const message = {
+    title: t(`${targetSubStep}.title`, defaultMessage.title),
+    description: t(`${targetSubStep}.description`, defaultMessage.description),
+    icon: defaultMessage.icon
+  };
+  const positionStyles = getIntegrationsTooltipPositionStyles(position);
+  
+  if (!message) return <>{children}</>;
+  
+  return (
+    <div className={cn('relative inline-block', className)}>
+      {children}
+      
+      {isVisible && (
+        <div
+          className={cn(
+            'absolute z-50 w-80 p-4 rounded-lg shadow-lg',
+            'bg-amber-100 dark:bg-amber-900/90',
+            'border-2 border-amber-300 dark:border-amber-700',
+            'animate-in fade-in slide-in-from-bottom-2 duration-300',
+            positionStyles.tooltip
+          )}
+          role="tooltip"
+        >
+          {/* Arrow */}
+          <div className={positionStyles.arrow} />
+          
+          {/* Content */}
+          <div className="relative">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl flex-shrink-0">{message.icon}</span>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-amber-900 dark:text-amber-100 text-sm mb-1">
+                  {message.title}
+                </h4>
+                <p className="text-amber-800 dark:text-amber-200 text-xs leading-relaxed">
+                  {message.description}
+                </p>
+                
+                {/* Skip link */}
+                {showSkip && onSkip && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSkip();
+                    }}
+                    className="mt-2 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 underline"
+                  >
+                    {t('skip', 'Skip this step →')}
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Pulse indicator */}
+            <div className="absolute top-0 right-0 flex items-center justify-center w-3 h-3">
+              <span className="absolute w-full h-full rounded-full bg-amber-500 opacity-75 animate-ping" />
+              <span className="absolute w-3 h-3 rounded-full bg-amber-600" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Integrations Complete Card
+ * Shows when integrations setup is complete (sub-step = 'end')
+ */
+interface IntegrationsCompleteCardProps {
+  onSelectNext: (step: 'setup_mailing_list' | 'setup_targets') => void;
+  className?: string;
+}
+
+export function IntegrationsCompleteCard({ onSelectNext, className }: IntegrationsCompleteCardProps) {
+  const { t } = useTranslation("common", { keyPrefix: "onboarding" });
+  const navigate = useNavigate();
+  
+  return (
+    <div className={cn(
+      'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30',
+      'border-2 border-green-300 dark:border-green-600 rounded-xl p-6',
+      'animate-in fade-in slide-in-from-top-4 duration-500',
+      className
+    )}>
+      <div className="flex items-start gap-4 mb-4">
+        <span className="text-3xl">🎉</span>
+        <div>
+          <h3 className="font-bold text-lg text-green-900 dark:text-green-100">
+            {t('integrationsSubSteps.end.title', 'Integrations Setup Complete!')}
+          </h3>
+          <p className="text-sm text-green-800 dark:text-green-200 mt-1">
+            {t('integrationsSubSteps.end.description', 'Choose what to do next.')}
+          </p>
+        </div>
+      </div>
+      <StepSelectionCard
+        workspaceId=""
+        onSelect={(step) => {
+          onSelectNext(step);
+          navigate(step === 'setup_mailing_list' ? '/settings/mail-list' : '/settings/targets');
+        }}
+      />
+    </div>
   );
 }
 

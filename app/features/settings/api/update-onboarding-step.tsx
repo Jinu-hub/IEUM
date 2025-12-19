@@ -8,13 +8,14 @@
 import type { Database } from "database.types";
 import type { ActionFunctionArgs } from "react-router";
 import { data } from "react-router";
-import { ONBOARDING_STEP } from "~/core/lib/constants";
+import { ONBOARDING_STEP, SETUP_INTEGRATIONS } from "~/core/lib/constants";
 import { logger } from "~/core/lib/logger";
 import makeServerClient from "~/core/lib/supa-client.server";
-import { updateGithubConnectedState, updateOnboardingStep, updateSlackConnectedState } from "../db/mutations";
+import { updateGithubConnectedState, updateOnboardingStep, updateSetupIntegrationsStep, updateSlackConnectedState } from "../db/mutations";
 import { getWorkspace, getWorkspaceOnboardingState } from "../db/queries";
 
 type OnboardingStep = Database["public"]["Enums"]["onboarding_step"];
+type SetupIntegrationsStep = Database["public"]["Enums"]["setup_integrations"];
 
 /**
  * オンボーディングステップの有効な遷移を定義
@@ -65,7 +66,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     const body = await request.json();
-    const { workspaceId, onboardingStep, githubConnected, slackConnected } = body;
+    const { workspaceId, onboardingStep, setupIntegrationsStep, githubConnected, slackConnected } = body;
 
     if (!workspaceId) {
       return data({ 
@@ -117,6 +118,34 @@ export async function action({ request }: ActionFunctionArgs) {
         slackConnected 
       });
       logger.info(`Slack connected state updated to: ${slackConnected}`);
+    }
+
+    // setup_integrationsサブステップの更新
+    if (setupIntegrationsStep) {
+      // サブステップ値の検証
+      if (!SETUP_INTEGRATIONS.includes(setupIntegrationsStep)) {
+        return data({ 
+          status: 'error', 
+          error: `Invalid setup_integrations step: ${setupIntegrationsStep}` 
+        }, { status: 400 });
+      }
+
+      await updateSetupIntegrationsStep(client, { 
+        workspaceId, 
+        setupIntegrationsStep: setupIntegrationsStep as SetupIntegrationsStep
+      });
+
+      logger.info(`✅ Setup integrations sub-step updated to: ${setupIntegrationsStep}`);
+
+      // サブステップのみ更新した場合は早期リターン
+      if (!onboardingStep) {
+        return data({ 
+          status: 'success', 
+          data: {
+            setupIntegrationsStep
+          }
+        });
+      }
     }
 
     // オンボーディングステップの更新

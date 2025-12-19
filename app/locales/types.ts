@@ -1117,6 +1117,24 @@ export type Translation = {
       first_mail_sending: string;
       completed: string;
     };
+    integrationsSubSteps: {
+      start: string;
+      connect_github: string;
+      connect_slack: string;
+      setup_slack_channel: string;
+      end: string;
+      skip: string;
+      "start.title": string;
+      "start.description": string;
+      "connect_github.title": string;
+      "connect_github.description": string;
+      "connect_slack.title": string;
+      "connect_slack.description": string;
+      "setup_slack_channel.title": string;
+      "setup_slack_channel.description": string;
+      "end.title": string;
+      "end.description": string;
+    };
     selection: {
       title: string;
       mailingList: {
