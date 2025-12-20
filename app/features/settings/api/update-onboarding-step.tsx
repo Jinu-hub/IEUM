@@ -8,14 +8,15 @@
 import type { Database } from "database.types";
 import type { ActionFunctionArgs } from "react-router";
 import { data } from "react-router";
-import { ONBOARDING_STEP, SETUP_INTEGRATIONS } from "~/core/lib/constants";
+import { ONBOARDING_STEP, SETUP_INTEGRATIONS, SETUP_MAILING_LIST } from "~/core/lib/constants";
 import { logger } from "~/core/lib/logger";
 import makeServerClient from "~/core/lib/supa-client.server";
-import { updateGithubConnectedState, updateOnboardingStep, updateSetupIntegrationsStep, updateSlackConnectedState } from "../db/mutations";
+import { updateGithubConnectedState, updateOnboardingStep, updateSetupIntegrationsStep, updateSetupMailingListStep, updateSlackConnectedState } from "../db/mutations";
 import { getWorkspace, getWorkspaceOnboardingState } from "../db/queries";
 
 type OnboardingStep = Database["public"]["Enums"]["onboarding_step"];
 type SetupIntegrationsStep = Database["public"]["Enums"]["setup_integrations"];
+type SetupMailingListStep = Database["public"]["Enums"]["setup_mailing_list"];
 
 /**
  * オンボーディングステップの有効な遷移を定義
@@ -66,7 +67,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     const body = await request.json();
-    const { workspaceId, onboardingStep, setupIntegrationsStep, githubConnected, slackConnected } = body;
+    const { workspaceId, onboardingStep, setupIntegrationsStep, setupMailingListStep, githubConnected, slackConnected } = body;
 
     if (!workspaceId) {
       return data({ 
@@ -143,6 +144,34 @@ export async function action({ request }: ActionFunctionArgs) {
           status: 'success', 
           data: {
             setupIntegrationsStep
+          }
+        });
+      }
+    }
+
+    // setup_mailing_listサブステップの更新
+    if (setupMailingListStep) {
+      // サブステップ値の検証
+      if (!SETUP_MAILING_LIST.includes(setupMailingListStep)) {
+        return data({ 
+          status: 'error', 
+          error: `Invalid setup_mailing_list step: ${setupMailingListStep}` 
+        }, { status: 400 });
+      }
+
+      await updateSetupMailingListStep(client, { 
+        workspaceId, 
+        setupMailingListStep: setupMailingListStep as SetupMailingListStep
+      });
+
+      logger.info(`✅ Setup mailing list sub-step updated to: ${setupMailingListStep}`);
+
+      // サブステップのみ更新した場合は早期リターン
+      if (!onboardingStep) {
+        return data({ 
+          status: 'success', 
+          data: {
+            setupMailingListStep
           }
         });
       }

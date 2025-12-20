@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, redirect, useFetcher, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
+import { redirect, useFetcher, useNavigate, type ActionFunctionArgs, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
 import {
   NexBadge,
@@ -45,13 +45,13 @@ import {
 } from "~/core/components/ui/dropdown-menu";
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
+import { MailingListGuideTooltip, MailingListSubProgress, OnboardingModeBanner } from '../components/onboarding-guide';
 import { deleteMailingListMember, upsertMailingList, upsertMailingListMember } from '../db/mutations';
 import { getMailingList, getMailingListMembers, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
+import { useOnboarding } from '../hooks/useOnboarding';
 import { formatDate, getSourceLabel, getSourceVariant } from '../lib/common';
 import { mailListUserSchema } from '../lib/constants';
 import { parseMetaJson } from '../lib/JsonUtils';
-import { useOnboarding } from '../hooks/useOnboarding';
-import { OnboardingModeBanner, NextStepLink } from '../components/onboarding-guide';
 import type { MailListData, MailListMemberData } from '../lib/types';
 import type { Route } from "./+types/mail-list-members";
 
@@ -175,7 +175,13 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
   const fetcher = useFetcher();
   
   // Onboarding hook
-  const { isOnboardingActive, currentStep, updateStep } = useOnboarding({ 
+  const { 
+    isOnboardingActive, 
+    currentStep, 
+    currentMailingListSubStep,
+    updateStep,
+    updateMailingListSubStep 
+  } = useOnboarding({ 
     workspaceId, 
     onboardingState 
   });
@@ -231,6 +237,10 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
           toast.success(t("mailListSavedSuccess"));
           setIsEditing(false);
           if (fetcher.data.isNew) {
+            // Advance to regist_address sub-step after saving basic info
+            if (isOnboardingActive && currentStep === 'setup_mailing_list' && currentMailingListSubStep === 'regist_basic') {
+              updateMailingListSubStep('regist_address');
+            }
             navigate(`/settings/mail-list/${fetcher.data.result.mailing_list_id}`);
           } else {
             setMailList(prev => prev ? {
@@ -246,6 +256,11 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
           // 멤버 정보 저장 처리
           if (fetcher.data.status === 'success') {
             toast.success(t("mailListMemberSavedSuccess"));
+            
+            // Advance to end sub-step after adding first member
+            if (isOnboardingActive && currentStep === 'setup_mailing_list' && currentMailingListSubStep === 'regist_address') {
+              updateMailingListSubStep('end');
+            }
             
             if (editingMember) {
               // 편집 모드: 기존 멤버 업데이트
@@ -476,11 +491,18 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
           <OnboardingModeBanner
             currentStep={currentStep}
             workspaceId={workspaceId}
+            subProgress={
+              <MailingListSubProgress 
+                currentSubStep={currentMailingListSubStep} 
+              />
+            }
+            subProgressLabel={onboardingT('mailingListSubSteps.progressLabel', 'メールリスト設定進行状況')}
+            subProgressColor="green"
           />
         )}
         
         {/* Onboarding: Go to Targets link after adding members */}
-        {isOnboardingActive && currentStep === 'setup_mailing_list' && !isNew && members.length > 0 && (
+        {isOnboardingActive && currentStep === 'setup_mailing_list' && !isNew && members.length > 0 && currentMailingListSubStep === 'end' && (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-200 dark:border-green-700 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -545,6 +567,12 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                 <div className="flex-1 space-y-4">
                   {isEditing ? (
                     <>
+                    <MailingListGuideTooltip
+                      currentSubStep={currentMailingListSubStep}
+                      targetSubStep="regist_basic"
+                      position="right"
+                      className="w-full max-w-md"
+                    >
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">
                           {t("detail.mailListName")} *
@@ -553,19 +581,21 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                           placeholder={t("detail.exampleMailListName")}
                           value={editingName}
                           onChange={(e) => setEditingName(e.target.value)}
+                          className="w-full max-w-md"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">
-                          {t("detail.description")} ({commonT("optional")})
-                        </label>
-                        <NexTextarea
-                          placeholder={t("detail.exampleDescription")}
-                          value={editingDescription}
-                          onChange={(e) => setEditingDescription(e.target.value)}
-                          rows={3}
-                        />
-                      </div>
+                    </MailingListGuideTooltip>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">
+                        {t("detail.description")} ({commonT("optional")})
+                      </label>
+                      <NexTextarea
+                        placeholder={t("detail.exampleDescription")}
+                        value={editingDescription}
+                        onChange={(e) => setEditingDescription(e.target.value)}
+                        rows={3}
+                      />
+                    </div>
                     </>
                   ) : (
                     <>
@@ -771,14 +801,20 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
                     <NexCardDescription className="mb-6">
                       {commonT("addFirstMember")}
                     </NexCardDescription>
-                    <NexButton 
-                      variant="primary" 
-                      leftIcon={<PlusIcon />}
-                      onClick={() => setIsMemberDialogOpen(true)}
-                      className="cursor-pointer"
+                    <MailingListGuideTooltip
+                      currentSubStep={currentMailingListSubStep}
+                      targetSubStep="regist_address"
+                      position="left"
                     >
-                      {commonT("addMember")}
-                    </NexButton>
+                      <NexButton 
+                        variant="primary" 
+                        leftIcon={<PlusIcon />}
+                        onClick={() => setIsMemberDialogOpen(true)}
+                        className="cursor-pointer"
+                      >
+                        {commonT("addMember")}
+                      </NexButton>
+                    </MailingListGuideTooltip>
                   </>
                 )}
               </NexCardContent>

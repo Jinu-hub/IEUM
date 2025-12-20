@@ -21,11 +21,11 @@ import {
 } from "~/core/components/ui/dropdown-menu";
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
+import { MailingListGuideTooltip, MailingListSubProgress, OnboardingModeBanner } from '../components/onboarding-guide';
 import { deleteMailingList } from '../db/mutations';
 import { getMailingList, getMailingListMemberCount, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
-import { formatDate } from '../lib/common';
 import { useOnboarding } from '../hooks/useOnboarding';
-import { OnboardingModeBanner, OnboardingGuideTooltip } from '../components/onboarding-guide';
+import { formatDate } from '../lib/common';
 import type { MailListData } from '../lib/types';
 import type { Route } from "./+types/mail-list";
 
@@ -105,7 +105,12 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
   const fetcher = useFetcher();
   
   // Onboarding hook
-  const { isOnboardingActive, currentStep } = useOnboarding({ 
+  const { 
+    isOnboardingActive, 
+    currentStep, 
+    currentMailingListSubStep,
+    updateMailingListSubStep 
+  } = useOnboarding({ 
     workspaceId, 
     onboardingState 
   });
@@ -132,6 +137,10 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
 
   // 메일 리스트 추가 핸들러
   const handleAddMailList = () => {
+    // Advance to regist_basic sub-step if in onboarding
+    if (isOnboardingActive && currentStep === 'setup_mailing_list' && currentMailingListSubStep === 'start') {
+      updateMailingListSubStep('regist_basic');
+    }
     // 새로운 메일 리스트 ID로 멤버 관리 페이지로 이동
     navigate('/settings/mail-list/new');
   };
@@ -171,6 +180,13 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
           <OnboardingModeBanner
             currentStep={currentStep}
             workspaceId={workspaceId}
+            subProgress={
+              <MailingListSubProgress 
+                currentSubStep={currentMailingListSubStep} 
+              />
+            }
+            subProgressLabel={onboardingT('mailingListSubSteps.progressLabel', 'メールリスト設定進行状況')}
+            subProgressColor="green"
           />
         )}
         
@@ -201,14 +217,20 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
               className="pl-10"
             />
           </div>
-          <NexButton
-            variant="primary"
-            leftIcon={<PlusIcon />}
-            onClick={handleAddMailList}
-            className="cursor-pointer"
+          <MailingListGuideTooltip
+            currentSubStep={currentMailingListSubStep}
+            targetSubStep="start"
+            position="left"
           >
-            {t("addMailList")}
-          </NexButton>
+            <NexButton
+              variant="primary"
+              leftIcon={<PlusIcon />}
+              onClick={handleAddMailList}
+              className="cursor-pointer"
+            >
+              {t("addMailList")}
+            </NexButton>
+          </MailingListGuideTooltip>
         </div>
 
         {/* 메일 리스트 그리드 */}

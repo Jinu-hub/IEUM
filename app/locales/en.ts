@@ -1179,6 +1179,21 @@ const en: Translation = {
       "end.title": "Integrations Complete!",
       "end.description": "Great job! Your integrations are set up. Choose what to do next.",
     },
+    mailingListSubSteps: {
+      start: "Start",
+      regist_basic: "Basic",
+      regist_address: "Members",
+      end: "Done",
+      progressLabel: "Mailing List Setup Progress",
+      "start.title": "Starting Mailing List Setup",
+      "start.description": "Add a new list to group email addresses.",
+      "regist_basic.title": "Enter Basic Information",
+      "regist_basic.description": "Enter the mailing list name and save.",
+      "regist_address.title": "Add Members",
+      "regist_address.description": "Add email addresses and names.",
+      "end.title": "Mailing List Setup Complete!",
+      "end.description": "You can add more members. When done, proceed to target setup.",
+    },
     selection: {
       title: "What would you like to do next?",
       mailingList: {
@@ -1218,7 +1233,7 @@ const en: Translation = {
     },
     mailList: {
       addListPrompt: "Add a new list to group email addresses",
-      afterSavePrompt: "Mailing list setup complete. Next, let's set up targets.",
+      afterSavePrompt: "You can add members. Once done, let's set up targets.",
       goToTargets: "Go to Targets",
     },
     targets: {

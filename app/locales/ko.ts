@@ -1178,6 +1178,21 @@ const ko: Translation = {
       "end.title": "연동 설정 완료!",
       "end.description": "잘하셨습니다! 연동 설정이 완료되었습니다. 다음 단계를 선택하세요.",
     },
+    mailingListSubSteps: {
+      start: "시작",
+      regist_basic: "기본정보",
+      regist_address: "멤버",
+      end: "완료",
+      progressLabel: "메일 리스트 설정 진행 상황",
+      "start.title": "메일 리스트 설정 시작",
+      "start.description": "새 리스트를 추가하여 이메일 주소를 그룹화하세요.",
+      "regist_basic.title": "기본 정보 입력",
+      "regist_basic.description": "메일 리스트 이름을 입력하고 저장하세요.",
+      "regist_address.title": "멤버 추가",
+      "regist_address.description": "이메일 주소와 이름을 저장하세요.",
+      "end.title": "메일 리스트 설정 완료!",
+      "end.description": "멤버를 추가할 수 있습니다. 끝나면 다음으로 타겟을 설정하세요.",
+    },
     selection: {
       title: "다음으로 무엇을 하시겠습니까?",
       mailingList: {
@@ -1217,7 +1232,7 @@ const ko: Translation = {
     },
     mailList: {
       addListPrompt: "새 리스트를 추가하여 이메일 주소를 그룹화하세요",
-      afterSavePrompt: "메일 리스트 설정 완료. 다음으로 타겟을 설정하세요.",
+      afterSavePrompt: "멤버를 추가할 수 있습니다. 끝나면 다음으로 타겟을 설정하세요.",
       goToTargets: "타겟 설정으로",
     },
     targets: {

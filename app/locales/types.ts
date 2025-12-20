@@ -1135,6 +1135,21 @@ export type Translation = {
       "end.title": string;
       "end.description": string;
     };
+    mailingListSubSteps: {
+      start: string;
+      regist_basic: string;
+      regist_address: string;
+      end: string;
+      progressLabel: string;
+      "start.title": string;
+      "start.description": string;
+      "regist_basic.title": string;
+      "regist_basic.description": string;
+      "regist_address.title": string;
+      "regist_address.description": string;
+      "end.title": string;
+      "end.description": string;
+    };
     selection: {
       title: string;
       mailingList: {

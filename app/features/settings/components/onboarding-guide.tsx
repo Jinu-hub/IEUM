@@ -14,6 +14,7 @@ import { cn } from '~/core/lib/utils';
 
 type OnboardingStep = Database["public"]["Enums"]["onboarding_step"];
 type SetupIntegrationsStep = Database["public"]["Enums"]["setup_integrations"];
+type SetupMailingListStep = Database["public"]["Enums"]["setup_mailing_list"];
 
 interface OnboardingGuideTooltipProps {
   /** Current onboarding step */
@@ -273,6 +274,12 @@ interface OnboardingModeBannerProps {
   onSkip?: () => void;
   showSkip?: boolean;
   className?: string;
+  /** Sub-progress component to display (e.g., MailingListSubProgress, IntegrationsSubProgress) */
+  subProgress?: ReactNode;
+  /** Label for sub-progress (e.g., "メールリスト設定進行状況") */
+  subProgressLabel?: string;
+  /** Color theme for sub-progress (default: 'blue', options: 'blue', 'green', 'amber') */
+  subProgressColor?: 'blue' | 'green' | 'amber';
 }
 
 export function OnboardingModeBanner({ 
@@ -281,7 +288,10 @@ export function OnboardingModeBanner({
   onDismiss, 
   onSkip,
   showSkip = false,
-  className 
+  className,
+  subProgress,
+  subProgressLabel,
+  subProgressColor = 'blue'
 }: OnboardingModeBannerProps) {
   const { t } = useTranslation("common", { keyPrefix: "onboarding" });
   const navigate = useNavigate();
@@ -293,6 +303,13 @@ export function OnboardingModeBanner({
     title: t(`steps.${currentStep}.title`, defaultMessage.title),
     description: t(`steps.${currentStep}.description`, defaultMessage.description),
     icon: defaultMessage.icon
+  };
+  
+  // Sub-progress color classes
+  const subProgressColorClasses = {
+    blue: 'text-blue-700 dark:text-blue-300',
+    green: 'text-green-700 dark:text-green-300',
+    amber: 'text-amber-700 dark:text-amber-300'
   };
   
   return (
@@ -323,6 +340,18 @@ export function OnboardingModeBanner({
             <OnboardingProgress currentStep={currentStep} />
           </div>
           
+          {/* Sub Progress indicator */}
+          {subProgress && (
+            <div className="mt-4 p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+              {subProgressLabel && (
+                <p className={cn('text-xs mb-2 font-medium', subProgressColorClasses[subProgressColor])}>
+                  {subProgressLabel}
+                </p>
+              )}
+              {subProgress}
+            </div>
+          )}
+
           {/* Action buttons */}
           {showSkip && onSkip && (
             <div className="mt-4 flex items-center gap-2">
@@ -800,4 +829,229 @@ export function IntegrationsCompleteCard({ onSelectNext, className }: Integratio
     </div>
   );
 }
+
+/* =========================================================
+   Mailing List Sub-Step Components
+   ========================================================= */
+
+/**
+ * Default messages for mailing list sub-steps
+ */
+const MAILING_LIST_SUB_STEP_MESSAGES: Record<SetupMailingListStep, { title: string; description: string; icon: string }> = {
+  'start': {
+    title: 'Starting Mailing List Setup',
+    description: 'Add a new list to group email addresses.',
+    icon: '📧'
+  },
+  'regist_basic': {
+    title: 'Enter Basic Information',
+    description: 'Enter the mailing list name and save.',
+    icon: '✏️'
+  },
+  'regist_address': {
+    title: 'Add Members',
+    description: 'Add email addresses and names.',
+    icon: '👥'
+  },
+  'end': {
+    title: 'Mailing List Setup Complete!',
+    description: 'You can add more members. When done, proceed to target setup.',
+    icon: '✅'
+  }
+};
+
+const MAILING_LIST_SUB_STEP_ORDER: SetupMailingListStep[] = [
+  'start',
+  'regist_basic',
+  'regist_address',
+  'end'
+];
+
+/**
+ * Mailing List Sub-Progress Indicator
+ * Shows progress within the setup_mailing_list step
+ */
+interface MailingListSubProgressProps {
+  currentSubStep: SetupMailingListStep | null;
+  className?: string;
+}
+
+export function MailingListSubProgress({ currentSubStep, className }: MailingListSubProgressProps) {
+  const { t } = useTranslation("common", { keyPrefix: "onboarding.mailingListSubSteps" });
+  
+  const SUB_STEP_LABELS: Record<SetupMailingListStep, string> = {
+    'start': t('start', 'Start'),
+    'regist_basic': t('regist_basic', 'Basic'),
+    'regist_address': t('regist_address', 'Members'),
+    'end': t('end', 'Done')
+  };
+  
+  const currentIndex = currentSubStep ? MAILING_LIST_SUB_STEP_ORDER.indexOf(currentSubStep) : -1;
+  
+  return (
+    <div className={cn('w-full', className)}>
+      <div className="flex items-center justify-between relative">
+        {/* Progress line */}
+        <div className="absolute top-3 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-700" />
+        <div 
+          className="absolute top-3 left-0 h-0.5 bg-green-500 transition-all duration-500"
+          style={{ width: `${Math.max(0, (currentIndex / (MAILING_LIST_SUB_STEP_ORDER.length - 1)) * 100)}%` }}
+        />
+        
+        {/* Steps */}
+        {MAILING_LIST_SUB_STEP_ORDER.map((step, index) => {
+          const isCompleted = index < currentIndex;
+          const isCurrent = index === currentIndex;
+          const isPending = index > currentIndex;
+          
+          return (
+            <div key={step} className="relative flex flex-col items-center z-10">
+              <div
+                className={cn(
+                  'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium transition-all duration-300',
+                  isCompleted && 'bg-green-500 text-white',
+                  isCurrent && 'bg-green-500 text-white ring-2 ring-green-200 dark:ring-green-800',
+                  isPending && 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                )}
+              >
+                {isCompleted ? '✓' : index + 1}
+              </div>
+              <span
+                className={cn(
+                  'mt-1 text-[10px] font-medium whitespace-nowrap',
+                  isCurrent && 'text-green-600 dark:text-green-400',
+                  !isCurrent && 'text-gray-500 dark:text-gray-400'
+                )}
+              >
+                {SUB_STEP_LABELS[step]}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Mailing List Guide Tooltip
+ * Similar to IntegrationsGuideTooltip but for mailing list sub-steps
+ */
+interface MailingListGuideTooltipProps {
+  /** Current mailing list sub-step */
+  currentSubStep: SetupMailingListStep | null;
+  /** Target sub-step this tooltip corresponds to */
+  targetSubStep: SetupMailingListStep;
+  /** Tooltip position */
+  position?: 'top' | 'bottom' | 'left' | 'right';
+  /** Child elements (anchor element) */
+  children: ReactNode;
+  /** Custom class name */
+  className?: string;
+  /** Callback when tooltip visibility changes */
+  onVisibilityChange?: (visible: boolean) => void;
+}
+
+function getMailingListTooltipPositionStyles(position: 'top' | 'bottom' | 'left' | 'right') {
+  const baseArrowStyles = 'absolute w-3 h-3 bg-green-100 dark:bg-green-900/90 rotate-45';
+  
+  switch (position) {
+    case 'top':
+      return {
+        tooltip: 'bottom-full mb-3 left-1/2 -translate-x-1/2',
+        arrow: `${baseArrowStyles} -bottom-1.5 left-1/2 -translate-x-1/2`
+      };
+    case 'bottom':
+      return {
+        tooltip: 'top-full mt-3 left-1/2 -translate-x-1/2',
+        arrow: `${baseArrowStyles} -top-1.5 left-1/2 -translate-x-1/2`
+      };
+    case 'left':
+      return {
+        tooltip: 'right-full mr-3 top-1/2 -translate-y-1/2',
+        arrow: `${baseArrowStyles} -right-1.5 top-1/2 -translate-y-1/2`
+      };
+    case 'right':
+      return {
+        tooltip: 'left-full ml-3 top-1/2 -translate-y-1/2',
+        arrow: `${baseArrowStyles} -left-1.5 top-1/2 -translate-y-1/2`
+      };
+  }
+}
+
+export function MailingListGuideTooltip({
+  currentSubStep,
+  targetSubStep,
+  position = 'bottom',
+  children,
+  className,
+  onVisibilityChange
+}: MailingListGuideTooltipProps) {
+  const { t } = useTranslation("common", { keyPrefix: "onboarding.mailingListSubSteps" });
+  const [isVisible, setIsVisible] = useState(false);
+  
+  // Show tooltip when current sub-step matches target sub-step
+  useEffect(() => {
+    const shouldShow = currentSubStep === targetSubStep;
+    setIsVisible(shouldShow);
+    onVisibilityChange?.(shouldShow);
+  }, [currentSubStep, targetSubStep, onVisibilityChange]);
+  
+  const defaultMessage = MAILING_LIST_SUB_STEP_MESSAGES[targetSubStep];
+  const message = {
+    title: t(`${targetSubStep}.title`, defaultMessage.title),
+    description: t(`${targetSubStep}.description`, defaultMessage.description),
+    icon: defaultMessage.icon
+  };
+  const positionStyles = getMailingListTooltipPositionStyles(position);
+  
+  if (!message) return <>{children}</>;
+  
+  // Use block if w-full is in className, otherwise use inline-block
+  const isFullWidth = className?.includes('w-full');
+  
+  return (
+    <div className={cn('relative', isFullWidth ? 'block' : 'inline-block', className)}>
+      {children}
+      
+      {isVisible && (
+        <div
+          className={cn(
+            'absolute z-50 w-80 p-4 rounded-lg shadow-lg',
+            'bg-green-100 dark:bg-green-900/90',
+            'border-2 border-green-300 dark:border-green-700',
+            'animate-in fade-in slide-in-from-bottom-2 duration-300',
+            positionStyles.tooltip
+          )}
+          role="tooltip"
+        >
+          {/* Arrow */}
+          <div className={positionStyles.arrow} />
+          
+          {/* Content */}
+          <div className="relative">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl flex-shrink-0">{message.icon}</span>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-green-900 dark:text-green-100 text-sm mb-1">
+                  {message.title}
+                </h4>
+                <p className="text-green-800 dark:text-green-200 text-xs leading-relaxed">
+                  {message.description}
+                </p>
+              </div>
+            </div>
+            
+            {/* Pulse indicator */}
+            <div className="absolute top-0 right-0 flex items-center justify-center w-3 h-3">
+              <span className="absolute w-full h-full rounded-full bg-green-500 opacity-75 animate-ping" />
+              <span className="absolute w-3 h-3 rounded-full bg-green-600" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 

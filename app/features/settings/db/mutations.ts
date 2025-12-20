@@ -847,3 +847,30 @@ export const updateSetupIntegrationsStep = async (
     }
     return data;
 };
+
+/**
+ * setup_mailing_listサブステップを更新
+ */
+export const updateSetupMailingListStep = async (
+    client: SupabaseClient<Database>,
+    { workspaceId, setupMailingListStep }: { 
+        workspaceId: string, 
+        setupMailingListStep: Database["public"]["Enums"]["setup_mailing_list"] 
+    }
+) => {
+    const { data, error } = await client
+        .from('onboarding_states')
+        .update({ 
+            setup_mailing_list: setupMailingListStep,
+            updated_at: new Date().toISOString()
+        })
+        .eq('workspace_id', workspaceId)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('updateSetupMailingListStep error', error);
+        throw error;
+    }
+    return data;
+};

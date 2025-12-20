@@ -12,12 +12,14 @@ import { useFetcher } from 'react-router';
 type OnboardingStep = Database["public"]["Enums"]["onboarding_step"];
 type OnboardingType = Database["public"]["Enums"]["onboarding_type"];
 type SetupIntegrationsStep = Database["public"]["Enums"]["setup_integrations"];
+type SetupMailingListStep = Database["public"]["Enums"]["setup_mailing_list"];
 
 interface OnboardingState {
   workspace_id: string;
   onboarding_mode: OnboardingType;
   onboarding_step: OnboardingStep;
   setup_integrations: SetupIntegrationsStep;
+  setup_mailing_list: SetupMailingListStep;
   github_connected: boolean;
   slack_connected: boolean;
   target_configured: boolean;
@@ -37,6 +39,8 @@ interface UseOnboardingReturn {
   currentStep: OnboardingStep | null;
   /** Current integrations sub-step */
   currentIntegrationsSubStep: SetupIntegrationsStep | null;
+  /** Current mailing list sub-step */
+  currentMailingListSubStep: SetupMailingListStep | null;
   /** Whether onboarding is completed */
   isCompleted: boolean;
   /** Whether GitHub is connected */
@@ -51,6 +55,8 @@ interface UseOnboardingReturn {
   skipToStep: (nextStep: OnboardingStep) => void;
   /** Update the integrations sub-step */
   updateIntegrationsSubStep: (nextSubStep: SetupIntegrationsStep) => void;
+  /** Update the mailing list sub-step */
+  updateMailingListSubStep: (nextSubStep: SetupMailingListStep) => void;
   /** Mark GitHub as connected */
   setGithubConnected: (connected: boolean) => void;
   /** Mark Slack as connected */
@@ -61,10 +67,14 @@ interface UseOnboardingReturn {
   isCurrentStep: (step: OnboardingStep) => boolean;
   /** Check if current integrations sub-step matches target */
   isCurrentIntegrationsSubStep: (subStep: SetupIntegrationsStep) => boolean;
+  /** Check if current mailing list sub-step matches target */
+  isCurrentMailingListSubStep: (subStep: SetupMailingListStep) => boolean;
   /** Get the next step for the current step */
   getNextStep: () => OnboardingStep | null;
   /** Get the next integrations sub-step */
   getNextIntegrationsSubStep: () => SetupIntegrationsStep | null;
+  /** Get the next mailing list sub-step */
+  getNextMailingListSubStep: () => SetupMailingListStep | null;
 }
 
 /**
@@ -109,10 +119,22 @@ const INTEGRATIONS_SUB_STEP_TRANSITIONS: Record<SetupIntegrationsStep, SetupInte
   'end': null
 };
 
+/**
+ * Mailing list sub-step transitions
+ * Flow: 'start' → 'regist_basic' → 'regist_address' → 'end'
+ */
+const MAILING_LIST_SUB_STEP_TRANSITIONS: Record<SetupMailingListStep, SetupMailingListStep | null> = {
+  'start': 'regist_basic',
+  'regist_basic': 'regist_address',
+  'regist_address': 'end',
+  'end': null
+};
+
 export function useOnboarding({ workspaceId, onboardingState }: UseOnboardingOptions): UseOnboardingReturn {
   const fetcher = useFetcher();
   const [localStep, setLocalStep] = useState<OnboardingStep | null>(null);
   const [localIntegrationsSubStep, setLocalIntegrationsSubStep] = useState<SetupIntegrationsStep | null>(null);
+  const [localMailingListSubStep, setLocalMailingListSubStep] = useState<SetupMailingListStep | null>(null);
 
   // Determine if onboarding is active
   const isOnboardingActive = useMemo(() => {
@@ -135,6 +157,12 @@ export function useOnboarding({ workspaceId, onboardingState }: UseOnboardingOpt
     if (localIntegrationsSubStep) return localIntegrationsSubStep;
     return onboardingState?.setup_integrations ?? null;
   }, [localIntegrationsSubStep, onboardingState]);
+
+  // Current mailing list sub-step
+  const currentMailingListSubStep = useMemo(() => {
+    if (localMailingListSubStep) return localMailingListSubStep;
+    return onboardingState?.setup_mailing_list ?? null;
+  }, [localMailingListSubStep, onboardingState]);
 
   // Auto-advance from 'start' to 'connect_github' after 3 seconds
   useEffect(() => {
@@ -215,6 +243,23 @@ export function useOnboarding({ workspaceId, onboardingState }: UseOnboardingOpt
     );
   }, [workspaceId, fetcher]);
 
+  // Update mailing list sub-step via API
+  const updateMailingListSubStep = useCallback((nextSubStep: SetupMailingListStep) => {
+    setLocalMailingListSubStep(nextSubStep); // Optimistic update
+    
+    fetcher.submit(
+      JSON.stringify({
+        workspaceId,
+        setupMailingListStep: nextSubStep
+      }),
+      {
+        method: 'POST',
+        action: '/api/settings/update-onboarding-step',
+        encType: 'application/json'
+      }
+    );
+  }, [workspaceId, fetcher]);
+
   // Check if current step matches target
   const isCurrentStep = useCallback((step: OnboardingStep) => {
     return currentStep === step;
@@ -224,6 +269,11 @@ export function useOnboarding({ workspaceId, onboardingState }: UseOnboardingOpt
   const isCurrentIntegrationsSubStep = useCallback((subStep: SetupIntegrationsStep) => {
     return currentIntegrationsSubStep === subStep;
   }, [currentIntegrationsSubStep]);
+
+  // Check if current mailing list sub-step matches target
+  const isCurrentMailingListSubStep = useCallback((subStep: SetupMailingListStep) => {
+    return currentMailingListSubStep === subStep;
+  }, [currentMailingListSubStep]);
 
   // Get next step for current step
   const getNextStep = useCallback(() => {
@@ -237,10 +287,17 @@ export function useOnboarding({ workspaceId, onboardingState }: UseOnboardingOpt
     return INTEGRATIONS_SUB_STEP_TRANSITIONS[currentIntegrationsSubStep];
   }, [currentIntegrationsSubStep]);
 
+  // Get next mailing list sub-step
+  const getNextMailingListSubStep = useCallback(() => {
+    if (!currentMailingListSubStep) return null;
+    return MAILING_LIST_SUB_STEP_TRANSITIONS[currentMailingListSubStep];
+  }, [currentMailingListSubStep]);
+
   return {
     isOnboardingActive,
     currentStep,
     currentIntegrationsSubStep,
+    currentMailingListSubStep,
     isCompleted: onboardingState?.is_completed ?? false,
     isGithubConnected: onboardingState?.github_connected ?? false,
     isSlackConnected: onboardingState?.slack_connected ?? false,
@@ -248,13 +305,16 @@ export function useOnboarding({ workspaceId, onboardingState }: UseOnboardingOpt
     updateStep,
     skipToStep,
     updateIntegrationsSubStep,
+    updateMailingListSubStep,
     setGithubConnected,
     setSlackConnected,
     isUpdating: fetcher.state !== 'idle',
     isCurrentStep,
     isCurrentIntegrationsSubStep,
+    isCurrentMailingListSubStep,
     getNextStep,
-    getNextIntegrationsSubStep
+    getNextIntegrationsSubStep,
+    getNextMailingListSubStep
   };
 }
 
