@@ -1,3 +1,4 @@
+
 /**
  * Onboarding Guide Components
  * 
@@ -15,6 +16,7 @@ import { cn } from '~/core/lib/utils';
 type OnboardingStep = Database["public"]["Enums"]["onboarding_step"];
 type SetupIntegrationsStep = Database["public"]["Enums"]["setup_integrations"];
 type SetupMailingListStep = Database["public"]["Enums"]["setup_mailing_list"];
+type SetupTargetsStep = Database["public"]["Enums"]["setup_targets"];
 
 interface OnboardingGuideTooltipProps {
   /** Current onboarding step */
@@ -278,8 +280,8 @@ interface OnboardingModeBannerProps {
   subProgress?: ReactNode;
   /** Label for sub-progress (e.g., "メールリスト設定進行状況") */
   subProgressLabel?: string;
-  /** Color theme for sub-progress (default: 'blue', options: 'blue', 'green', 'amber') */
-  subProgressColor?: 'blue' | 'green' | 'amber';
+  /** Color theme for sub-progress (default: 'blue', options: 'blue', 'green', 'amber', 'purple') */
+  subProgressColor?: 'blue' | 'green' | 'amber' | 'purple';
 }
 
 export function OnboardingModeBanner({ 
@@ -309,7 +311,8 @@ export function OnboardingModeBanner({
   const subProgressColorClasses = {
     blue: 'text-blue-700 dark:text-blue-300',
     green: 'text-green-700 dark:text-green-300',
-    amber: 'text-amber-700 dark:text-amber-300'
+    amber: 'text-amber-700 dark:text-amber-300',
+    purple: 'text-purple-700 dark:text-purple-300'
   };
   
   return (
@@ -1011,13 +1014,15 @@ export function MailingListGuideTooltip({
   const isFullWidth = className?.includes('w-full');
   
   return (
-    <div className={cn('relative', isFullWidth ? 'block' : 'inline-block', className)}>
-      {children}
+    <div className={cn('relative pointer-events-none', isFullWidth ? 'block' : 'inline-block', className)}>
+      <div className="pointer-events-auto">
+        {children}
+      </div>
       
       {isVisible && (
         <div
           className={cn(
-            'absolute z-50 w-80 p-4 rounded-lg shadow-lg',
+            'absolute z-50 w-80 p-4 rounded-lg shadow-lg pointer-events-auto',
             'bg-green-100 dark:bg-green-900/90',
             'border-2 border-green-300 dark:border-green-700',
             'animate-in fade-in slide-in-from-bottom-2 duration-300',
@@ -1054,4 +1059,293 @@ export function MailingListGuideTooltip({
   );
 }
 
+/* =========================================================
+   Targets Sub-Step Components
+   ========================================================= */
 
+/**
+ * Default messages for targets sub-steps
+ */
+const TARGETS_SUB_STEP_MESSAGES: Record<SetupTargetsStep, { title: string; description: string; icon: string }> = {
+  'start': {
+    title: 'Starting Target Setup',
+    description: 'Add a new target to configure data sources and delivery schedule.',
+    icon: '🎯'
+  },
+  'regist_basic': {
+    title: 'Enter Basic Information',
+    description: 'Enter basic information. When done, click Complete. Next, enter the schedule.',
+    icon: '✏️'
+  },
+  'regist_schedule': {
+    title: 'Enter Schedule',
+    description: 'Enter day and time. When done, click Complete. Next, enter data sources.',
+    icon: '⏰'
+  },
+  'regist_sourses': {
+    title: 'Add Data Sources',
+    description: 'Select connected service and source, then click Add. Git repositories: 1 max, Slack channels: 3 max. When setup is complete, click Save.',
+    icon: '📊'
+  },
+  'end': {
+    title: 'Target Setup Complete!',
+    description: 'Target setup is complete. You can add more targets or proceed to the next step.',
+    icon: '✅'
+  }
+};
+
+const TARGETS_SUB_STEP_ORDER: SetupTargetsStep[] = [
+  'start',
+  'regist_basic',
+  'regist_schedule',
+  'regist_sourses',
+  'end'
+];
+
+/**
+ * Targets Sub-Progress Indicator
+ * Shows progress within the setup_targets step
+ */
+interface TargetsSubProgressProps {
+  currentSubStep: SetupTargetsStep | null;
+  className?: string;
+}
+
+export function TargetsSubProgress({ currentSubStep, className }: TargetsSubProgressProps) {
+  const { t } = useTranslation("common", { keyPrefix: "onboarding.targetsSubSteps" });
+  
+  const SUB_STEP_LABELS: Record<SetupTargetsStep, string> = {
+    'start': t('start', 'Start'),
+    'regist_basic': t('regist_basic', 'Basic'),
+    'regist_schedule': t('regist_schedule', 'Schedule'),
+    'regist_sourses': t('regist_sourses', 'Sources'),
+    'end': t('end', 'Done')
+  };
+  
+  const currentIndex = currentSubStep ? TARGETS_SUB_STEP_ORDER.indexOf(currentSubStep) : -1;
+  
+  return (
+    <div className={cn('w-full', className)}>
+      <div className="flex items-center justify-between relative">
+        {/* Progress line */}
+        <div className="absolute top-3 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-700" />
+        <div 
+          className="absolute top-3 left-0 h-0.5 bg-purple-500 transition-all duration-500"
+          style={{ width: `${Math.max(0, (currentIndex / (TARGETS_SUB_STEP_ORDER.length - 1)) * 100)}%` }}
+        />
+        
+        {/* Steps */}
+        {TARGETS_SUB_STEP_ORDER.map((step, index) => {
+          const isCompleted = index < currentIndex;
+          const isCurrent = index === currentIndex;
+          const isPending = index > currentIndex;
+          
+          return (
+            <div key={step} className="relative flex flex-col items-center z-10">
+              <div
+                className={cn(
+                  'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium transition-all duration-300',
+                  isCompleted && 'bg-purple-500 text-white',
+                  isCurrent && 'bg-purple-500 text-white ring-2 ring-purple-200 dark:ring-purple-800',
+                  isPending && 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                )}
+              >
+                {isCompleted ? '✓' : index + 1}
+              </div>
+              <span
+                className={cn(
+                  'mt-1 text-[10px] font-medium whitespace-nowrap',
+                  isCurrent && 'text-purple-600 dark:text-purple-400',
+                  !isCurrent && 'text-gray-500 dark:text-gray-400'
+                )}
+              >
+                {SUB_STEP_LABELS[step]}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Targets Guide Tooltip
+ * Similar to MailingListGuideTooltip but for targets sub-steps
+ */
+interface TargetsGuideTooltipProps {
+  /** Current targets sub-step */
+  currentSubStep: SetupTargetsStep | null;
+  /** Target sub-step this tooltip corresponds to */
+  targetSubStep: SetupTargetsStep;
+  /** Tooltip position */
+  position?: 'top' | 'bottom' | 'left' | 'right';
+  /** Child elements (anchor element) */
+  children: ReactNode;
+  /** Custom class name */
+  className?: string;
+  /** Callback when tooltip visibility changes */
+  onVisibilityChange?: (visible: boolean) => void;
+}
+
+function getTargetsTooltipPositionStyles(position: 'top' | 'bottom' | 'left' | 'right') {
+  const baseArrowStyles = 'absolute w-3 h-3 bg-purple-100 dark:bg-purple-900/90 rotate-45';
+  
+  switch (position) {
+    case 'top':
+      return {
+        tooltip: 'bottom-full mb-3 left-1/2 -translate-x-1/2',
+        arrow: `${baseArrowStyles} -bottom-1.5 left-1/2 -translate-x-1/2`
+      };
+    case 'bottom':
+      return {
+        tooltip: 'top-full mt-3 left-1/2 -translate-x-1/2',
+        arrow: `${baseArrowStyles} -top-1.5 left-1/2 -translate-x-1/2`
+      };
+    case 'left':
+      return {
+        tooltip: 'right-full mr-3 top-1/2 -translate-y-1/2',
+        arrow: `${baseArrowStyles} -right-1.5 top-1/2 -translate-y-1/2`
+      };
+    case 'right':
+      return {
+        tooltip: 'left-full ml-3 top-1/2 -translate-y-1/2',
+        arrow: `${baseArrowStyles} -left-1.5 top-1/2 -translate-y-1/2`
+      };
+  }
+}
+
+export function TargetsGuideTooltip({
+  currentSubStep,
+  targetSubStep,
+  position = 'bottom',
+  children,
+  className,
+  onVisibilityChange
+}: TargetsGuideTooltipProps) {
+  const { t } = useTranslation("common", { keyPrefix: "onboarding.targetsSubSteps" });
+  const [isVisible, setIsVisible] = useState(false);
+  
+  // Show tooltip when current sub-step matches target sub-step
+  useEffect(() => {
+    const shouldShow = currentSubStep === targetSubStep;
+    setIsVisible(shouldShow);
+    onVisibilityChange?.(shouldShow);
+  }, [currentSubStep, targetSubStep, onVisibilityChange]);
+  
+  const defaultMessage = TARGETS_SUB_STEP_MESSAGES[targetSubStep];
+  const message = {
+    title: t(`${targetSubStep}.title`, defaultMessage.title),
+    description: t(`${targetSubStep}.description`, defaultMessage.description),
+    icon: defaultMessage.icon
+  };
+  const positionStyles = getTargetsTooltipPositionStyles(position);
+  
+  if (!message) return <>{children}</>;
+  
+  // Use block if w-full is in className, otherwise use inline-block
+  const isFullWidth = className?.includes('w-full');
+  
+  return (
+    <div className={cn('relative pointer-events-none', isFullWidth ? 'block' : 'inline-block', className)}>
+      <div className="pointer-events-auto">
+        {children}
+      </div>
+      
+      {isVisible && (
+        <div
+          className={cn(
+            'absolute z-50 w-80 p-4 rounded-lg shadow-lg pointer-events-auto',
+            'bg-purple-100 dark:bg-purple-900/90',
+            'border-2 border-purple-300 dark:border-purple-700',
+            'animate-in fade-in slide-in-from-bottom-2 duration-300',
+            positionStyles.tooltip
+          )}
+          role="tooltip"
+        >
+          {/* Arrow */}
+          <div className={positionStyles.arrow} />
+          
+          {/* Content */}
+          <div className="relative">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl flex-shrink-0">{message.icon}</span>
+              <div className="flex-1 min-w-0 text-left">
+                <h4 className="font-bold text-purple-900 dark:text-purple-100 text-sm mb-1 text-left">
+                  {message.title}
+                </h4>
+                <p className="text-purple-800 dark:text-purple-200 text-xs leading-relaxed text-left">
+                  {message.description}
+                </p>
+              </div>
+            </div>
+            
+            {/* Pulse indicator */}
+            <div className="absolute top-0 right-0 flex items-center justify-center w-3 h-3">
+              <span className="absolute w-full h-full rounded-full bg-purple-500 opacity-75 animate-ping" />
+              <span className="absolute w-3 h-3 rounded-full bg-purple-600" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Targets Section Guide Message
+ * Displays a guide message below a section with a "Complete" button
+ */
+interface TargetsSectionGuideProps {
+  currentSubStep: SetupTargetsStep | null;
+  targetSubStep: SetupTargetsStep;
+  onComplete?: () => void;
+  className?: string;
+}
+
+export function TargetsSectionGuide({
+  currentSubStep,
+  targetSubStep,
+  onComplete,
+  className
+}: TargetsSectionGuideProps) {
+  const { t } = useTranslation("common", { keyPrefix: "onboarding.targetsSubSteps" });
+  
+  if (currentSubStep !== targetSubStep) return null;
+  
+  const defaultMessage = TARGETS_SUB_STEP_MESSAGES[targetSubStep];
+  const message = {
+    title: t(`${targetSubStep}.title`, defaultMessage.title),
+    description: t(`${targetSubStep}.description`, defaultMessage.description),
+    icon: defaultMessage.icon
+  };
+  
+  return (
+    <div className={cn(
+      'mt-4 p-4 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg',
+      className
+    )}>
+      <div className="flex items-start gap-3">
+        <span className="text-2xl flex-shrink-0">{message.icon}</span>
+        <div className="flex-1 min-w-0">
+          <h4 className="font-bold text-purple-900 dark:text-purple-100 text-sm mb-1">
+            {message.title}
+          </h4>
+          <p className="text-purple-800 dark:text-purple-200 text-xs leading-relaxed mb-3 whitespace-pre-line">
+            {message.description}
+          </p>
+          {onComplete && (
+            <NexButton
+              variant="primary"
+              size="sm"
+              onClick={onComplete}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {t('complete', 'Complete')}
+            </NexButton>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

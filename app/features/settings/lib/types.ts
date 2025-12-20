@@ -85,9 +85,9 @@ export interface MailListMemberData {
  * @returns スケジュールタイプのオプション配列
  */
 export const getScheduleTypes = (t: (key: string) => string) => [
-  { value: 'manual', label: t('schedule.manual') },
   { value: 'weekly', label: t('schedule.weekly') },
   // 🚀 今後サポート予定
+  // { value: 'manual', label: t('schedule.manual') },
   // { value: 'daily', label: t('schedule.daily') },
   // { value: 'monthly', label: t('schedule.monthly') },
   // { value: 'custom', label: t('schedule.custom') },

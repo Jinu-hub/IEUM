@@ -1151,6 +1151,25 @@ export type Translation = {
       "end.title": string;
       "end.description": string;
     };
+    targetsSubSteps: {
+      start: string;
+      regist_basic: string;
+      regist_schedule: string;
+      regist_sourses: string;
+      end: string;
+      complete: string;
+      progressLabel: string;
+      "start.title": string;
+      "start.description": string;
+      "regist_basic.title": string;
+      "regist_basic.description": string;
+      "regist_schedule.title": string;
+      "regist_schedule.description": string;
+      "regist_sourses.title": string;
+      "regist_sourses.description": string;
+      "end.title": string;
+      "end.description": string;
+    };
     selection: {
       title: string;
       mailingList: {

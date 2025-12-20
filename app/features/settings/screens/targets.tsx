@@ -1,5 +1,5 @@
 import { Clock, Copy, Edit, Mail, MoreVertical, Power, PowerOff, Target, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { redirect, useNavigate, useSubmit } from 'react-router';
 import { toast } from 'sonner';
@@ -20,11 +20,11 @@ import {
 } from "~/core/components/ui/dropdown-menu";
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
+import { FirstMailConfirmation, OnboardingModeBanner, TargetsGuideTooltip, TargetsSubProgress } from '../components/onboarding-guide';
 import { switchTargetActive } from '../db/mutations';
 import { getMailingList, getTargetLastSentAt, getTargets, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
-import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
 import { useOnboarding } from '../hooks/useOnboarding';
-import { OnboardingModeBanner, FirstMailConfirmation } from '../components/onboarding-guide';
+import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
 import type { TargetData } from '../lib/types';
 import type { Route } from "./+types/targets";
 
@@ -114,7 +114,13 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
   const submit = useSubmit();
   
   // Onboarding hook
-  const { isOnboardingActive, currentStep, updateStep } = useOnboarding({ 
+  const { 
+    isOnboardingActive, 
+    currentStep, 
+    currentTargetsSubStep,
+    updateStep,
+    updateTargetsSubStep 
+  } = useOnboarding({ 
     workspaceId, 
     onboardingState 
   });
@@ -123,6 +129,26 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
   const [showFirstMailConfirmation, setShowFirstMailConfirmation] = useState(
     isOnboardingActive && currentStep === 'first_mail_sending'
   );
+
+  // Update showFirstMailConfirmation when currentStep changes
+  useEffect(() => {
+    if (isOnboardingActive && currentStep === 'first_mail_sending') {
+      setShowFirstMailConfirmation(true);
+    } else if (currentStep !== 'first_mail_sending') {
+      setShowFirstMailConfirmation(false);
+    }
+  }, [isOnboardingActive, currentStep]);
+
+  // Handle end sub-step: advance to first_mail_sending
+  useEffect(() => {
+    if (isOnboardingActive && currentStep === 'setup_targets' && currentTargetsSubStep === 'end') {
+      // Small delay to ensure UI is ready
+      const timer = setTimeout(() => {
+        updateStep('first_mail_sending');
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOnboardingActive, currentStep, currentTargetsSubStep, updateStep]);
 
   // 활성 상태 토글
   const toggleTargetActive = (targetId: string) => {
@@ -146,6 +172,10 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
 
   // 타겟 추가 핸들러
   const handleAddTarget = () => {
+    // Advance to regist_basic sub-step if in onboarding
+    if (isOnboardingActive && currentStep === 'setup_targets' && currentTargetsSubStep === 'start') {
+      updateTargetsSubStep('regist_basic');
+    }
     navigate('/settings/target/new');
   };
 
@@ -206,6 +236,13 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
           <OnboardingModeBanner
             currentStep={currentStep}
             workspaceId={workspaceId}
+            subProgress={
+              <TargetsSubProgress 
+                currentSubStep={currentTargetsSubStep} 
+              />
+            }
+            subProgressLabel={onboardingT('targetsSubSteps.progressLabel', '타겟 설정 진행 상황')}
+            subProgressColor="purple"
           />
         )}
         
@@ -245,14 +282,20 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                 <NexCardDescription className="mb-6">
                   {t("addFirstTarget")}
                 </NexCardDescription>
-                <NexButton 
-                  variant="primary" 
-                  leftIcon={<PlusIcon />}
-                  onClick={handleAddTarget}
-                  className="cursor-pointer"
+                <TargetsGuideTooltip
+                  currentSubStep={currentTargetsSubStep}
+                  targetSubStep="start"
+                  position="left"
                 >
-                  {t("addTarget")}
-                </NexButton>
+                  <NexButton 
+                    variant="primary" 
+                    leftIcon={<PlusIcon />}
+                    onClick={handleAddTarget}
+                    className="cursor-pointer"
+                  >
+                    {t("addTarget")}
+                  </NexButton>
+                </TargetsGuideTooltip>
               </NexCardContent>
             </NexCard>
           ) : (

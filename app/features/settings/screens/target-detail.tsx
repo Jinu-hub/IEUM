@@ -25,11 +25,11 @@ import {
 } from "~/core/components/ui/tooltip";
 import { CATEGORY_TYPE } from '~/core/lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
+import { OnboardingModeBanner, TargetsSectionGuide, TargetsSubProgress } from '../components/onboarding-guide';
 import { createTargetWithSources } from '../db/mutations';
 import { getIntegrationsInfo, getMailingList, getTarget, getTargetSources, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useIntegrationSources } from '../hooks/useIntegrationSources';
 import { useOnboarding } from '../hooks/useOnboarding';
-import { OnboardingModeBanner } from '../components/onboarding-guide';
 import {
   getNonMemberSlackChannels,
   getSourceTypeLabel,
@@ -187,7 +187,13 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   const isNew = targetId === 'new';
   
   // Onboarding hook
-  const { isOnboardingActive, currentStep, updateStep } = useOnboarding({ 
+  const { 
+    isOnboardingActive, 
+    currentStep, 
+    currentTargetsSubStep,
+    updateStep,
+    updateTargetsSubStep 
+  } = useOnboarding({ 
     workspaceId, 
     onboardingState 
   });
@@ -283,7 +289,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   }, [target, targetSources, integrations, isNew]);
 
   // 스케줄 관련 상태
-  const [scheduleType, setScheduleType] = useState('manual');
+  const [scheduleType, setScheduleType] = useState('weekly');
   const [selectedHour, setSelectedHour] = useState('9');
   const [selectedMinute, setSelectedMinute] = useState('0');
   const [selectedWeekday, setSelectedWeekday] = useState('1'); // 월요일
@@ -343,9 +349,10 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
             </div>
           );
           
-          // Onboarding: Update step to first_mail_sending after target save
+          // Onboarding: Update sub-step to 'end' after target save
+          // The step transition to 'first_mail_sending' will be handled in targets.tsx
           if (isOnboardingActive && currentStep === 'setup_targets') {
-            updateStep('first_mail_sending');
+            updateTargetsSubStep('end');
           }
           
           // 딜레이된 리다이렉트
@@ -487,6 +494,13 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
           <OnboardingModeBanner
             currentStep={currentStep}
             workspaceId={workspaceId}
+            subProgress={
+              <TargetsSubProgress 
+                currentSubStep={currentTargetsSubStep} 
+              />
+            }
+            subProgressLabel={onboardingT('targetsSubSteps.progressLabel', '타겟 설정 진행 상황')}
+            subProgressColor="purple"
           />
         )}
         
@@ -643,11 +657,29 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                   )}
                 </div>
               </div>
+              
+              {/* Onboarding: Basic Info Guide */}
+              <TargetsSectionGuide
+                currentSubStep={currentTargetsSubStep}
+                targetSubStep="regist_basic"
+                onComplete={() => {
+                  if (isOnboardingActive && currentStep === 'setup_targets') {
+                    updateTargetsSubStep('regist_schedule');
+                    // Scroll to schedule section
+                    setTimeout(() => {
+                      document.getElementById('schedule-section')?.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                      });
+                    }, 100);
+                  }
+                }}
+              />
             </NexCardContent>
           </NexCard>
 
           {/* 스케줄 섹션 */}
-          <NexCard variant="outlined">
+          <NexCard variant="outlined" id="schedule-section">
             <NexCardContent className="p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="p-2 rounded-lg bg-primary/10">
@@ -755,11 +787,29 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                   </div>
                 )}
               </div>
+              
+              {/* Onboarding: Schedule Guide */}
+              <TargetsSectionGuide
+                currentSubStep={currentTargetsSubStep}
+                targetSubStep="regist_schedule"
+                onComplete={() => {
+                  if (isOnboardingActive && currentStep === 'setup_targets') {
+                    updateTargetsSubStep('regist_sourses');
+                    // Scroll to data sources section
+                    setTimeout(() => {
+                      document.getElementById('data-sources-section')?.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                      });
+                    }, 100);
+                  }
+                }}
+              />
             </NexCardContent>
           </NexCard>
 
           {/* 인테그레이션 소스 섹션 */}
-          <NexCard variant="outlined">
+          <NexCard variant="outlined" id="data-sources-section">
             <NexCardContent className="p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="p-2 rounded-lg bg-primary/10">
@@ -1023,6 +1073,12 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                   );
                 })()}
               </div>
+              
+              {/* Onboarding: Data Sources Guide */}
+              <TargetsSectionGuide
+                currentSubStep={currentTargetsSubStep}
+                targetSubStep="regist_sourses"
+              />
             </NexCardContent>
           </NexCard>
 

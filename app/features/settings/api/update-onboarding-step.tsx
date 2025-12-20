@@ -8,15 +8,16 @@
 import type { Database } from "database.types";
 import type { ActionFunctionArgs } from "react-router";
 import { data } from "react-router";
-import { ONBOARDING_STEP, SETUP_INTEGRATIONS, SETUP_MAILING_LIST } from "~/core/lib/constants";
+import { ONBOARDING_STEP, SETUP_INTEGRATIONS, SETUP_MAILING_LIST, SETUP_TARGETS } from "~/core/lib/constants";
 import { logger } from "~/core/lib/logger";
 import makeServerClient from "~/core/lib/supa-client.server";
-import { updateGithubConnectedState, updateOnboardingStep, updateSetupIntegrationsStep, updateSetupMailingListStep, updateSlackConnectedState } from "../db/mutations";
+import { updateGithubConnectedState, updateOnboardingStep, updateSetupIntegrationsStep, updateSetupMailingListStep, updateSetupTargetsStep, updateSlackConnectedState } from "../db/mutations";
 import { getWorkspace, getWorkspaceOnboardingState } from "../db/queries";
 
 type OnboardingStep = Database["public"]["Enums"]["onboarding_step"];
 type SetupIntegrationsStep = Database["public"]["Enums"]["setup_integrations"];
 type SetupMailingListStep = Database["public"]["Enums"]["setup_mailing_list"];
+type SetupTargetsStep = Database["public"]["Enums"]["setup_targets"];
 
 /**
  * オンボーディングステップの有効な遷移を定義
@@ -67,7 +68,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     const body = await request.json();
-    const { workspaceId, onboardingStep, setupIntegrationsStep, setupMailingListStep, githubConnected, slackConnected } = body;
+    const { workspaceId, onboardingStep, setupIntegrationsStep, setupMailingListStep, setupTargetsStep, githubConnected, slackConnected } = body;
 
     if (!workspaceId) {
       return data({ 
@@ -172,6 +173,34 @@ export async function action({ request }: ActionFunctionArgs) {
           status: 'success', 
           data: {
             setupMailingListStep
+          }
+        });
+      }
+    }
+
+    // setup_targetsサブステップの更新
+    if (setupTargetsStep) {
+      // サブステップ値の検証
+      if (!SETUP_TARGETS.includes(setupTargetsStep)) {
+        return data({ 
+          status: 'error', 
+          error: `Invalid setup_targets step: ${setupTargetsStep}` 
+        }, { status: 400 });
+      }
+
+      await updateSetupTargetsStep(client, { 
+        workspaceId, 
+        setupTargetsStep: setupTargetsStep as SetupTargetsStep
+      });
+
+      logger.info(`✅ Setup targets sub-step updated to: ${setupTargetsStep}`);
+
+      // サブステップのみ更新した場合は早期リターン
+      if (!onboardingStep) {
+        return data({ 
+          status: 'success', 
+          data: {
+            setupTargetsStep
           }
         });
       }
