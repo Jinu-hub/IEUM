@@ -478,6 +478,9 @@ export type Translation = {
     addFirstTarget: string;
     addTarget: string;
     memberMailIncluded: string;
+    targetDeletedSuccess: string;
+    targetDeletedFailed: string;
+    confirmDeleteTarget: string;
     detail: {
       addTarget: string;
       editTarget: string;

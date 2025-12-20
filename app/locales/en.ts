@@ -480,6 +480,9 @@ const en: Translation = {
     addFirstTarget: "Add your first newsletter target",
     addTarget: "Add target",
     memberMailIncluded: "Member mail included",
+    targetDeletedSuccess: "Target deleted successfully",
+    targetDeletedFailed: "Failed to delete target",
+    confirmDeleteTarget: "Are you sure you want to delete this target?",
     detail: {
       addTarget: "Add new target",
       editTarget: "Edit target",

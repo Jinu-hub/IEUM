@@ -101,12 +101,12 @@ const getSidebarData = (
           url: "/settings/integrations",
         },
         {
-          title: t("targets"),
-          url: "/settings/targets",
-        },
-        {
           title: t("mailList"),
           url: "/settings/mail-list",
+        },
+        {
+          title: t("targets"),
+          url: "/settings/targets",
         },
       ],
     },

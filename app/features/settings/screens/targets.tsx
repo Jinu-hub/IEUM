@@ -1,7 +1,7 @@
 import { Clock, Copy, Edit, Mail, MoreVertical, Power, PowerOff, Target, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { redirect, useNavigate, useSubmit } from 'react-router';
+import { redirect, useFetcher, useNavigate, useSubmit } from 'react-router';
 import { toast } from 'sonner';
 import {
   NexBadge,
@@ -21,7 +21,7 @@ import {
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
 import { FirstMailConfirmation, OnboardingModeBanner, TargetsGuideTooltip, TargetsSubProgress } from '../components/onboarding-guide';
-import { switchTargetActive } from '../db/mutations';
+import { deleteTarget, switchTargetActive } from '../db/mutations';
 import { getMailingList, getTargetLastSentAt, getTargets, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useOnboarding } from '../hooks/useOnboarding';
 import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
@@ -77,29 +77,59 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const formData = await request.formData();
   const targetId = formData.get('targetId') as string;
+  const workspaceId = formData.get('workspaceId') as string;
   const actionType = formData.get('actionType') as string;
-  if (!targetId || !actionType) {
+  if (!actionType) {
     return {
       status: 'error',
-      message: 'Target not found or action type not found'
+      message: 'Action type not found'
     };
   }
-  try {
-    if (actionType === 'switchTargetActive') {
-      await switchTargetActive(client, { targetId: targetId});
-    } else {
+  if (actionType === 'switchTargetActive') {
+    if (!targetId) {
       return {
         status: 'error',
-        message: 'Invalid action type'
+        message: 'Target not found'
       };
     }
-  } catch (error) {
+    try {
+      await switchTargetActive(client, { targetId: targetId});
+      return { status: 'success', message: 'Target active switched' };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'Target active switch failed'
+      };
+    }
+  } else if (actionType === 'deleteTarget') {
+    if (!targetId || !workspaceId) {
+      return {
+        status: 'error',
+        message: 'Target not found or workspace not found'
+      };
+    }
+    try {
+      const result = await deleteTarget(client, { targetId });
+      return {
+        status: 'success',
+        actionType: actionType,
+        result: result,
+        message: 'Target deleted successfully'
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        actionType: actionType,
+        result: null,
+        message: 'Target deletion failed'
+      };
+    }
+  } else {
     return {
       status: 'error',
-      message: 'Target active switch failed'
+      message: 'Invalid action type'
     };
   }
-  return { status: 'success', message: 'Target active switched' };
 };
 
 
@@ -112,6 +142,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
   const [targets, setTargets] = useState<TargetData[]>(targetData);
   const navigate = useNavigate();
   const submit = useSubmit();
+  const fetcher = useFetcher();
   
   // Onboarding hook
   const { 
@@ -150,6 +181,20 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
     }
   }, [isOnboardingActive, currentStep, currentTargetsSubStep, updateStep]);
 
+  // 후처리: fetcher 상태 변화 감지
+  useEffect(() => {
+    if (fetcher.state === 'idle' && fetcher.data) {
+      if (fetcher.data.actionType === 'deleteTarget') {
+        if (fetcher.data.status === 'success') {
+          toast.success(fetcher.data.message || t("targetDeletedSuccess") || "타겟이 삭제되었습니다");
+          setTargets(prev => prev.filter(target => target.targetId !== fetcher.data.result.target_id));
+        } else if (fetcher.data.status === 'error') {
+          toast.error(fetcher.data.message || t("targetDeletedFailed") || "타겟 삭제에 실패했습니다");
+        }
+      }
+    }
+  }, [fetcher.state, fetcher.data, t]);
+
   // 활성 상태 토글
   const toggleTargetActive = (targetId: string) => {
     setTargets(prev => 
@@ -186,9 +231,12 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
 
   // 타겟 삭제 핸들러
   const handleDeleteTarget = (targetId: string) => {
-    if (confirm("정말로 이 타겟을 삭제하시겠습니까?")) {
-      setTargets(prev => prev.filter(target => target.targetId !== targetId));
-      console.log("타겟 삭제됨:", targetId);
+    if (confirm(t("confirmDeleteTarget") || "정말로 이 타겟을 삭제하시겠습니까?")) {
+      const submitFormData = new FormData();
+      submitFormData.append('actionType', 'deleteTarget');
+      submitFormData.append('targetId', targetId);
+      submitFormData.append('workspaceId', workspaceId);
+      fetcher.submit(submitFormData, { method: 'POST' });
     }
   };
 

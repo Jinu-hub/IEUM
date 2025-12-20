@@ -480,6 +480,9 @@ const ja: Translation = {
     addFirstTarget: "最初のニュースレター送信ターゲットを追加してください",
     addTarget: "ターゲットを追加",
     memberMailIncluded: "(メンバーメールを含む)",
+    targetDeletedSuccess: "ターゲットが削除されました",
+    targetDeletedFailed: "ターゲットの削除に失敗しました",
+    confirmDeleteTarget: "このターゲットを削除してもよろしいですか？",
     detail: {
       addTarget: "新しいターゲットを追加",
       editTarget: "ターゲットを編集",

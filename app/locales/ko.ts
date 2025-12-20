@@ -479,6 +479,9 @@ const ko: Translation = {
     addFirstTarget: "첫 번째 뉴스레터 타겟을 추가해주세요",
     addTarget: "타겟 추가",
     memberMailIncluded: "(멤버 메일 포함)",
+    targetDeletedSuccess: "타겟이 삭제되었습니다",
+    targetDeletedFailed: "타겟 삭제에 실패했습니다",
+    confirmDeleteTarget: "정말로 이 타겟을 삭제하시겠습니까?",
     detail: {
       addTarget: "새 타겟 추가",
       editTarget: "타겟 편집",
