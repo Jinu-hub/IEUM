@@ -1168,6 +1168,7 @@ const en: Translation = {
       setup_slack_channel: "Channels",
       end: "Done",
       skip: "Skip this step →",
+      progressLabel: "Integrations Setup Progress",
       "start.title": "Starting Integrations Setup",
       "start.description": "Let's connect your services. We'll guide you through GitHub and Slack.",
       "connect_github.title": "Connect GitHub",

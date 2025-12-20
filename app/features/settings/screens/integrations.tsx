@@ -19,7 +19,7 @@ import {
 } from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
-import { IntegrationsCompleteCard, IntegrationsGuideTooltip, IntegrationsSubProgress, OnboardingProgress } from '../components/onboarding-guide';
+import { IntegrationsCompleteCard, IntegrationsGuideTooltip, IntegrationsSubProgress, OnboardingModeBanner } from '../components/onboarding-guide';
 import { getIntegrationsInfo, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useIntegrationActions } from '../hooks/useIntegrationActions';
 import { useIntegrationResponse } from '../hooks/useIntegrationResponse';
@@ -390,35 +390,15 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Onboarding Banner for setup_integrations step */}
         {isOnboardingActive && currentStep === 'setup_integrations' && !shouldShowStepSelection && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-2 border-blue-300 dark:border-blue-600 rounded-xl p-6 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="flex items-start gap-4">
-              <span className="text-3xl">🔗</span>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded">
-                    {onboardingT('badge')}
-                  </span>
-                  <h3 className="font-bold text-lg text-blue-900 dark:text-blue-100">
-                    {onboardingT('steps.setup_integrations.title')}
-                  </h3>
-                </div>
-                <p className="text-sm text-blue-800 dark:text-blue-200 mb-4">
-                  {onboardingT('steps.setup_integrations.description')}
-                </p>
-                
-                {/* Main Progress indicator */}
-                <div className="mb-4">
-                  <OnboardingProgress currentStep={currentStep} />
-                </div>
-                
-                {/* Sub Progress indicator for integrations */}
-                <div className="mb-4 p-3 bg-white/50 dark:bg-black/20 rounded-lg">
-                  <p className="text-xs text-blue-700 dark:text-blue-300 mb-2 font-medium">연동 진행 상황</p>
-                  <IntegrationsSubProgress currentSubStep={currentIntegrationsSubStep} />
-                </div>
-              </div>
-            </div>
-          </div>
+          <OnboardingModeBanner
+            currentStep={currentStep}
+            workspaceId={workspaceId}
+            subProgress={
+              <IntegrationsSubProgress currentSubStep={currentIntegrationsSubStep} />
+            }
+            subProgressLabel={onboardingT('integrationsSubSteps.progressLabel', '연동 진행 상황')}
+            subProgressColor="blue"
+          />
         )}
         
         {/* Step Selection when sub-step is 'end' */}

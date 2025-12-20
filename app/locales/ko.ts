@@ -1167,6 +1167,7 @@ const ko: Translation = {
       setup_slack_channel: "채널",
       end: "완료",
       skip: "이 단계 건너뛰기 →",
+      progressLabel: "연동 진행 상황",
       "start.title": "연동 설정 시작",
       "start.description": "서비스를 연결합니다. GitHub와 Slack을 안내해 드릴게요.",
       "connect_github.title": "GitHub 연결",

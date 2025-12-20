@@ -1032,11 +1032,11 @@ export function MailingListGuideTooltip({
           <div className="relative">
             <div className="flex items-start gap-3">
               <span className="text-2xl flex-shrink-0">{message.icon}</span>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-green-900 dark:text-green-100 text-sm mb-1">
+              <div className="flex-1 min-w-0 text-left">
+                <h4 className="font-bold text-green-900 dark:text-green-100 text-sm mb-1 text-left">
                   {message.title}
                 </h4>
-                <p className="text-green-800 dark:text-green-200 text-xs leading-relaxed">
+                <p className="text-green-800 dark:text-green-200 text-xs leading-relaxed text-left">
                   {message.description}
                 </p>
               </div>

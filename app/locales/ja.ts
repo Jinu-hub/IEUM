@@ -1168,6 +1168,7 @@ const ja: Translation = {
       setup_slack_channel: "チャンネル",
       end: "完了",
       skip: "このステップをスキップ →",
+      progressLabel: "連携進行状況",
       "start.title": "連携設定を開始",
       "start.description": "サービスを接続します。GitHubとSlackをご案内します.",
       "connect_github.title": "GitHub接続",
