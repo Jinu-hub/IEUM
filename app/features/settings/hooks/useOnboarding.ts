@@ -198,7 +198,7 @@ export function useOnboarding({ workspaceId, onboardingState }: UseOnboardingOpt
     if (isOnboardingActive && currentStep === 'setup_integrations' && currentIntegrationsSubStep === 'start') {
       const timer = setTimeout(() => {
         updateIntegrationsSubStep('connect_github');
-      }, 3000);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [isOnboardingActive, currentStep, currentIntegrationsSubStep]);

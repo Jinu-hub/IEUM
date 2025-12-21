@@ -1127,6 +1127,7 @@ export type Translation = {
       setup_slack_channel: string;
       end: string;
       skip: string;
+      completeStep: string;
       progressLabel: string;
       "start.title": string;
       "start.description": string;

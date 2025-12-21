@@ -1170,6 +1170,7 @@ const ko: Translation = {
       setup_slack_channel: "채널",
       end: "완료",
       skip: "이 단계 건너뛰기 →",
+      completeStep: "이 단계 완료하기 →",
       progressLabel: "연동 진행 상황",
       "start.title": "연동 설정 시작",
       "start.description": "서비스를 연결합니다. GitHub와 Slack을 안내해 드릴게요.",
@@ -1220,7 +1221,7 @@ const ko: Translation = {
       title: "다음으로 무엇을 하시겠습니까?",
       mailingList: {
         title: "메일 리스트 설정",
-        description: "이메일 주소를 그룹화합니다. 나중에 해도 됩니다.",
+        description: "이메일 주소를 그룹화합니다. 지금 하지 않아도 됩니다.",
       },
       targets: {
         title: "타겟 설정",
@@ -1255,7 +1256,7 @@ const ko: Translation = {
     },
     mailList: {
       addListPrompt: "새 리스트를 추가하여 이메일 주소를 그룹화하세요",
-      afterSavePrompt: "멤버를 추가할 수 있습니다. 끝나면 다음으로 타겟을 설정하세요.",
+      afterSavePrompt: "멤버를 추가할 수 있습니다. 끝나면 타겟 설정으로 이동합니다.",
       goToTargets: "타겟 설정으로",
     },
     targets: {

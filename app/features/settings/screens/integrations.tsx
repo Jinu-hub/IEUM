@@ -19,7 +19,7 @@ import {
 } from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
-import { IntegrationsCompleteCard, IntegrationsGuideTooltip, IntegrationsSubProgress, OnboardingModeBanner } from '../components/onboarding-guide';
+import { IntegrationsCompleteCard, IntegrationsGuideTooltip, IntegrationsSectionGuide, IntegrationsSubProgress, OnboardingModeBanner } from '../components/onboarding-guide';
 import { getIntegrationsInfo, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useIntegrationActions } from '../hooks/useIntegrationActions';
 import { useIntegrationResponse } from '../hooks/useIntegrationResponse';
@@ -114,31 +114,73 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   const [prevGithubConnected, setPrevGithubConnected] = useState(isConnectedGitHub);
   const [prevSlackConnected, setPrevSlackConnected] = useState(isConnectedSlack);
   
+  // Check URL params for connection success
+  const statusParam = searchParams.get('status');
+  const isSuccess = statusParam === 'success'
+  
   // Update onboarding sub-step when connection status changes
   useEffect(() => {
     if (!isOnboardingActive || currentStep !== 'setup_integrations') return;
     
-    // GitHub just connected
-    if (isConnectedGitHub && !prevGithubConnected && currentIntegrationsSubStep === 'connect_github') {
+    // GitHub just connected (check URL param or state change)
+    if (
+      currentIntegrationsSubStep === 'connect_github' && 
+      isConnectedGitHub && 
+      (isSuccess || (!prevGithubConnected && isConnectedGitHub))
+    ) {
       setGithubConnected(true);
       updateIntegrationsSubStep('connect_slack');
+      setPrevGithubConnected(true); // Update immediately after handling
+      // Clear URL param if present
+      if (isSuccess) {
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete('status');
+        newSearchParams.delete('message');
+        navigate(`/settings/integrations?${newSearchParams.toString()}`, { replace: true });
+      }
+      return; // Early return to avoid updating again below
     }
-    setPrevGithubConnected(isConnectedGitHub);
     
-    // Slack just connected
-    if (isConnectedSlack && !prevSlackConnected && currentIntegrationsSubStep === 'connect_slack') {
+    // Slack just connected (check URL param or state change)
+    if (
+      currentIntegrationsSubStep === 'connect_slack' && 
+      isConnectedSlack && 
+      (isSuccess || (!prevSlackConnected && isConnectedSlack))
+    ) {
       setSlackConnected(true);
       // Check if there are channels to set up
       const slackIntegration = integrationsInfo.find((i: any) => i.type === 'slack') as any;
-      const hasChannels = slackIntegration?.resourceCache?.channels?.length > 0;
-      if (hasChannels) {
-        updateIntegrationsSubStep('setup_slack_channel');
-      } else {
-        updateIntegrationsSubStep('end');
+      updateIntegrationsSubStep('setup_slack_channel');
+      setPrevSlackConnected(true); // Update immediately after handling
+      // Clear URL param if present
+      if (isSuccess) {
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete('status');
+        newSearchParams.delete('message');
+        navigate(`/settings/integrations?${newSearchParams.toString()}`, { replace: true });
       }
+      return; // Early return to avoid updating again below
     }
+    
+    // Update previous states only if no connection change was detected
+    setPrevGithubConnected(isConnectedGitHub);
     setPrevSlackConnected(isConnectedSlack);
-  }, [isConnectedGitHub, isConnectedSlack, isOnboardingActive, currentStep, currentIntegrationsSubStep, prevGithubConnected, prevSlackConnected, integrationsInfo]);
+  }, [
+    isConnectedGitHub, 
+    isConnectedSlack, 
+    isOnboardingActive, 
+    currentStep, 
+    currentIntegrationsSubStep, 
+    prevGithubConnected, 
+    prevSlackConnected, 
+    integrationsInfo,
+    setGithubConnected,
+    setSlackConnected,
+    updateIntegrationsSubStep,
+    isSuccess,
+    navigate,
+    searchParams
+  ]);
   
   useEffect(() => {
     const status = searchParams.get('status');
@@ -637,31 +679,13 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                           
                           {/* 접근 가능한 채널 */}
                           <div className="mt-3">
-                            {isOnboardingActive && currentStep === 'setup_integrations' && currentIntegrationsSubStep === 'setup_slack_channel' ? (
-                              <IntegrationsGuideTooltip
-                                currentSubStep={currentIntegrationsSubStep}
-                                targetSubStep="setup_slack_channel"
-                                position="top"
-                                showSkip
-                                onSkip={() => updateIntegrationsSubStep('end')}
-                              >
-                                <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2 inline-block">
-                                  <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">{t("channelList")}</span>  
-                                  <br />
-                                  <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription1")}</span>
-                                  <br />
-                                  <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription2")}</span>
-                                </div>
-                              </IntegrationsGuideTooltip>
-                            ) : (
-                              <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2">
-                                <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">{t("channelList")}</span>  
-                                <br />
-                                <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription1")}</span>
-                                <br />
-                                <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription2")}</span>
-                              </div>
-                            )}
+                            <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2">
+                              <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">{t("channelList")}</span>  
+                              <br />
+                              <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription1")}</span>
+                              <br />
+                              <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription2")}</span>
+                            </div>
                             {integration.resourceCache.channels && integration.resourceCache.channels.length > 0 ? (
                               <div>
                                 {/* 통합된 통계 정보 */}
@@ -768,6 +792,21 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                   )}
                 </div>
               </NexCardContent>
+              
+              {/* Onboarding: Slack Channel Setup Guide */}
+              {isOnboardingActive && currentStep === 'setup_integrations' && integration.type === 'slack' && (
+                <IntegrationsSectionGuide
+                  currentSubStep={currentIntegrationsSubStep}
+                  targetSubStep="setup_slack_channel"
+                  onComplete={() => {
+                    updateIntegrationsSubStep('end');
+                    // Scroll to top of page
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 100);
+                  }}
+                />
+              )}
             </NexCard>
           ))}
         </div>

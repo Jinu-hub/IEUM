@@ -990,12 +990,12 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                         // 연결된 경우 추가 버튼
                         return (
                           <NexButton
-                            variant="secondary"
-                            size="sm"
+                            variant="primary"
+                            size="md"
                             leftIcon={<Plus />}
                             onClick={handleAddIntegrationSource}
                             disabled={!newIntegration.integrationType || !newIntegration.sourceIdent || isSaving}
-                            className="w-full sm:w-auto sm:min-w-[120px] cursor-pointer"
+                            className="w-full sm:w-auto sm:min-w-[140px] cursor-pointer font-semibold shadow-md hover:shadow-lg transition-all"
                           >
                             {commonT("add")}
                           </NexButton>

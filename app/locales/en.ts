@@ -1171,6 +1171,7 @@ const en: Translation = {
       setup_slack_channel: "Channels",
       end: "Done",
       skip: "Skip this step →",
+      completeStep: "Complete this step →",
       progressLabel: "Integrations Setup Progress",
       "start.title": "Starting Integrations Setup",
       "start.description": "Let's connect your services. We'll guide you through GitHub and Slack.",
@@ -1221,7 +1222,7 @@ const en: Translation = {
       title: "What would you like to do next?",
       mailingList: {
         title: "Set Up Mailing List",
-        description: "Group email addresses. Can be done later.",
+        description: "Group email addresses. Can be done later if you want.",
       },
       targets: {
         title: "Set Up Targets",

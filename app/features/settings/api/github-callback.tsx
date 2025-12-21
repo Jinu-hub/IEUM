@@ -122,7 +122,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       });
 
       // 성공 시 설정 페이지로 리다이렉트
-      return redirect('/settings/integrations?success=github_connected');
+      return redirect('/settings/integrations?status=success&message=' + 
+        encodeURIComponent(`GitHub connected: ${installation.account && "login" in installation.account ? installation.account.login : installation.account?.name}`));
 
     } catch (error: any) {
       logger.error('Failed to verify GitHub App installation', { 

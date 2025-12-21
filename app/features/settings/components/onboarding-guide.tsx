@@ -792,6 +792,72 @@ export function IntegrationsGuideTooltip({
 }
 
 /**
+ * Integrations Section Guide Message
+ * Displays a guide message below a section with a skip link
+ */
+interface IntegrationsSectionGuideProps {
+  currentSubStep: SetupIntegrationsStep | null;
+  targetSubStep: SetupIntegrationsStep;
+  onSkip?: () => void;
+  onComplete?: () => void;
+  className?: string;
+}
+
+export function IntegrationsSectionGuide({
+  currentSubStep,
+  targetSubStep,
+  onSkip,
+  onComplete,
+  className
+}: IntegrationsSectionGuideProps) {
+  const { t } = useTranslation("common", { keyPrefix: "onboarding.integrationsSubSteps" });
+  
+  if (currentSubStep !== targetSubStep) return null;
+  
+  const defaultMessage = INTEGRATIONS_SUB_STEP_MESSAGES[targetSubStep];
+  const message = {
+    title: t(`${targetSubStep}.title`, defaultMessage.title),
+    description: t(`${targetSubStep}.description`, defaultMessage.description),
+    icon: defaultMessage.icon
+  };
+  
+  return (
+    <div className={cn(
+      'mt-4 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg',
+      className
+    )}>
+      <div className="flex items-start gap-3">
+        <span className="text-2xl flex-shrink-0">{message.icon}</span>
+        <div className="flex-1 min-w-0">
+          <h4 className="font-bold text-amber-900 dark:text-amber-100 text-sm mb-1">
+            {message.title}
+          </h4>
+          <p className="text-amber-800 dark:text-amber-200 text-xs leading-relaxed mb-3 whitespace-pre-line">
+            {message.description}
+          </p>
+          {onSkip && (
+            <button
+              onClick={onSkip}
+              className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 underline"
+            >
+              {t('skip', 'Skip this step →')}
+            </button>
+          )}
+          {onComplete && (
+            <button
+            onClick={onComplete}
+            className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 underline"
+          >
+            {t('completeStep', 'Complete this step →')}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Integrations Complete Card
  * Shows when integrations setup is complete (sub-step = 'end')
  */

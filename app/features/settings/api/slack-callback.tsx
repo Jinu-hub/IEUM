@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // OAuth 에러 처리
     if (error) {
       logger.error('Slack OAuth error:', { error });
-      return redirect('/settings/integrations?error=' + encodeURIComponent(`Slack 연결 실패: ${error}`));
+      return redirect('/settings/integrations?error=' + encodeURIComponent(`Failed to connect Slack: ${error}`));
     }
 
     // 필수 파라미터 확인
@@ -186,11 +186,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     });
 
     return redirect('/settings/integrations?status=success&message=' + 
-      encodeURIComponent(`Slack 연결 완료: ${tokenData.team?.name}`));
+      encodeURIComponent(`Slack connected: ${tokenData.team?.name}`));
 
   } catch (error: any) {
     logger.error('Slack OAuth 콜백 처리 실패:', error);
     return redirect('/settings/integrations?error=' + 
-      encodeURIComponent('Slack 연결 처리 중 오류가 발생했습니다.'));
+      encodeURIComponent('Failed to connect Slack'));
   }
 }
