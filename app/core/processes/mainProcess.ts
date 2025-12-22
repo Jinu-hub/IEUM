@@ -83,6 +83,10 @@ export async function analyzeData(
     logger.info('📝 Kpi snapshot created');
     //await saveContentToFile(kpiInfo, 'output-test', 'kpi_info_', 'json');
 
+    if (!input.enableCreateContents?.slack) {
+        return { kpiInfo, highlights: [], topics: [], ongoing: [], userActivity: [] };
+    }
+
     // 2-2. slack data를 기반으로 topic clustering을 생성
     const topicsTemp = await topicClustering(linkedData, language, input.source, input.range);
     await saveHighlight(adminClient, {
@@ -248,6 +252,8 @@ export async function mergeContents(input: CreateContentsInput,
         baseTemplate = baseTemplate.replace('{{PERIOD}}', input.range);
         if (input.enableCreateContents?.github) {
             baseTemplate = baseTemplate.replace('{{KPI_SECTION}}', kpiSection);
+        } else {
+            baseTemplate = baseTemplate.replace('{{KPI_SECTION}}', '');
         }
         baseTemplate = baseTemplate.replace('{{MAIN_SECTION}}', mainTemplate);
         baseTemplate = baseTemplate.replace('{{CLOSING_SECTION}}', closingSection);

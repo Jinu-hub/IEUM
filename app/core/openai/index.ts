@@ -10,9 +10,9 @@ export { summarizerAgent } from './test-agent';
 // Prompt Builders
 export {
     getPrompt
-} from './prompts';
+} from '../prompts';
 
 // Templates
-export { BASE_TEMPLATE_EN } from './templates/0_base-template.en';
-export { MAIN_TEMPLATE_EN } from './templates/2_main-template.en';
+export { BASE_TEMPLATE_EN } from '../templates/0_base-template.en';
+export { MAIN_TEMPLATE_EN } from '../templates/2_main-template.en';
 

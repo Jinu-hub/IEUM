@@ -1,43 +1,43 @@
 import { run } from "@openai/agents";
 import { z } from "zod";
 import { createGithubStats } from "~/features/cron/api/create-contents";
+import type { SupportedLanguage } from "../config/style-guide";
 import type { FetchedRepoData } from "../integrations/github/types";
 import { CFG_RANKER } from "../lib/constants";
 import { logger } from "../lib/logger";
 import type {
-    CaseKpi,
-    ChatroomActivityMetaJson,
-    KpiSnapshot,
-    LinkedActivityDoc,
-    LinkedItem,
-    RankedHighlight,
-    RepoKpi,
-    UserRepoKpi
+  CaseKpi,
+  ChatroomActivityMetaJson,
+  KpiSnapshot,
+  LinkedActivityDoc,
+  LinkedItem,
+  RankedHighlight,
+  RepoKpi,
+  UserRepoKpi
 } from "../lib/types";
 import {
-    createActivitySummaryAgent,
-    createHighlightsSummaryAgent,
-    createOngoingProgressAgent,
-    createTopicClusteringAgent
+  createActivitySummaryAgent,
+  createHighlightsSummaryAgent,
+  createOngoingProgressAgent,
+  createTopicClusteringAgent
 } from "../openai/agents/analyze-agents";
-import type { SupportedLanguage } from "../openai/config/style-guide";
 import {
-    ActivityOutput,
-    Cluster,
-    CommonInput,
-    OngoingProgressOutput,
-    TopicOutput
+  ActivityOutput,
+  Cluster,
+  CommonInput,
+  OngoingProgressOutput,
+  TopicOutput
 } from "../openai/models";
 import {
-    baseScore,
-    buildKpiIndex,
-    countMessagesIncludingReplies,
-    countReactionsIncludingReplies,
-    extractCaseId,
-    kpiFactorOf,
-    prepareHighlightsWithMessages,
-    prepareMemberDataWithMessages,
-    smallBonuses
+  baseScore,
+  buildKpiIndex,
+  countMessagesIncludingReplies,
+  countReactionsIncludingReplies,
+  extractCaseId,
+  kpiFactorOf,
+  prepareHighlightsWithMessages,
+  prepareMemberDataWithMessages,
+  smallBonuses
 } from "./utils";
 
 /**

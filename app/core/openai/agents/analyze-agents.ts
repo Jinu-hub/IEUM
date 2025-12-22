@@ -1,12 +1,12 @@
 import { Agent } from "@openai/agents";
-import type { SupportedLanguage } from "../config/style-guide";
+import type { SupportedLanguage } from "../../config/style-guide";
+import { buildPrompt } from "../../prompts";
 import {
-    ActivityOutput,
-    HighlightsOutput,
-    OngoingProgressOutput,
-    TopicOutput
+  ActivityOutput,
+  HighlightsOutput,
+  OngoingProgressOutput,
+  TopicOutput
 } from "../models";
-import { buildPrompt } from "../prompts";
 
 /**
  * Topic Clustering Agent を言語に応じて生成（単一ファイル + 文字列置換方式）

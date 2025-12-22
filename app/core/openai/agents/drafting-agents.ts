@@ -1,6 +1,6 @@
 import { Agent } from "@openai/agents";
-import type { SupportedLanguage } from "../config/style-guide";
-import { buildPrompt } from "../prompts";
+import type { SupportedLanguage } from "../../config/style-guide";
+import { buildPrompt } from "../../prompts";
 
 
 export function createKpiSectionAgent(

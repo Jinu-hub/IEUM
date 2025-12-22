@@ -2,7 +2,7 @@
  * GitHub Data Formatter - Multi-language Support
  */
 import type { FetchedRepoData } from "~/core/integrations/github/types";
-import type { SupportedLanguage } from "../config/style-guide";
+import type { SupportedLanguage } from "../../config/style-guide";
 
 /**
  * 언어별 라벨 정의
@@ -60,8 +60,8 @@ export function formatGithubData(
         : '  - (No commits)';
 
       // Merged PRs 섹션
-      const prsSection = repo.mergedPRs && repo.mergedPRs.length > 0
-        ? repo.mergedPRs
+      const prsSection = repo.closedPRs && repo.closedPRs.length > 0
+        ? repo.closedPRs
             .slice(0, 5)
             .map((pr) => `  - #${pr.number}: ${pr.title} by ${pr.user}`)
             .join("\n")
@@ -89,7 +89,7 @@ export function formatGithubData(
 - **${labels.commits} (${repo.commits?.length || 0})**:
 ${commitsSection}
 
-- **${labels.mergedPRs} (${repo.mergedPRs?.length || 0})**:
+- **${labels.mergedPRs} (${repo.closedPRs?.length || 0})**:
 ${prsSection}
 
 - **${labels.openedIssues} (${repo.openedIssues?.length || 0})**:

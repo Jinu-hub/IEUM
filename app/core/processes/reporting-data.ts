@@ -1,8 +1,8 @@
 import { run } from "@openai/agents";
+import type { SupportedLanguage } from "../config/style-guide";
 import { logger } from "../lib/logger";
 import type { CreateContentsInput, EnableCreateContents } from "../lib/types";
 import { createConvertToHTMLAgent, createFinalContentsAgent } from "../openai/agents/reporting-agents";
-import type { SupportedLanguage } from "../openai/config/style-guide";
 import { CommonInput } from "../openai/models";
 
 /**

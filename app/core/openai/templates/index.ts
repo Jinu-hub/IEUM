@@ -1,16 +1,16 @@
 /**
  * Template Index - Language Selection
  */
-import { type SupportedLanguage } from '../config/style-guide';
-import { BASE_TEMPLATE_EN } from './0_base-template.en';
-import { BASE_TEMPLATE_JA } from './0_base-template.ja';
-import { BASE_TEMPLATE_KO } from './0_base-template.ko';
-import { MAIN_TEMPLATE_EN } from './2_main-template.en';
-import { MAIN_TEMPLATE_JA } from './2_main-template.ja';
-import { MAIN_TEMPLATE_KO } from './2_main-template.ko';
-import { GITHUB_SUMMARY_TEMPLATE_EN } from './github-template.en';
-import { GITHUB_SUMMARY_TEMPLATE_JA } from './github-template.ja';
-import { GITHUB_SUMMARY_TEMPLATE_KO } from './github-template.ko';
+import { type SupportedLanguage } from '../../config/style-guide';
+import { BASE_TEMPLATE_EN } from '../../templates/0_base-template.en';
+import { BASE_TEMPLATE_JA } from '../../templates/0_base-template.ja';
+import { BASE_TEMPLATE_KO } from '../../templates/0_base-template.ko';
+import { MAIN_TEMPLATE_EN } from '../../templates/2_main-template.en';
+import { MAIN_TEMPLATE_JA } from '../../templates/2_main-template.ja';
+import { MAIN_TEMPLATE_KO } from '../../templates/2_main-template.ko';
+import { GITHUB_SUMMARY_TEMPLATE_EN } from '../../templates/github-template.en';
+import { GITHUB_SUMMARY_TEMPLATE_JA } from '../../templates/github-template.ja';
+import { GITHUB_SUMMARY_TEMPLATE_KO } from '../../templates/github-template.ko';
 
 const GITHUB_TEMPLATES: Record<SupportedLanguage, string> = {
   en: GITHUB_SUMMARY_TEMPLATE_EN,

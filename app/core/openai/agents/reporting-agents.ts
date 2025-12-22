@@ -1,7 +1,7 @@
 import { Agent } from "@openai/agents";
 import type { EnableCreateContents } from "~/core/lib/types";
-import type { SupportedLanguage } from "../config/style-guide";
-import { buildPrompt } from "../prompts";
+import type { SupportedLanguage } from "../../config/style-guide";
+import { buildPrompt } from "../../prompts";
 
 export function createFinalContentsAgent(
     language: SupportedLanguage = 'en',

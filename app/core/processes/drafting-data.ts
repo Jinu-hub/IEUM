@@ -16,6 +16,9 @@ export async function createKpiSection(
     kpiData: KpiSnapshot,
     language: 'en' | 'ko' | 'ja' = 'en'
 ): Promise<any> {
+    if (Object.keys(kpiData).length === 0) {
+        return null;
+    }
     const agent = createKpiSectionAgent(language);
     const input = CommonInput.parse({
         project: 'all',
