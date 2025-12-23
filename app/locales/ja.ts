@@ -513,6 +513,8 @@ const ja: Translation = {
       botInvitationMethodDescription2: "Slackで希望のチャンネルに移動",
       botInvitationMethodDescription3: "入力してEnterキーを押します。",
       botName: "ボット名",
+      githubRepoLimitReached: "ターゲットあたりのGitHubリポジトリの制限に達しました。最大{{count}}個まで追加できます。",
+      slackChannelLimitReached: "ターゲットあたりのSlackチャンネルの制限に達しました。最大{{count}}個まで追加できます。",
     },
   },
   mailLists: {

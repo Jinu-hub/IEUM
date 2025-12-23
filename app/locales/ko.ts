@@ -512,6 +512,8 @@ const ko: Translation = {
       botInvitationMethodDescription2: "Slack에서 원하는 채널로 이동",
       botInvitationMethodDescription3: "입력하고 엔터.",
       botName: "봇이름",
+      githubRepoLimitReached: "타겟당 GitHub 리포지토리의 제한에 도달했습니다. 최대 {{count}}개까지 추가할 수 있습니다.",
+      slackChannelLimitReached: "타겟당 Slack 채널의 제한에 도달했습니다. 최대 {{count}}개까지 추가할 수 있습니다.",
     },
   },
   mailLists: {

@@ -166,3 +166,20 @@ export const CFG_RANKER = {
     maxPerTopic: 3,
   },
 };
+
+
+export const PLAN_TYPE = [
+  "free",
+  "starter",
+  "pro",
+  "enterprise",
+] as const;
+
+export type PlanType = typeof PLAN_TYPE[number];
+
+export const PLAN_TYPE_LABEL = {
+  free: "Free",
+  starter: "Starter",
+  pro: "Pro",
+  enterprise: "Enterprise",
+};

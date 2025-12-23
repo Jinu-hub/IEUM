@@ -1,3 +1,4 @@
+import { type PlanType } from "~/core/lib/constants";
 import type { ConnectedIntegration, GitHubRepository, SlackChannel, SourceItem } from "./constants";
 
 /**
@@ -237,3 +238,83 @@ export function getSourceVariant(source: string): "success" | "info" | "warning"
   };
   return variants[source] || 'secondary';
 };
+
+/**
+ * 플랜별 설정가능 타깃 소스 제한
+ * @param planType - プランタイプ
+ * @returns 각 소스 타입별 제한 수
+ */
+export function getAvailableTargetSources(planType: PlanType = 'free'): {
+  gitrepo: number;
+  slackChannel: number;
+} {
+  switch (planType) {
+    case 'free':
+    case 'starter':
+      return {
+        gitrepo: 1,
+        slackChannel: 3
+      };
+    case 'pro':
+      return {
+        gitrepo: 2,
+        slackChannel: 5
+      };
+    case 'enterprise':
+      // Enterpriseプランは制限なし（または大きな数値）
+      return {
+        gitrepo: 999,
+        slackChannel: 999
+      };
+  }
+}
+
+/**
+ * 소스 추가 시 제한 체크
+ * @param integrationSources - 현재 추가된 소스 목록
+ * @param newSource - 추가하려는 새 소스
+ * @param planType - プランタイプ
+ * @param t - 翻訳関数（オプション）
+ * @returns 제한 초과 여부와 에러 메시지
+ */
+export function checkSourceLimit(
+  integrationSources: Array<{ integrationType: string; sourceType: string }>,
+  newSource: { integrationType: string; sourceType: string },
+  planType: PlanType = 'free',
+  t?: (key: string, options?: { count?: number }) => string
+): { isValid: boolean; errorMessage?: string } {
+  const limits = getAvailableTargetSources(planType);
+  
+  // 현재 소스 개수 계산
+  const currentGithubRepos = integrationSources.filter(
+    s => s.integrationType === 'github' && s.sourceType === 'github_repo'
+  ).length;
+  const currentSlackChannels = integrationSources.filter(
+    s => s.integrationType === 'slack' && s.sourceType === 'slack_channel'
+  ).length;
+  
+  // 새 소스 타입 확인
+  if (newSource.integrationType === 'github' && newSource.sourceType === 'github_repo') {
+    if (currentGithubRepos >= limits.gitrepo) {
+      const errorMessage = t 
+        ? t('detail.githubRepoLimitReached', { count: limits.gitrepo })
+        : `GitHub repository limit reached. Maximum ${limits.gitrepo} per target.`;
+      return {
+        isValid: false,
+        errorMessage
+      };
+    }
+  } else if (newSource.integrationType === 'slack' && newSource.sourceType === 'slack_channel') {
+    if (currentSlackChannels >= limits.slackChannel) {
+      const errorMessage = t
+        ? t('detail.slackChannelLimitReached', { count: limits.slackChannel })
+        : `Slack channel limit reached. Maximum ${limits.slackChannel} per target.`;
+      return {
+        isValid: false,
+        errorMessage
+      };
+    }
+  }
+  
+  return { isValid: true };
+}

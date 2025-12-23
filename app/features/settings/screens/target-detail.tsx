@@ -23,7 +23,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/core/components/ui/tooltip";
-import { CATEGORY_TYPE } from '~/core/lib/constants';
+import { CATEGORY_TYPE, type PlanType } from '~/core/lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { OnboardingModeBanner, TargetsSectionGuide, TargetsSubProgress } from '../components/onboarding-guide';
 import { createTargetWithSources } from '../db/mutations';
@@ -31,6 +31,7 @@ import { getIntegrationsInfo, getMailingList, getTarget, getTargetSources, getWo
 import { useIntegrationSources } from '../hooks/useIntegrationSources';
 import { useOnboarding } from '../hooks/useOnboarding';
 import {
+  checkSourceLimit,
   getNonMemberSlackChannels,
   getSourceTypeLabel,
 } from '../lib/common';
@@ -447,8 +448,37 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     }
   }, [newIntegration.integrationType, integrations, updateAvailableSources, setAvailableSources]);
 
+  // 플랜 타입 (현재는 기본값 사용, 추후 workspace에서 가져오도록 수정 필요)
+  const planType: PlanType = 'free'; // TODO: workspace에서 plan_type 가져오기
+  
+  // 소스 제한 에러 메시지 상태
+  const [sourceLimitError, setSourceLimitError] = useState<string | null>(null);
+
   // 인테그레이션 소스 추가 핸들러
   const handleAddIntegrationSource = () => {
+    // 제한 체크
+    const integration = integrations.find((i: any) => i.type === newIntegration.integrationType);
+    const sourceType = integration?.type === 'github' ? 'github_repo' : 'slack_channel';
+    
+    const limitCheck = checkSourceLimit(
+      integrationSources,
+      {
+        integrationType: newIntegration.integrationType,
+        sourceType: sourceType
+      },
+      planType,
+      t
+    );
+    
+    if (!limitCheck.isValid) {
+      setSourceLimitError(limitCheck.errorMessage || 'Source limit reached.');
+      toast.error(limitCheck.errorMessage || 'Source limit reached.');
+      return;
+    }
+    
+    // 제한 체크 통과 시 에러 메시지 초기화
+    setSourceLimitError(null);
+    
     const success = handleAddSource(newIntegration);
     if (success) {
       setNewIntegration({ integrationType: '', sourceType: '', sourceIdent: '' });
@@ -965,6 +995,13 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                             </div>
                           ) : null;
                         })()}
+                        
+                        {/* 소스 제한 에러 메시지 */}
+                        {sourceLimitError && (
+                          <div className="text-xs text-red-600 dark:text-red-400">
+                            {sourceLimitError}
+                          </div>
+                        )}
                       </div>
 
                       {/* 추가 버튼 또는 설정 버튼 */}

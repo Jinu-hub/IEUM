@@ -513,6 +513,8 @@ const en: Translation = {
       botInvitationMethodDescription2: "Move to the desired channel in Slack",
       botInvitationMethodDescription3: "Input and press Enter.",
       botName: "Bot name",
+      githubRepoLimitReached: "Reached the limit for GitHub repositories per target. You can add up to {{count}}.",
+      slackChannelLimitReached: "Reached the limit for Slack channels per target. You can add up to {{count}}.",
     },
   },
   mailLists: {

@@ -1,21 +1,21 @@
 import type { Database } from 'database.types';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { data, redirect, useFetcher, useSearchParams, type LoaderFunctionArgs } from 'react-router';
+import { data, Link, redirect, useFetcher, useSearchParams, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
 import {
-    CheckCircleIcon,
-    GitHubIcon,
-    HashIcon,
-    LockIcon,
-    NexBadge,
-    NexButton,
-    NexCard,
-    NexCardContent,
-    NexCardDescription,
-    NexCardHeader,
-    NexCardTitle,
-    SlackIcon
+  CheckCircleIcon,
+  GitHubIcon,
+  HashIcon,
+  LockIcon,
+  NexBadge,
+  NexButton,
+  NexCard,
+  NexCardContent,
+  NexCardDescription,
+  NexCardHeader,
+  NexCardTitle,
+  SlackIcon
 } from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
@@ -409,6 +409,30 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
       <div className="max-w-4xl mx-auto space-y-8">
+        {/* Legal Links */}
+        <div className="flex items-center gap-4 text-sm">
+          <Link
+            to="/legal/privacy-policy"
+            className="text-[#5E6AD2] hover:text-[#7C89F9] dark:text-[#7C89F9] dark:hover:text-[#5E6AD2] underline transition-colors"
+          >
+            Privacy Policy
+          </Link>
+          <span className="text-[#8B92B5] dark:text-[#6C6F7E]">|</span>
+          <Link
+            to="/legal/terms-of-service"
+            className="text-[#5E6AD2] hover:text-[#7C89F9] dark:text-[#7C89F9] dark:hover:text-[#5E6AD2] underline transition-colors"
+          >
+            Terms of Service
+          </Link>
+          <span className="text-[#8B92B5] dark:text-[#6C6F7E]">|</span>
+          <Link
+            to="/legal/security-whitepaper"
+            className="text-[#5E6AD2] hover:text-[#7C89F9] dark:text-[#7C89F9] dark:hover:text-[#5E6AD2] underline transition-colors"
+          >
+            Security Whitepaper
+          </Link>
+        </div>
+
         {/* 헤더 섹션 */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-[#0D0E10] dark:text-[#FFFFFF]">
@@ -451,7 +475,14 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
 
         {/* 통합 서비스 카드 목록 */}
         <div className="grid gap-6">
-          {integrations.map((integration) => (
+          {integrations
+            .sort((a, b) => {
+              // Slackを先に表示（integrations-review.tsxでのみ適用）
+              if (a.type === 'slack' && b.type !== 'slack') return -1;
+              if (a.type !== 'slack' && b.type === 'slack') return 1;
+              return 0;
+            })
+            .map((integration) => (
             <NexCard
               key={integration.type}
               variant="default"
@@ -738,44 +769,43 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
           ))}
         </div>
 
-      {/* 도움말 섹션 */}
-      <NexCard variant="outlined" className="mt-8">
-        <NexCardHeader>
-          <NexCardTitle as="h3" className="text-lg">
-            {t("help.title")}
-          </NexCardTitle>
-          <NexCardDescription>
-            {t("help.description")}
-          </NexCardDescription>
-        </NexCardHeader>
-        <NexCardContent>
-          <div className="space-y-4 text-sm">
+        {/* 도움말 섹션 */}
+        <NexCard variant="outlined" className="mt-8">
+          <NexCardHeader>
+            <NexCardTitle as="h3" className="text-lg">
+              {t("help.title")}
+            </NexCardTitle>
+            <NexCardDescription>
+              {t("help.description")}
+            </NexCardDescription>
+          </NexCardHeader>
+          <NexCardContent>
+            <div className="space-y-4 text-sm">
             <div>
-              <h4 className="font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-2 flex items-center space-x-2">
-                <GitHubIcon className="w-4 h-4" />
-                <span>{t("help.githubConnection")}</span>
-              </h4>
-              <ul className="space-y-1 text-[#8B92B5] dark:text-[#6C6F7E] list-disc list-inside ml-6">
-                <li>{t("help.githubConnectionDescription1")}</li>
-                <li>{t("help.githubConnectionDescription2")} <br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    {t("help.githubConnectionDescription3")}</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-2 flex items-center space-x-2">
-                <SlackIcon className="w-4 h-4" />
-                <span>{t("help.slackConnection")}</span>
-              </h4>
-              <ul className="space-y-1 text-[#8B92B5] dark:text-[#6C6F7E] list-disc list-inside ml-6">
-                <li>{t("help.slackConnectionDescription1")}</li>
-                <li>{t("help.slackConnectionDescription2")}</li>
-                <li>{t("help.slackConnectionDescription3")} <br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    {t("help.slackConnectionDescription4")}</li>
-              </ul>
-            </div>
-
+                <h4 className="font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-2 flex items-center space-x-2">
+                  <SlackIcon className="w-4 h-4" />
+                  <span>{t("help.slackConnection")}</span>
+                </h4>
+                <ul className="space-y-1 text-[#8B92B5] dark:text-[#6C6F7E] list-disc list-inside ml-6">
+                  <li>{t("help.slackConnectionDescription1")}</li>
+                  <li>{t("help.slackConnectionDescription2")}</li>
+                  <li>{t("help.slackConnectionDescription3")} <br />
+                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                      {t("help.slackConnectionDescription4")}</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-[#0D0E10] dark:text-[#FFFFFF] mb-2 flex items-center space-x-2">
+                  <GitHubIcon className="w-4 h-4" />
+                  <span>{t("help.githubConnection")}</span>
+                </h4>
+                <ul className="space-y-1 text-[#8B92B5] dark:text-[#6C6F7E] list-disc list-inside ml-6">
+                  <li>{t("help.githubConnectionDescription1")}</li>
+                  <li>{t("help.githubConnectionDescription2")} <br />
+                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                      {t("help.githubConnectionDescription3")}</li>
+                </ul>
+              </div>
             </div>
           </NexCardContent>
         </NexCard>

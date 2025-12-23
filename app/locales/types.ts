@@ -511,6 +511,8 @@ export type Translation = {
       botInvitationMethodDescription2: string;
       botInvitationMethodDescription3: string;
       botName: string;
+      githubRepoLimitReached: string;
+      slackChannelLimitReached: string;
     };
   };
   mailLists: {
