@@ -39,10 +39,11 @@ export async function createFinalContents(input: CreateContentsInput, mergedCont
 
 /**
  * 최종 콘텐츠를 섹션별로 나누어서 반환(Divide Contents)
+ * @param isNoKpi is no kpi
  * @param finalContents final contents (markdown)
  * @returns DividedContents
  */
-export function divideContents(finalContents: string): DividedContents {
+export function divideContents(isNoKpi: boolean, finalContents: string): DividedContents {
     logger.info('📝 Dividing contents started');
 
     // コードブロックを除去（```で囲まれている部分）
@@ -74,7 +75,9 @@ export function divideContents(finalContents: string): DividedContents {
 
     // 各セクションを抽出（多言語対応：日本語/英語/韓国語）
     sections.summary = extractSection(/##\s+.*?(サマリー|Summary|요약|주간요약)/i);
-    sections.kpi = extractSection(/##\s+.*?(KPI|指標|지표)/i);
+    if (!isNoKpi) {
+        sections.kpi = extractSection(/##\s+.*?(KPI|指標|지표)/i);
+    }
     sections.highlights = extractSection(/##\s+.*?(ハイライト|Highlight|하이라이트|주요내용)/i);
     sections.topics = extractSection(/##\s+.*?(トピック|Topic|토픽|주제)/i);
     sections.ongoing = extractSection(/##\s+.*?(進行中|ロードマップ|予定|Ongoing|Roadmap|진행중|로드맵|예정)/i);
@@ -89,12 +92,14 @@ export function divideContents(finalContents: string): DividedContents {
 /**
  * 최종 콘텐츠를 HTML로 변환(Convert to HTML)
  * @param language language
+ * @param isNoKpi is no kpi
  * @param sections sections
  * @returns 
  */
-export async function convertToHTML(language: SupportedLanguage, sections: DividedContents) {
+export async function convertToHTML(input: CreateContentsInput, sections: DividedContents) {
     logger.info('📝 Converting to HTML started');
-    const agent = createConvertToHTMLAgent(language);
+    const language = input.language;
+    const agent = createConvertToHTMLAgent(language, input.enableCreateContents!);
     const inputData = CommonInput.parse({
         project: 'all',
         contents: JSON.stringify(sections),

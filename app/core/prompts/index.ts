@@ -8,6 +8,7 @@ import { TOPIC_CLUSTERING_INSTRUCTIONS } from './analyze/topic_clustering_ins';
 import { ACTIVITY_SUMMARY_INSTRUCTIONS } from './analyze/user_activity_ins';
 import { CONVERT_TO_HTML_INSTRUCTIONS } from './convert_to_html';
 import { CONVERT_TO_HTML_KPI_INSTRUCTIONS } from './convert_to_html_kpi';
+import { CONVERT_TO_HTML_INSTRUCTIONS_NO_KPI } from './convert_to_html_no_kpi';
 import { FUN_CORNER_SECTION_INSTRUCTIONS } from './drafting/fun_corner_sec_ins';
 import { HIGHLIGHTS_SECTION_INSTRUCTIONS } from './drafting/highlights_sec_ins';
 import { KPI_SECTION_INSTRUCTIONS } from './drafting/kpi_sec_ins';
@@ -16,6 +17,7 @@ import { ONGOING_SECTION_INSTRUCTIONS } from './drafting/ongoing_sec_ins';
 import { TOPICS_SECTION_INSTRUCTIONS } from './drafting/topics_sec_ins';
 import { FINAL_KPI_INSTRUCTIONS_V1 } from './final_kpi_ins_v1';
 import { FINAL_RESULT_INSTRUCTIONS } from './final_res_ins';
+import { FINAL_RESULT_INSTRUCTIONS_NO_KPI } from './final_res_ins_no_kpi';
 import type { PromptType } from './types';
 
 export { buildPrompt } from './prompt-builder';
@@ -52,6 +54,10 @@ export function getPrompt(
       return CONVERT_TO_HTML_INSTRUCTIONS;
     case 'convert_to_html_kpi':
       return CONVERT_TO_HTML_KPI_INSTRUCTIONS;
+    case 'create_final_contents_no_kpi':
+      return FINAL_RESULT_INSTRUCTIONS_NO_KPI;
+    case 'convert_to_html_no_kpi':
+      return CONVERT_TO_HTML_INSTRUCTIONS_NO_KPI;
   }
   return '';
 }

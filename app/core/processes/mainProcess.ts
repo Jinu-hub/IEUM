@@ -165,7 +165,7 @@ export async function analyzeData(
  * @returns 
  */
 export async function draftingData(
-    language: 'en' | 'ko' | 'ja' = 'en',
+    input: CreateContentsInput,
     linkedData: LinkedActivityDoc, 
     kpiInfo: KpiSnapshot, 
     highlights: z.infer<typeof HighlightsOutput>, 
@@ -174,20 +174,27 @@ export async function draftingData(
     userActivity: z.infer<typeof ActivityOutput>) {
     logger.info('📝 Drafting data started');
 
+    const language = input.language;
+
+    // 3-1. KPI Section을 생성
+    let kpiSection = '';
+    if (input.enableCreateContents?.github) {
+        kpiSection = await createKpiSection(kpiInfo, language);
+        logger.info('📝 Kpi section created');
+    }
+
+    if (!input.enableCreateContents?.slack) {
+        return { kpiSection, highlightsSection: '', topicsSection: '', memberSection: '', ongoingSection: '', closingSection: '' };
+    }
+
     // 모든 섹션을 병렬로 생성
     const [
-        kpiSection,
         highlightsSection,
         topicsSection,
         memberSection,
         ongoingSection,
         closingSection
     ] = await Promise.all([
-        // 3-1. KPI Section을 생성
-        createKpiSection(kpiInfo, language).then(result => {
-            logger.info('📝 Kpi section created');
-            return result;
-        }),
         // 3-2. Highlights섹션을 생성
         createHighlightsSection(highlights, language).then(result => {
             logger.info('📝 Highlights section created');
@@ -272,14 +279,15 @@ export async function generateFinalContents(input: CreateContentsInput, mergedCo
     logger.info('📝 Generating final contents started');
     const finalContents = await createFinalContents(input, mergedContents);
     const isOnlyKpi = input.enableCreateContents?.github && !input.enableCreateContents?.slack;
+    const isNoKpi = !input.enableCreateContents?.github && input.enableCreateContents?.slack;
     if (isOnlyKpi) {
         const htmlContents = await convertToHTMLOnlyKpi(input.language, finalContents as string, 
             input.enableCreateContents as EnableCreateContents);
         logger.info('📝 Generating final contents completed');
         return { finalContents, htmlContents };
     } else {
-        const sections = await divideContents(finalContents as string);
-        const htmlContents = await convertToHTML(input.language, sections);
+        const sections = await divideContents(isNoKpi || false, finalContents as string);
+        const htmlContents = await convertToHTML(input, sections);
         logger.info('📝 Generating final contents completed');
         return { finalContents, htmlContents };
     }
@@ -308,7 +316,7 @@ export async function generateContents(input: CreateContentsInput) {
 
     // 3. 각 섹션 초안 생성(Drafting Sections)
     const { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } = 
-        await draftingData(input.language, linkedData, kpiInfo, highlights, topics, ongoing, userActivity);
+        await draftingData(input, linkedData, kpiInfo, highlights, topics, ongoing, userActivity);
     
     // await saveContentToFile(kpiSection, 'output-sample/kpi', 'kpi_section_', 'md');
     // await saveContentToFile(highlightsSection, 'output-sample/highlights', 'highlights_section_', 'md');

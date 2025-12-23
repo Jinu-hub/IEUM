@@ -12,7 +12,8 @@ export function createFinalContentsAgent(
     }
 ) {
     const isOnlyKpi = enableCreateContents.github && !enableCreateContents.slack;
-    const promptType = isOnlyKpi ? 'create_final_kpi' : 'create_final_contents';
+    const isNoKpi = !enableCreateContents.github && enableCreateContents.slack;
+    const promptType = isOnlyKpi ? 'create_final_kpi' : isNoKpi ? 'create_final_contents_no_kpi' : 'create_final_contents';
     const instructions = buildPrompt(promptType, language);
     return new Agent({
         name: 'final_contents_agent',
@@ -30,7 +31,8 @@ export function createConvertToHTMLAgent(
     }
 ) {
     const isOnlyKpi = enableCreateContents.github && !enableCreateContents.slack;
-    const promptType = isOnlyKpi ? 'convert_to_html_kpi' : 'convert_to_html';
+    const isNoKpi = !enableCreateContents.github && enableCreateContents.slack;
+    const promptType = isOnlyKpi ? 'convert_to_html_kpi' : isNoKpi ? 'convert_to_html_no_kpi' : 'convert_to_html';
     const instructions = buildPrompt(promptType, language);
     return new Agent({
         name: 'convert_to_html_agent',
