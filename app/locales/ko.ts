@@ -482,6 +482,8 @@ const ko: Translation = {
     targetDeletedSuccess: "타겟이 삭제되었습니다",
     targetDeletedFailed: "타겟 삭제에 실패했습니다",
     confirmDeleteTarget: "정말로 이 타겟을 삭제하시겠습니까?",
+    targetLimitReached: "타겟 제한에 도달했습니다. 최대 {{count}}개까지 추가할 수 있습니다.",
+    targetLimitReachedTrial: "현재 트라이얼 기간이어서 {{count}}개까지 설정할 수 있습니다.",
     detail: {
       addTarget: "새 타겟 추가",
       editTarget: "타겟 편집",

@@ -18,12 +18,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/core/components/ui/dropdown-menu";
+import { type PlanType } from '~/core/lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
 import { FirstMailConfirmation, OnboardingModeBanner, TargetsGuideTooltip, TargetsSubProgress } from '../components/onboarding-guide';
 import { deleteTarget, switchTargetActive } from '../db/mutations';
 import { getMailingList, getTargetLastSentAt, getTargets, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useOnboarding } from '../hooks/useOnboarding';
+import { checkTargetLimit } from '../lib/common';
 import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
 import type { TargetData } from '../lib/types';
 import type { Route } from "./+types/targets";
@@ -215,8 +217,19 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
     }, 500);
   };
 
+  // 플랜 타입 (현재는 기본값 사용, 추후 workspace에서 가져오도록 수정 필요)
+  const planType: PlanType = 'trial'; // TODO: workspace에서 plan_type 가져오기
+
   // 타겟 추가 핸들러
   const handleAddTarget = () => {
+    // 제한 체크
+    const limitCheck = checkTargetLimit(targets.length, planType, t);
+    
+    if (!limitCheck.isValid) {
+      toast.error(limitCheck.errorMessage || 'Target limit reached.');
+      return;
+    }
+    
     // Advance to regist_basic sub-step if in onboarding
     if (isOnboardingActive && currentStep === 'setup_targets' && currentTargetsSubStep === 'start') {
       updateTargetsSubStep('regist_basic');

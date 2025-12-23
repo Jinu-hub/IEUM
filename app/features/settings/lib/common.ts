@@ -249,6 +249,7 @@ export function getAvailableTargetSources(planType: PlanType = 'free'): {
   slackChannel: number;
 } {
   switch (planType) {
+    case 'trial':
     case 'free':
     case 'starter':
       return {
@@ -314,6 +315,65 @@ export function checkSourceLimit(
         errorMessage
       };
     }
+  }
+  
+  return { isValid: true };
+}
+
+/**
+ * 플랜별 설정가능 타겟 수 제한
+ * @param planType - プランタイプ
+ * @returns 타겟 수 제한
+ */
+export function getAvailableTargetLimit(planType: PlanType = 'free'): number {
+  switch (planType) {
+    case 'trial':
+      return 1;
+    case 'free':
+      return 1;
+    case 'starter':
+      return 3;
+    case 'pro':
+      return 10;
+    case 'enterprise':
+      // Enterpriseプランは制限なし（または大きな数値）
+      return 999;
+  }
+}
+
+/**
+ * 타겟 추가 시 제한 체크
+ * @param currentTargetCount - 현재 타겟 개수
+ * @param planType - プランタイプ
+ * @param t - 翻訳関数（オプション）
+ * @returns 제한 초과 여부와 에러 메시지
+ */
+export function checkTargetLimit(
+  currentTargetCount: number,
+  planType: PlanType = 'free',
+  t?: (key: string, options?: { count?: number }) => string
+): { isValid: boolean; errorMessage?: string } {
+  const limit = getAvailableTargetLimit(planType);
+  
+  if (currentTargetCount >= limit) {
+    // トライアル期間の場合は特別なメッセージを表示
+    if (planType === 'trial') {
+      const errorMessage = t 
+        ? t('targetLimitReachedTrial', { count: limit })
+        : `You are currently in the trial period, so you can only set up ${limit} target.`;
+      return {
+        isValid: false,
+        errorMessage
+      };
+    }
+    
+    const errorMessage = t 
+      ? t('targetLimitReached', { count: limit })
+      : `Target limit reached. Maximum ${limit} targets allowed.`;
+    return {
+      isValid: false,
+      errorMessage
+    };
   }
   
   return { isValid: true };

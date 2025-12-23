@@ -483,6 +483,8 @@ const ja: Translation = {
     targetDeletedSuccess: "ターゲットが削除されました",
     targetDeletedFailed: "ターゲットの削除に失敗しました",
     confirmDeleteTarget: "このターゲットを削除してもよろしいですか？",
+    targetLimitReached: "ターゲットの制限に達しました。最大{{count}}個まで追加できます。",
+    targetLimitReachedTrial: "現在トライアル期間中のため、{{count}}個まで設定できます。",
     detail: {
       addTarget: "新しいターゲットを追加",
       editTarget: "ターゲットを編集",

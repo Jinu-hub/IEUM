@@ -169,6 +169,7 @@ export const CFG_RANKER = {
 
 
 export const PLAN_TYPE = [
+  "trial",
   "free",
   "starter",
   "pro",
@@ -178,6 +179,7 @@ export const PLAN_TYPE = [
 export type PlanType = typeof PLAN_TYPE[number];
 
 export const PLAN_TYPE_LABEL = {
+  trial: "Trial",
   free: "Free",
   starter: "Starter",
   pro: "Pro",

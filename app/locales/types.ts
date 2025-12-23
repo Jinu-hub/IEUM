@@ -481,6 +481,8 @@ export type Translation = {
     targetDeletedSuccess: string;
     targetDeletedFailed: string;
     confirmDeleteTarget: string;
+    targetLimitReached: string;
+    targetLimitReachedTrial: string;
     detail: {
       addTarget: string;
       editTarget: string;
