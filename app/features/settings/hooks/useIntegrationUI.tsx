@@ -120,6 +120,7 @@ export function useIntegrationUI({
   const getActionButton = (integration: IntegrationService) => {
     const { status, onConnect, onDisconnect, onConfigure } = integration;
     const connectDisabled = integration.disableConnect ?? false;
+    const integrationType = integration.type;
     const connectButtonClasses = `flex items-center space-x-2 ${
       connectDisabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
     }`;
@@ -168,12 +169,13 @@ export function useIntegrationUI({
     if (status === 'connected') {
       return (
         <div className="flex gap-2">
-          {onConfigure && (
+          {onConfigure && integrationType === 'test_integration' && (
             <NexButton
-              variant="ghost"
+              variant="secondary"
               size="sm"
               leftIcon={<SettingsIcon className="w-4 h-4" />}
               onClick={onConfigure}
+              className="cursor-pointer"
             >
               {t("actions.settings")}
             </NexButton>
@@ -235,7 +237,7 @@ export function useIntegrationUI({
       ],
       onConnect: handleGitHubConnect,
       onDisconnect: handleGitHubDisconnect,
-      onConfigure: () => console.log('GitHub 설정'),
+      onConfigure: handleGitHubConnect,
       // DB에서 가져온 추가 정보
       ...(githubInfo && {
         id: githubInfo.integration_id,

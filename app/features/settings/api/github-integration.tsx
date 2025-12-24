@@ -171,6 +171,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
             redirectUrl,
             message: 'Redirecting to GitHub App installation'
           });
+        } else {
+          // installationId가 있으면 GitHub App 설치 설정 페이지로 리다이렉트
+          const settingsUrl = `https://github.com/settings/installations/${installationId}`;
+          
+          logger.info('Redirecting to GitHub App installation settings', { 
+            workspaceId, 
+            userId: user.id, 
+            installationId,
+            redirectUrl: settingsUrl
+          });
+          
+          return data({
+            status: 'redirect',
+            redirectUrl: settingsUrl,
+            message: 'Redirecting to GitHub App installation settings'
+          });
         }
       }
       

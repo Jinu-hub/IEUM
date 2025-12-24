@@ -762,8 +762,8 @@ const ko: Translation = {
       title: "투명하고 확장 가능한 Nexletter 가격 정책",
       subtitle: "팀 규모와 워크플로에 맞춰 AI 뉴스레터 자동화를 지금 시작하고, 계속 이어가세요.",
       description: "모든 요금제는 Slack · GitHub 통합, KPI 위젯, 다국어 뉴스레터를 기본 제공합니다. Free 체험 이후에도 동일한 자동화를 Starter 플랜에서 계속 이용할 수 있습니다.",
-      primaryButton: "4주 무료 체험 시작하기",
-      secondaryButton: "Starter로 계속하기",
+      primaryButton: "무료 체험 시작하기",
+      secondaryButton: "샘플 보기",
     },
     badge: "모든 요금제, 무료 체험 4회 제공",
     billing: {

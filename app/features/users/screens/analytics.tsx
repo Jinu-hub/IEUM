@@ -110,15 +110,26 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
     : { averageMemberCount: 0, growthRate: 0, isGrowth: false, isNoChange: true };
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="flex flex-1 flex-col gap-4 p-4 pt-0 space-y-6">
       {/* 페이지 헤더 */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          📊 {t("title")}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          {t("description")}
-        </p>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#667eea] to-[#764ba2] p-8 text-white ">
+        <div className="relative z-10">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">{t("title")}</h1>
+              <p className="text-white/80 text-sm">{t("description")}</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* 배경 장식 요소 */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-2xl"></div>
       </div>
 
       {!hasEmailMetadata ? (

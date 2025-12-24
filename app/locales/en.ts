@@ -763,8 +763,8 @@ const en: Translation = {
       title: "Transparent and Scalable Nexletter Pricing",
       subtitle: "Start AI newsletter automation now and continue based on your team size and workflow.",
       description: "All plans include Slack · GitHub integration, KPI widgets, and multilingual newsletters by default. After the Free trial, you can continue using the same automation with the Starter plan.",
-      primaryButton: "Start 4-Week Free Trial",
-      secondaryButton: "Continue with Starter",
+      primaryButton: "Start Free Trial",
+      secondaryButton: "View Samples",
     },
     badge: "All plans include 4 free trials",
     billing: {

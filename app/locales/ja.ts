@@ -763,8 +763,8 @@ const ja: Translation = {
       title: "透明で拡張可能なNexletter料金プラン",
       subtitle: "チーム規模とワークフローに合わせてAIニュースレター自動化を今すぐ始めて、継続してください。",
       description: "すべてのプランには、Slack・GitHub統合、KPIウィジェット、多言語ニュースレターが標準で含まれています。Freeトライアル後も、Starterプランで同じ自動化を継続して利用できます。",
-      primaryButton: "4週間無料トライアルを開始",
-      secondaryButton: "Starterで続ける",
+      primaryButton: "無料トライアルを開始",
+      secondaryButton: "サンプルを見る",
     },
     badge: "すべてのプラン、無料トライアル4回提供",
     billing: {

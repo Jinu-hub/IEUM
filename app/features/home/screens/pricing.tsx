@@ -224,7 +224,7 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
           secondary: {
             label: t("pricing.hero.secondaryButton"),
             variant: "secondary",
-            href: "/join"
+            href: "/samples"
           }
         }}
         media={{
