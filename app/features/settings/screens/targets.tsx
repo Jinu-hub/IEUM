@@ -478,9 +478,13 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                             <DropdownMenuItem 
                               onClick={() => handleCopyTarget(target.targetId)}
                               className="flex items-center space-x-2"
+                              disabled={true}
                             >
                               <Copy className="h-4 w-4" />
                               <span>{commonT("copy")}</span>
+                              <span className="rounded-full bg-muted-foreground/20 px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                                SOON
+                              </span>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleDeleteTarget(target.targetId)}

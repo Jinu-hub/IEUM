@@ -108,6 +108,12 @@ const getSidebarData = (
           title: t("targets"),
           url: "/settings/targets",
         },
+        {
+          title: t("templates"),
+          url: "#",
+          disabled: true,
+          tooltip: commonT("soon"),
+        },
       ],
     },
     {

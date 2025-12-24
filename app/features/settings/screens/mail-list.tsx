@@ -357,9 +357,13 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
                           <DropdownMenuItem 
                             onClick={() => handleCopyMailList(mailList.mailingListId)}
                             className="flex items-center space-x-2"
+                            disabled={true}
                           >
                             <Copy className="h-4 w-4" />
                             <span>{commonT("copy")}</span>
+                            <span className="rounded-full bg-muted-foreground/20 px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                              SOON
+                            </span>
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleDeleteMailList(mailList.mailingListId)}
@@ -385,7 +389,7 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
         className={cn(
           "fixed bottom-6 right-6 p-4 rounded-full shadow-lg transition-all duration-200",
           "bg-sky-600 text-white hover:bg-sky-700",
-          "hover:scale-105 active:scale-95",
+          "hover:scale-105 active:scale-95 cursor-pointer",
           "focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2",
           "dark:focus:ring-offset-background"
         )}

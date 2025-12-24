@@ -90,6 +90,8 @@ export type Translation = {
     csvUpload: string;
     csvDownload: string;
     comingSoon: string;
+    contactTitle: string;
+    contactDescription: string;
     addMember: string;
     editMember: string;
     noMembers: string;
@@ -327,6 +329,7 @@ export type Translation = {
     settings: string;
     integrations: string;
     targets: string;
+    templates: string;
     mailList: string;
     contents: string;
     sentMail: string;
