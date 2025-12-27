@@ -185,3 +185,30 @@ export const PLAN_TYPE_LABEL = {
   pro: "Pro",
   enterprise: "Enterprise",
 };
+
+export const SUBSCRIPTION_STATUS = [
+  "trialing",
+  "active",
+  "paused",
+  "expired",
+  "canceled",
+] as const;
+
+export type SubscriptionStatus = typeof SUBSCRIPTION_STATUS[number];
+
+export const SUBSCRIPTION_MODE = [
+  "experiment",
+  "free",
+  "paid",
+] as const;
+
+export type SubscriptionMode = typeof SUBSCRIPTION_MODE[number];
+
+export const SOURCE_TYPE = [
+  "slack_channel",
+  "slack_thread",
+  "github_repo",
+  "github_search",
+] as const;
+
+export type SourceType = typeof SOURCE_TYPE[number];

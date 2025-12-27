@@ -761,6 +761,24 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_limits: {
+        Row: {
+          max_targets: number | null
+          max_workspaces: number | null
+          plan_type: Database["public"]["Enums"]["plan_type"]
+        }
+        Insert: {
+          max_targets?: number | null
+          max_workspaces?: number | null
+          plan_type: Database["public"]["Enums"]["plan_type"]
+        }
+        Update: {
+          max_targets?: number | null
+          max_workspaces?: number | null
+          plan_type?: Database["public"]["Enums"]["plan_type"]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -979,6 +997,77 @@ export type Database = {
             referencedColumns: ["workspace_id"]
           },
         ]
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          ends_at: string | null
+          latest_payment_id: number | null
+          mode: Database["public"]["Enums"]["subscription_mode"]
+          plan_type: Database["public"]["Enums"]["plan_type"]
+          started_at: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          subscription_id: string
+          trial_ends_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at?: string | null
+          latest_payment_id?: number | null
+          mode: Database["public"]["Enums"]["subscription_mode"]
+          plan_type: Database["public"]["Enums"]["plan_type"]
+          started_at: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          subscription_id?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string | null
+          latest_payment_id?: number | null
+          mode?: Database["public"]["Enums"]["subscription_mode"]
+          plan_type?: Database["public"]["Enums"]["plan_type"]
+          started_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          subscription_id?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_latest_payment_id_payments_payment_id_fk"
+            columns: ["latest_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["payment_id"]
+          },
+        ]
+      }
+      target_source_policy: {
+        Row: {
+          max_count: number | null
+          plan_type: Database["public"]["Enums"]["plan_type"]
+          policy_id: string
+          source_type: Database["public"]["Enums"]["source_type"]
+        }
+        Insert: {
+          max_count?: number | null
+          plan_type: Database["public"]["Enums"]["plan_type"]
+          policy_id?: string
+          source_type: Database["public"]["Enums"]["source_type"]
+        }
+        Update: {
+          max_count?: number | null
+          plan_type?: Database["public"]["Enums"]["plan_type"]
+          policy_id?: string
+          source_type?: Database["public"]["Enums"]["source_type"]
+        }
+        Relationships: []
       }
       target_sources: {
         Row: {
@@ -1356,6 +1445,7 @@ export type Database = {
         | "completed"
       onboarding_type: "default" | "slack_review"
       period: "daily" | "weekly" | "monthly" | "yearly"
+      plan_type: "trial" | "free" | "starter" | "pro" | "enterprise"
       review_step:
         | "review_start"
         | "review_connect"
@@ -1377,6 +1467,11 @@ export type Database = {
         | "regist_schedule"
         | "regist_sourses"
         | "end"
+      source_type:
+        | "slack_channel"
+        | "slack_thread"
+        | "github_repo"
+        | "github_search"
       step_name:
         | "queued"
         | "collect_data"
@@ -1384,6 +1479,13 @@ export type Database = {
         | "assemble_data"
         | "send_email"
       step_status: "queued" | "running" | "success" | "failed" | "canceled"
+      subscription_mode: "experiment" | "free" | "paid"
+      subscription_status:
+        | "trialing"
+        | "active"
+        | "paused"
+        | "expired"
+        | "canceled"
       user_type: "normal" | "nexletter" | "app_review"
       workspace_kind:
         | "org"
@@ -1585,6 +1687,7 @@ export const Constants = {
       ],
       onboarding_type: ["default", "slack_review"],
       period: ["daily", "weekly", "monthly", "yearly"],
+      plan_type: ["trial", "free", "starter", "pro", "enterprise"],
       review_step: [
         "review_start",
         "review_connect",
@@ -1609,6 +1712,12 @@ export const Constants = {
         "regist_sourses",
         "end",
       ],
+      source_type: [
+        "slack_channel",
+        "slack_thread",
+        "github_repo",
+        "github_search",
+      ],
       step_name: [
         "queued",
         "collect_data",
@@ -1617,6 +1726,14 @@ export const Constants = {
         "send_email",
       ],
       step_status: ["queued", "running", "success", "failed", "canceled"],
+      subscription_mode: ["experiment", "free", "paid"],
+      subscription_status: [
+        "trialing",
+        "active",
+        "paused",
+        "expired",
+        "canceled",
+      ],
       user_type: ["normal", "nexletter", "app_review"],
       workspace_kind: [
         "org",
