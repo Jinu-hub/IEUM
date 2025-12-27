@@ -23,6 +23,7 @@ import { authUid, authUsers, authenticatedRole, serviceRole } from "drizzle-orm/
 
 import { timestamps } from "~/core/db/helpers.server";
 import {
+  PERIOD_TYPE,
   PLAN_TYPE,
   SOURCE_TYPE,
   SUBSCRIPTION_MODE,
@@ -36,6 +37,7 @@ export const planType = pgEnum("plan_type", PLAN_TYPE);
 export const subscriptionStatus = pgEnum("subscription_status", SUBSCRIPTION_STATUS);
 export const subscriptionMode = pgEnum("subscription_mode", SUBSCRIPTION_MODE);
 export const sourceType = pgEnum("source_type", SOURCE_TYPE);
+export const periodType = pgEnum("period_type", PERIOD_TYPE);
 
 /**
  * Payments Table
@@ -162,6 +164,12 @@ export const planLimits = pgTable(
     max_workspaces: integer(),
     // Maximum number of targets (null = unlimited)
     max_targets: integer(),
+    // Maximum number of daily emails sent per week
+    max_daily_emails_per_week: integer(),
+    // Maximum number of weekly emails sent per month
+    max_weekly_emails_per_month: integer(),
+    // Maximum number of monthly emails sent per month
+    max_monthly_emails_per_month: integer(),
   },
   (table) => [
     pgPolicy("plan_select", { for: "select", to: authenticatedRole, using: sql`true` }),
@@ -198,5 +206,50 @@ export const targetSourcePolicy = pgTable(
     pgPolicy("tsp_insert", { for: "insert", to: serviceRole, withCheck: sql`true` }),
     pgPolicy("tsp_update", { for: "update", to: serviceRole, using: sql`true`, withCheck: sql`true` }),
     pgPolicy("tsp_delete", { for: "delete", to: serviceRole, using: sql`true` }),
+  ],
+);
+
+/**
+ * Usage Counters Table
+ * 
+ * Tracks usage metrics for users by subscription mode and time period.
+ * Records process pipeline counts and email sent counts for billing and quota management.
+ * 
+ * Includes Row Level Security (RLS) policies:
+ * - Users can only view their own usage counter records
+ * - Only service role can modify usage counters (backend service manages these)
+ */
+export const usageCounters = pgTable(
+  "usage_counters",
+  {
+    // Primary key for counter records
+    counter_id: uuid().defaultRandom().primaryKey(),
+    // Foreign key to the user who owns the usage counter
+    // Using CASCADE ensures counter records are deleted when user is deleted
+    user_id: uuid()
+      .notNull()
+      .references(() => authUsers.id, {
+        onDelete: "cascade",
+      }),
+    // Subscription mode: experiment, free, paid
+    mode: subscriptionMode().notNull(),
+    // Period type: hourly, daily, weekly, monthly
+    period_type: periodType().notNull(),
+    // When the measurement period started
+    period_start: timestamp({ withTimezone: true }).notNull(),
+    // When the measurement period ended
+    period_end: timestamp({ withTimezone: true }).notNull(),
+    // Number of processing pipelines executed
+    process_count: integer().notNull(),
+    // Number of emails sent
+    email_sent_count: integer().notNull(),
+    // When the counter record was created
+    created_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    pgPolicy("uc_select", { for: "select", to: authenticatedRole, using: sql`${authUid} = ${table.user_id}` }),
+    pgPolicy("uc_insert", { for: "insert", to: serviceRole, withCheck: sql`true` }),
+    pgPolicy("uc_update", { for: "update", to: serviceRole, using: sql`true`, withCheck: sql`true` }),
+    pgPolicy("uc_delete", { for: "delete", to: serviceRole, using: sql`true` }),
   ],
 );

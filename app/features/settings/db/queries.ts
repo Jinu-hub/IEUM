@@ -303,3 +303,84 @@ export const getTargetLastSentAt = async (
   }
   return data[0]?.sent_at ?? null;
 };
+
+/**
+ * Get user's subscription plan type
+ * 
+ * @param client - Authenticated Supabase client instance
+ * @param userId - The ID of the user whose subscription to retrieve
+ * @returns The plan type of the user's active subscription, or 'free' as default
+ */
+export const getUserSubscriptionPlanType = async (
+  client: SupabaseClient<Database>,
+  { userId }: { userId: string },
+): Promise<Database["public"]["Enums"]["plan_type"]> => {
+  const { data, error } = await client
+    .from('subscriptions')
+    .select('plan_type')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .or('ends_at.is.null,ends_at.gt.now()')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+  
+  if (error) {
+    // If no subscription found, default to 'free'
+    console.log('getUserSubscriptionPlanType error (defaulting to free):', error);
+    return 'free';
+  }
+  
+  return data?.plan_type || 'free';
+};
+
+/**
+ * Get plan limits for a specific plan type
+ * 
+ * @param client - Authenticated Supabase client instance
+ * @param planType - The plan type to get limits for
+ * @returns The plan limits for the specified plan type, or null if not found
+ */
+export const getPlanLimits = async (
+  client: SupabaseClient<Database>,
+  { planType }: { planType: Database["public"]["Enums"]["plan_type"] },
+) => {
+  const { data, error } = await client
+    .from('plan_limits')
+    .select('*')
+    .eq('plan_type', planType)
+    .single();
+  
+  if (error) {
+    console.log('getPlanLimits error:', error);
+    // Return null if plan limits not found (plan might not have limits configured)
+    return null;
+  }
+  
+  return data;
+};
+
+/**
+ * Get target source policies for a specific plan type
+ * 
+ * @param client - Authenticated Supabase client instance
+ * @param planType - The plan type to get policies for
+ * @returns Array of target source policies for the specified plan type
+ */
+export const getTargetSourcePolicy = async (
+  client: SupabaseClient<Database>,
+  { planType }: { planType: Database["public"]["Enums"]["plan_type"] },
+) => {
+  const { data, error } = await client
+    .from('target_source_policy')
+    .select('*')
+    .eq('plan_type', planType);
+  
+  if (error) {
+    console.log('getTargetSourcePolicy error:', error);
+    // Return empty array if policies not found
+    return [];
+  }
+  
+  return data || [];
+};

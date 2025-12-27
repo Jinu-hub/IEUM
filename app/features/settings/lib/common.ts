@@ -275,6 +275,7 @@ export function getAvailableTargetSources(planType: PlanType = 'free'): {
  * @param integrationSources - 현재 추가된 소스 목록
  * @param newSource - 추가하려는 새 소스
  * @param planType - プランタイプ
+ * @param targetSourcePolicy - DB에서 가져온 타겟 소스 정책 배열（オプション）
  * @param t - 翻訳関数（オプション）
  * @returns 제한 초과 여부와 에러 메시지
  */
@@ -282,9 +283,35 @@ export function checkSourceLimit(
   integrationSources: Array<{ integrationType: string; sourceType: string }>,
   newSource: { integrationType: string; sourceType: string },
   planType: PlanType = 'free',
+  targetSourcePolicy?: Array<{ source_type: string; max_count: number | null }> | null,
   t?: (key: string, options?: { count?: number }) => string
 ): { isValid: boolean; errorMessage?: string } {
-  const limits = getAvailableTargetSources(planType);
+  // DB에서 가져온 정책이 있으면 사용, 없으면 기본값 사용
+  let gitrepoLimit: number;
+  let slackChannelLimit: number;
+  
+  if (targetSourcePolicy && targetSourcePolicy.length > 0) {
+    // DB에서 정책을 찾아서 사용
+    const githubRepoPolicy = targetSourcePolicy.find(p => p.source_type === 'github_repo');
+    const slackChannelPolicy = targetSourcePolicy.find(p => p.source_type === 'slack_channel');
+    
+    gitrepoLimit = githubRepoPolicy?.max_count !== null && githubRepoPolicy?.max_count !== undefined
+      ? githubRepoPolicy.max_count
+      : githubRepoPolicy?.max_count === null
+      ? 999 // null = unlimited
+      : getAvailableTargetSources(planType).gitrepo;
+    
+    slackChannelLimit = slackChannelPolicy?.max_count !== null && slackChannelPolicy?.max_count !== undefined
+      ? slackChannelPolicy.max_count
+      : slackChannelPolicy?.max_count === null
+      ? 999 // null = unlimited
+      : getAvailableTargetSources(planType).slackChannel;
+  } else {
+    // DB에 정책이 설정되지 않은 경우、기본값 사용
+    const limits = getAvailableTargetSources(planType);
+    gitrepoLimit = limits.gitrepo;
+    slackChannelLimit = limits.slackChannel;
+  }
   
   // 현재 소스 개수 계산
   const currentGithubRepos = integrationSources.filter(
@@ -296,20 +323,20 @@ export function checkSourceLimit(
   
   // 새 소스 타입 확인
   if (newSource.integrationType === 'github' && newSource.sourceType === 'github_repo') {
-    if (currentGithubRepos >= limits.gitrepo) {
+    if (currentGithubRepos >= gitrepoLimit) {
       const errorMessage = t 
-        ? t('detail.githubRepoLimitReached', { count: limits.gitrepo })
-        : `GitHub repository limit reached. Maximum ${limits.gitrepo} per target.`;
+        ? t('detail.githubRepoLimitReached', { count: gitrepoLimit })
+        : `GitHub repository limit reached. Maximum ${gitrepoLimit} per target.`;
       return {
         isValid: false,
         errorMessage
       };
     }
   } else if (newSource.integrationType === 'slack' && newSource.sourceType === 'slack_channel') {
-    if (currentSlackChannels >= limits.slackChannel) {
+    if (currentSlackChannels >= slackChannelLimit) {
       const errorMessage = t
-        ? t('detail.slackChannelLimitReached', { count: limits.slackChannel })
-        : `Slack channel limit reached. Maximum ${limits.slackChannel} per target.`;
+        ? t('detail.slackChannelLimitReached', { count: slackChannelLimit })
+        : `Slack channel limit reached. Maximum ${slackChannelLimit} per target.`;
       return {
         isValid: false,
         errorMessage
@@ -345,15 +372,28 @@ export function getAvailableTargetLimit(planType: PlanType = 'free'): number {
  * 타겟 추가 시 제한 체크
  * @param currentTargetCount - 현재 타겟 개수
  * @param planType - プランタイプ
+ * @param planLimits - DB에서 가져온 플랜 제한 정보（オプション）
  * @param t - 翻訳関数（オプション）
  * @returns 제한 초과 여부와 에러 메시지
  */
 export function checkTargetLimit(
   currentTargetCount: number,
   planType: PlanType = 'free',
+  planLimits?: { max_targets: number | null } | null,
   t?: (key: string, options?: { count?: number }) => string
 ): { isValid: boolean; errorMessage?: string } {
-  const limit = getAvailableTargetLimit(planType);
+  // DB에서 가져온 제한 값이 있으면 사용, 없으면 기본값 사용
+  let limit: number;
+  if (planLimits?.max_targets !== null && planLimits?.max_targets !== undefined) {
+    // DB에 제한 값이 설정된 경우
+    limit = planLimits.max_targets;
+  } else if (planLimits?.max_targets === null) {
+    // null = unlimited の場合は大きな数値を設定
+    limit = 999;
+  } else {
+    // DB에 제한이 설정되지 않은 경우、기본값 사용
+    limit = getAvailableTargetLimit(planType);
+  }
   
   if (currentTargetCount >= limit) {
     // トライアル期間の場合は特別なメッセージを表示

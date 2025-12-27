@@ -763,17 +763,26 @@ export type Database = {
       }
       plan_limits: {
         Row: {
+          max_daily_emails_per_week: number | null
+          max_monthly_emails_per_month: number | null
           max_targets: number | null
+          max_weekly_emails_per_month: number | null
           max_workspaces: number | null
           plan_type: Database["public"]["Enums"]["plan_type"]
         }
         Insert: {
+          max_daily_emails_per_week?: number | null
+          max_monthly_emails_per_month?: number | null
           max_targets?: number | null
+          max_weekly_emails_per_month?: number | null
           max_workspaces?: number | null
           plan_type: Database["public"]["Enums"]["plan_type"]
         }
         Update: {
+          max_daily_emails_per_week?: number | null
+          max_monthly_emails_per_month?: number | null
           max_targets?: number | null
+          max_weekly_emails_per_month?: number | null
           max_workspaces?: number | null
           plan_type?: Database["public"]["Enums"]["plan_type"]
         }
@@ -1236,6 +1245,42 @@ export type Database = {
           },
         ]
       }
+      usage_counters: {
+        Row: {
+          counter_id: string
+          created_at: string
+          email_sent_count: number
+          mode: Database["public"]["Enums"]["subscription_mode"]
+          period_end: string
+          period_start: string
+          period_type: Database["public"]["Enums"]["period_type"]
+          process_count: number
+          user_id: string
+        }
+        Insert: {
+          counter_id?: string
+          created_at?: string
+          email_sent_count: number
+          mode: Database["public"]["Enums"]["subscription_mode"]
+          period_end: string
+          period_start: string
+          period_type: Database["public"]["Enums"]["period_type"]
+          process_count: number
+          user_id: string
+        }
+        Update: {
+          counter_id?: string
+          created_at?: string
+          email_sent_count?: number
+          mode?: Database["public"]["Enums"]["subscription_mode"]
+          period_end?: string
+          period_start?: string
+          period_type?: Database["public"]["Enums"]["period_type"]
+          process_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       workspace: {
         Row: {
           created_at: string
@@ -1445,6 +1490,7 @@ export type Database = {
         | "completed"
       onboarding_type: "default" | "slack_review"
       period: "daily" | "weekly" | "monthly" | "yearly"
+      period_type: "hourly" | "daily" | "weekly" | "monthly"
       plan_type: "trial" | "free" | "starter" | "pro" | "enterprise"
       review_step:
         | "review_start"
@@ -1687,6 +1733,7 @@ export const Constants = {
       ],
       onboarding_type: ["default", "slack_review"],
       period: ["daily", "weekly", "monthly", "yearly"],
+      period_type: ["hourly", "daily", "weekly", "monthly"],
       plan_type: ["trial", "free", "starter", "pro", "enterprise"],
       review_step: [
         "review_start",

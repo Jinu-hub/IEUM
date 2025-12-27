@@ -6,6 +6,8 @@
  * 1. A profile record in the public.profiles table
  * 2. A personal workspace for the user
  * 3. A workspace member record with owner role
+ * 4. An onboarding state record
+ * 5. A trial subscription record in the public.subscriptions table
  * 
  * The function handles different authentication scenarios:
  * 1. Email/phone authentication: Uses provided name or defaults to 'Anonymous'
@@ -84,6 +86,32 @@ BEGIN
     -- Create onboarding state record
     INSERT INTO public.onboarding_states (workspace_id, onboarding_mode, onboarding_step, review_step, slack_connected, github_connected, target_configured, first_mail_send, is_completed)
     VALUES (new_workspace_id, 'default', 'welcome', null, false, false, false, 'waiting_choice', false);
+    
+    -- Create trial subscription for the new user
+    INSERT INTO public.subscriptions (
+        user_id,
+        plan_type,
+        status,
+        mode,
+        started_at,
+        ends_at,
+        trial_ends_at,
+        latest_payment_id,
+        updated_at,
+        created_at
+    )
+    VALUES (
+        new.id,
+        'trial',
+        'active',
+        'experiment',
+        NOW(),
+        NULL,
+        NULL,
+        NULL,
+        NOW(),
+        NOW()
+    );
     
     RETURN NEW; -- Return the user record that triggered this function
 END;

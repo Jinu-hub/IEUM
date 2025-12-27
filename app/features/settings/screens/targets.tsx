@@ -23,7 +23,7 @@ import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
 import { FirstMailConfirmation, OnboardingModeBanner, TargetsGuideTooltip, TargetsSubProgress } from '../components/onboarding-guide';
 import { deleteTarget, switchTargetActive } from '../db/mutations';
-import { getMailingList, getTargetLastSentAt, getTargets, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
+import { getMailingList, getPlanLimits, getTargetLastSentAt, getTargets, getUserSubscriptionPlanType, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useOnboarding } from '../hooks/useOnboarding';
 import { checkTargetLimit } from '../lib/common';
 import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
@@ -31,7 +31,7 @@ import type { TargetData } from '../lib/types';
 import type { Route } from "./+types/targets";
 
 export const meta: Route.MetaFunction = () => {
-  return [{ title: `타겟 | ${import.meta.env.VITE_APP_NAME}` }];
+  return [{ title: `Targets | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -67,7 +67,25 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     // Onboarding state not found, continue without it
   }
   
-  return { workspaceId, targetData: mergedTargetData, onboardingState };
+  // Get user's subscription plan type
+  let planType: PlanType = 'free';
+  try {
+    planType = await getUserSubscriptionPlanType(client, { userId: user.id });
+  } catch (error) {
+    // If subscription not found, default to 'free'
+    console.log('Failed to get subscription plan type, defaulting to free:', error);
+  }
+  
+  // Get plan limits for the user's plan type
+  let planLimits = null;
+  try {
+    planLimits = await getPlanLimits(client, { planType });
+  } catch (error) {
+    // If plan limits not found, continue without them
+    console.log('Failed to get plan limits:', error);
+  }
+  
+  return { workspaceId, targetData: mergedTargetData, onboardingState, planType, planLimits };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -140,7 +158,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
   const { t: onboardingT } = useTranslation("common", { keyPrefix: "onboarding" });
-  const { workspaceId, targetData, onboardingState } = loaderData;
+  const { workspaceId, targetData, onboardingState, planType, planLimits } = loaderData;
   const [targets, setTargets] = useState<TargetData[]>(targetData);
   const navigate = useNavigate();
   const submit = useSubmit();
@@ -217,13 +235,10 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
     }, 500);
   };
 
-  // 플랜 타입 (현재는 기본값 사용, 추후 workspace에서 가져오도록 수정 필요)
-  const planType: PlanType = 'trial'; // TODO: workspace에서 plan_type 가져오기
-
   // 타겟 추가 핸들러
   const handleAddTarget = () => {
-    // 제한 체크
-    const limitCheck = checkTargetLimit(targets.length, planType, t);
+    // 제한 체크（DB에서 가져온 planLimits 사용）
+    const limitCheck = checkTargetLimit(targets.length, planType, planLimits, t);
     
     if (!limitCheck.isValid) {
       toast.error(limitCheck.errorMessage || 'Target limit reached.');

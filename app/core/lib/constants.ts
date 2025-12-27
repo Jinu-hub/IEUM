@@ -212,3 +212,12 @@ export const SOURCE_TYPE = [
 ] as const;
 
 export type SourceType = typeof SOURCE_TYPE[number];
+
+export const PERIOD_TYPE = [
+  "hourly",
+  "daily",
+  "weekly",
+  "monthly",
+] as const;
+
+export type PeriodType = typeof PERIOD_TYPE[number];

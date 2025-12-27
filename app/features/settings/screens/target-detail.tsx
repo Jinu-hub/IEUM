@@ -27,7 +27,7 @@ import { CATEGORY_TYPE, type PlanType } from '~/core/lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { OnboardingModeBanner, TargetsSectionGuide, TargetsSubProgress } from '../components/onboarding-guide';
 import { createTargetWithSources } from '../db/mutations';
-import { getIntegrationsInfo, getMailingList, getTarget, getTargetSources, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
+import { getIntegrationsInfo, getMailingList, getTarget, getTargetSourcePolicy, getTargetSources, getUserSubscriptionPlanType, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useIntegrationSources } from '../hooks/useIntegrationSources';
 import { useOnboarding } from '../hooks/useOnboarding';
 import {
@@ -46,7 +46,7 @@ import type { Route } from "./+types/target-detail";
 
 export const meta = ({ params }: { params: { targetId: string } }) => {
   const isNew = params.targetId === 'new';
-  return [{ title: `${isNew ? '새 타겟 추가' : '타겟 편집'} | ${import.meta.env.VITE_APP_NAME}` }];
+  return [{ title: `${isNew ? 'Add Target' : 'Edit Target'} | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -68,13 +68,31 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     // Onboarding state not found, continue without it
   }
 
+  // Get user's subscription plan type
+  let planType: PlanType = 'free';
+  try {
+    planType = await getUserSubscriptionPlanType(client, { userId: user.id });
+  } catch (error) {
+    // If subscription not found, default to 'free'
+    console.log('Failed to get subscription plan type, defaulting to free:', error);
+  }
+
+  // Get target source policy for the user's plan type
+  let targetSourcePolicy = null;
+  try {
+    targetSourcePolicy = await getTargetSourcePolicy(client, { planType });
+  } catch (error) {
+    // If target source policy not found, continue without it
+    console.log('Failed to get target source policy:', error);
+  }
+
   const targetId = params.targetId;
   if (targetId && targetId !== 'new') {
     const target = await getTarget(client, { targetId: targetId || '' });
     const targetSources = await getTargetSources(client, { workspaceId: workspaceId, targetId: targetId });
-    return { workspaceId, target, mailingLists, integrations, targetSources, onboardingState };
+    return { workspaceId, target, mailingLists, integrations, targetSources, onboardingState, planType, targetSourcePolicy };
   } else {
-    return { workspaceId, target: null, mailingLists, integrations, targetSources: [], onboardingState };
+    return { workspaceId, target: null, mailingLists, integrations, targetSources: [], onboardingState, planType, targetSourcePolicy };
   }
 };
 
@@ -179,7 +197,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
   const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
   const { t: errorsT } = useTranslation("common", { keyPrefix: "errors" });
   const { t: onboardingT } = useTranslation("common", { keyPrefix: "onboarding" });
-  const { workspaceId, target, mailingLists, integrations, targetSources, onboardingState } = loaderData;
+  const { workspaceId, target, mailingLists, integrations, targetSources, onboardingState, planType, targetSourcePolicy } = loaderData;
   const navigate = useNavigate();
   const submit = useSubmit();
   const actionData = useActionData();
@@ -448,8 +466,6 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     }
   }, [newIntegration.integrationType, integrations, updateAvailableSources, setAvailableSources]);
 
-  // 플랜 타입 (현재는 기본값 사용, 추후 workspace에서 가져오도록 수정 필요)
-  const planType: PlanType = 'free'; // TODO: workspace에서 plan_type 가져오기
   
   // 소스 제한 에러 메시지 상태
   const [sourceLimitError, setSourceLimitError] = useState<string | null>(null);
@@ -467,6 +483,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
         sourceType: sourceType
       },
       planType,
+      targetSourcePolicy || null,
       t
     );
     
