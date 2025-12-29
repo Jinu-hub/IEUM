@@ -224,17 +224,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
           }
 
           const ownerUserId = await getWorkspaceOwnerUserId(adminClient, { workspaceId: target.workspace_id });
+          const planType = await getUserSubscriptionPlanType(adminClient, { userId: ownerUserId as string }) || 'free';
+          const planLimit = await getPlanLimits(adminClient, { planType });
 
           // usage_counters 등록/업데이트
           const usageCounter = await incrementUsageCounterForEmail(adminClient, { workspaceId: target.workspace_id, userId: ownerUserId as string });
           if (usageCounter) {
             logger.info('Usage counter updated', { usageCounter });
-            
-            // 사용자의 active subscription에서 plan_type 가져오기
-            const planType = await getUserSubscriptionPlanType(adminClient, { userId: ownerUserId as string });
-
-            // plan_limits에서 max_weekly_emails_per_month 가져오기
-            const planLimit = await getPlanLimits(adminClient, { planType });
 
             if (planLimit && planLimit.max_weekly_emails_per_month !== null) {
               // email_sent_count가 limit보다 크면 continue
@@ -267,8 +263,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
             metricsJson: {} 
           });
           
+          // max_members_per_target가 null이거나 undefined면 0 (데이터 없음 = 제한 없음)
+          const maxMembers = planLimit?.max_members_per_target ?? 0;
+          
           await sendMails(input, target.display_name, target.mailing_list_id || '', 
-            slackResult, content.data as { finalContents: string, htmlContents: string })
+            slackResult, content.data as { finalContents: string, htmlContents: string }, planType, maxMembers)
         }
       } catch (error: any) {
         logger.error('Cron actions target running error', { error: error.message });
@@ -473,17 +472,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
           }
 
           const ownerUserId = await getWorkspaceOwnerUserId(adminClient, { workspaceId: target.workspace_id });
+          const planType = await getUserSubscriptionPlanType(adminClient, { userId: ownerUserId as string }) || 'free';
+          const planLimit = await getPlanLimits(adminClient, { planType });
 
           // usage_counters 등록/업데이트
           const usageCounter = await incrementUsageCounterForEmail(adminClient, { workspaceId: target.workspace_id, userId: ownerUserId as string });
           if (usageCounter) {
             logger.info('Usage counter updated', { usageCounter });
-            
-            // 사용자의 active subscription에서 plan_type 가져오기
-            const planType = await getUserSubscriptionPlanType(adminClient, { userId: ownerUserId as string });
-
-            // plan_limits에서 max_weekly_emails_per_month 가져오기
-            const planLimit = await getPlanLimits(adminClient, { planType });
 
             if (planLimit && planLimit.max_weekly_emails_per_month !== null) {
               // email_sent_count가 limit보다 크면 continue
@@ -516,8 +511,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
             metricsJson: {} 
           });
           
+          // max_members_per_target가 null이거나 undefined면 0 (데이터 없음 = 제한 없음)
+          const maxMembers = planLimit?.max_members_per_target ?? 0;
+          
           await sendMails(input, target.display_name, target.mailing_list_id || '', 
-            slackResult, content.data as { finalContents: string, htmlContents: string })
+            slackResult, content.data as { finalContents: string, htmlContents: string }, planType, maxMembers)
         }
       } catch (error: any) {
         logger.error('Cron actions target running error', { error: error.message });

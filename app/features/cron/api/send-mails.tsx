@@ -1,3 +1,4 @@
+import type { Database } from "database.types";
 import { logger } from "~/core/lib/logger";
 import resendClient from "~/core/lib/resend-client.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
@@ -12,9 +13,17 @@ import { getMailingListMembers, getUserEmail, getWorkspaceOwner } from "~/featur
  * @param workspaceId 워크스페이스 ID
  * @param mailingListId 메일링 리스트 ID
  * @param slackResult Slack 결과
- * @returns 이메일 목록
+ * @param planType 플랜 타입
+ * @param maxMembers 최대 멤버 수
+ * @returns 이메일 목록과 잘림 여부
  */
-export async function getTargetEmails(workspaceId: string, mailingListId: string, slackResult: any) {
+export async function getTargetEmails(
+  workspaceId: string, 
+  mailingListId: string, 
+  slackResult: any,
+  planType: Database["public"]["Enums"]["plan_type"],
+  maxMembers: number = 0
+) {
     let emailList: string[] = [];
 
     if (slackResult) {
@@ -59,9 +68,23 @@ export async function getTargetEmails(workspaceId: string, mailingListId: string
     }
 
     // ownerEmail이 to로 설정되면 targetEmails에서 제거
-    const bccEmailsArray = toEmail === ownerEmail?.email 
+    let bccEmailsArray = toEmail === ownerEmail?.email 
       ? targetEmails 
       : targetEmails.length > 1 ? targetEmails.slice(1) : [];
+    
+    let isCut = false;
+    
+    if (maxMembers > 0) {
+      if (bccEmailsArray.length > maxMembers) {
+        logger.info('BCC emails exceeded limit, cutting', {
+          originalCount: bccEmailsArray.length,
+          maxMembers: maxMembers,
+          planType: planType
+        });
+        bccEmailsArray = bccEmailsArray.slice(0, maxMembers);
+        isCut = true;
+      }
+    }
     
     const bccEmails = bccEmailsArray.length > 0 ? bccEmailsArray : undefined;
 
@@ -69,10 +92,11 @@ export async function getTargetEmails(workspaceId: string, mailingListId: string
       to: toEmail,
       isOwnerEmail: toEmail === ownerEmail?.email,
       bccCount: bccEmails?.length || 0,
-      totalRecipients: targetEmails.length + (ownerEmail ? 1 : 0)
+      totalRecipients: targetEmails.length + (ownerEmail ? 1 : 0),
+      isCut: isCut
     });
 
-    return { toEmail, bccEmails };
+    return { toEmail, bccEmails, isCut };
 }
 
 /**
@@ -82,12 +106,21 @@ export async function getTargetEmails(workspaceId: string, mailingListId: string
  * @param mailingListId 메일링 리스트 ID
  * @param slackResult Slack 결과
  * @param contents 콘텐츠
+ * @param planType 플랜 타입
+ * @param maxMembers 최대 멤버 수
  * @returns 
  */
-export async function sendMails(input: CreateContentsInput, targetDisplayName: string, mailingListId: string
-  , slackResult: any, contents: { finalContents: string, htmlContents: string }) {
+export async function sendMails(
+  input: CreateContentsInput, 
+  targetDisplayName: string, 
+  mailingListId: string,
+  slackResult: any, 
+  contents: { finalContents: string, htmlContents: string },
+  planType: Database["public"]["Enums"]["plan_type"],
+  maxMembers: number = 0
+) {
 
-    const { toEmail, bccEmails } = await getTargetEmails(input.workspaceId, mailingListId, slackResult) || { toEmail: undefined, bccEmails: undefined };
+    const { toEmail, bccEmails, isCut } = await getTargetEmails(input.workspaceId, mailingListId, slackResult, planType, maxMembers) || { toEmail: undefined, bccEmails: undefined, isCut: false };
     
     if (!toEmail) {
       logger.error('To email not found', { workspaceId: input.workspaceId, mailingListId });
@@ -112,7 +145,8 @@ export async function sendMails(input: CreateContentsInput, targetDisplayName: s
       failureReason = sendResult.error.message;
     } else {
       logger.info('Email sent successfully', { emailId: sendResult.data?.id, toEmail });
-      status = 'delivered';
+      // bccEmails가 잘렸으면 status를 'partial'로 설정
+      status = isCut ? 'partial' : 'delivered';
       failureReason = null;
     }
 
