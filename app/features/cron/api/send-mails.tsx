@@ -1,8 +1,11 @@
 import { logger } from "~/core/lib/logger";
 import resendClient from "~/core/lib/resend-client.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
+import type { CreateContentsInput } from "~/core/lib/types";
+import { generatePeriodKey } from "~/core/processes/utils";
+import { saveNewsletterEditions } from "~/features/contents/db/mutations";
+import { getUniquePeriodKey } from "~/features/contents/db/queries";
 import { getMailingListMembers, getUserEmail, getWorkspaceOwner } from "~/features/settings/db/queries";
-
 
 /**
  * 이메일 목록을 가져오는 함수
@@ -74,45 +77,83 @@ export async function getTargetEmails(workspaceId: string, mailingListId: string
 
 /**
  * 이메일을 전송하는 함수
- * @param workspaceId 워크스페이스 ID
+ * @param input 입력 데이터
+ * @param targetDisplayName 타겟 디스플레이 이름
  * @param mailingListId 메일링 리스트 ID
  * @param slackResult Slack 결과
+ * @param contents 콘텐츠
  * @returns 
  */
-export async function sendMails(workspaceId: string, mailingListId: string, slackResult: any) {
+export async function sendMails(input: CreateContentsInput, targetDisplayName: string, mailingListId: string
+  , slackResult: any, contents: { finalContents: string, htmlContents: string }) {
 
-    const { toEmail, bccEmails } = await getTargetEmails(workspaceId, mailingListId, slackResult) || { toEmail: undefined, bccEmails: undefined };
-    if (!toEmail || !bccEmails) {
-      logger.error('To email or BCC emails not found', { workspaceId, mailingListId });
+    const { toEmail, bccEmails } = await getTargetEmails(input.workspaceId, mailingListId, slackResult) || { toEmail: undefined, bccEmails: undefined };
+    
+    if (!toEmail) {
+      logger.error('To email not found', { workspaceId: input.workspaceId, mailingListId });
       return;
     }
 
+    const subject = `${targetDisplayName} Weekly Newsletter`;
     //to: "jinu35@ymail.ne.jp",
     const sendResult = await resendClient.emails.send({
-      from: "Jinu from Nexletter <hello@mail1.nex.it.com>",
-      to: toEmail,
-      subject: "Can you see this email?",
-      html: `
-        <p>Hi Jinu,</p>
-        <p>I'm just confirming that our new domain <b>mail1.nex.it.com</b> can reach Gmail inboxes.</p>
-        <p>You can ignore this message.</p>
-        <p>Thanks!<br/>Nexletter Bot</p>
-      `,
-      text: `
-    Hi Jinu,
-    
-    This is just a delivery test for our new domain (mail1.nex.it.com).
-    You can ignore this message.
-    
-    Thanks,
-    Nexletter Bot
-      `,
+      from: "Nexletter <info@mail.nexone.ink>",
+      to: "takefree.withu@gmail.com",
+      bcc: 'son@digitalsheep.co.jp',
+      subject: subject,
+      html: contents.htmlContents,
     });
 
+    let status;
+    let failureReason;
     if (sendResult.error) {
       logger.error('Failed to send email', { error: sendResult.error, toEmail });
+      status = 'failed';
+      failureReason = sendResult.error.message;
     } else {
       logger.info('Email sent successfully', { emailId: sendResult.data?.id, toEmail });
+      status = 'delivered';
+      failureReason = null;
     }
 
+    const statsJson: any = {
+      count: 1 + (bccEmails?.length || 0),
+      to: toEmail,
+      bcc: bccEmails,
+      range: input.range,
+    };
+
+    const period = input.period;
+    const basePeriodKey = generatePeriodKey(period, input.from);
+    const periodKey = await getUniquePeriodKey(adminClient, input.workspaceId, basePeriodKey, 'newsletter_editions');
+
+    await saveNewsletterEditions(adminClient, { 
+      workspaceId: input.workspaceId,
+      runId: input.runId,
+      targetId: input.targetId,
+      subject: subject,
+      htmlBody: contents.htmlContents,
+      textBody: contents.finalContents,
+      statsJson: statsJson,
+      sentAt: new Date().toISOString(),
+      status: status,
+      providerMessageId: sendResult.data?.id || '',
+      failureReason: failureReason,
+      period: period,
+      periodKey: periodKey,
+    });
+    
+
+}
+
+
+export async function sendWarmingUpEmail(toEmail: string, bccEmails: string[], subject: string, html: string) {
+  const sendResult = await resendClient.emails.send({
+    from: "Nexletter <info@mail.nexone.ink>",
+    to: toEmail,
+    bcc: bccEmails,
+    subject: subject,
+    html: html,
+  });
+  return sendResult;
 }

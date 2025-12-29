@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "database.types";
+import { logger } from "~/core/lib/logger";
 
 export const createNewsletterRun = async (client: SupabaseClient<Database>, 
     { workspaceId, trigger, logRef }: 
@@ -240,5 +241,107 @@ export const saveHighlight = async (client: SupabaseClient<Database>,
     } catch (error) {
         console.error('saveHighlight error', error);
         throw error
+    }
+}
+
+/**
+ * usage_counters 등록/업데이트
+ * 
+ * workspace_id를 기반으로 owner user의 usage counter를 업데이트합니다.
+ * 현재 시간보다 period_end가 작은 monthly 레코드가 있으면 email_sent_count를 증가시키고,
+ * 없으면 새로운 monthly 레코드를 생성합니다.
+ * 
+ * @param client - Supabase client instance (admin client 권장)
+ * @param workspaceId - workspace ID
+ */
+export const incrementUsageCounterForEmail = async (
+    client: SupabaseClient<Database>,
+    { workspaceId }: { workspaceId: string }
+) => {
+    try {
+        // workspace에서 owner_user_id 가져오기
+        const { data: workspaceData, error: workspaceError } = await client
+            .from('workspace')
+            .select('owner_user_id')
+            .eq('workspace_id', workspaceId)
+            .single();
+
+        if (workspaceError || !workspaceData?.owner_user_id) {
+            logger.error('Failed to get workspace owner', { error: workspaceError });
+            return;
+        }
+
+        const userId = workspaceData.owner_user_id;
+
+        // user의 active subscription mode 가져오기
+        const { data: subscriptionData, error: subscriptionError } = await client
+            .from('subscriptions')
+            .select('mode')
+            .eq('user_id', userId)
+            .eq('status', 'active')
+            .or('ends_at.is.null,ends_at.gt.now()')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        const mode = subscriptionError ? 'free' : (subscriptionData?.mode || 'free');
+
+        // 현재 시간
+        const now = new Date();
+        // 1개월 뒤
+        const periodEnd = new Date(now);
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+        // 현재 시간보다 period_end가 작은 monthly 레코드가 있는지 확인
+        const { data: existingCounter, error: checkError } = await client
+            .from('usage_counters')
+            .select('counter_id, email_sent_count')
+            .eq('user_id', userId)
+            .eq('period_type', 'monthly')
+            .lt('period_end', now.toISOString())
+            .order('period_end', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (checkError) {
+            logger.error('Failed to check existing usage counter', { error: checkError });
+            return;
+        }
+
+        if (existingCounter) {
+            // 기존 레코드가 있으면 email_sent_count만 increment
+            const { error: updateError } = await client
+                .from('usage_counters')
+                .update({ email_sent_count: (existingCounter.email_sent_count || 0) + 1 })
+                .eq('counter_id', existingCounter.counter_id);
+
+            if (updateError) {
+                logger.error('Failed to update usage counter', { error: updateError });
+            } else {
+                logger.info('Updated usage counter', { counter_id: existingCounter.counter_id });
+            }
+        } else {
+            // 새 레코드 생성
+            const { error: insertError } = await client
+                .from('usage_counters')
+                .insert({
+                    user_id: userId,
+                    mode: mode,
+                    period_type: 'monthly',
+                    period_start: now.toISOString(),
+                    period_end: periodEnd.toISOString(),
+                    email_sent_count: 1,
+                    process_count: 0,
+                });
+
+            if (insertError) {
+                logger.error('Failed to insert usage counter', { error: insertError });
+            } else {
+                logger.info('Created usage counter', { userId, mode, period_type: 'monthly' });
+            }
+        }
+    } catch (error: any) {
+        logger.error('Usage counter update error', { error: error.message });
+        // usage counter 오류는 전체 프로세스를 중단하지 않음
     }
 }
