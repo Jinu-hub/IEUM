@@ -1,0 +1,1 @@
+ALTER TABLE "plan_limits" ADD COLUMN "max_members_per_target" integer;

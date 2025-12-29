@@ -18,3 +18,18 @@ export async function getUserProfile(
   }
   return data;
 }
+
+export async function getWorkspaceOwnerUserId(
+  client: SupabaseClient<Database>,
+  { workspaceId }: { workspaceId: string },
+) {
+  const { data, error } = await client
+    .from("workspace")
+    .select("owner_user_id")
+    .eq("workspace_id", workspaceId)
+    .single();
+  if (error) {
+    throw error;
+  }
+  return data?.owner_user_id || null;
+}

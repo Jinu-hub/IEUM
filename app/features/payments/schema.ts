@@ -170,6 +170,8 @@ export const planLimits = pgTable(
     max_weekly_emails_per_month: integer(),
     // Maximum number of monthly emails sent per month
     max_monthly_emails_per_month: integer(),
+    // Maximum number of members per target
+    max_members_per_target: integer(),
   },
   (table) => [
     pgPolicy("plan_select", { for: "select", to: authenticatedRole, using: sql`true` }),

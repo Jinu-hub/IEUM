@@ -183,6 +183,13 @@
       "when": 1766830892210,
       "tag": "0025_shiny_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1766994605818,
+      "tag": "0026_natural_zaran",
+      "breakpoints": true
     }
   ]
 }

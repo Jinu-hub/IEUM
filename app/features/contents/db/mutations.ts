@@ -253,25 +253,13 @@ export const saveHighlight = async (client: SupabaseClient<Database>,
  * 
  * @param client - Supabase client instance (admin client 권장)
  * @param workspaceId - workspace ID
+ * @returns 업데이트 또는 생성된 usage counter 레코드, 실패 시 null
  */
 export const incrementUsageCounterForEmail = async (
     client: SupabaseClient<Database>,
-    { workspaceId }: { workspaceId: string }
-) => {
+    { workspaceId, userId }: { workspaceId: string, userId: string }
+): Promise<Database["public"]["Tables"]["usage_counters"]["Row"] | null> => {
     try {
-        // workspace에서 owner_user_id 가져오기
-        const { data: workspaceData, error: workspaceError } = await client
-            .from('workspace')
-            .select('owner_user_id')
-            .eq('workspace_id', workspaceId)
-            .single();
-
-        if (workspaceError || !workspaceData?.owner_user_id) {
-            logger.error('Failed to get workspace owner', { error: workspaceError });
-            return;
-        }
-
-        const userId = workspaceData.owner_user_id;
 
         // user의 active subscription mode 가져오기
         const { data: subscriptionData, error: subscriptionError } = await client
@@ -305,24 +293,28 @@ export const incrementUsageCounterForEmail = async (
 
         if (checkError) {
             logger.error('Failed to check existing usage counter', { error: checkError });
-            return;
+            return null;
         }
 
         if (existingCounter) {
             // 기존 레코드가 있으면 email_sent_count만 increment
-            const { error: updateError } = await client
+            const { data: usageCounter, error: updateError } = await client
                 .from('usage_counters')
                 .update({ email_sent_count: (existingCounter.email_sent_count || 0) + 1 })
-                .eq('counter_id', existingCounter.counter_id);
+                .eq('counter_id', existingCounter.counter_id)
+                .select()
+                .single();
 
             if (updateError) {
                 logger.error('Failed to update usage counter', { error: updateError });
+                return null;
             } else {
                 logger.info('Updated usage counter', { counter_id: existingCounter.counter_id });
+                return usageCounter;
             }
         } else {
             // 새 레코드 생성
-            const { error: insertError } = await client
+            const { data: usageCounter, error: insertError } = await client
                 .from('usage_counters')
                 .insert({
                     user_id: userId,
@@ -332,16 +324,21 @@ export const incrementUsageCounterForEmail = async (
                     period_end: periodEnd.toISOString(),
                     email_sent_count: 1,
                     process_count: 0,
-                });
+                })
+                .select()
+                .single();
 
             if (insertError) {
                 logger.error('Failed to insert usage counter', { error: insertError });
+                return null;
             } else {
                 logger.info('Created usage counter', { userId, mode, period_type: 'monthly' });
+                return usageCounter;
             }
         }
     } catch (error: any) {
         logger.error('Usage counter update error', { error: error.message });
         // usage counter 오류는 전체 프로세스를 중단하지 않음
+        return null;
     }
 }

@@ -764,6 +764,7 @@ export type Database = {
       plan_limits: {
         Row: {
           max_daily_emails_per_week: number | null
+          max_members_per_target: number | null
           max_monthly_emails_per_month: number | null
           max_targets: number | null
           max_weekly_emails_per_month: number | null
@@ -772,6 +773,7 @@ export type Database = {
         }
         Insert: {
           max_daily_emails_per_week?: number | null
+          max_members_per_target?: number | null
           max_monthly_emails_per_month?: number | null
           max_targets?: number | null
           max_weekly_emails_per_month?: number | null
@@ -780,6 +782,7 @@ export type Database = {
         }
         Update: {
           max_daily_emails_per_week?: number | null
+          max_members_per_target?: number | null
           max_monthly_emails_per_month?: number | null
           max_targets?: number | null
           max_weekly_emails_per_month?: number | null
