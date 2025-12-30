@@ -125,7 +125,14 @@ export async function fetchIntegrationData(
   }
 
   if (!githubResult && !slackResult) {
-    throw new Error("Failed to fetch GitHub and Slack data");
+    logger.warn('Failed to fetch GitHub and Slack data - no matched sources', {
+      matchedRepos: matchedSources.matchedRepos.length,
+      matchedChannels: matchedSources.matchedChannels.length,
+      githubCredentialRef: !!githubCredentialRef,
+      slackCredentialRef: !!slackCredentialRef
+    });
+    // エラーをスローせず、nullの結果を返して処理を続行可能にする
+    // （実際にはtarget-processing.tsで早期リターンされるため、ここには到達しない）
   }
 
   return {

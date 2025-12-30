@@ -2,16 +2,16 @@
  * 타겟 처리 함수
  */
 
-import type { CreateContentsInput } from "~/core/lib/types";
 import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
+import type { CreateContentsInput } from "~/core/lib/types";
 import { updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
 import { getIntegrationsInfo, getTargetSources } from "~/features/settings/db/queries";
 import { createContents } from "./create-contents";
-import { sendMails } from "./send-mails";
 import { fetchIntegrationData } from "./integration-fetching";
-import { matchSourcesToIntegrations } from "./source-matching";
 import { checkEmailLimit } from "./limit-checking";
+import { sendMails } from "./send-mails";
+import { matchSourcesToIntegrations } from "./source-matching";
 import type { FetchedData, Target } from "./types";
 
 /**
@@ -96,6 +96,27 @@ export async function processTarget(
       githubData,
       slackData
     );
+
+    // 매칭된 소스가 없는 경우 경고 로그를 출력하고 스킵
+    if (matchedSources.matchedRepos.length === 0 && matchedSources.matchedChannels.length === 0) {
+      logger.warn('No matched sources found for target, skipping', {
+        targetId: target.target_id,
+        targetName: target.display_name,
+        sourcesCount: sources.length,
+        sourcesWithType: matchedSources.sourcesWithType.map((s: any) => ({
+          sourceType: s.sourceType,
+          sourceIdent: s.sourceIdent,
+          integrationType: s.integrationType
+        }))
+      });
+      
+      await updateNewsletterRunError(adminClient, { 
+        runId: runMapping.runId, 
+        runStepId: runMapping.runStepId, 
+        errorSummary: 'No matched sources found for target', 
+      });
+      return;
+    }
 
     // 데이터 페칭
     const fetchedData = await fetchIntegrationData(integrationsInfo, matchedSources);

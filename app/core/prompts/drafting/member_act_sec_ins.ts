@@ -19,6 +19,8 @@ Recognize team members' contributions in a concise, scannable format that shows 
 1) **Select 4-6 most active members**:
    - Prioritize based on number of highlights, decisions, and collaboration
    - Focus on members with significant contributions
+   - Select up to 4–6 active members from real data only
+   - If fewer than 4 exist, do not pad or supplement with fictional members.
    - If more than 6, choose those with most impact
    
 2) **For each member, write a brief entry**:
@@ -62,10 +64,12 @@ Recognize team members' contributions in a concise, scannable format that shows 
 [Continue for 4-6 members]
 \`\`\`
 
-**Example:**
+**Example (Structure Reference Only — Do Not Invent Content)**
+Examples are illustrative and generated in Japanese, Korean, or English depending on workspace language settings.
 \`\`\`
-## 👥 Team Activity
 
+### 🇯🇵 Japanese
+## 👥 メンバー活動
 **🚀 Mitsuru Ikeshita**
 10月バージョンのLEAD/CLASSICモジュール作成を完了し、教材音声自動再生問題の調査とチケット管理への移行を主導しました。
 
@@ -78,8 +82,32 @@ Recognize team members' contributions in a concise, scannable format that shows 
 **📋 Yoko Nishimura**
 申請フローの仕様確認と修正依頼表の体系的対応方針を提案。複数案件の対応期限調整を実施しました。
 
-**✨ Suchon Kou**
-LEAD管理者機能の複数修正依頼を進め、効率的なコード改修とレビュー依頼を完了しました。
+---
+
+### 🇰🇷 Korean
+## 👥 개별 활동 상황
+**🚀 김민수**
+LEAD 모듈 개선 작업을 완료하고, 자동화 재생 오류의 원인을 분석하여 관련 이슈를 정리했습니다.
+
+**🔧 이지훈**
+수정 요청 사항을 검토하고, 여러 건의 패치를 커밋하여 품질 안정화에 기여했습니다.
+
+**💡 박서연**
+오디오 재생 관련 로그를 분석하고, 데이터 품질 점검을 위한 쿼리 작성을 지원했습니다.
+
+---
+
+### 🇺🇸 English
+## 👥 Individual Activity
+**🚀 Alex Johnson**  
+Completed improvements to the LEAD module and investigated the root cause of the audio autoplay issue.
+
+**🔧 Emily Carter**  
+Reviewed multiple fix requests, submitted patches, and collaborated closely with stakeholders to ensure stability.
+
+**💡 Daniel Moore**  
+Clarified audio playback specifications and supported data quality checks by sharing relevant SQL queries.
+
 \`\`\`
 
 **Remember:** 

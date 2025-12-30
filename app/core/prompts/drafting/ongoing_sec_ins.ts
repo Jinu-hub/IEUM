@@ -26,6 +26,9 @@ Provide a clear view of in-progress work and upcoming milestones so the team kno
   - location: Where (if applicable)
 
 ## ✍️ What to Do
+⚠️ **Important**: 
+Each section aims for 2–3 items, but never invent content.  
+If fewer than 2 items exist, list only what actually happened.
 
 1) **Ongoing Work (2-3 most important items)**:
    - Select based on importance, progress, and team impact
@@ -86,31 +89,56 @@ Provide a clear view of in-progress work and upcoming milestones so the team kno
 - **YYYY-MM-DD**: [Event title and brief description]
 \`\`\`
 
-**Example:**
-\`\`\`
+**Example (Structure Reference Only — Do Not Invent Content)**
+Examples are illustrative and generated in Japanese, Korean, or English depending on workspace language settings.
+
+
+### 🇯🇵 Japanese
+## 🔄 進行中のタスク & ロードマップ
+
+### 現在の進行状況
+**修正依頼表対応その6** (Progress: 60%)
+8件のチケットに対応中で、No.425が完了しました。
+
+### 🗓️ ロードマップ
+**10月対応分のコミット** (2025-10-13 to 2025-10-31)
+修正対応を継続予定です。
+
+### 📅 予定
+- **2025-10-17**: レビュー＆コミット予定
+
+---
+
+### 🇰🇷 Korean
+## 🔄 진행 상황 및 향후 계획
+
+### 현재 진행 중
+**수정 요청 대응 #6** (진행률: 60%)
+총 8건 중 일부 작업이 완료되었습니다.
+
+### 🗓️ 로드맵
+**10월 커밋 예정 작업** (2025-10-13 ~ 2025-10-31)
+관련 수정 작업을 지속합니다.
+
+### 📅 예정 일정
+- **2025-10-17**: 리뷰 및 커밋 예정
+
+---
+
+### 🇺🇸 English
 ## 🔄 Ongoing Progress & Looking Ahead
 
 ### Currently In Progress
-
-**修正依頼表対応その6** (Progress: 60%)
-8件のチケットに対応中で、No.425が完了しました。Momoko Teradaが10月13日までにエラー原因解明を進め、Suchon Kouが10月17日にレビュー依頼・コミット作業を予定しています。
-
-**音声自動再生機能対応** (Progress: 70%)
-1スライド素材の仕様確認が完了し、対応方針の確定と実装を進めています。Tomoaki Watanabeが10月12日までに機能要件を整理し、開発チームが10月15日に実装を開始します。
+**Fix Request Batch #6** (Progress: 60%)
+Several tickets are in progress, with partial completion achieved.
 
 ### 🗓️ Roadmap
-
-**10月対応分のコミット** (2025-10-13 to 2025-10-31)
-修正依頼表その6の対応を継続し、一部のチケットは11月切替後にコミット予定です。
-
-**11月アップデート** (2025-11-01 to 2025-11-30)
-スキル管理画面改良 #21794 とユーザ配信再計算API改善 #21790 の対応を開始します。
+**October Commit Plan** (2025-10-13 to 2025-10-31)
+Ongoing fixes will continue through October.
 
 ### 📅 Upcoming
+- **2025-10-17**: Review & commit scheduled
 
-- **2025-10-17**: レビュー＆コミット予定
-- **2025-10-13**: 修正依頼表対応その6（継続）
-\`\`\`
 
 **Remember:** 
 - Always include exact dates
