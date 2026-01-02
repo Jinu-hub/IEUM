@@ -81,6 +81,7 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
 
   const statusConfig = getStatusConfig(email.status, t);
   const StatusIcon = statusConfig.icon;
+  const statsJson = email.statsJson as { count: number, original_count: number };
 
   // 메일 재발송 핸들러
   const handleResendEmail = () => {
@@ -295,6 +296,11 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                         {formatDetailedTime(email.sentAt, i18n.language)}
                       </span>
                     </div>
+                    {email.status === 'partial' && statsJson && (
+                      <span className="text-sm text-muted-foreground">
+                        {t("mail.result", { count: statsJson.count, originalCount: statsJson.original_count })}
+                      </span>
+                    )}
                     {email.failureReason && (
                       <p className="text-sm text-red-600 mt-1">
                         {email.failureReason}

@@ -116,8 +116,10 @@ export type Translation = {
         sending: string;
         delivered: string;
         failed: string;
+        partial: string;
         unknown: string;
       };
+      result: string;
     };
     categories: {
       development: string;

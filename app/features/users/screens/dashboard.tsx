@@ -76,7 +76,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
   
   // 이메일 통계 계산
   const emailStats = {
-    sending: sentEmails.filter(email => email.status === 'sending').length,
+   // sending: sentEmails.filter(email => email.status === 'sending').length,
+    partial: sentEmails.filter(email => email.status === 'partial').length,
     delivered: sentEmails.filter(email => email.status === 'delivered').length,
     failed: sentEmails.filter(email => email.status === 'failed').length,
   };
@@ -506,7 +507,8 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { status: 'sending' as typeof MAIL_STATUS[number], count: emailStats.sending },
+            //{ status: 'sending' as typeof MAIL_STATUS[number], count: emailStats.sending },
+            { status: 'partial' as typeof MAIL_STATUS[number], count: emailStats.partial },
             { status: 'delivered' as typeof MAIL_STATUS[number], count: emailStats.delivered },
             { status: 'failed' as typeof MAIL_STATUS[number], count: emailStats.failed }
           ].map(({ status, count }) => {

@@ -118,8 +118,10 @@ const ja: Translation = {
         sending: "送信中",
         delivered: "送信完了",
         failed: "送信失敗",
+        partial: "部分送信",
         unknown: "不明",
       },
+      result: "{{originalCount}}名のメンバー 中 {{count}}名のメンバーにメールを送信完了",
     },
     categories: {
       development: "開発",

@@ -193,6 +193,7 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
             </div>
           ) : (
             filteredEmails.map((email, index) => {
+              const statsJson = email.statsJson as { count: number, original_count: number };
               const statusConfig = getStatusConfig(email.status, t);
               const StatusIcon = statusConfig.icon;
               
@@ -235,6 +236,11 @@ export default function SentMailScreen( { loaderData }: Route.ComponentProps ) {
                           <NexBadge variant={statusConfig.variant} size="sm">
                             {statusConfig.label}
                           </NexBadge>
+                          {email.status === 'partial' && statsJson && (
+                            <span className="text-sm text-muted-foreground">
+                              {`${statsJson.count} / ${statsJson.original_count}`}
+                            </span>
+                          )}
                           {email.failureReason && (
                             <span className="text-red-600 text-xs">
                               {email.failureReason}

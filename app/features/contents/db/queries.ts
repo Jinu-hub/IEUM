@@ -19,7 +19,8 @@ export const getSentEmailList = async (
       target_id,
       targets!inner (
         display_name
-      )
+      ),
+      stats_json
     `)
     .eq('workspace_id', workspaceId)
     .order('sent_at', { ascending: false });
@@ -38,6 +39,7 @@ export const getSentEmailList = async (
     providerMessageId: sentEmail.provider_message_id || undefined,
     archiveUrl: sentEmail.archive_url || undefined,
     failureReason: sentEmail.failure_reason || undefined,
+    statsJson: sentEmail.stats_json || {},
   }));
   
 };
@@ -60,6 +62,7 @@ export const getSentEmail = async (
       target_id,
       html_body,
       text_body,
+      stats_json,
       targets!inner (
         display_name
       )
@@ -83,6 +86,7 @@ export const getSentEmail = async (
     failureReason: data.failure_reason || undefined,
     htmlBody: data.html_body || '',
     textBody: data.text_body || '',
+    statsJson: data.stats_json || {},
   };
 };
 

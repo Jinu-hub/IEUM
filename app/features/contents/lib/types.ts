@@ -11,6 +11,7 @@ export interface SentEmailData {
   providerMessageId?: string;
   failureReason?: string; // 실패 시 이유
   archiveUrl?: string; // 아카이브 링크 (옵션)
+  statsJson?: unknown;
 }
 
 // 메일 통계 타입 (MVP용 단순화)

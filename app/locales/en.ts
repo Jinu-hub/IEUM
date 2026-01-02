@@ -118,8 +118,10 @@ const en: Translation = {
         sending: "Sending",
         delivered: "Delivered",
         failed: "Failed",
+        partial: "Partial",
         unknown: "Unknown",
       },
+      result: "{{originalCount}} members of the members sent email to {{count}} members",
     },
     categories: {
       development: "Development",

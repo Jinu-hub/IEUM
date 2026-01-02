@@ -1,4 +1,4 @@
-import { CheckCircle, Clock, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { MAIL_STATUS } from '~/core/lib/constants';
 import type { SentEmailData } from './types';
 
@@ -59,6 +59,14 @@ export const getStatusConfig = (status: typeof MAIL_STATUS[number], t: (key: str
         color: 'text-red-600',
         bgColor: 'bg-red-50 dark:bg-red-950',
       };
+    case 'partial':
+      return {
+        icon: AlertCircle,
+        label: t("mail.status.partial"),
+        variant: 'warning' as const,
+        color: 'text-yellow-600',
+        bgColor: 'bg-yellow-50 dark:bg-yellow-950',
+      };
     default:
       // Fallback for unexpected status
       return {
@@ -74,7 +82,7 @@ export const getStatusConfig = (status: typeof MAIL_STATUS[number], t: (key: str
 // 상태별 필터 옵션 생성 함수 (MVP용 단순화)
 export const createStatusFilters = (emails: SentEmailData[], t: (key: string) => string) => [
   { value: 'all', label: t('allStatus'), count: emails.length },
-  { value: 'sending', label: t('mail.status.sending'), count: emails.filter(e => e.status === 'sending').length },
+  { value: 'partial', label: t('mail.status.partial'), count: emails.filter(e => e.status === 'partial').length },
   { value: 'delivered', label: t('mail.status.delivered'), count: emails.filter(e => e.status === 'delivered').length },
   { value: 'failed', label: t('mail.status.failed'), count: emails.filter(e => e.status === 'failed').length },
 ];

@@ -117,8 +117,10 @@ const ko: Translation = {
         sending: "발송중",
         delivered: "발송완료",
         failed: "발송실패",
+        partial: "부분발송",
         unknown: "알 수 없음",
       },
+      result: "{{originalCount}}명의 멤버 중 {{count}}명의 멤버에게 이메일을 발송 완료",
     },
     categories: {
       development: "개발",

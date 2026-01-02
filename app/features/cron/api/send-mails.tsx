@@ -73,11 +73,13 @@ export async function getTargetEmails(
       : targetEmails.length > 1 ? targetEmails.slice(1) : [];
     
     let isCut = false;
+
+    const originalCount = bccEmailsArray.length;
     
     if (maxMembers > 0) {
-      if (bccEmailsArray.length > maxMembers) {
+      if (originalCount > maxMembers) {
         logger.info('BCC emails exceeded limit, cutting', {
-          originalCount: bccEmailsArray.length,
+          originalCount: originalCount,
           maxMembers: maxMembers,
           planType: planType
         });
@@ -96,7 +98,7 @@ export async function getTargetEmails(
       isCut: isCut
     });
 
-    return { toEmail, bccEmails, isCut };
+    return { toEmail, bccEmails, isCut, originalCount };
 }
 
 /**
@@ -120,7 +122,7 @@ export async function sendMails(
   maxMembers: number = 0
 ) {
 
-    const { toEmail, bccEmails, isCut } = await getTargetEmails(input.workspaceId, mailingListId, slackResult, planType, maxMembers) || { toEmail: undefined, bccEmails: undefined, isCut: false };
+    const { toEmail, bccEmails, isCut, originalCount } = await getTargetEmails(input.workspaceId, mailingListId, slackResult, planType, maxMembers) || { toEmail: undefined, bccEmails: undefined, isCut: false, originalCount: 0 };
     
     if (!toEmail) {
       logger.error('To email not found', { workspaceId: input.workspaceId, mailingListId });
@@ -150,8 +152,11 @@ export async function sendMails(
       failureReason = null;
     }
 
+    const count = 1 + (bccEmails?.length || 0);
+
     const statsJson: any = {
-      count: 1 + (bccEmails?.length || 0),
+      count: count,
+      original_count: 1 + originalCount,
       to: toEmail,
       bcc: bccEmails,
       range: input.range,
