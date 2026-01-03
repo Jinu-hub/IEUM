@@ -490,6 +490,8 @@ const ja: Translation = {
     confirmDeleteTarget: "このターゲットを削除してもよろしいですか？",
     targetLimitReached: "ターゲットの制限に達しました。最大{{count}}個まで追加できます。",
     targetLimitReachedTrial: "現在トライアル期間中のため、{{count}}個まで設定できます。",
+    emailLimitReached: "月基準最大週間メール発送許可量({{count}})に達したため、",
+    emailLimitReachedAfter: "以降に発送が可能です。",
     detail: {
       addTarget: "新しいターゲットを追加",
       editTarget: "ターゲットを編集",

@@ -23,10 +23,10 @@ import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
 import { FirstMailConfirmation, OnboardingModeBanner, TargetsGuideTooltip, TargetsSubProgress } from '../components/onboarding-guide';
 import { deleteTarget, switchTargetActive } from '../db/mutations';
-import { getMailingList, getPlanLimits, getTargetLastSentAt, getTargets, getUserSubscriptionPlanType, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
+import { getCurrentMonthlyUsageCounter, getMailingList, getPlanLimits, getTargetLastSentAt, getTargets, getUserSubscriptionPlanType, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useOnboarding } from '../hooks/useOnboarding';
 import { checkTargetLimit } from '../lib/common';
-import { formatLastSent, formatSchedule } from '../lib/scheduleUtils';
+import { formatLastSent, formatSchedule, formatTimeUntil, getNextScheduledTime } from '../lib/scheduleUtils';
 import type { TargetData } from '../lib/types';
 import type { Route } from "./+types/targets";
 
@@ -85,7 +85,16 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     console.log('Failed to get plan limits:', error);
   }
   
-  return { workspaceId, targetData: mergedTargetData, onboardingState, planType, planLimits };
+  // Get current monthly usage counter
+  let usageCounter = null;
+  try {
+    usageCounter = await getCurrentMonthlyUsageCounter(client, { userId: user.id });
+  } catch (error) {
+    // If usage counter not found, continue without it
+    console.log('Failed to get usage counter:', error);
+  }
+  
+  return { workspaceId, targetData: mergedTargetData, onboardingState, planType, planLimits, usageCounter };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -154,11 +163,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
 
 export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
-  const { t } = useTranslation("common", { keyPrefix: "targets" });
+  const { t, i18n } = useTranslation("common", { keyPrefix: "targets" });
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
   const { t: onboardingT } = useTranslation("common", { keyPrefix: "onboarding" });
-  const { workspaceId, targetData, onboardingState, planType, planLimits } = loaderData;
+  const { workspaceId, targetData, onboardingState, planType, planLimits, usageCounter } = loaderData;
   const [targets, setTargets] = useState<TargetData[]>(targetData);
   const navigate = useNavigate();
   const submit = useSubmit();
@@ -296,7 +305,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
     const nextDate = new Date();
     nextDate.setDate(nextDate.getDate() + 1);
     nextDate.setHours(7, 0, 0, 0);
-    return nextDate.toLocaleString('ja-JP', {
+    return nextDate.toLocaleString(i18n.language, {
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
@@ -384,7 +393,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                 className="transition-all duration-200 cursor-pointer"
                 onClick={() => handleEditTarget(target.targetId)}
               >
-                <NexCardContent className="p-6">
+                <NexCardContent className="p-4">
                   <div className="flex items-center justify-between">
                     {/* 좌측: 타겟 정보 */}
                     <div className="flex items-start space-x-4 flex-1">
@@ -431,12 +440,12 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                         </div>
 
                         {/* 타겟 정보 그리드 */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                           {/* 스케줄 */}
-                          <div className="flex items-center space-x-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <span className="font-medium">{commonT("schedule")}:</span>
+                          <div className="flex items-start space-x-2">
+                            <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1">
+                              <span className="font-medium block">{commonT("schedule")}:</span>
                               <div className="text-muted-foreground">
                                 {formatSchedule(target.scheduleCron, timesT)}
                               </div>
@@ -444,10 +453,10 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                           </div>
 
                           {/* 메일링 리스트 */}
-                          <div className="flex items-center space-x-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <span className="font-medium">{commonT("sendTarget")}:</span>
+                          <div className="flex items-start space-x-2">
+                            <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1">
+                              <span className="font-medium block">{commonT("sendTarget")}:</span>
                               <div className="text-muted-foreground">
                                 {target.mailingListName || commonT("notSet")} 
                               </div>
@@ -458,20 +467,98 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
                           </div>
 
                           {/* 마지막 발송 시각 */}
-                          <div className="flex items-center space-x-2">
-                            <Target className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <span className="font-medium">{commonT("lastSent")}:</span>
+                          <div className="flex items-start space-x-2">
+                            <Target className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1">
+                              <span className="font-medium block">{commonT("lastSent")}:</span>
                               <div className="text-muted-foreground">
                                 {formatLastSent(target.lastSentAt || undefined, target.timezone || "Asia/Tokyo", timesT)}
                               </div>
                             </div>
                           </div>
+
+                          {/* 다음 발송 예정 */}
+                          {target.scheduleCron && target.isActive ? (
+                            <div className="flex items-start space-x-2">
+                              <Target className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                              <div className="min-w-0 flex-1">
+                                <span className="font-medium block">{commonT("nextSend")}:</span>
+                                <div className="text-muted-foreground">
+                                  {(() => {
+                                    // 上限チェック: email_sent_count >= max_weekly_emails_per_month の場合、period_end以降のスケジュールを計算
+                                    let minDate: Date | undefined = undefined;
+                                    let isLimitReached = false;
+                                    let periodEndDate: Date | undefined = undefined;
+                                    
+                                    if (usageCounter && planLimits && planLimits.max_weekly_emails_per_month !== null) {
+                                      if (usageCounter.email_sent_count >= planLimits.max_weekly_emails_per_month) {
+                                        // 上限に達している場合、period_end以降のスケジュールを計算
+                                        isLimitReached = true;
+                                        periodEndDate = new Date(usageCounter.period_end);
+                                        minDate = periodEndDate;
+                                      }
+                                    }
+                                    
+                                    const nextTime = getNextScheduledTime(target.scheduleCron, minDate);
+                                    if (nextTime) {
+                                      const timeUntil = formatTimeUntil(nextTime, timesT, commonT);
+                                      const scheduleStart = new Date(nextTime);
+                                      const scheduleEnd = new Date(nextTime);
+                                      scheduleEnd.setHours(scheduleEnd.getHours() + 2);
+                                      
+                                      return (
+                                        <>
+                                          {timeUntil}{' ('}
+                                          {scheduleStart.toLocaleString(i18n.language, {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            timeZone: target.timezone || 'Asia/Tokyo'
+                                          })}~ 
+                                          {scheduleEnd.toLocaleString(i18n.language, {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            timeZone: target.timezone || 'Asia/Tokyo'
+                                          })}
+                                          {')'}
+                                        </>
+                                      );
+                                    }
+                                    return timesT("time.notSent") || "Not scheduled";
+                                  })()}
+                                </div>
+                                {(() => {
+                                  // 上限に達している場合、メッセージを表示
+                                  if (usageCounter && planLimits && planLimits.max_weekly_emails_per_month !== null) {
+                                    if (usageCounter.email_sent_count >= planLimits.max_weekly_emails_per_month) {
+                                      const periodEndDate = new Date(usageCounter.period_end);
+                                      // yyyy/mm/dd形式でフォーマット
+                                      const year = periodEndDate.getFullYear();
+                                      const month = String(periodEndDate.getMonth() + 1).padStart(2, '0');
+                                      const day = String(periodEndDate.getDate()).padStart(2, '0');
+                                      const formattedDate = `${year}/${month}/${day}`;
+                                      return (
+                                        <div className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                                          {t("emailLimitReached", {
+                                            count: planLimits.max_weekly_emails_per_month
+                                          })}{' '}
+                                          <span className="font-medium">{formattedDate}</span>{' '}
+                                          {t("emailLimitReachedAfter")}
+                                        </div>
+                                      );
+                                    }
+                                  }
+                                  return null;
+                                })()}
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>
 
-                                         {/* 우측: 액션 버튼 */}
+                    {/* 우측: 액션 버튼 */}
                     <div className="flex items-center space-x-2 ml-4" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

@@ -290,10 +290,10 @@ export function formatSchedule(cron?: string, t?: (key: string, options?: any) =
 
 
 // 다음 발송 예정 시각 계산 함수
-export const getNextScheduledTime = (cronExpression?: string): Date | null => {
+export const getNextScheduledTime = (cronExpression?: string, minDate?: Date): Date | null => {
   if (!cronExpression) return null;
   
-  const now = new Date();
+  const now = minDate || new Date();
   const parts = cronExpression.split(' ');
   if (parts.length !== 5) return null;
   
@@ -315,6 +315,11 @@ export const getNextScheduledTime = (cronExpression?: string): Date | null => {
     
     nextDate.setDate(nextDate.getDate() + daysUntilTarget);
     nextDate.setHours(hour, minute, 0, 0);
+    
+    // minDate 이후のスケジュールを確保
+    if (minDate && nextDate < minDate) {
+      nextDate.setDate(nextDate.getDate() + 7);
+    }
   } else if (dayOfMonth !== -1 && dayOfWeek === -1) {
     // 월간 스케줄
     nextDate.setDate(dayOfMonth);
@@ -323,11 +328,21 @@ export const getNextScheduledTime = (cronExpression?: string): Date | null => {
     if (nextDate <= now) {
       nextDate.setMonth(nextDate.getMonth() + 1);
     }
+    
+    // minDate 이후のスケジュールを確保
+    if (minDate && nextDate < minDate) {
+      nextDate.setMonth(nextDate.getMonth() + 1);
+    }
   } else {
     // 일간 스케줄
     nextDate.setHours(hour, minute, 0, 0);
     
     if (nextDate <= now) {
+      nextDate.setDate(nextDate.getDate() + 1);
+    }
+    
+    // minDate 이후のスケジュールを確保
+    if (minDate && nextDate < minDate) {
       nextDate.setDate(nextDate.getDate() + 1);
     }
   }

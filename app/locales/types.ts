@@ -488,6 +488,8 @@ export type Translation = {
     confirmDeleteTarget: string;
     targetLimitReached: string;
     targetLimitReachedTrial: string;
+    emailLimitReached: string;
+    emailLimitReachedAfter: string;
     detail: {
       addTarget: string;
       editTarget: string;

@@ -361,6 +361,36 @@ export const getPlanLimits = async (
 };
 
 /**
+ * Get current monthly usage counter for a user
+ * 
+ * @param client - Authenticated Supabase client instance
+ * @param userId - The user ID to get usage counter for
+ * @returns The current monthly usage counter, or null if not found
+ */
+export const getCurrentMonthlyUsageCounter = async (
+  client: SupabaseClient<Database>,
+  { userId }: { userId: string },
+) => {
+  const now = new Date();
+  const { data, error } = await client
+    .from('usage_counters')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('period_type', 'monthly')
+    .gte('period_end', now.toISOString())
+    .order('period_end', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  
+  if (error) {
+    console.log('getCurrentMonthlyUsageCounter error:', error);
+    return null;
+  }
+  
+  return data;
+};
+
+/**
  * Get target source policies for a specific plan type
  * 
  * @param client - Authenticated Supabase client instance

@@ -14,11 +14,12 @@ import {
   XCircleIcon,
 } from '~/core/components/nex';
 import type { MAIL_STATUS } from '~/core/lib/constants';
+import { type PlanType } from '~/core/lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
 import { getSentEmailList } from '~/features/contents/db/queries';
 import { getStatusConfig } from '~/features/contents/lib/common';
-import { getIntegrationsInfo, getTargets, getWorkspace, getWorkspaceOnboardingState } from '~/features/settings/db/queries';
+import { getCurrentMonthlyUsageCounter, getIntegrationsInfo, getPlanLimits, getTargets, getUserSubscriptionPlanType, getWorkspace, getWorkspaceOnboardingState } from '~/features/settings/db/queries';
 import { useOnboarding } from '~/features/settings/hooks/useOnboarding';
 import { formatTimeUntil, getNextScheduledTime } from '~/features/settings/lib/scheduleUtils';
 import type { Route } from "./+types/dashboard";
@@ -49,7 +50,34 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     // Onboarding state not found, continue without it
   }
   
-  return data({ user, workspaceId, integrationsInfo, targets, sentEmails, onboardingState });
+  // Get user's subscription plan type
+  let planType: PlanType = 'free';
+  try {
+    planType = await getUserSubscriptionPlanType(client, { userId: user.id });
+  } catch (error) {
+    // If subscription not found, default to 'free'
+    console.log('Failed to get subscription plan type, defaulting to free:', error);
+  }
+  
+  // Get plan limits for the user's plan type
+  let planLimits = null;
+  try {
+    planLimits = await getPlanLimits(client, { planType });
+  } catch (error) {
+    // If plan limits not found, continue without them
+    console.log('Failed to get plan limits:', error);
+  }
+  
+  // Get current monthly usage counter
+  let usageCounter = null;
+  try {
+    usageCounter = await getCurrentMonthlyUsageCounter(client, { userId: user.id });
+  } catch (error) {
+    // If usage counter not found, continue without it
+    console.log('Failed to get usage counter:', error);
+  }
+  
+  return data({ user, workspaceId, integrationsInfo, targets, sentEmails, onboardingState, planType, planLimits, usageCounter });
 };
 
 
@@ -60,7 +88,7 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
   const { t: targetsT } = useTranslation("common", { keyPrefix: "targets" });
   const { t: onboardingT } = useTranslation("common", { keyPrefix: "onboarding" });
   const navigate = useNavigate();
-  const { user, workspaceId, integrationsInfo, targets, sentEmails, onboardingState } = loaderData;
+  const { user, workspaceId, integrationsInfo, targets, sentEmails, onboardingState, planType, planLimits, usageCounter } = loaderData;
   
   // Onboarding hook
   const { isOnboardingActive, currentStep, updateStep } = useOnboarding({ 
@@ -388,7 +416,16 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
             </NexCard>
           ) : (
             targets.map((target) => {
-              const nextSchedule = getNextScheduledTime(target.scheduleCron);
+              // 上限チェック: email_sent_count >= max_weekly_emails_per_month の場合、period_end以降のスケジュールを計算
+              let minDate: Date | undefined = undefined;
+              if (usageCounter && planLimits && planLimits.max_weekly_emails_per_month !== null) {
+                if (usageCounter.email_sent_count >= planLimits.max_weekly_emails_per_month) {
+                  // 上限に達している場合、period_end以降のスケジュールを計算
+                  minDate = new Date(usageCounter.period_end);
+                }
+              }
+              
+              const nextSchedule = getNextScheduledTime(target.scheduleCron, minDate);
               const isActive = target.isActive;
               
               return (
@@ -446,21 +483,54 @@ export default function Dashboard( { loaderData }: Route.ComponentProps ) {
                           </div>
                           
                           {nextSchedule && isActive && (
-                            <div className="pt-2 border-t border-border">
+                            <div className="pt-2 border-t border-border space-y-2">
                               <div className="flex items-center space-x-1 text-muted-foreground">
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <span>
-                                  {nextSchedule.toLocaleString(i18n.language, {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    timeZone: target.timezone || 'Asia/Tokyo'
-                                  })}
+                                  {(() => {
+                                    const scheduleStart = new Date(nextSchedule);
+                                    const scheduleEnd = new Date(nextSchedule);
+                                    scheduleEnd.setHours(scheduleEnd.getHours() + 2);
+                                    
+                                    return (
+                                      <>
+                                        {scheduleStart.toLocaleString(i18n.language, {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                          timeZone: target.timezone || 'Asia/Tokyo'
+                                        })}~ 
+                                        {scheduleEnd.toLocaleString(i18n.language, {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                          timeZone: target.timezone || 'Asia/Tokyo'
+                                        })}
+                                      </>
+                                    );
+                                  })()}
                                 </span>
                               </div>
+                              {/* 上限に達している場合、メッセージを表示 */}
+                              {usageCounter && planLimits && planLimits.max_weekly_emails_per_month !== null && usageCounter.email_sent_count >= planLimits.max_weekly_emails_per_month && (
+                                <div className="text-xs text-orange-600 dark:text-orange-400">
+                                  {targetsT("emailLimitReached", {
+                                    count: planLimits.max_weekly_emails_per_month
+                                  })}{' '}
+                                  <span className="font-medium">
+                                    {(() => {
+                                      const periodEndDate = new Date(usageCounter.period_end);
+                                      const year = periodEndDate.getFullYear();
+                                      const month = String(periodEndDate.getMonth() + 1).padStart(2, '0');
+                                      const day = String(periodEndDate.getDate()).padStart(2, '0');
+                                      return `${year}/${month}/${day}`;
+                                    })()}
+                                  </span>{' '}
+                                  {targetsT("emailLimitReachedAfter")}
+                                </div>
+                              )}
                             </div>
                           )}
                         </>

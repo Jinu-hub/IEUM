@@ -490,6 +490,8 @@ const en: Translation = {
     confirmDeleteTarget: "Are you sure you want to delete this target?",
     targetLimitReached: "Target limit reached. You can add up to {{count}} targets.",
     targetLimitReachedTrial: "You are currently in the trial period, so you can only set up {{count}} target.",
+    emailLimitReached: "Monthly maximum weekly email sending limit ({{count}}) has been reached, so sending will be available after",
+    emailLimitReachedAfter: ".",
     detail: {
       addTarget: "Add new target",
       editTarget: "Edit target",

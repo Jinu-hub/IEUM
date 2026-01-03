@@ -489,6 +489,8 @@ const ko: Translation = {
     confirmDeleteTarget: "정말로 이 타겟을 삭제하시겠습니까?",
     targetLimitReached: "타겟 제한에 도달했습니다. 최대 {{count}}개까지 추가할 수 있습니다.",
     targetLimitReachedTrial: "현재 트라이얼 기간이어서 {{count}}개까지 설정할 수 있습니다.",
+    emailLimitReached: "월 기준 최대 주간 메일 발송 허용량({{count}})에 도달하였으므로",
+    emailLimitReachedAfter: "이후에 발송이 가능합니다.",
     detail: {
       addTarget: "새 타겟 추가",
       editTarget: "타겟 편집",
