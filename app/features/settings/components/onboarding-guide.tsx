@@ -1415,3 +1415,43 @@ export function TargetsSectionGuide({
     </div>
   );
 }
+
+/**
+ * Onboarding Complete Card
+ * Shows when onboarding is fully completed
+ */
+interface OnboardingCompleteCardProps {
+  className?: string;
+}
+
+export function OnboardingCompleteCard({ className }: OnboardingCompleteCardProps) {
+  const { t } = useTranslation("common", { keyPrefix: "onboarding" });
+  
+  const defaultMessage = DEFAULT_GUIDE_MESSAGES['completed'];
+  const message = {
+    title: t('steps.completed.title', defaultMessage.title),
+    description: t('steps.completed.description', defaultMessage.description),
+    icon: defaultMessage.icon
+  };
+  
+  return (
+    <div className={cn(
+      'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30',
+      'border-2 border-green-300 dark:border-green-600 rounded-xl p-6',
+      'animate-in fade-in slide-in-from-top-4 duration-500',
+      className
+    )}>
+      <div className="flex items-start gap-4">
+        <span className="text-4xl flex-shrink-0">{message.icon}</span>
+        <div className="flex-1">
+          <h3 className="font-bold text-xl text-green-900 dark:text-green-100 mb-2">
+            {message.title}
+          </h3>
+          <p className="text-base text-green-800 dark:text-green-200">
+            {message.description}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

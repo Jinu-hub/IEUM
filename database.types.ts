@@ -1526,6 +1526,7 @@ export type Database = {
         | "collect_data"
         | "summarize_data"
         | "assemble_data"
+        | "finalize_data"
         | "send_email"
       step_status: "queued" | "running" | "success" | "failed" | "canceled"
       subscription_mode: "experiment" | "free" | "paid"
@@ -1773,6 +1774,7 @@ export const Constants = {
         "collect_data",
         "summarize_data",
         "assemble_data",
+        "finalize_data",
         "send_email",
       ],
       step_status: ["queued", "running", "success", "failed", "canceled"],

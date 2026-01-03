@@ -1,0 +1,1 @@
+ALTER TYPE "public"."step_name" ADD VALUE 'finalize_data' BEFORE 'send_email';

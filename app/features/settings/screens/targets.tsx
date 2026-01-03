@@ -21,7 +21,8 @@ import {
 import { type PlanType } from '~/core/lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
-import { FirstMailConfirmation, OnboardingModeBanner, TargetsGuideTooltip, TargetsSubProgress } from '../components/onboarding-guide';
+import { FirstMailConfirmation, OnboardingCompleteCard, OnboardingModeBanner, TargetsGuideTooltip, TargetsSubProgress } from '../components/onboarding-guide';
+import { ProcessingStatusBar } from '../components/processing-status-bar';
 import { deleteTarget, switchTargetActive } from '../db/mutations';
 import { getCurrentMonthlyUsageCounter, getMailingList, getPlanLimits, getTargetLastSentAt, getTargets, getUserSubscriptionPlanType, getWorkspace, getWorkspaceOnboardingState } from '../db/queries';
 import { useOnboarding } from '../hooks/useOnboarding';
@@ -189,6 +190,13 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
   const [showFirstMailConfirmation, setShowFirstMailConfirmation] = useState(
     isOnboardingActive && currentStep === 'first_mail_sending'
   );
+  
+  // Onboarding complete card state
+  const [showCompleteCard, setShowCompleteCard] = useState(false);
+  
+  // Processing status state
+  const [processingRunStepId, setProcessingRunStepId] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Update showFirstMailConfirmation when currentStep changes
   useEffect(() => {
@@ -284,18 +292,63 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
   };
 
   // Handle first mail confirmation
-  const handleFirstMailConfirm = (sendNow: boolean) => {
+  const handleFirstMailConfirm = async (sendNow: boolean) => {
     if (sendNow) {
-      // YES: Just update the step to completed (implementation will be added later)
-      updateStep('completed');
-      toast.success(onboardingT('steps.completed.title'));
+      // 중복 실행 방지
+      if (isProcessing) {
+        toast.error('processing is already in progress. please try again later.');
+        return;
+      }
+
+      // 활성 타겟 찾기
+      const activeTarget = targets.find(t => t.isActive);
+      if (!activeTarget) {
+        toast.error('active target not found');
+        setShowFirstMailConfirmation(false);
+        return;
+      }
+
+      setIsProcessing(true);
+      try {
+        // 즉시 실행 API 호출
+        const response = await fetch('/api/cron/send-now', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetId: activeTarget.targetId,
+            workspaceId: workspaceId,
+          }),
+        });
+
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+          setProcessingRunStepId(result.runStepId);
+        } else {
+          toast.error(result.message || 'execution failed');
+          setIsProcessing(false);
+        }
+      } catch (error: any) {
+        toast.error(error.message || 'execution failed');
+        setIsProcessing(false);
+      }
     } else {
-      // NO: Show next schedule and complete onboarding
+      // NO: Wait for schedule and complete onboarding
+      setShowCompleteCard(true);
       updateStep('completed');
-      toast.success(onboardingT('steps.completed.title'));
     }
     setShowFirstMailConfirmation(false);
   };
+  
+  // 카드가 표시된 후 5초 후에 사라지도록
+  useEffect(() => {
+    if (showCompleteCard) {
+      const timer = setTimeout(() => {
+        setShowCompleteCard(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showCompleteCard]);
   
   // Get next scheduled send time for first mail confirmation
   const getNextScheduleInfo = () => {
@@ -338,6 +391,30 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
             nextSchedule={getNextScheduleInfo()}
             onConfirm={handleFirstMailConfirm}
           />
+        )}
+        
+        {/* Processing Status Bar */}
+        {processingRunStepId && (
+          <ProcessingStatusBar 
+            runStepId={processingRunStepId}
+            isOnboarding={isOnboardingActive && currentStep === 'first_mail_sending'}
+            onComplete={() => {
+              setProcessingRunStepId(null);
+              setIsProcessing(false);
+              if (isOnboardingActive && currentStep === 'first_mail_sending') {
+                updateStep('completed');
+              }
+            }}
+            onError={(error) => {
+              setIsProcessing(false);
+              toast.error(error);
+            }}
+          />
+        )}
+        
+        {/* Onboarding Complete Card (NO 선택 시에만 표시) */}
+        {showCompleteCard && (
+          <OnboardingCompleteCard />
         )}
         
         {/* 헤더 섹션 */}

@@ -18,7 +18,7 @@ export const RUN_STATUS = [
 ] as const;
 
 export const STEP_NAME = [
-  "queued", "collect_data", "summarize_data", "assemble_data", "send_email"
+  "queued", "collect_data", "summarize_data", "assemble_data", "finalize_data", "send_email"
 ] as const;
 
 export const STEP_STATUS = [

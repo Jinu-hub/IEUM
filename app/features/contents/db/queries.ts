@@ -221,3 +221,32 @@ export async function getUniquePeriodKey(
     currentKey = `${basePeriodKey}_${suffix}`;
   }
 }
+
+/**
+ * Newsletter run step 상태 조회
+ * @param client - Supabase client
+ * @param runStepId - run step ID
+ * @returns run step의 현재 스텝, 상태, 에러 정보
+ */
+export async function getNewsletterRunStep(
+  client: SupabaseClient<Database>,
+  { runStepId }: { runStepId: string }
+) {
+  const { data, error } = await client
+    .from('newsletter_run_steps')
+    .select('step, status, error_summary, finished_at')
+    .eq('run_step_id', runStepId)
+    .single();
+
+  if (error) {
+    console.log('getNewsletterRunStep error', error);
+    throw error;
+  }
+
+  return {
+    step: data.step,
+    status: data.status,
+    errorSummary: data.error_summary,
+    finishedAt: data.finished_at,
+  };
+}
