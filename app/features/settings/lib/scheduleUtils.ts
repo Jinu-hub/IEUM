@@ -243,7 +243,7 @@ export function formatSchedule(cron?: string, t?: (key: string, options?: any) =
   
   const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
   const hourNum = parseInt(hour);
-  const nextHour = (hourNum + 1) % 24;
+  const nextHour = (hourNum + 2) % 24;
   
   const timeRange = t 
     ? t("schedule.timeRange", { start: hourNum, end: nextHour })

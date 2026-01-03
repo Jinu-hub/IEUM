@@ -796,7 +796,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                         <SelectContent>
                           {hours.map((hour) => {
                             const currentHour = parseInt(hour.value);
-                            const nextHour = (currentHour + 1) % 24;
+                            const nextHour = (currentHour + 2) % 24;
                             return (
                               <SelectItem key={hour.value} value={hour.value}>
                                 {timesT("schedule.timeRange", { start: currentHour, end: nextHour })}
@@ -813,7 +813,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                       <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4 text-primary" />
                         <span className="text-sm font-medium text-foreground">
-                          {timesT("schedule.weeklyFormat", { day: weekdays.find(d => d.value === selectedWeekday)?.label, time: timesT("schedule.timeRange", { start: parseInt(selectedHour), end: (parseInt(selectedHour) + 1) % 24 }) })}
+                          {timesT("schedule.weeklyFormat", { day: weekdays.find(d => d.value === selectedWeekday)?.label, time: timesT("schedule.timeRange", { start: parseInt(selectedHour), end: (parseInt(selectedHour) + 2) % 24 }) })}
                         </span>
                       </div>
                       {formData.scheduleCron && (
