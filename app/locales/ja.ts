@@ -1276,6 +1276,39 @@ const ja: Translation = {
       afterSavePrompt: "ターゲットの設定が完了しました！",
     },
   },
+  processingStatus: {
+    title: "ニュースレター生成中...",
+    titleCompleted: "ニュースレター生成完了",
+    errorBadge: "エラー",
+    completedBadge: "完了",
+    retryMessage: "ステータス確認に失敗しました（再試行中... {{current}}/{{max}}）",
+    steps: {
+      collect_data: {
+        label: "データ収集",
+        description: "GitHubとSlackからチーム活動データを取得しています。",
+      },
+      summarize_data: {
+        label: "分析/要約",
+        description: "AIが収集したデータを分析し、核心内容を要約しています。",
+      },
+      assemble_data: {
+        label: "セクション構成",
+        description: "ハイライト、KPIなどニュースレターセクションを生成しています。",
+      },
+      finalize_data: {
+        label: "コンテンツ生成",
+        description: "最終ニュースレターコンテンツをHTML形式で生成しています。",
+      },
+      send_email: {
+        label: "メール送信",
+        description: "生成したニュースレターを購読者に送信しています。",
+      },
+    },
+    onboardingComplete: {
+      title: "セットアップ完了！",
+      description: "おめでとうございます！NexLetterのセットアップが完了しました。最初のニュースレターが正常に送信されました。",
+    },
+  },
 };
 
 export default ja;

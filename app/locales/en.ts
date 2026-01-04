@@ -1276,6 +1276,39 @@ const en: Translation = {
       afterSavePrompt: "Target setup complete!",
     },
   },
+  processingStatus: {
+    title: "Generating Newsletter...",
+    titleCompleted: "Newsletter Created",
+    errorBadge: "Error",
+    completedBadge: "Complete",
+    retryMessage: "Status check failed (retrying... {{current}}/{{max}})",
+    steps: {
+      collect_data: {
+        label: "Collecting Data",
+        description: "Fetching team activity data from GitHub and Slack.",
+      },
+      summarize_data: {
+        label: "Analyzing",
+        description: "AI is analyzing and summarizing the collected data.",
+      },
+      assemble_data: {
+        label: "Building Sections",
+        description: "Creating newsletter sections: highlights, KPIs, and more.",
+      },
+      finalize_data: {
+        label: "Generating Content",
+        description: "Creating the final newsletter content in HTML format.",
+      },
+      send_email: {
+        label: "Sending Email",
+        description: "Delivering the newsletter to subscribers.",
+      },
+    },
+    onboardingComplete: {
+      title: "Setup Complete!",
+      description: "Congratulations! Your NexLetter setup is complete. Your first newsletter has been sent successfully.",
+    },
+  },
 };
 
 export default en;

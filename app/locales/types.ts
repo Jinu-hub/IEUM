@@ -1232,4 +1232,37 @@ export type Translation = {
       afterSavePrompt: string;
     };
   };
+  processingStatus: {
+    title: string;
+    titleCompleted: string;
+    errorBadge: string;
+    completedBadge: string;
+    retryMessage: string;
+    steps: {
+      collect_data: {
+        label: string;
+        description: string;
+      };
+      summarize_data: {
+        label: string;
+        description: string;
+      };
+      assemble_data: {
+        label: string;
+        description: string;
+      };
+      finalize_data: {
+        label: string;
+        description: string;
+      };
+      send_email: {
+        label: string;
+        description: string;
+      };
+    };
+    onboardingComplete: {
+      title: string;
+      description: string;
+    };
+  };
 };

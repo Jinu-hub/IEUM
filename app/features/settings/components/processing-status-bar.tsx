@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { NexBadge, NexCard, NexCardContent } from '~/core/components/nex';
 import { cn } from '~/core/lib/utils';
 
@@ -18,17 +19,19 @@ interface ProcessingStatusBarProps {
   isOnboarding?: boolean; // 온보딩 중인지 여부
 }
 
-const stepLabels: Record<string, string> = {
-  collect_data: '데이터 수집',
-  summarize_data: '정규화/분석/요약',
-  assemble_data: '섹션생성/병합',
-  finalize_data: '최종 콘텐츠 생성',
-  send_email: '메일발송',
-};
-
 const stepOrder: StepStatus[] = ['collect_data', 'summarize_data', 'assemble_data', 'finalize_data', 'send_email'];
 
+// 각 단계별 아이콘
+const stepIcons: Record<string, string> = {
+  collect_data: '📊',
+  summarize_data: '🤖',
+  assemble_data: '🔧',
+  finalize_data: '✨',
+  send_email: '📬',
+};
+
 export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboarding = false }: ProcessingStatusBarProps) {
+  const { t } = useTranslation("common", { keyPrefix: "processingStatus" });
   const [currentStep, setCurrentStep] = useState<StepStatus>('collect_data');
   const [status, setStatus] = useState<ProcessingStatus>('running');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -54,6 +57,7 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
         if (result.status === 'success' && result.data) {
           // 성공 시 에러 카운트 리셋
           errorCount = 0;
+          setErrorMessage(null);
           const { step, status: stepStatus, errorSummary, finishedAt } = result.data;
           
           setCurrentStep(step as StepStatus);
@@ -91,13 +95,13 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
           if (errorCount >= MAX_ERRORS) {
             // 너무 많은 에러 발생 시 중단
             setStatus('error');
-            setErrorMessage(result.error || '상태 조회 실패');
-            onError?.(result.error || '상태 조회 실패');
+            setErrorMessage(result.error || t('retryMessage', { current: errorCount, max: MAX_ERRORS }));
+            onError?.(result.error || 'Status check failed');
             return;
           }
           
           // 에러 메시지는 표시하지만 계속 폴링 시도
-          setErrorMessage(`상태 조회 실패 (재시도 중... ${errorCount}/${MAX_ERRORS})`);
+          setErrorMessage(t('retryMessage', { current: errorCount, max: MAX_ERRORS }));
           pollTimeout = setTimeout(pollStatus, retryDelay);
         }
       } catch (error: any) {
@@ -109,14 +113,14 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
         
         if (errorCount >= MAX_ERRORS) {
           setStatus('error');
-          const errorMsg = error.message || '상태 조회 중 오류 발생';
+          const errorMsg = error.message || 'Status check failed';
           setErrorMessage(errorMsg);
           onError?.(errorMsg);
           return;
         }
         
         // 에러 발생해도 계속 재시도
-        setErrorMessage(`상태 조회 중 오류 발생 (재시도 중... ${errorCount}/${MAX_ERRORS})`);
+        setErrorMessage(t('retryMessage', { current: errorCount, max: MAX_ERRORS }));
         pollTimeout = setTimeout(pollStatus, retryDelay);
       }
     };
@@ -129,7 +133,7 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
         clearTimeout(pollTimeout);
       }
     };
-  }, [runStepId, onComplete, onError]);
+  }, [runStepId, onComplete, onError, t]);
 
   const currentIndex = stepOrder.indexOf(currentStep);
   const progressPercentage = status === 'completed' 
@@ -141,79 +145,143 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
   // 완료 상태가 아니면 일반 진행 표시
   if (status !== 'completed') {
     return (
-      <NexCard variant="outlined" className="mb-4">
-        <NexCardContent className="p-4">
-          <div className="space-y-4">
+      <NexCard 
+        variant="outlined" 
+        className={cn(
+          "mb-4 overflow-hidden border-2",
+          status === 'error' 
+            ? "border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20" 
+            : "border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20"
+        )}
+      >
+        <NexCardContent className="p-5">
+          <div className="space-y-5">
+            {/* Header */}
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">뉴스레터 생성 진행 중...</h3>
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center text-xl",
+                  status === 'error' 
+                    ? "bg-red-100 dark:bg-red-900/50" 
+                    : "bg-blue-100 dark:bg-blue-900/50"
+                )}>
+                  {status === 'error' ? '⚠️' : (
+                    <span className="animate-pulse">{stepIcons[currentStep] || '🔄'}</span>
+                  )}
+                </div>
+                <div>
+                  <h3 className={cn(
+                    "font-bold text-lg",
+                    status === 'error' 
+                      ? "text-red-900 dark:text-red-100" 
+                      : "text-gray-900 dark:text-gray-100"
+                  )}>
+                    {t('title')}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {t(`steps.${currentStep}.description`)}
+                  </p>
+                </div>
+              </div>
               {status === 'error' && (
-                <NexBadge variant="error" size="sm">오류</NexBadge>
+                <NexBadge variant="error" size="sm">{t('errorBadge')}</NexBadge>
               )}
             </div>
           
-          {/* Progress Indicator - onboarding-guide.tsx 스타일 적용 */}
-          <div className={cn('w-full')}>
-            <div className="flex items-center justify-between relative">
-              {/* Progress line */}
-              <div className="absolute top-3 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-700" />
-              <div 
-                className={cn(
-                  "absolute top-3 left-0 h-0.5 transition-all duration-500",
-                  status === 'error' ? "bg-red-500" : "bg-blue-500"
-                )}
-                style={{ width: `${progressPercentage}%` }}
-              />
-              
-              {/* Steps */}
-              {stepOrder.map((step, index) => {
-                const isCompleted = index < currentIndex;
-                const isCurrent = index === currentIndex && status === 'running';
-                const isPending = index > currentIndex;
-                const isError = status === 'error' && index === currentIndex;
+            {/* Progress Bar with Steps */}
+            <div className="pt-2">
+              {/* Progress line container */}
+              <div className="relative">
+                {/* Background progress line */}
+                <div className="absolute top-5 left-5 right-5 h-1 bg-gray-200 dark:bg-gray-700 rounded-full" />
                 
-                return (
-                  <div key={step} className="relative flex flex-col items-center z-10">
-                    <div
-                      className={cn(
-                        'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium transition-all duration-300',
-                        isCompleted && 'bg-blue-500 text-white',
-                        isCurrent && !isError && 'bg-blue-500 text-white ring-2 ring-blue-200 dark:ring-blue-800 animate-pulse',
-                        isError && 'bg-red-500 text-white ring-2 ring-red-200 dark:ring-red-800',
-                        isPending && 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                      )}
-                    >
-                      {isCompleted ? '✓' : (
-                        isCurrent && !isError ? (
-                          <span className="animate-spin">⟳</span>
-                        ) : (
-                          index + 1
-                        )
-                      )}
-                    </div>
-                    <span
-                      className={cn(
-                        'mt-1 text-[10px] font-medium whitespace-nowrap',
-                        isCurrent && !isError && 'text-blue-600 dark:text-blue-400',
-                        isError && 'text-red-600 dark:text-red-400',
-                        !isCurrent && !isError && 'text-gray-500 dark:text-gray-400'
-                      )}
-                    >
-                      {stepLabels[step] || step}
-                    </span>
-                  </div>
-                );
-              })}
+                {/* Active progress line */}
+                <div 
+                  className={cn(
+                    "absolute top-5 left-5 h-1 rounded-full transition-all duration-700 ease-out",
+                    status === 'error' 
+                      ? "bg-gradient-to-r from-red-400 to-red-500" 
+                      : "bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500"
+                  )}
+                  style={{ width: `calc(${progressPercentage}% - 40px)` }}
+                />
+                
+                {/* Steps */}
+                <div className="relative flex items-start justify-between">
+                  {stepOrder.map((step, index) => {
+                    const isCompleted = index < currentIndex;
+                    const isCurrent = index === currentIndex && status === 'running';
+                    const isPending = index > currentIndex;
+                    const isError = status === 'error' && index === currentIndex;
+                    
+                    return (
+                      <div 
+                        key={step} 
+                        className="flex flex-col items-center"
+                        style={{ width: '20%' }}
+                      >
+                        {/* Step circle */}
+                        <div
+                          className={cn(
+                            'w-10 h-10 rounded-xl flex items-center justify-center text-sm font-semibold transition-all duration-500 shadow-sm',
+                            isCompleted && 'bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-blue-200 dark:shadow-blue-900',
+                            isCurrent && !isError && 'bg-gradient-to-br from-blue-500 to-indigo-500 text-white ring-4 ring-blue-200 dark:ring-blue-800 shadow-lg shadow-blue-200 dark:shadow-blue-900',
+                            isError && 'bg-gradient-to-br from-red-500 to-red-600 text-white ring-4 ring-red-200 dark:ring-red-800',
+                            isPending && 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
+                          )}
+                        >
+                          {isCompleted ? (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : isCurrent && !isError ? (
+                            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                          ) : isError ? (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          ) : (
+                            <span className="text-lg">{stepIcons[step]}</span>
+                          )}
+                        </div>
+                        
+                        {/* Step label */}
+                        <span
+                          className={cn(
+                            'mt-2 text-xs font-medium text-center leading-tight',
+                            isCompleted && 'text-blue-600 dark:text-blue-400',
+                            isCurrent && !isError && 'text-blue-700 dark:text-blue-300 font-semibold',
+                            isError && 'text-red-600 dark:text-red-400 font-semibold',
+                            isPending && 'text-gray-400 dark:text-gray-500'
+                          )}
+                        >
+                          {t(`steps.${step}.label`)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
 
-          {errorMessage && (
-            <div className="text-sm text-red-600 dark:text-red-400 mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded">
-              {errorMessage}
-            </div>
-          )}
-        </div>
-      </NexCardContent>
-    </NexCard>
+            {/* Error message */}
+            {errorMessage && (
+              <div className={cn(
+                "text-sm p-3 rounded-lg flex items-center gap-2",
+                status === 'error'
+                  ? "text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/30"
+                  : "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30"
+              )}>
+                <span>{status === 'error' ? '❌' : '⏳'}</span>
+                {errorMessage}
+              </div>
+            )}
+          </div>
+        </NexCardContent>
+      </NexCard>
     );
   }
 
@@ -221,64 +289,79 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
   return (
     <NexCard 
       variant="outlined" 
-      className="mb-4"
+      className="mb-4 overflow-hidden border-2 border-green-200 dark:border-green-900 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20"
     >
-      <NexCardContent className="p-4">
-        <div className="space-y-4">
+      <NexCardContent className="p-5">
+        <div className="space-y-5">
           {isOnboarding ? (
             // 온보딩 완료 메시지
             <div className="flex items-start gap-4">
-              <span className="text-4xl flex-shrink-0">✅</span>
-              <div className="flex-1">
-                <h3 className="font-bold text-xl text-green-900 dark:text-green-100 mb-2">
-                  Setup Complete!
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-green-200 dark:shadow-green-900/50">
+                <span className="text-2xl">🎉</span>
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className="font-bold text-xl text-green-900 dark:text-green-100 mb-1">
+                  {t('onboardingComplete.title')}
                 </h3>
-                <p className="text-base text-green-800 dark:text-green-200 mb-4">
-                  Congratulations! Your NexLetter setup is complete. Your first newsletter has been sent successfully.
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  {t('onboardingComplete.description')}
                 </p>
               </div>
             </div>
           ) : (
             // 일반 완료 메시지
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">뉴스레터 생성 완료</h3>
-              <NexBadge variant="success" size="sm">완료</NexBadge>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-md shadow-green-200 dark:shadow-green-900/50">
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="font-bold text-lg text-green-900 dark:text-green-100">
+                  {t('titleCompleted')}
+                </h3>
+              </div>
+              <NexBadge variant="success" size="sm">{t('completedBadge')}</NexBadge>
             </div>
           )}
           
           {/* Progress Indicator - 모든 스텝 완료 표시 */}
-          <div className={cn('w-full')}>
-            <div className="flex items-center justify-between relative">
-              {/* Progress line - 100% */}
-              <div className="absolute top-3 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-700" />
+          <div className="pt-2">
+            {/* Progress line container */}
+            <div className="relative">
+              {/* Background progress line */}
+              <div className="absolute top-5 left-5 right-5 h-1 bg-gray-200 dark:bg-gray-700 rounded-full" />
+              
+              {/* Active progress line - 100% */}
               <div 
-                className="absolute top-3 left-0 h-0.5 bg-green-500 transition-all duration-500"
-                style={{ width: '100%' }}
+                className="absolute top-5 left-5 h-1 rounded-full bg-gradient-to-r from-green-400 via-green-500 to-emerald-500 transition-all duration-700"
+                style={{ width: 'calc(100% - 40px)' }}
               />
               
               {/* Steps - 모두 완료 상태 */}
-              {stepOrder.map((step, index) => {
-                return (
-                  <div key={step} className="relative flex flex-col items-center z-10">
+              <div className="relative flex items-start justify-between">
+                {stepOrder.map((step, index) => (
+                  <div 
+                    key={step} 
+                    className="flex flex-col items-center"
+                    style={{ width: '20%' }}
+                  >
+                    {/* Step circle */}
                     <div
-                      className={cn(
-                        'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium transition-all duration-300',
-                        'bg-green-500 text-white'
-                      )}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-green-400 to-emerald-500 text-white shadow-md shadow-green-200 dark:shadow-green-900/50"
                     >
-                      ✓
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
                     </div>
-                    <span
-                      className={cn(
-                        'mt-1 text-[10px] font-medium whitespace-nowrap',
-                        'text-green-600 dark:text-green-400'
-                      )}
-                    >
-                      {stepLabels[step] || step}
+                    
+                    {/* Step label */}
+                    <span className="mt-2 text-xs font-medium text-center text-green-600 dark:text-green-400">
+                      {t(`steps.${step}.label`)}
                     </span>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -286,4 +369,3 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
     </NexCard>
   );
 }
-

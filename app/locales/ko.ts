@@ -1275,6 +1275,39 @@ const ko: Translation = {
       afterSavePrompt: "타겟 설정 완료!",
     },
   },
+  processingStatus: {
+    title: "뉴스레터 생성 중...",
+    titleCompleted: "뉴스레터 생성 완료",
+    errorBadge: "오류",
+    completedBadge: "완료",
+    retryMessage: "상태 조회 실패 (재시도 중... {{current}}/{{max}})",
+    steps: {
+      collect_data: {
+        label: "데이터 수집",
+        description: "GitHub와 Slack에서 팀 활동 데이터를 가져오는 중입니다.",
+      },
+      summarize_data: {
+        label: "분석/요약",
+        description: "AI가 수집된 데이터를 분석하고 핵심 내용을 요약합니다.",
+      },
+      assemble_data: {
+        label: "섹션 구성",
+        description: "하이라이트, KPI 등 뉴스레터 섹션을 생성합니다.",
+      },
+      finalize_data: {
+        label: "콘텐츠 생성",
+        description: "최종 뉴스레터 콘텐츠를 HTML로 생성합니다.",
+      },
+      send_email: {
+        label: "메일 발송",
+        description: "생성된 뉴스레터를 구독자에게 전송합니다.",
+      },
+    },
+    onboardingComplete: {
+      title: "설정 완료!",
+      description: "축하합니다! NexLetter 설정이 완료되었습니다. 첫 번째 뉴스레터가 성공적으로 발송되었습니다.",
+    },
+  },
 };
 
 export default ko;
