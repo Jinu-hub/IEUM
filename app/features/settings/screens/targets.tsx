@@ -398,6 +398,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
           <ProcessingStatusBar 
             runStepId={processingRunStepId}
             isOnboarding={isOnboardingActive && currentStep === 'first_mail_sending'}
+            nextSchedule={getNextScheduleInfo()}
             onComplete={() => {
               setProcessingRunStepId(null);
               setIsProcessing(false);

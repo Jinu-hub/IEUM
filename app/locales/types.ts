@@ -2,6 +2,91 @@ export type Translation = {
   home: {
     title: string;
     subtitle: string;
+    hero: {
+      description: string;
+      subscribeButton: string;
+      sampleButton: string;
+    };
+    integrations: {
+      badge: string;
+      title: string;
+      description: string;
+      connected: string;
+      comingSoon: string;
+    };
+    analytics: {
+      badge: string;
+      title: string;
+      description: string;
+      dashboardTitle: string;
+      dashboardSubtitle: string;
+      preview: string;
+      commitTrend: string;
+      developerActivity: string;
+      caseStatus: string;
+      viewDashboard: string;
+    };
+    teamHighlights: {
+      badge: string;
+      title: string;
+      description: string;
+      weeklyAchievement: {
+        title: string;
+        subtitle: string;
+        completedIssues: string;
+        deployments: string;
+        codeReviews: string;
+      };
+      teamCommunication: {
+        title: string;
+        subtitle: string;
+      };
+      latestNewsletter: {
+        title: string;
+        subtitle: string;
+        mainTopics: string;
+        participants: string;
+        readTime: string;
+        readButton: string;
+      };
+      codeQuality: {
+        title: string;
+        subtitle: string;
+        testCoverage: string;
+        qualityScore: string;
+        bugFixes: string;
+      };
+      teamProductivity: {
+        title: string;
+        subtitle: string;
+        commits: string;
+        prCreated: string;
+        prMerged: string;
+        vsLastWeek: string;
+      };
+      innovationHighlights: {
+        title: string;
+        subtitle: string;
+      };
+    };
+    individualActivity: {
+      badge: string;
+      title: string;
+      description: string;
+      commits: string;
+      prReviews: string;
+      messages: string;
+      contribution: string;
+      viewAllTeamActivity: string;
+      dashboardNote: string;
+    };
+    cta: {
+      badge: string;
+      title: string;
+      description: string;
+      getStarted: string;
+      viewSamples: string;
+    };
   };
   navigation: {
     en: string;

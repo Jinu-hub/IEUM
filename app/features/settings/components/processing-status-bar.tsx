@@ -4,7 +4,7 @@
  * 뉴스레터 생성 진행 상태를 실시간으로 표시하는 컴포넌트
  */
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NexBadge, NexCard, NexCardContent } from '~/core/components/nex';
 import { cn } from '~/core/lib/utils';
@@ -17,6 +17,7 @@ interface ProcessingStatusBarProps {
   onComplete?: () => void;
   onError?: (error: string) => void;
   isOnboarding?: boolean; // 온보딩 중인지 여부
+  nextSchedule?: string; // 다음 스케줄 정보
 }
 
 const stepOrder: StepStatus[] = ['collect_data', 'summarize_data', 'assemble_data', 'finalize_data', 'send_email'];
@@ -30,7 +31,7 @@ const stepIcons: Record<string, string> = {
   send_email: '📬',
 };
 
-export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboarding = false }: ProcessingStatusBarProps) {
+export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboarding = false, nextSchedule }: ProcessingStatusBarProps) {
   const { t } = useTranslation("common", { keyPrefix: "processingStatus" });
   const [currentStep, setCurrentStep] = useState<StepStatus>('collect_data');
   const [status, setStatus] = useState<ProcessingStatus>('running');
@@ -303,8 +304,15 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
                 <h3 className="font-bold text-xl text-green-900 dark:text-green-100 mb-1">
                   {t('onboardingComplete.title')}
                 </h3>
-                <p className="text-sm text-green-700 dark:text-green-300">
-                  {t('onboardingComplete.description')}
+                <p className="text-sm text-green-700 dark:text-green-300 leading-relaxed">
+                  {t('onboardingComplete.description', { schedule: nextSchedule || '' })
+                    .split('<br />')
+                    .map((line, index, array) => (
+                      <React.Fragment key={index}>
+                        {line}
+                        {index < array.length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
                 </p>
               </div>
             </div>

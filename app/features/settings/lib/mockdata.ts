@@ -1,4 +1,4 @@
-import type { TargetData, MailListData, MailListMemberData } from "../lib/types";
+import type { MailListData, MailListMemberData, TargetData } from "../lib/types";
 
 // 샘플 데이터
 export const sampleTargets: TargetData[] = [
@@ -9,7 +9,11 @@ export const sampleTargets: TargetData[] = [
       scheduleCron: "0 9 * * 1", // 매주 월요일 9시
       lastSentAt: "2025-01-13T09:00:00Z",
       mailingListName: "Tech Newsletter",
-      timezone: "Asia/Seoul"
+      timezone: "Asia/Seoul",
+      category: "development",
+      mailingListId: "1",
+      scheduleHour: "9",
+      isMemberMail: true,
     },
     {
       targetId: "2",
@@ -18,7 +22,11 @@ export const sampleTargets: TargetData[] = [
       scheduleCron: "0 10 1 * *", // 매월 1일 10시
       lastSentAt: "2025-01-01T10:00:00Z",
       mailingListName: "Product Updates",
-      timezone: "Asia/Seoul"
+      timezone: "Asia/Seoul",
+      category: "development",
+      mailingListId: "2",
+      scheduleHour: "10",
+      isMemberMail: true,
     },
     {
       targetId: "3",
@@ -27,7 +35,11 @@ export const sampleTargets: TargetData[] = [
       scheduleCron: undefined,
       lastSentAt: "2024-12-15T14:30:00Z",
       mailingListName: "Emergency Alerts",
-      timezone: "Asia/Seoul"
+      timezone: "Asia/Seoul",
+      category: "development",
+      mailingListId: "3",
+      scheduleHour: "14",
+      isMemberMail: true,
     }
   ];
 
@@ -381,3 +393,107 @@ export const sampleEmailHTML = {
 </html>
   `
 };
+
+// Home 화면 샘플 데이터
+export const homeCommitTrendData = [
+  { name: 'W1', value: 28 },
+  { name: 'W2', value: 35 },
+  { name: 'W3', value: 45 },
+  { name: 'W4', value: 38 },
+  { name: 'W5', value: 42 },
+  { name: 'W6', value: 50 },
+];
+
+export const homeDeveloperData = [
+  { name: 'Alex K.', commits: 12 },
+  { name: 'Sarah L.', commits: 8 },
+  { name: 'Mike T.', commits: 6 },
+  { name: 'Others', commits: 14 },
+];
+
+export const homeCaseData = [
+  { name: 'Feature', value: 45, color: '#7C89F9' },
+  { name: 'Bug Fix', value: 30, color: '#10B981' },
+  { name: 'Refactor', value: 15, color: '#F59E0B' },
+  { name: 'Docs', value: 10, color: '#EC4899' },
+];
+
+export const homeFeatureHighlights = [
+  {
+    iconName: 'Layers' as const,
+    title: "자동 데이터 수집",
+    description: "Slack, GitHub 등 다양한 소스에서 팀 활동을 자동으로 수집합니다"
+  },
+  {
+    iconName: 'Sparkles' as const,
+    title: "AI 기반 요약",
+    description: "수집된 데이터를 AI가 분석하여 핵심 내용만 정리합니다"
+  },
+  {
+    iconName: 'Mail' as const,
+    title: "자동 뉴스레터 발송",
+    description: "정해진 일정에 맞춰 팀원들에게 자동으로 뉴스레터를 발송합니다"
+  }
+];
+
+export const homeIntegrations = [
+  {
+    name: "Slack",
+    iconName: 'MessageCircle' as const,
+    description: "팀 대화와 중요한 논의사항을 자동으로 수집합니다",
+    status: "active",
+    color: "success"
+  },
+  {
+    name: "GitHub",
+    iconName: 'GitBranch' as const,
+    description: "커밋, PR, 이슈를 주간 활동으로 정리합니다",
+    status: "active", 
+    color: "primary"
+  },
+  {
+    name: "Discord",
+    iconName: 'MessageSquare' as const,
+    description: "Discord 채널에서 팀 활동을 수집합니다",
+    status: "coming-soon",
+    color: "warning"
+  },
+  {
+    name: "더 많은 통합 예정",
+    iconName: 'Sparkles' as const,
+    description: "추가 통합 서비스를 준비 중입니다",
+    status: "coming-soon",
+    color: "secondary"
+  }
+];
+
+export const homeAnalyticsFeatures = [
+  {
+    title: "GitHub 활동 분석",
+    description: "커밋, PR, 이슈 트렌드를 한눈에",
+    iconName: 'GitCommit' as const,
+    lightBg: "bg-blue-50 border-blue-200",
+    darkBg: "dark:bg-blue-500/20 dark:border-blue-500/30"
+  },
+  {
+    title: "Slack 커뮤니케이션",
+    description: "팀 소통 패턴과 활성도 추적",
+    iconName: 'MessageSquare' as const,
+    lightBg: "bg-green-50 border-green-200",
+    darkBg: "dark:bg-green-500/20 dark:border-green-500/30"
+  },
+  {
+    title: "뉴스레터 성과",
+    description: "발송, 오픈율, 참여도 측정",
+    iconName: 'Mail' as const,
+    lightBg: "bg-purple-50 border-purple-200",
+    darkBg: "dark:bg-purple-500/20 dark:border-purple-500/30"
+  },
+  {
+    title: "프로젝트 현황",
+    description: "케이스별 개발 진행 상태",
+    iconName: 'BarChart3' as const,
+    lightBg: "bg-orange-50 border-orange-200",
+    darkBg: "dark:bg-orange-500/20 dark:border-orange-500/30"
+  }
+];

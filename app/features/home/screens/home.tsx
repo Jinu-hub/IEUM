@@ -4,57 +4,64 @@
  * This file implements the main landing page for an internal newsletter system
  * designed for software development companies. The system integrates with Slack, 
  * GitHub, and other development tools to automatically generate weekly newsletters.
- * 
- * Key features:
- * - Modern newsletter system showcase
- * - Integration highlights (Slack, GitHub, etc.)
- * - Newsletter preview and samples
- * - Company-focused design for internal tools
  */
 
 import type { Route } from "./+types/home";
 
 import {
+  ArrowRight,
+  BarChart3,
   Calendar,
   CheckCircle,
-  FileText,
   GitBranch,
+  GitCommit,
+  Layers,
   Mail,
   MessageCircle,
+  MessageSquare,
+  Sparkles,
   TrendingUp,
   Users,
   Zap
 } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis
+} from "recharts";
 
 import {
   NexBadge,
   NexButton,
   NexCard,
   NexCardContent,
-  NexCardDescription,
-  NexCardHeader,
-  NexCardTitle,
   NexCarousel,
   NexCarouselItem,
   NexHero,
   NexProgress
 } from "~/core/components/nex";
 import i18next from "~/core/lib/i18next.server";
+import {
+  homeAnalyticsFeatures,
+  homeCaseData,
+  homeCommitTrendData,
+  homeDeveloperData,
+  homeFeatureHighlights,
+  homeIntegrations
+} from "~/features/settings/lib/mockdata";
 
 /**
  * Meta function for setting page metadata
- * 
- * This function generates SEO-friendly metadata for the home page using data from the loader.
- * It sets:
- * - Page title from translated "home.title" key
- * - Meta description from translated "home.subtitle" key
- * 
- * The metadata is language-specific based on the user's locale preference.
- * 
- * @param data - Data returned from the loader function containing translated title and subtitle
- * @returns Array of metadata objects for the page
  */
 export const meta: Route.MetaFunction = ({ data }) => {
   return [
@@ -65,18 +72,10 @@ export const meta: Route.MetaFunction = ({ data }) => {
 
 /**
  * Loader function for server-side data fetching
- * 
- * This function loads data for the newsletter system homepage including
- * sample statistics, recent activity, and integration status.
- * 
- * @param request - The incoming HTTP request
- * @returns Object with page data and translations
  */
 export async function loader({ request }: Route.LoaderArgs) {
-  // Get a translation function for the user's locale from the request
   const t = await i18next.getFixedT(request);
   
-  // Mock data for newsletter system - in real app this would come from your API
   const stats = {
     totalNewsletters: 52,
     slackMessages: 1247,
@@ -84,7 +83,6 @@ export async function loader({ request }: Route.LoaderArgs) {
     teamMembers: 24
   };
   
-  // Return translated strings and stats for use in both the component and meta function
   return {
     title: "Nexletter - 사내 뉴스레터 시스템",
     subtitle: "Slack과 GitHub을 통합한 자동화된 주간 뉴스레터",
@@ -94,76 +92,69 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 /**
  * Newsletter System Home Page Component
- * 
- * Main landing page for the internal newsletter system showcasing:
- * - Hero section with key features
- * - Integration highlights (Slack, GitHub, etc.)
- * - Statistics and metrics
- * - Sample newsletter preview
- * - Team collaboration features
- * 
- * @returns JSX element representing the newsletter system homepage
  */
 export default function Home({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { stats } = loaderData;
 
-  // Sample integrations data
-  const integrations = [
-    {
-      name: "Slack",
-      icon: MessageCircle,
-      description: "팀 대화와 중요한 논의사항을 자동으로 수집합니다",
-      status: "active",
-      color: "success"
-    },
-    {
-      name: "GitHub",
-      icon: GitBranch,
-      description: "커밋, PR, 이슈를 주간 활동으로 정리합니다",
-      status: "active", 
-      color: "primary"
-    },
-    {
-      name: "Jira",
-      icon: CheckCircle,
-      description: "프로젝트 진행상황과 완료된 작업을 추적합니다",
-      status: "coming-soon",
-      color: "warning"
-    },
-    {
-      name: "Figma",
-      icon: FileText,
-      description: "디자인 업데이트와 새로운 프로토타입을 포함합니다",
-      status: "coming-soon",
-      color: "secondary"
-    }
-  ];
+  // Icon mapping for home page data
+  const iconMap = useMemo(() => ({
+    Layers,
+    Sparkles,
+    Mail,
+    MessageCircle,
+    GitBranch,
+    MessageSquare,
+    GitCommit,
+    BarChart3
+  }), []);
 
-  // Sample recent activities
-  const recentActivities = [
-    { type: "slack", content: "💡 #engineering에서 새로운 아키텍처 논의", time: "2시간 전" },
-    { type: "github", content: "🚀 user-auth 브랜치에 15개 커밋 추가", time: "3시간 전" },
-    { type: "slack", content: "🎉 #general에서 제품 출시 축하", time: "5시간 전" },
-    { type: "github", content: "🐛 결제 시스템 버그 수정 완료", time: "1일 전" },
-  ];
+  // Use data from mockdata
+  const commitTrendData = homeCommitTrendData;
+  const developerData = homeDeveloperData;
+  const caseData = homeCaseData;
+
+  // Feature highlights with icon mapping
+  const featureHighlights = useMemo(() => 
+    homeFeatureHighlights.map(item => ({
+      ...item,
+      icon: iconMap[item.iconName]
+    })), [iconMap]
+  );
+
+  // Integrations with icon mapping
+  const integrations = useMemo(() => 
+    homeIntegrations.map(item => ({
+      ...item,
+      icon: iconMap[item.iconName]
+    })), [iconMap]
+  );
+
+  // Analytics features with icon mapping
+  const analyticsFeatures = useMemo(() => 
+    homeAnalyticsFeatures.map(item => ({
+      ...item,
+      icon: iconMap[item.iconName]
+    })), [iconMap]
+  );
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-20">
       {/* Hero Section */}
       <NexHero
         variant="split"
-        title="Nexletter"
-        subtitle="개발팀을 위한 스마트한 주간 뉴스레터"
-        description="Slack 대화, GitHub 활동, 프로젝트 진행상황을 자동으로 분석하여 팀의 한 주를 정리한 뉴스레터를 생성합니다. 더 이상 수동으로 주간 보고서를 작성할 필요가 없습니다."
+        title={t("home.title")}
+        subtitle={t("home.subtitle")}
+        description={t("home.hero.description")}
         actions={{
           primary: { 
-            label: "뉴스레터 구독하기", 
+            label: t("home.hero.subscribeButton"), 
             variant: "primary",
             href: "/join"
           },
           secondary: { 
-            label: "샘플 뉴스레터 보기", 
+            label: t("home.hero.sampleButton"), 
             variant: "secondary",
             href: "/samples"
           }
@@ -174,43 +165,33 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         }}
       />
 
-      {/* Statistics Section */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <NexCard variant="elevated" className="text-center">
-          <NexCardContent className="pt-6">
-            <div className="text-3xl font-bold text-primary">{stats.totalNewsletters}</div>
-            <p className="text-sm text-muted-foreground">발송된 뉴스레터</p>
-          </NexCardContent>
-        </NexCard>
-        
-        <NexCard variant="elevated" className="text-center">
-          <NexCardContent className="pt-6">
-            <div className="text-3xl font-bold text-primary">{stats.slackMessages.toLocaleString()}</div>
-            <p className="text-sm text-muted-foreground">분석된 Slack 메시지</p>
-          </NexCardContent>
-        </NexCard>
-        
-        <NexCard variant="elevated" className="text-center">
-          <NexCardContent className="pt-6">
-            <div className="text-3xl font-bold text-primary">{stats.githubCommits}</div>
-            <p className="text-sm text-muted-foreground">이번 주 커밋</p>
-          </NexCardContent>
-        </NexCard>
-        
-        <NexCard variant="elevated" className="text-center">
-          <NexCardContent className="pt-6">
-            <div className="text-3xl font-bold text-primary">{stats.teamMembers}</div>
-            <p className="text-sm text-muted-foreground">팀 멤버</p>
-          </NexCardContent>
-        </NexCard>
+      {/* Feature Highlights */}
+      <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        {featureHighlights.map((feature) => {
+          const Icon = feature.icon;
+          return (
+            <NexCard key={feature.title} variant="outlined" hoverable>
+              <NexCardContent className="flex flex-col gap-4 p-6">
+                <div className="w-fit rounded-2xl bg-primary/10 p-3">
+                  <Icon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                </div>
+              </NexCardContent>
+            </NexCard>
+          );
+        })}
       </section>
 
       {/* Integrations Section */}
-      <section>
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">강력한 통합 기능</h2>
+      <section className="space-y-8">
+        <div className="text-center">
+          <NexBadge variant="info" className="mb-4">{t("home.integrations.badge")}</NexBadge>
+          <h2 className="text-3xl font-bold mb-4">{t("home.integrations.title")}</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            이미 사용하고 있는 도구들과 seamless하게 연결되어 팀의 활동을 자동으로 수집하고 정리합니다.
+            {t("home.integrations.description")}
           </p>
         </div>
         
@@ -221,7 +202,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               <NexCard key={index} variant="outlined" hoverable>
                 <NexCardContent className="p-6">
                   <div className="flex items-start space-x-4">
-                    <div className="p-3 rounded-lg bg-primary/10">
+                    <div className="p-3 rounded-xl bg-primary/10">
                       <Icon className="h-6 w-6 text-primary" />
                     </div>
                     <div className="flex-1">
@@ -231,10 +212,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                           variant={integration.status === "active" ? "success" : "warning"}
                           size="sm"
                         >
-                          {integration.status === "active" ? "연결됨" : "곧 출시"}
+                          {integration.status === "active" ? t("home.integrations.connected") : t("home.integrations.comingSoon")}
                         </NexBadge>
                       </div>
-                      <p className="text-muted-foreground">{integration.description}</p>
+                      <p className="text-muted-foreground text-sm">{integration.description}</p>
                     </div>
                   </div>
                 </NexCardContent>
@@ -244,76 +225,139 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </div>
       </section>
 
-      {/* Recent Activity */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          <h3 className="text-2xl font-bold mb-6">실시간 활동</h3>
-          <NexCard variant="outlined">
-            <NexCardContent className="p-0">
-              <div className="space-y-0">
-                {recentActivities.map((activity, index) => (
-                  <div key={index} className="flex items-center space-x-4 p-4 border-b last:border-b-0">
-                    <div className="p-2 rounded-lg bg-muted">
-                      {activity.type === "slack" ? (
-                        <MessageCircle className="h-4 w-4" />
-                      ) : (
-                        <GitBranch className="h-4 w-4" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm">{activity.content}</p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
-                    </div>
+      {/* Analytics Feature Preview Section */}
+      <section className="space-y-8">
+        {/* Section Header */}
+        <div className="text-center space-y-4">
+          <NexBadge variant="info">{t("home.analytics.badge")}</NexBadge>
+          <h2 className="text-3xl font-bold">{t("home.analytics.title")}</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            {t("home.analytics.description")}
+          </p>
+        </div>
+
+        {/* Analytics Preview Card */}
+        <NexCard variant="elevated" className="overflow-hidden">
+          {/* Preview Header */}
+          <div className="relative bg-gradient-to-r from-purple-600/80 via-pink-500/60 to-purple-400/40 p-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 to-transparent" />
+            <div className="relative flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="rounded-xl bg-white/10 p-3 backdrop-blur-sm">
+                  <BarChart3 className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">{t("home.analytics.dashboardTitle")}</h3>
+                  <p className="text-white/70 text-sm">{t("home.analytics.dashboardSubtitle")}</p>
+                </div>
+              </div>
+              <NexBadge variant="secondary" className="bg-white/20 text-white border-white/30">
+                {t("home.analytics.preview")}
+              </NexBadge>
+            </div>
+          </div>
+
+          <NexCardContent className="p-6">
+            {/* Analytics Feature Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {analyticsFeatures.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <div 
+                    key={feature.title}
+                    className={`rounded-xl p-4 border ${feature.lightBg} ${feature.darkBg}`}
+                  >
+                    <Icon className="h-5 w-5 text-primary mb-2" />
+                    <p className="font-medium text-sm">{feature.title}</p>
+                    <p className="text-xs text-muted-foreground">{feature.description}</p>
                   </div>
-                ))}
-              </div>
-            </NexCardContent>
-          </NexCard>
-        </div>
+                );
+              })}
+            </div>
 
-        {/* Newsletter Preview */}
-        <div>
-          <h3 className="text-2xl font-bold mb-6">뉴스레터 미리보기</h3>
-          <NexCard variant="elevated">
-            <NexCardHeader>
-              <div className="flex items-center justify-between">
-                <NexCardTitle>Week #47 - Dev Team Digest</NexCardTitle>
-                <NexBadge variant="info">새로운</NexBadge>
+            {/* Mini Charts Preview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Commit Trend Preview */}
+              <div className="rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700/50 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium">{t("home.analytics.commitTrend")}</p>
+                  <NexBadge variant="success" size="sm">+18%</NexBadge>
+                </div>
+                <div className="h-24">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={commitTrendData}>
+                      <defs>
+                        <linearGradient id="colorCommit" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#7C89F9" stopOpacity={0.6}/>
+                          <stop offset="95%" stopColor="#7C89F9" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <Area 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="#7C89F9" 
+                        fill="url(#colorCommit)"
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <NexCardDescription>2024년 11월 18일 - 11월 24일</NexCardDescription>
-            </NexCardHeader>
-            <NexCardContent>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-sm mb-2">📈 이번 주 하이라이트</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                    <li>사용자 인증 시스템 리팩토링 완료</li>
-                    <li>모바일 앱 성능 30% 개선</li>
-                    <li>새로운 결제 시스템 테스트 시작</li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h4 className="font-semibold text-sm mb-2">💬 팀 토론 주제</h4>
-                  <p className="text-sm text-muted-foreground">
-                    마이크로서비스 아키텍처 도입에 대한 활발한 논의가 #architecture 채널에서...
-                  </p>
-                </div>
 
-                <NexProgress value={75} variant="default" className="mt-4" />
-                <p className="text-xs text-muted-foreground">뉴스레터 생성 진행률: 75%</p>
+              {/* Developer Activity Preview */}
+              <div className="rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700/50 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium">{t("home.analytics.developerActivity")}</p>
+                  <NexBadge variant="info" size="sm">4명</NexBadge>
+                </div>
+                <div className="h-24">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={developerData} layout="vertical">
+                      <XAxis type="number" hide />
+                      <YAxis type="category" dataKey="name" hide />
+                      <Bar dataKey="commits" fill="#7C89F9" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            </NexCardContent>
-          </NexCard>
-        </div>
+
+              {/* Case Status Preview */}
+              <div className="rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700/50 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium">{t("home.analytics.caseStatus")}</p>
+                  <NexBadge variant="warning" size="sm">34건</NexBadge>
+                </div>
+                <div className="h-24 flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={caseData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={25}
+                        outerRadius={40}
+                        dataKey="value"
+                      >
+                        {caseData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </NexCardContent>
+        </NexCard>
       </section>
 
       {/* Team Highlights Carousel */}
-      <section>
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">팀 하이라이트</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            매주 자동으로 수집되는 팀의 성과와 중요한 순간들을 확인해보세요
+      <section className="space-y-6 md:space-y-8">
+        <div className="text-center px-4">
+          <NexBadge variant="success" className="mb-3 md:mb-4">{t("home.teamHighlights.badge")}</NexBadge>
+          <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">{t("home.teamHighlights.title")}</h2>
+          <p className="text-sm md:text-lg text-muted-foreground max-w-2xl mx-auto">
+            {t("home.teamHighlights.description")}
           </p>
         </div>
 
@@ -341,29 +385,29 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         >
           {/* Weekly Achievement */}
           <NexCarouselItem>
-            <NexCard variant="elevated" className="mx-2 h-full">
-              <NexCardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/20 mr-4">
-                    <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
+              <NexCardContent className="p-4 md:p-6">
+                <div className="flex items-center mb-3 md:mb-4">
+                  <div className="p-2 md:p-3 rounded-xl bg-green-100 dark:bg-green-900/20 mr-3 md:mr-4 flex-shrink-0">
+                    <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-green-600 dark:text-green-400" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">이번 주 성과</h3>
-                    <p className="text-sm text-muted-foreground">Week #47</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.weeklyAchievement.title")}</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.weeklyAchievement.subtitle")}</p>
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">완료된 이슈</span>
-                    <NexBadge variant="success">24개</NexBadge>
+                    <span className="text-xs md:text-sm">{t("home.teamHighlights.weeklyAchievement.completedIssues")}</span>
+                    <NexBadge variant="success" size="sm">24개</NexBadge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">배포 횟수</span>
-                    <NexBadge variant="info">12회</NexBadge>
+                    <span className="text-xs md:text-sm">{t("home.teamHighlights.weeklyAchievement.deployments")}</span>
+                    <NexBadge variant="info" size="sm">12회</NexBadge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">코드 리뷰</span>
-                    <NexBadge variant="secondary">89개</NexBadge>
+                    <span className="text-xs md:text-sm">{t("home.teamHighlights.weeklyAchievement.codeReviews")}</span>
+                    <NexBadge variant="secondary" size="sm">89개</NexBadge>
                   </div>
                 </div>
               </NexCardContent>
@@ -372,29 +416,29 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
           {/* Team Communication */}
           <NexCarouselItem>
-            <NexCard variant="elevated" className="mx-2 h-full">
-              <NexCardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/20 mr-4">
-                    <MessageCircle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
+              <NexCardContent className="p-4 md:p-6">
+                <div className="flex items-center mb-3 md:mb-4">
+                  <div className="p-2 md:p-3 rounded-xl bg-blue-100 dark:bg-blue-900/20 mr-3 md:mr-4 flex-shrink-0">
+                    <MessageCircle className="h-5 w-5 md:h-6 md:w-6 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">팀 소통</h3>
-                    <p className="text-sm text-muted-foreground">활발한 논의</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.teamCommunication.title")}</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.teamCommunication.subtitle")}</p>
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   <div>
-                    <p className="text-sm font-medium">#engineering 채널</p>
-                    <p className="text-xs text-muted-foreground">새로운 마이크로서비스 아키텍처 설계 논의</p>
+                    <p className="text-xs md:text-sm font-medium">#engineering 채널</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">새로운 마이크로서비스 아키텍처 설계 논의</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">#frontend 채널</p>
-                    <p className="text-xs text-muted-foreground">React 18 업그레이드 계획 수립</p>
+                    <p className="text-xs md:text-sm font-medium">#frontend 채널</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">React 18 업그레이드 계획 수립</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">#backend 채널</p>
-                    <p className="text-xs text-muted-foreground">API 성능 최적화 결과 공유</p>
+                    <p className="text-xs md:text-sm font-medium">#backend 채널</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">API 성능 최적화 결과 공유</p>
                   </div>
                 </div>
               </NexCardContent>
@@ -403,32 +447,32 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
           {/* Latest Newsletter */}
           <NexCarouselItem>
-            <NexCard variant="elevated" className="mx-2 h-full">
-              <NexCardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  <div className="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/20 mr-4">
-                    <Mail className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
+              <NexCardContent className="p-4 md:p-6">
+                <div className="flex items-center mb-3 md:mb-4">
+                  <div className="p-2 md:p-3 rounded-xl bg-purple-100 dark:bg-purple-900/20 mr-3 md:mr-4 flex-shrink-0">
+                    <Mail className="h-5 w-5 md:h-6 md:w-6 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">최신 뉴스레터</h3>
-                    <p className="text-sm text-muted-foreground">11월 3주차</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.latestNewsletter.title")}</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.latestNewsletter.subtitle")}</p>
                   </div>
                 </div>
-                <div className="space-y-3">
-                  <div className="text-sm">
-                    <span className="font-medium">주요 토픽:</span>
+                <div className="space-y-2 md:space-y-3">
+                  <div className="text-xs md:text-sm">
+                    <span className="font-medium">{t("home.teamHighlights.latestNewsletter.mainTopics")}</span>
                     <span className="ml-1 text-muted-foreground">결제 시스템 개선</span>
                   </div>
-                  <div className="text-sm">
-                    <span className="font-medium">참여 인원:</span>
-                    <span className="ml-1 text-muted-foreground">8명</span>
+                  <div className="text-xs md:text-sm">
+                    <span className="font-medium">{t("home.teamHighlights.latestNewsletter.participants")}</span>
+                    <span className="ml-1 text-muted-foreground">17명</span>
                   </div>
-                  <div className="text-sm">
-                    <span className="font-medium">읽기 시간:</span>
+                  <div className="text-xs md:text-sm">
+                    <span className="font-medium">{t("home.teamHighlights.latestNewsletter.readTime")}</span>
                     <span className="ml-1 text-muted-foreground">3분</span>
                   </div>
-                  <NexButton variant="secondary" size="sm" className="w-full mt-3">
-                    뉴스레터 읽기
+                  <NexButton variant="secondary" size="sm" className="w-full mt-2 md:mt-3 cursor-pointer text-xs md:text-sm">
+                    {t("home.teamHighlights.latestNewsletter.readButton")}
                   </NexButton>
                 </div>
               </NexCardContent>
@@ -437,35 +481,35 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
           {/* Code Quality */}
           <NexCarouselItem>
-            <NexCard variant="elevated" className="mx-2 h-full">
-              <NexCardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  <div className="p-3 rounded-lg bg-orange-100 dark:bg-orange-900/20 mr-4">
-                    <CheckCircle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
+              <NexCardContent className="p-4 md:p-6">
+                <div className="flex items-center mb-3 md:mb-4">
+                  <div className="p-2 md:p-3 rounded-xl bg-orange-100 dark:bg-orange-900/20 mr-3 md:mr-4 flex-shrink-0">
+                    <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-orange-600 dark:text-orange-400" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">코드 품질</h3>
-                    <p className="text-sm text-muted-foreground">이번 주 통계</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.codeQuality.title")}</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.codeQuality.subtitle")}</p>
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   <div>
                     <div className="flex justify-between mb-1">
-                      <span className="text-sm">테스트 커버리지</span>
-                      <span className="text-sm font-medium">94%</span>
+                      <span className="text-xs md:text-sm">{t("home.teamHighlights.codeQuality.testCoverage")}</span>
+                      <span className="text-xs md:text-sm font-medium">94%</span>
                     </div>
                     <NexProgress value={94} variant="success" />
                   </div>
                   <div>
                     <div className="flex justify-between mb-1">
-                      <span className="text-sm">코드 품질 점수</span>
-                      <span className="text-sm font-medium">A+</span>
+                      <span className="text-xs md:text-sm">{t("home.teamHighlights.codeQuality.qualityScore")}</span>
+                      <span className="text-xs md:text-sm font-medium">A+</span>
                     </div>
                     <NexProgress value={98} variant="default" />
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">버그 수정</span>
-                    <NexBadge variant="success">15개</NexBadge>
+                    <span className="text-xs md:text-sm">{t("home.teamHighlights.codeQuality.bugFixes")}</span>
+                    <NexBadge variant="success" size="sm">15개</NexBadge>
                   </div>
                 </div>
               </NexCardContent>
@@ -474,34 +518,34 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
           {/* Team Productivity */}
           <NexCarouselItem>
-            <NexCard variant="elevated" className="mx-2 h-full">
-              <NexCardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  <div className="p-3 rounded-lg bg-indigo-100 dark:bg-indigo-900/20 mr-4">
-                    <Users className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+            <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
+              <NexCardContent className="p-4 md:p-6">
+                <div className="flex items-center mb-3 md:mb-4">
+                  <div className="p-2 md:p-3 rounded-xl bg-indigo-100 dark:bg-indigo-900/20 mr-3 md:mr-4 flex-shrink-0">
+                    <Users className="h-5 w-5 md:h-6 md:w-6 text-indigo-600 dark:text-indigo-400" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">팀 생산성</h3>
-                    <p className="text-sm text-muted-foreground">이번 주 요약</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.teamProductivity.title")}</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.teamProductivity.subtitle")}</p>
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-primary">127</div>
-                    <p className="text-xs text-muted-foreground">커밋 수</p>
+                    <div className="text-xl md:text-2xl font-bold text-primary">127</div>
+                    <p className="text-xs text-muted-foreground">{t("home.teamHighlights.teamProductivity.commits")}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-center">
                     <div>
-                      <div className="text-lg font-semibold">18</div>
-                      <p className="text-xs text-muted-foreground">PR 생성</p>
+                      <div className="text-base md:text-lg font-semibold">18</div>
+                      <p className="text-xs text-muted-foreground">{t("home.teamHighlights.teamProductivity.prCreated")}</p>
                     </div>
                     <div>
-                      <div className="text-lg font-semibold">22</div>
-                      <p className="text-xs text-muted-foreground">PR 병합</p>
+                      <div className="text-base md:text-lg font-semibold">22</div>
+                      <p className="text-xs text-muted-foreground">{t("home.teamHighlights.teamProductivity.prMerged")}</p>
                     </div>
                   </div>
                   <div className="text-center">
-                    <NexBadge variant="success">+15% vs 지난주</NexBadge>
+                    <NexBadge variant="success" size="sm">+15% {t("home.teamHighlights.teamProductivity.vsLastWeek")}</NexBadge>
                   </div>
                 </div>
               </NexCardContent>
@@ -510,29 +554,29 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
           {/* Innovation Highlights */}
           <NexCarouselItem>
-            <NexCard variant="elevated" className="mx-2 h-full">
-              <NexCardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  <div className="p-3 rounded-lg bg-cyan-100 dark:bg-cyan-900/20 mr-4">
-                    <Zap className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
+            <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
+              <NexCardContent className="p-4 md:p-6">
+                <div className="flex items-center mb-3 md:mb-4">
+                  <div className="p-2 md:p-3 rounded-xl bg-cyan-100 dark:bg-cyan-900/20 mr-3 md:mr-4 flex-shrink-0">
+                    <Zap className="h-5 w-5 md:h-6 md:w-6 text-cyan-600 dark:text-cyan-400" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">혁신 하이라이트</h3>
-                    <p className="text-sm text-muted-foreground">이번 주 발견</p>
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.innovationHighlights.title")}</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.innovationHighlights.subtitle")}</p>
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   <div>
-                    <p className="text-sm font-medium">새로운 도구 도입</p>
-                    <p className="text-xs text-muted-foreground">GitHub Copilot으로 개발 속도 향상</p>
+                    <p className="text-xs md:text-sm font-medium">새로운 도구 도입</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">GitHub Copilot으로 개발 속도 향상</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">프로세스 개선</p>
-                    <p className="text-xs text-muted-foreground">자동화된 배포 파이프라인 구축</p>
+                    <p className="text-xs md:text-sm font-medium">프로세스 개선</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">자동화된 배포 파이프라인 구축</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">기술 학습</p>
-                    <p className="text-xs text-muted-foreground">팀 내 TypeScript 워크샵 진행</p>
+                    <p className="text-xs md:text-sm font-medium">기술 학습</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">팀 내 TypeScript 워크샵 진행</p>
                   </div>
                 </div>
               </NexCardContent>
@@ -541,31 +585,202 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </NexCarousel>
       </section>
 
+      {/* Individual Activity Section */}
+      <section className="space-y-6 md:space-y-8">
+        <div className="text-center px-4">
+          <NexBadge variant="warning" className="mb-3 md:mb-4">{t("home.individualActivity.badge")}</NexBadge>
+          <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">{t("home.individualActivity.title")}</h2>
+          <p className="text-sm md:text-lg text-muted-foreground max-w-2xl mx-auto">
+            {t("home.individualActivity.description")}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {/* Member 1 */}
+          <NexCard variant="outlined" hoverable className="overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-blue-500 to-cyan-400" />
+            <NexCardContent className="p-4 md:p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm md:text-base">
+                  AK
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm md:text-base truncate">Alex Kim</p>
+                  <p className="text-xs text-muted-foreground">Frontend Lead</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.commits")}</span>
+                  <span className="text-sm font-semibold">28</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.prReviews")}</span>
+                  <span className="text-sm font-semibold">15</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.messages")}</span>
+                  <span className="text-sm font-semibold">142</span>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.contribution")}</span>
+                  <NexBadge variant="success" size="sm">Top Contributor</NexBadge>
+                </div>
+              </div>
+            </NexCardContent>
+          </NexCard>
+
+          {/* Member 2 */}
+          <NexCard variant="outlined" hoverable className="overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-purple-500 to-pink-400" />
+            <NexCardContent className="p-4 md:p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center text-white font-bold text-sm md:text-base">
+                  SL
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm md:text-base truncate">Sarah Lee</p>
+                  <p className="text-xs text-muted-foreground">Backend Developer</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">커밋</span>
+                  <span className="text-sm font-semibold">21</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">PR 리뷰</span>
+                  <span className="text-sm font-semibold">23</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">메시지</span>
+                  <span className="text-sm font-semibold">98</span>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">기여도</span>
+                  <NexBadge variant="info" size="sm">Active Reviewer</NexBadge>
+                </div>
+              </div>
+            </NexCardContent>
+          </NexCard>
+
+          {/* Member 3 */}
+          <NexCard variant="outlined" hoverable className="overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-green-500 to-emerald-400" />
+            <NexCardContent className="p-4 md:p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center text-white font-bold text-sm md:text-base">
+                  MT
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm md:text-base truncate">Mike Tanaka</p>
+                  <p className="text-xs text-muted-foreground">DevOps Engineer</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">커밋</span>
+                  <span className="text-sm font-semibold">15</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">PR 리뷰</span>
+                  <span className="text-sm font-semibold">8</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">메시지</span>
+                  <span className="text-sm font-semibold">67</span>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">기여도</span>
+                  <NexBadge variant="warning" size="sm">Deploy Master</NexBadge>
+                </div>
+              </div>
+            </NexCardContent>
+          </NexCard>
+
+          {/* Member 4 */}
+          <NexCard variant="outlined" hoverable className="overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-orange-500 to-amber-400" />
+            <NexCardContent className="p-4 md:p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center text-white font-bold text-sm md:text-base">
+                  JP
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm md:text-base truncate">Jenny Park</p>
+                  <p className="text-xs text-muted-foreground">QA Engineer</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">커밋</span>
+                  <span className="text-sm font-semibold">12</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">PR 리뷰</span>
+                  <span className="text-sm font-semibold">31</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">메시지</span>
+                  <span className="text-sm font-semibold">156</span>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">기여도</span>
+                  <NexBadge variant="secondary" size="sm">Bug Hunter</NexBadge>
+                </div>
+              </div>
+            </NexCardContent>
+          </NexCard>
+        </div>
+      </section>
+
       {/* CTA Section */}
-      <section className="text-center py-16">
-        <NexCard variant="elevated" className="p-12 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-50 dark:from-slate-900/50 dark:via-gray-900/30 dark:to-slate-900/50">
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-3xl font-bold mb-4">
-                팀의 생산성을 한 단계 높여보세요
+      <section className="text-center">
+        <NexCard 
+          variant="elevated" 
+          className="p-12 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-50 dark:from-slate-900/50 dark:via-gray-900/30 dark:to-slate-900/50 shadow-xl shadow-primary/10"
+        >
+          <NexCardContent className="space-y-8">
+            <div className="space-y-4">
+              <NexBadge variant="info" className="mb-2">{t("home.cta.badge")}</NexBadge>
+              <h2 className="text-3xl font-bold">
+                {t("home.cta.title")}
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                매주 자동으로 생성되는 뉴스레터로 팀의 성과를 투명하게 공유하고, 
-                놓친 중요한 정보들을 손쉽게 파악할 수 있습니다.
+                {t("home.cta.description")}
               </p>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/join" className="inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 h-11 px-8 text-base bg-[#5E6AD2] text-white border-none hover:bg-[#4C566A] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(94,106,210,0.4)] dark:bg-[#7C89F9] dark:hover:bg-[#6B77E6] cursor-pointer">
+              <NexButton 
+                variant="primary" 
+                size="lg" 
+                className="cursor-pointer"
+                onClick={() => navigate("/join")}
+              >
                 <Calendar className="h-5 w-5 mr-2" />
-                시작하기
-              </Link>
-              <Link to="/samples" className="inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 h-11 px-8 text-base bg-transparent text-[#5E6AD2] border border-[#E1E4E8] hover:bg-[#F8F9FA] hover:border-[#5E6AD2] dark:text-[#7C89F9] dark:border-[#2C2D30] dark:hover:bg-[#1A1B1E] dark:hover:border-[#7C89F9] cursor-pointer">
+                {t("home.cta.getStarted")}
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </NexButton>
+              <NexButton 
+                variant="secondary" 
+                size="lg"
+                className="cursor-pointer"
+                onClick={() => navigate("/samples")}
+              >
                 <Mail className="h-5 w-5 mr-2" />
-                샘플 뉴스레터 보기
-              </Link>
+                {t("home.cta.viewSamples")}
+              </NexButton>
             </div>
-          </div>
+          </NexCardContent>
         </NexCard>
       </section>
     </div>
