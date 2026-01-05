@@ -12,7 +12,6 @@ import {
   ArrowRight,
   BarChart3,
   Calendar,
-  CheckCircle,
   GitBranch,
   GitCommit,
   Layers,
@@ -21,7 +20,6 @@ import {
   MessageSquare,
   Sparkles,
   TrendingUp,
-  Users,
   Zap
 } from "lucide-react";
 import { useMemo } from "react";
@@ -47,8 +45,7 @@ import {
   NexCardContent,
   NexCarousel,
   NexCarouselItem,
-  NexHero,
-  NexProgress
+  NexHero
 } from "~/core/components/nex";
 import i18next from "~/core/lib/i18next.server";
 import {
@@ -84,8 +81,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
   
   return {
-    title: "Nexletter - 사내 뉴스레터 시스템",
-    subtitle: "Slack과 GitHub을 통합한 자동화된 주간 뉴스레터",
+    title: t("home.title"),
+    subtitle: t("home.subtitle"),
     stats
   };
 }
@@ -119,24 +116,30 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const featureHighlights = useMemo(() => 
     homeFeatureHighlights.map(item => ({
       ...item,
-      icon: iconMap[item.iconName]
-    })), [iconMap]
+      icon: iconMap[item.iconName],
+      title: t(item.titleKey),
+      description: t(item.descriptionKey)
+    })), [iconMap, t]
   );
 
   // Integrations with icon mapping
   const integrations = useMemo(() => 
     homeIntegrations.map(item => ({
       ...item,
-      icon: iconMap[item.iconName]
-    })), [iconMap]
+      icon: iconMap[item.iconName],
+      name: t(item.nameKey),
+      description: t(item.descriptionKey)
+    })), [iconMap, t]
   );
 
   // Analytics features with icon mapping
   const analyticsFeatures = useMemo(() => 
     homeAnalyticsFeatures.map(item => ({
       ...item,
-      icon: iconMap[item.iconName]
-    })), [iconMap]
+      icon: iconMap[item.iconName],
+      title: t(item.titleKey),
+      description: t(item.descriptionKey)
+    })), [iconMap, t]
   );
 
   return (
@@ -167,16 +170,42 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
       {/* Feature Highlights */}
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        {featureHighlights.map((feature) => {
+        {featureHighlights.map((feature, index) => {
           const Icon = feature.icon;
+          const isHighlighted = index === 1; // AI 기반 요약 카드 강조
+          
           return (
-            <NexCard key={feature.title} variant="outlined" hoverable>
+            <NexCard 
+              key={feature.titleKey}
+              variant="outlined" 
+              hoverable
+              className={`relative transition-all duration-300 ${
+                isHighlighted 
+                  ? 'border-primary/40 bg-primary/[0.03] dark:bg-primary/[0.06]' 
+                  : ''
+              }`}
+            >
               <NexCardContent className="flex flex-col gap-4 p-6">
-                <div className="w-fit rounded-2xl bg-primary/10 p-3">
+                {/* Subtle featured indicator */}
+                {isHighlighted && (
+                  <div className="absolute top-4 right-4">
+                    <span className="text-[10px] font-medium tracking-wider text-primary/70 uppercase">
+                      Core
+                    </span>
+                  </div>
+                )}
+                
+                <div className={`w-fit rounded-2xl p-3 transition-colors ${
+                  isHighlighted 
+                    ? 'bg-primary/20' 
+                    : 'bg-primary/10'
+                }`}>
                   <Icon className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <h3 className={`text-lg font-semibold mb-2 ${isHighlighted ? 'text-primary' : ''}`}>
+                    {feature.title}
+                  </h3>
                   <p className="text-sm text-muted-foreground">{feature.description}</p>
                 </div>
               </NexCardContent>
@@ -239,8 +268,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         {/* Analytics Preview Card */}
         <NexCard variant="elevated" className="overflow-hidden">
           {/* Preview Header */}
-          <div className="relative bg-gradient-to-r from-purple-600/80 via-pink-500/60 to-purple-400/40 p-6">
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 to-transparent" />
+          <div className="relative bg-gradient-to-r from-purple-600/70 via-pink-500/50 to-purple-400/30 p-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-900/15 to-transparent" />
             <div className="relative flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="rounded-xl bg-white/10 p-3 backdrop-blur-sm">
@@ -264,7 +293,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 const Icon = feature.icon;
                 return (
                   <div 
-                    key={feature.title}
+                    key={feature.titleKey}
                     className={`rounded-xl p-4 border ${feature.lightBg} ${feature.darkBg}`}
                   >
                     <Icon className="h-5 w-5 text-primary mb-2" />
@@ -288,14 +317,14 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                     <AreaChart data={commitTrendData}>
                       <defs>
                         <linearGradient id="colorCommit" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#7C89F9" stopOpacity={0.6}/>
-                          <stop offset="95%" stopColor="#7C89F9" stopOpacity={0.1}/>
+                          <stop offset="5%" stopColor="#8B96F5" stopOpacity={0.5}/>
+                          <stop offset="95%" stopColor="#8B96F5" stopOpacity={0.08}/>
                         </linearGradient>
                       </defs>
                       <Area 
                         type="monotone" 
                         dataKey="value" 
-                        stroke="#7C89F9" 
+                        stroke="#8B96F5" 
                         fill="url(#colorCommit)"
                         strokeWidth={2}
                       />
@@ -308,14 +337,14 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               <div className="rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700/50 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm font-medium">{t("home.analytics.developerActivity")}</p>
-                  <NexBadge variant="info" size="sm">4명</NexBadge>
+                  <NexBadge variant="info" size="sm">4{t("common.people")}</NexBadge>
                 </div>
                 <div className="h-24">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={developerData} layout="vertical">
                       <XAxis type="number" hide />
                       <YAxis type="category" dataKey="name" hide />
-                      <Bar dataKey="commits" fill="#7C89F9" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="commits" fill="#8B96F5" radius={[0, 4, 4, 0]} opacity={0.85} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -325,7 +354,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               <div className="rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700/50 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm font-medium">{t("home.analytics.caseStatus")}</p>
-                  <NexBadge variant="warning" size="sm">34건</NexBadge>
+                  <NexBadge variant="warning" size="sm">34{t("common.count")}</NexBadge>
                 </div>
                 <div className="h-24 flex items-center justify-center">
                   <ResponsiveContainer width="100%" height="100%">
@@ -348,7 +377,12 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               </div>
             </div>
           </NexCardContent>
+        {/* Staged Release Notice */}
+        <p className="text-center text-xs text-muted-foreground">
+          {t("home.analytics.stagedRelease")}
+        </p>
         </NexCard>
+        
       </section>
 
       {/* Team Highlights Carousel */}
@@ -398,23 +432,85 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 </div>
                 <div className="space-y-2 md:space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm">{t("home.teamHighlights.weeklyAchievement.completedIssues")}</span>
-                    <NexBadge variant="success" size="sm">24개</NexBadge>
+                    <span className="text-xs md:text-sm">{t("home.teamHighlights.weeklyAchievement.commits")}</span>
+                    <NexBadge variant="success" size="sm">56{t("common.count")}</NexBadge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm">{t("home.teamHighlights.weeklyAchievement.deployments")}</span>
-                    <NexBadge variant="info" size="sm">12회</NexBadge>
+                    <span className="text-xs md:text-sm">{t("home.teamHighlights.weeklyAchievement.prMerged")}</span>
+                    <NexBadge variant="info" size="sm">12{t("common.count")}</NexBadge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm">{t("home.teamHighlights.weeklyAchievement.codeReviews")}</span>
-                    <NexBadge variant="secondary" size="sm">89개</NexBadge>
+                    <span className="text-xs md:text-sm">{t("home.teamHighlights.weeklyAchievement.participants")}</span>
+                    <NexBadge variant="secondary" size="sm">12{t("common.people")}</NexBadge>
                   </div>
                 </div>
               </NexCardContent>
             </NexCard>
           </NexCarouselItem>
 
-          {/* Team Communication */}
+          {/* Highlight of the week */}
+          <NexCarouselItem>
+            <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
+              <NexCardContent className="p-4 md:p-6">
+                <div className="flex items-center mb-3 md:mb-4">
+                  <div className="p-2 md:p-3 rounded-xl bg-purple-100 dark:bg-purple-900/20 mr-3 md:mr-4 flex-shrink-0">
+                    <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.latestNewsletter.title")}</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.latestNewsletter.subtitle")}</p>
+                  </div>
+                </div>
+                <div className="space-y-2 md:space-y-3">
+                  <div className="text-xs md:text-sm">
+                    <span className="font-medium">{t("home.teamHighlights.latestNewsletter.mainTopics")}</span>
+                    <span className="ml-1 text-muted-foreground">{t("home.teamHighlights.latestNewsletter.sampleMainTopic")}</span>
+                  </div>
+                  <div className="text-xs md:text-sm">
+                    <span className="font-medium">{t("home.teamHighlights.latestNewsletter.participants")}</span>
+                    <span className="ml-1 text-muted-foreground">7{t("common.people")}</span>
+                  </div>
+                  <div className="text-xs md:text-sm">
+                    <span className="font-medium">{t("home.teamHighlights.latestNewsletter.summary")}</span>
+                    <span className="ml-1 text-muted-foreground">{t("home.teamHighlights.latestNewsletter.sampleSummary")}</span>
+                  </div>
+                </div>
+              </NexCardContent>
+            </NexCard>
+          </NexCarouselItem>
+
+          {/* Topics of the week */}
+          <NexCarouselItem>
+            <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
+              <NexCardContent className="p-4 md:p-6">
+                <div className="flex items-center mb-3 md:mb-4">
+                  <div className="p-2 md:p-3 rounded-xl bg-cyan-100 dark:bg-cyan-900/20 mr-3 md:mr-4 flex-shrink-0">
+                    <Zap className="h-5 w-5 md:h-6 md:w-6 text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.topicsOfTheWeek.title")}</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.topicsOfTheWeek.subtitle")}</p>
+                  </div>
+                </div>
+                <div className="space-y-2 md:space-y-3">
+                  <div>
+                    <p className="text-xs md:text-sm font-medium">{t("home.teamHighlights.topicsOfTheWeek.topic1Title")}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{t("home.teamHighlights.topicsOfTheWeek.topic1Description")}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs md:text-sm font-medium">{t("home.teamHighlights.topicsOfTheWeek.topic2Title")}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{t("home.teamHighlights.topicsOfTheWeek.topic2Description")}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs md:text-sm font-medium">{t("home.teamHighlights.topicsOfTheWeek.topic3Title")}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{t("home.teamHighlights.topicsOfTheWeek.topic3Description")}</p>
+                  </div>
+                </div>
+              </NexCardContent>
+            </NexCard>
+          </NexCarouselItem>
+
+          {/* Communication of the week */}
           <NexCarouselItem>
             <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
               <NexCardContent className="p-4 md:p-6">
@@ -429,154 +525,59 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 </div>
                 <div className="space-y-2 md:space-y-3">
                   <div>
-                    <p className="text-xs md:text-sm font-medium">#engineering 채널</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">새로운 마이크로서비스 아키텍처 설계 논의</p>
+                    <p className="text-xs md:text-sm font-medium">{t("home.teamHighlights.teamCommunication.channel1")}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{t("home.teamHighlights.teamCommunication.channel1Description")}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm font-medium">#frontend 채널</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">React 18 업그레이드 계획 수립</p>
+                    <p className="text-xs md:text-sm font-medium">{t("home.teamHighlights.teamCommunication.channel2")}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{t("home.teamHighlights.teamCommunication.channel2Description")}</p>
                   </div>
                   <div>
-                    <p className="text-xs md:text-sm font-medium">#backend 채널</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">API 성능 최적화 결과 공유</p>
+                    <p className="text-xs md:text-sm font-medium">{t("home.teamHighlights.teamCommunication.channel3")}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{t("home.teamHighlights.teamCommunication.channel3Description")}</p>
                   </div>
                 </div>
               </NexCardContent>
             </NexCard>
           </NexCarouselItem>
 
-          {/* Latest Newsletter */}
+          {/* Ongoing & Roadmap */}
           <NexCarouselItem>
             <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
               <NexCardContent className="p-4 md:p-6">
                 <div className="flex items-center mb-3 md:mb-4">
-                  <div className="p-2 md:p-3 rounded-xl bg-purple-100 dark:bg-purple-900/20 mr-3 md:mr-4 flex-shrink-0">
-                    <Mail className="h-5 w-5 md:h-6 md:w-6 text-purple-600 dark:text-purple-400" />
+                  <div className="p-2 md:p-3 rounded-xl bg-amber-100 dark:bg-amber-900/20 mr-3 md:mr-4 flex-shrink-0">
+                    <Calendar className="h-5 w-5 md:h-6 md:w-6 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.latestNewsletter.title")}</h3>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.latestNewsletter.subtitle")}</p>
+                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.roadmap.title")}</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.roadmap.subtitle")}</p>
                   </div>
                 </div>
                 <div className="space-y-2 md:space-y-3">
-                  <div className="text-xs md:text-sm">
-                    <span className="font-medium">{t("home.teamHighlights.latestNewsletter.mainTopics")}</span>
-                    <span className="ml-1 text-muted-foreground">결제 시스템 개선</span>
-                  </div>
-                  <div className="text-xs md:text-sm">
-                    <span className="font-medium">{t("home.teamHighlights.latestNewsletter.participants")}</span>
-                    <span className="ml-1 text-muted-foreground">17명</span>
-                  </div>
-                  <div className="text-xs md:text-sm">
-                    <span className="font-medium">{t("home.teamHighlights.latestNewsletter.readTime")}</span>
-                    <span className="ml-1 text-muted-foreground">3분</span>
-                  </div>
-                  <NexButton variant="secondary" size="sm" className="w-full mt-2 md:mt-3 cursor-pointer text-xs md:text-sm">
-                    {t("home.teamHighlights.latestNewsletter.readButton")}
-                  </NexButton>
-                </div>
-              </NexCardContent>
-            </NexCard>
-          </NexCarouselItem>
-
-          {/* Code Quality */}
-          <NexCarouselItem>
-            <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
-              <NexCardContent className="p-4 md:p-6">
-                <div className="flex items-center mb-3 md:mb-4">
-                  <div className="p-2 md:p-3 rounded-xl bg-orange-100 dark:bg-orange-900/20 mr-3 md:mr-4 flex-shrink-0">
-                    <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.codeQuality.title")}</h3>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.codeQuality.subtitle")}</p>
-                  </div>
-                </div>
-                <div className="space-y-2 md:space-y-3">
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-xs md:text-sm">{t("home.teamHighlights.codeQuality.testCoverage")}</span>
-                      <span className="text-xs md:text-sm font-medium">94%</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-medium truncate">{t("home.teamHighlights.roadmap.project1Title")}</p>
+                      <p className="text-xs text-muted-foreground">{t("home.teamHighlights.roadmap.project1Progress")}</p>
                     </div>
-                    <NexProgress value={94} variant="success" />
+                    <NexBadge variant="warning" size="sm">{t("home.teamHighlights.roadmap.project1Status")}</NexBadge>
                   </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-xs md:text-sm">{t("home.teamHighlights.codeQuality.qualityScore")}</span>
-                      <span className="text-xs md:text-sm font-medium">A+</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-medium truncate">{t("home.teamHighlights.roadmap.project2Title")}</p>
+                      <p className="text-xs text-muted-foreground">{t("home.teamHighlights.roadmap.project2Schedule")}</p>
                     </div>
-                    <NexProgress value={98} variant="default" />
+                    <NexBadge variant="info" size="sm">{t("home.teamHighlights.roadmap.project2Status")}</NexBadge>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm">{t("home.teamHighlights.codeQuality.bugFixes")}</span>
-                    <NexBadge variant="success" size="sm">15개</NexBadge>
-                  </div>
-                </div>
-              </NexCardContent>
-            </NexCard>
-          </NexCarouselItem>
-
-          {/* Team Productivity */}
-          <NexCarouselItem>
-            <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
-              <NexCardContent className="p-4 md:p-6">
-                <div className="flex items-center mb-3 md:mb-4">
-                  <div className="p-2 md:p-3 rounded-xl bg-indigo-100 dark:bg-indigo-900/20 mr-3 md:mr-4 flex-shrink-0">
-                    <Users className="h-5 w-5 md:h-6 md:w-6 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.teamProductivity.title")}</h3>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.teamProductivity.subtitle")}</p>
-                  </div>
-                </div>
-                <div className="space-y-2 md:space-y-3">
-                  <div className="text-center">
-                    <div className="text-xl md:text-2xl font-bold text-primary">127</div>
-                    <p className="text-xs text-muted-foreground">{t("home.teamHighlights.teamProductivity.commits")}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-center">
-                    <div>
-                      <div className="text-base md:text-lg font-semibold">18</div>
-                      <p className="text-xs text-muted-foreground">{t("home.teamHighlights.teamProductivity.prCreated")}</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-slate-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-medium truncate">{t("home.teamHighlights.roadmap.project3Title")}</p>
+                      <p className="text-xs text-muted-foreground">{t("home.teamHighlights.roadmap.project3Schedule")}</p>
                     </div>
-                    <div>
-                      <div className="text-base md:text-lg font-semibold">22</div>
-                      <p className="text-xs text-muted-foreground">{t("home.teamHighlights.teamProductivity.prMerged")}</p>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <NexBadge variant="success" size="sm">+15% {t("home.teamHighlights.teamProductivity.vsLastWeek")}</NexBadge>
-                  </div>
-                </div>
-              </NexCardContent>
-            </NexCard>
-          </NexCarouselItem>
-
-          {/* Innovation Highlights */}
-          <NexCarouselItem>
-            <NexCard variant="elevated" className="mx-1 md:mx-2 h-full">
-              <NexCardContent className="p-4 md:p-6">
-                <div className="flex items-center mb-3 md:mb-4">
-                  <div className="p-2 md:p-3 rounded-xl bg-cyan-100 dark:bg-cyan-900/20 mr-3 md:mr-4 flex-shrink-0">
-                    <Zap className="h-5 w-5 md:h-6 md:w-6 text-cyan-600 dark:text-cyan-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-base md:text-lg font-semibold">{t("home.teamHighlights.innovationHighlights.title")}</h3>
-                    <p className="text-xs md:text-sm text-muted-foreground">{t("home.teamHighlights.innovationHighlights.subtitle")}</p>
-                  </div>
-                </div>
-                <div className="space-y-2 md:space-y-3">
-                  <div>
-                    <p className="text-xs md:text-sm font-medium">새로운 도구 도입</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">GitHub Copilot으로 개발 속도 향상</p>
-                  </div>
-                  <div>
-                    <p className="text-xs md:text-sm font-medium">프로세스 개선</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">자동화된 배포 파이프라인 구축</p>
-                  </div>
-                  <div>
-                    <p className="text-xs md:text-sm font-medium">기술 학습</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">팀 내 TypeScript 워크샵 진행</p>
+                    <NexBadge variant="secondary" size="sm">{t("home.teamHighlights.roadmap.project3Status")}</NexBadge>
                   </div>
                 </div>
               </NexCardContent>
@@ -647,21 +648,21 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">커밋</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.commits")}</span>
                   <span className="text-sm font-semibold">21</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">PR 리뷰</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.prReviews")}</span>
                   <span className="text-sm font-semibold">23</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">메시지</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.messages")}</span>
                   <span className="text-sm font-semibold">98</span>
                 </div>
               </div>
               <div className="mt-4 pt-3 border-t border-border">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">기여도</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.contribution")}</span>
                   <NexBadge variant="info" size="sm">Active Reviewer</NexBadge>
                 </div>
               </div>
@@ -683,21 +684,21 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">커밋</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.commits")}</span>
                   <span className="text-sm font-semibold">15</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">PR 리뷰</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.prReviews")}</span>
                   <span className="text-sm font-semibold">8</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">메시지</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.messages")}</span>
                   <span className="text-sm font-semibold">67</span>
                 </div>
               </div>
               <div className="mt-4 pt-3 border-t border-border">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">기여도</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.contribution")}</span>
                   <NexBadge variant="warning" size="sm">Deploy Master</NexBadge>
                 </div>
               </div>
@@ -719,21 +720,21 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">커밋</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.commits")}</span>
                   <span className="text-sm font-semibold">12</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">PR 리뷰</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.prReviews")}</span>
                   <span className="text-sm font-semibold">31</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">메시지</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.messages")}</span>
                   <span className="text-sm font-semibold">156</span>
                 </div>
               </div>
               <div className="mt-4 pt-3 border-t border-border">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">기여도</span>
+                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.contribution")}</span>
                   <NexBadge variant="secondary" size="sm">Bug Hunter</NexBadge>
                 </div>
               </div>
@@ -750,7 +751,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         >
           <NexCardContent className="space-y-8">
             <div className="space-y-4">
-              <NexBadge variant="info" className="mb-2">{t("home.cta.badge")}</NexBadge>
               <h2 className="text-3xl font-bold">
                 {t("home.cta.title")}
               </h2>

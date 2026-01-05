@@ -7,12 +7,42 @@ export type Translation = {
       subscribeButton: string;
       sampleButton: string;
     };
+    featureHighlights: {
+      autoDataCollection: {
+        title: string;
+        description: string;
+      };
+      aiSummary: {
+        title: string;
+        description: string;
+      };
+      autoNewsletter: {
+        title: string;
+        description: string;
+      };
+    };
     integrations: {
       badge: string;
       title: string;
       description: string;
       connected: string;
       comingSoon: string;
+      slack: {
+        name: string;
+        description: string;
+      };
+      github: {
+        name: string;
+        description: string;
+      };
+      discord: {
+        name: string;
+        description: string;
+      };
+      moreIntegrations: {
+        name: string;
+        description: string;
+      };
     };
     analytics: {
       badge: string;
@@ -25,6 +55,25 @@ export type Translation = {
       developerActivity: string;
       caseStatus: string;
       viewDashboard: string;
+      stagedRelease: string;
+      features: {
+        githubActivity: {
+          title: string;
+          description: string;
+        };
+        slackCommunication: {
+          title: string;
+          description: string;
+        };
+        newsletterPerformance: {
+          title: string;
+          description: string;
+        };
+        projectStatus: {
+          title: string;
+          description: string;
+        };
+      };
     };
     teamHighlights: {
       badge: string;
@@ -33,21 +82,28 @@ export type Translation = {
       weeklyAchievement: {
         title: string;
         subtitle: string;
-        completedIssues: string;
-        deployments: string;
-        codeReviews: string;
+        commits: string;
+        prMerged: string;
+        participants: string;
       };
       teamCommunication: {
         title: string;
         subtitle: string;
+        channel1: string;
+        channel1Description: string;
+        channel2: string;
+        channel2Description: string;
+        channel3: string;
+        channel3Description: string;
       };
       latestNewsletter: {
         title: string;
         subtitle: string;
         mainTopics: string;
         participants: string;
-        readTime: string;
-        readButton: string;
+        summary: string;
+        sampleMainTopic: string;
+        sampleSummary: string;
       };
       codeQuality: {
         title: string;
@@ -64,9 +120,32 @@ export type Translation = {
         prMerged: string;
         vsLastWeek: string;
       };
-      innovationHighlights: {
+      topicsOfTheWeek: {
         title: string;
         subtitle: string;
+        topic1Title: string;
+        topic1Description: string;
+        topic2Title: string;
+        topic2Description: string;
+        topic3Title: string;
+        topic3Description: string;
+      };
+      roadmap: {
+        title: string;
+        subtitle: string;
+        project1Title: string;
+        project1Progress: string;
+        project1Status: string;
+        project2Title: string;
+        project2Schedule: string;
+        project2Status: string;
+        project3Title: string;
+        project3Schedule: string;
+        project3Status: string;
+        inProgress: string;
+        planned: string;
+        scheduled: string;
+        progress: string;
       };
     };
     individualActivity: {
@@ -114,6 +193,8 @@ export type Translation = {
     channel: string;
     numberOfChannel: string;
     numberOfRepo: string;
+    count: string;
+    people: string;
     private: string;
     public: string;
     connected: string;

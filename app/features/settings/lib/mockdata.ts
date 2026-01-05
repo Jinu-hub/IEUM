@@ -421,47 +421,47 @@ export const homeCaseData = [
 export const homeFeatureHighlights = [
   {
     iconName: 'Layers' as const,
-    title: "자동 데이터 수집",
-    description: "Slack, GitHub 등 다양한 소스에서 팀 활동을 자동으로 수집합니다"
+    titleKey: "home.featureHighlights.autoDataCollection.title",
+    descriptionKey: "home.featureHighlights.autoDataCollection.description"
   },
   {
     iconName: 'Sparkles' as const,
-    title: "AI 기반 요약",
-    description: "수집된 데이터를 AI가 분석하여 핵심 내용만 정리합니다"
+    titleKey: "home.featureHighlights.aiSummary.title",
+    descriptionKey: "home.featureHighlights.aiSummary.description"
   },
   {
     iconName: 'Mail' as const,
-    title: "자동 뉴스레터 발송",
-    description: "정해진 일정에 맞춰 팀원들에게 자동으로 뉴스레터를 발송합니다"
+    titleKey: "home.featureHighlights.autoNewsletter.title",
+    descriptionKey: "home.featureHighlights.autoNewsletter.description"
   }
 ];
 
 export const homeIntegrations = [
   {
-    name: "Slack",
+    nameKey: "home.integrations.slack.name",
     iconName: 'MessageCircle' as const,
-    description: "팀 대화와 중요한 논의사항을 자동으로 수집합니다",
+    descriptionKey: "home.integrations.slack.description",
     status: "active",
     color: "success"
   },
   {
-    name: "GitHub",
+    nameKey: "home.integrations.github.name",
     iconName: 'GitBranch' as const,
-    description: "커밋, PR, 이슈를 주간 활동으로 정리합니다",
+    descriptionKey: "home.integrations.github.description",
     status: "active", 
     color: "primary"
   },
   {
-    name: "Discord",
+    nameKey: "home.integrations.discord.name",
     iconName: 'MessageSquare' as const,
-    description: "Discord 채널에서 팀 활동을 수집합니다",
+    descriptionKey: "home.integrations.discord.description",
     status: "coming-soon",
     color: "warning"
   },
   {
-    name: "더 많은 통합 예정",
+    nameKey: "home.integrations.moreIntegrations.name",
     iconName: 'Sparkles' as const,
-    description: "추가 통합 서비스를 준비 중입니다",
+    descriptionKey: "home.integrations.moreIntegrations.description",
     status: "coming-soon",
     color: "secondary"
   }
@@ -469,29 +469,29 @@ export const homeIntegrations = [
 
 export const homeAnalyticsFeatures = [
   {
-    title: "GitHub 활동 분석",
-    description: "커밋, PR, 이슈 트렌드를 한눈에",
+    titleKey: "home.analytics.features.githubActivity.title",
+    descriptionKey: "home.analytics.features.githubActivity.description",
     iconName: 'GitCommit' as const,
     lightBg: "bg-blue-50 border-blue-200",
     darkBg: "dark:bg-blue-500/20 dark:border-blue-500/30"
   },
   {
-    title: "Slack 커뮤니케이션",
-    description: "팀 소통 패턴과 활성도 추적",
+    titleKey: "home.analytics.features.slackCommunication.title",
+    descriptionKey: "home.analytics.features.slackCommunication.description",
     iconName: 'MessageSquare' as const,
     lightBg: "bg-green-50 border-green-200",
     darkBg: "dark:bg-green-500/20 dark:border-green-500/30"
   },
   {
-    title: "뉴스레터 성과",
-    description: "발송, 오픈율, 참여도 측정",
+    titleKey: "home.analytics.features.newsletterPerformance.title",
+    descriptionKey: "home.analytics.features.newsletterPerformance.description",
     iconName: 'Mail' as const,
     lightBg: "bg-purple-50 border-purple-200",
     darkBg: "dark:bg-purple-500/20 dark:border-purple-500/30"
   },
   {
-    title: "프로젝트 현황",
-    description: "케이스별 개발 진행 상태",
+    titleKey: "home.analytics.features.projectStatus.title",
+    descriptionKey: "home.analytics.features.projectStatus.description",
     iconName: 'BarChart3' as const,
     lightBg: "bg-orange-50 border-orange-200",
     darkBg: "dark:bg-orange-500/20 dark:border-orange-500/30"

@@ -6,8 +6,22 @@ const ko: Translation = {
     subtitle: "팀을 위한 스마트한 뉴스레터",
     hero: {
       description: "Slack 대화, GitHub 활동, 프로젝트 진행상황을 자동으로 분석하여 팀의 한 주를 정리한 뉴스레터를 생성합니다. 더 이상 수동으로 주간 보고서를 작성할 필요가 없습니다.",
-      subscribeButton: "시작하기",
-      sampleButton: "샘플보기",
+      subscribeButton: "무료 체험 시작하기",
+      sampleButton: "샘플 뉴스레터 보기",
+    },
+    featureHighlights: {
+      autoDataCollection: {
+        title: "자동 데이터 수집",
+        description: "Slack, GitHub 등 다양한 소스에서 팀 활동을 자동으로 수집합니다",
+      },
+      aiSummary: {
+        title: "AI 기반 요약",
+        description: "수집된 데이터를 AI가 분석하여 \"이번 주 핵심만 한눈에\" 정리합니다",
+      },
+      autoNewsletter: {
+        title: "자동 뉴스레터 발송",
+        description: "정해진 일정에 맞춰 팀원들에게 자동으로 뉴스레터를 발송합니다",
+      },
     },
     integrations: {
       badge: "통합 기능",
@@ -15,6 +29,22 @@ const ko: Translation = {
       description: "이미 사용하고 있는 도구들과 seamless하게 연결되어 팀의 활동을 자동으로 수집하고 정리합니다.",
       connected: "연결됨",
       comingSoon: "곧 출시",
+      slack: {
+        name: "Slack",
+        description: "팀 대화와 중요한 논의사항을 주간 활동으로 정리합니다",
+      },
+      github: {
+        name: "GitHub",
+        description: "커밋, PR, 이슈를 주간 활동으로 정리합니다",
+      },
+      discord: {
+        name: "Discord",
+        description: "Discord 채널에서 주요 활동을 요약용 데이터로 수집할 예정입니다",
+      },
+      moreIntegrations: {
+        name: "더 많은 통합 예정",
+        description: "추가 통합 서비스를 예정 하고 있습니다",
+      },
     },
     analytics: {
       badge: "실시간 분석",
@@ -27,6 +57,25 @@ const ko: Translation = {
       developerActivity: "개발자 활동",
       caseStatus: "케이스 현황",
       viewDashboard: "Analytics 대시보드 보기",
+      stagedRelease: "일부 Analytics 기능은 단계적으로 제공될 예정입니다.",
+      features: {
+        githubActivity: {
+          title: "GitHub 활동 분석",
+          description: "커밋, PR, 이슈 트렌드를 한눈에",
+        },
+        slackCommunication: {
+          title: "Slack 커뮤니케이션",
+          description: "팀 소통 패턴과 활성도 추적",
+        },
+        newsletterPerformance: {
+          title: "뉴스레터 성과",
+          description: "발송, 오픈율, 참여도 측정",
+        },
+        projectStatus: {
+          title: "프로젝트 현황",
+          description: "케이스별 개발 진행 상태",
+        },
+      },
     },
     teamHighlights: {
       badge: "팀 활동",
@@ -34,22 +83,29 @@ const ko: Translation = {
       description: "매주 자동으로 수집되는 팀의 성과와 중요한 순간들을 확인해보세요",
       weeklyAchievement: {
         title: "이번 주 성과",
-        subtitle: "Week #52",
-        completedIssues: "완료된 이슈",
-        deployments: "배포 횟수",
-        codeReviews: "코드 리뷰",
+        subtitle: "12월 4주차",
+        commits: "커밋 수",
+        prMerged: "PR 병합 수",
+        participants: "활동적인 기여자 수",
       },
       teamCommunication: {
         title: "팀 소통",
         subtitle: "활발한 논의",
+        channel1: "#engineering 채널",
+        channel1Description: "새로운 마이크로서비스 아키텍처 설계 논의",
+        channel2: "#frontend 채널",
+        channel2Description: "React 18 업그레이드 계획 수립",
+        channel3: "#backend 채널",
+        channel3Description: "API 성능 최적화 결과 공유",
       },
       latestNewsletter: {
-        title: "최신 뉴스레터",
+        title: "이번 주 하이라이트",
         subtitle: "12월 4주차",
-        mainTopics: "주요 토픽:",
+        mainTopics: "안건:",
         participants: "참여 인원:",
-        readTime: "읽기 시간:",
-        readButton: "뉴스레터 읽기",
+        summary: "내용:",
+        sampleMainTopic: "결제 시스템 개선",
+        sampleSummary: "새로운 마이크로서비스 아키텍처 도입 계획 수립",
       },
       codeQuality: {
         title: "코드 품질",
@@ -66,9 +122,32 @@ const ko: Translation = {
         prMerged: "PR 병합",
         vsLastWeek: "vs 지난주",
       },
-      innovationHighlights: {
-        title: "혁신 하이라이트",
-        subtitle: "이번 주 발견",
+      topicsOfTheWeek: {
+        title: "이번 주 토픽",
+        subtitle: "발견된 토픽들",
+        topic1Title: "새로운 도구 도입",
+        topic1Description: "GitHub Copilot으로 개발 속도 향상",
+        topic2Title: "프로세스 개선",
+        topic2Description: "자동화된 배포 파이프라인 구축",
+        topic3Title: "기술 학습",
+        topic3Description: "팀 내 TypeScript 워크샵 진행",
+      },
+      roadmap: {
+        title: "진행 중 & 로드맵",
+        subtitle: "프로젝트 현황",
+        project1Title: "결제 시스템 v2.0",
+        project1Progress: "진행률 65%",
+        project1Status: "진행중",
+        project2Title: "모바일 앱 리뉴얼",
+        project2Schedule: "Q1 예정",
+        project2Status: "계획됨",
+        project3Title: "AI 추천 엔진",
+        project3Schedule: "Q2 로드맵",
+        project3Status: "예정",
+        inProgress: "진행중",
+        planned: "계획됨",
+        scheduled: "예정",
+        progress: "진행률",
       },
     },
     individualActivity: {
@@ -115,6 +194,8 @@ const ko: Translation = {
     channel: "채널",
     numberOfChannel: "개",
     numberOfRepo: "개",
+    count: "건",
+    people: "명",
     private: "비공개",
     public: "공개",
     connected: "연결됨",

@@ -6,8 +6,22 @@ const en: Translation = {
     subtitle: "For Team Newsletters",
     hero: {
       description: "Automatically analyze Slack conversations, GitHub activities, and project progress to create a weekly newsletter that summarizes your team's week. No more manual weekly reports.",
-      subscribeButton: "Get Started",
-      sampleButton: "View Samples",
+      subscribeButton: "Start Free Trial",
+      sampleButton: "View Sample Newsletter",
+    },
+    featureHighlights: {
+      autoDataCollection: {
+        title: "Automatic Data Collection",
+        description: "Automatically collects team activities from various sources such as Slack and GitHub",
+      },
+      aiSummary: {
+        title: "AI-Based Summary",
+        description: "AI analyzes collected data to organize \"this week's key points at a glance\"",
+      },
+      autoNewsletter: {
+        title: "Automatic Newsletter Delivery",
+        description: "Automatically sends newsletters to team members according to a set schedule",
+      },
     },
     integrations: {
       badge: "Integrations",
@@ -15,6 +29,22 @@ const en: Translation = {
       description: "Seamlessly connect with the tools you already use to automatically collect and organize your team's activities.",
       connected: "Connected",
       comingSoon: "Coming Soon",
+      slack: {
+        name: "Slack",
+        description: "Organizes team conversations and important discussions into weekly activities",
+      },
+      github: {
+        name: "GitHub",
+        description: "Organizes commits, PRs, and issues into weekly activities",
+      },
+      discord: {
+        name: "Discord",
+        description: "Planned to collect key activities from Discord channels as summary data",
+      },
+      moreIntegrations: {
+        name: "More Integrations Coming",
+        description: "Additional integration services are planned",
+      },
     },
     analytics: {
       badge: "Real-time Analytics",
@@ -27,6 +57,25 @@ const en: Translation = {
       developerActivity: "Developer Activity",
       caseStatus: "Case Status",
       viewDashboard: "View Analytics Dashboard",
+      stagedRelease: "Some Analytics features will be rolled out gradually.",
+      features: {
+        githubActivity: {
+          title: "GitHub Activity Analysis",
+          description: "Commits, PRs, and issue trends at a glance",
+        },
+        slackCommunication: {
+          title: "Slack Communication",
+          description: "Track team communication patterns and activity levels",
+        },
+        newsletterPerformance: {
+          title: "Newsletter Performance",
+          description: "Measure delivery, open rates, and engagement",
+        },
+        projectStatus: {
+          title: "Project Status",
+          description: "Development progress status by case",
+        },
+      },
     },
     teamHighlights: {
       badge: "Team Activity",
@@ -34,22 +83,29 @@ const en: Translation = {
       description: "Check out your team's achievements and important moments collected automatically every week",
       weeklyAchievement: {
         title: "This Week's Achievements",
-        subtitle: "Week #52",
-        completedIssues: "Completed Issues",
-        deployments: "Deployments",
-        codeReviews: "Code Reviews",
+        subtitle: "December 4th Week",
+        commits: "Commits",
+        prMerged: "PR Merged",
+        participants: "Active Contributors",
       },
       teamCommunication: {
         title: "Team Communication",
         subtitle: "Active Discussions",
+        channel1: "#engineering channel",
+        channel1Description: "Discussion on new microservices architecture design",
+        channel2: "#frontend channel",
+        channel2Description: "Planning React 18 upgrade",
+        channel3: "#backend channel",
+        channel3Description: "Sharing API performance optimization results",
       },
       latestNewsletter: {
         title: "Latest Newsletter",
         subtitle: "Week 4 of December",
-        mainTopics: "Main Topics:",
+        mainTopics: "Items:",
         participants: "Participants:",
-        readTime: "Read Time:",
-        readButton: "Read Newsletter",
+        summary: "Content:",
+        sampleMainTopic: "Payment System Improvement",
+        sampleSummary: "Planning for new microservices architecture adoption",
       },
       codeQuality: {
         title: "Code Quality",
@@ -66,9 +122,32 @@ const en: Translation = {
         prMerged: "PR Merged",
         vsLastWeek: "vs Last Week",
       },
-      innovationHighlights: {
-        title: "Innovation Highlights",
-        subtitle: "Discovered This Week",
+      topicsOfTheWeek: {
+        title: "Topics of the Week",
+        subtitle: "Discovered topics this week",
+        topic1Title: "New Tool Adoption",
+        topic1Description: "Improving development speed with GitHub Copilot",
+        topic2Title: "Process Improvement",
+        topic2Description: "Building automated deployment pipeline",
+        topic3Title: "Technical Learning",
+        topic3Description: "Conducting TypeScript workshop within the team",
+      },
+      roadmap: {
+        title: "Ongoing & Roadmap",
+        subtitle: "Project Status",
+        project1Title: "Payment System v2.0",
+        project1Progress: "65% Progress",
+        project1Status: "In Progress",
+        project2Title: "Mobile App Renewal",
+        project2Schedule: "Q1 Scheduled",
+        project2Status: "Planned",
+        project3Title: "AI Recommendation Engine",
+        project3Schedule: "Q2 Roadmap",
+        project3Status: "Scheduled",
+        inProgress: "In Progress",
+        planned: "Planned",
+        scheduled: "Scheduled",
+        progress: "Progress",
       },
     },
     individualActivity: {
@@ -116,6 +195,8 @@ const en: Translation = {
     channel: "Channel",
     numberOfChannel: "items",
     numberOfRepo: "items",
+    count: "",
+    people: "",
     private: "Private",
     public: "Public",
     connected: "Connected",

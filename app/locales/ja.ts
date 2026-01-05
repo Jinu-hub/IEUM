@@ -6,8 +6,22 @@ const ja: Translation = {
     subtitle: "スマートなチーム向けニュースレター",
     hero: {
       description: "Slackの会話、GitHubの活動、プロジェクトの進捗を自動的に分析し、チームの1週間をまとめたニュースレターを生成します。手動での週次報告はもう必要ありません。",
-      subscribeButton: "始める",
+      subscribeButton: "無料トライアルを開始",
       sampleButton: "サンプルを見る",
+    },
+    featureHighlights: {
+      autoDataCollection: {
+        title: "自動データ収集",
+        description: "Slack、GitHubなど様々なソースからチームの活動を自動的に収集します",
+      },
+      aiSummary: {
+        title: "AIベースの要約",
+        description: "収集されたデータをAIが分析し、「今週の要点を一目で」整理します",
+      },
+      autoNewsletter: {
+        title: "自動ニュースレター配信",
+        description: "設定されたスケジュールに従って、チームメンバーに自動的にニュースレターを配信します",
+      },
     },
     integrations: {
       badge: "統合機能",
@@ -15,6 +29,22 @@ const ja: Translation = {
       description: "既に使用しているツールとシームレスに接続し、チームの活動を自動的に収集・整理します。",
       connected: "接続済み",
       comingSoon: "近日公開",
+      slack: {
+        name: "Slack",
+        description: "チームの会話と重要な議論事項を週次活動として整理します",
+      },
+      github: {
+        name: "GitHub",
+        description: "コミット、PR、イシューを週次活動として整理します",
+      },
+      discord: {
+        name: "Discord",
+        description: "Discordチャンネルから主要な活動を要約用データとして収集する予定です",
+      },
+      moreIntegrations: {
+        name: "より多くの統合予定",
+        description: "追加の統合サービスを予定しています",
+      },
     },
     analytics: {
       badge: "リアルタイム分析",
@@ -27,6 +57,25 @@ const ja: Translation = {
       developerActivity: "開発者活動",
       caseStatus: "ケース状況",
       viewDashboard: "Analyticsダッシュボードを見る",
+      stagedRelease: "一部のAnalytics機能は段階的に提供される予定です。",
+      features: {
+        githubActivity: {
+          title: "GitHub活動分析",
+          description: "コミット、PR、イシューのトレンドを一目で",
+        },
+        slackCommunication: {
+          title: "Slackコミュニケーション",
+          description: "チームのコミュニケーションパターンと活動レベルを追跡",
+        },
+        newsletterPerformance: {
+          title: "ニュースレター実績",
+          description: "配信、開封率、エンゲージメントを測定",
+        },
+        projectStatus: {
+          title: "プロジェクト状況",
+          description: "ケース別の開発進捗状況",
+        },
+      },
     },
     teamHighlights: {
       badge: "チーム活動",
@@ -34,22 +83,29 @@ const ja: Translation = {
       description: "毎週自動的に収集されるチームの成果と重要な瞬間を確認してください",
       weeklyAchievement: {
         title: "今週の成果",
-        subtitle: "Week #52",
-        completedIssues: "完了したイシュー",
-        deployments: "デプロイ回数",
-        codeReviews: "コードレビュー",
+        subtitle: "12月第4週",
+        commits: "コミット数",
+        prMerged: "PRマージ数",
+        participants: "活動的貢献者数",
       },
       teamCommunication: {
         title: "チームコミュニケーション",
         subtitle: "活発な議論",
+        channel1: "#engineeringチャンネル",
+        channel1Description: "新しいマイクロサービスアーキテクチャ設計の議論",
+        channel2: "#frontendチャンネル",
+        channel2Description: "React 18アップグレード計画の策定",
+        channel3: "#backendチャンネル",
+        channel3Description: "APIパフォーマンス最適化結果の共有",
       },
       latestNewsletter: {
         title: "最新ニュースレター",
         subtitle: "12月第4週",
-        mainTopics: "主要トピック:",
+        mainTopics: "アイテム:",
         participants: "参加者:",
-        readTime: "読む時間:",
-        readButton: "ニュースレターを読む",
+        summary: "内容:",
+        sampleMainTopic: "決済システム改善",
+        sampleSummary: "新しいマイクロサービスアーキテクチャ導入計画の策定",
       },
       codeQuality: {
         title: "コード品質",
@@ -66,9 +122,32 @@ const ja: Translation = {
         prMerged: "PRマージ",
         vsLastWeek: "先週比",
       },
-      innovationHighlights: {
-        title: "イノベーションハイライト",
-        subtitle: "今週発見",
+      topicsOfTheWeek: {
+        title: "今週のトピック",
+        subtitle: "発見されたトピック",
+        topic1Title: "新しいツール導入",
+        topic1Description: "GitHub Copilotで開発速度向上",
+        topic2Title: "プロセス改善",
+        topic2Description: "自動化されたデプロイパイプライン構築",
+        topic3Title: "技術学習",
+        topic3Description: "チーム内TypeScriptワークショップ実施",
+      },
+      roadmap: {
+        title: "進行中 & ロードマップ",
+        subtitle: "プロジェクト状況",
+        project1Title: "決済システム v2.0",
+        project1Progress: "進捗率 65%",
+        project1Status: "進行中",
+        project2Title: "モバイルアプリリニューアル",
+        project2Schedule: "Q1予定",
+        project2Status: "計画済み",
+        project3Title: "AI推薦エンジン",
+        project3Schedule: "Q2ロードマップ",
+        project3Status: "予定",
+        inProgress: "進行中",
+        planned: "計画済み",
+        scheduled: "予定",
+        progress: "進捗率",
       },
     },
     individualActivity: {
@@ -87,7 +166,7 @@ const ja: Translation = {
       title: "チームの生産性を次のレベルへ",
       description: "自動生成される週次ニュースレターでチームの成果を透明に共有し、見逃した重要な情報を簡単に把握できます。",
       getStarted: "始める",
-      viewSamples: "サンプルニュースレターを見る",
+      viewSamples: "サンプルを見る",
     },
   },
   navigation: {
@@ -116,6 +195,8 @@ const ja: Translation = {
     channel: "チャンネル",
     numberOfChannel: "個",
     numberOfRepo: "個",
+    count: "件",
+    people: "名",
     private: "非公開",
     public: "公開",
     connected: "接続済み",
