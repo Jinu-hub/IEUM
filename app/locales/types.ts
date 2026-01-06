@@ -171,6 +171,13 @@ export type Translation = {
     en: string;
     kr: string;
     ja: string;
+    links: {
+      about: string;
+      blog: string;
+      faq: string;
+      pricing: string;
+      contact: string;
+    };
   };
   common: {
     confirmationComplete: string;
@@ -1429,6 +1436,46 @@ export type Translation = {
     onboardingComplete: {
       title: string;
       description: string;
+    };
+  };
+  footer: {
+    brand: {
+      description: string;
+    };
+    links: {
+      product: {
+        title: string;
+        items: {
+          samples: string;
+          pricing: string;
+          sitemap: string;
+          sitemapTooltip: string;
+        };
+      };
+      info: {
+        title: string;
+        items: {
+          about: string;
+          blog: string;
+        };
+      };
+      support: {
+        title: string;
+        items: {
+          faq: string;
+          contact: string;
+          community: string;
+          communityTooltip: string;
+        };
+      };
+      legal: {
+        title: string;
+        items: {
+          privacyPolicy: string;
+          termsOfService: string;
+          securityWhitepaper: string;
+        };
+      };
     };
   };
 };

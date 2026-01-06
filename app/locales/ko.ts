@@ -172,6 +172,13 @@ const ko: Translation = {
   navigation: {
     kr: "한국어",    en: "영어",
     ja: "일본어",
+    links: {
+      about: "소개",
+      blog: "블로그",
+      faq: "FAQ",
+      pricing: "가격",
+      contact: "문의하기",
+    },
   },
   common: {
     confirmationComplete: "확인이 완료되었습니다",
@@ -1472,6 +1479,46 @@ const ko: Translation = {
     onboardingComplete: {
       title: "설정 완료!",
       description: "NexLetter 설정이 완료되었습니다. 첫 번째 뉴스레터가 성공적으로 발송되었습니다.  <br />다음 메일은 {{schedule}} 에 자동으로 발송됩니다.",
+    },
+  },
+  footer: {
+    brand: {
+      description: "팀 작업을 위한 스마트한 뉴스레터 시스템. Slack채널, GitHub레포지토리를 통합하여 팀의 주간 활동을 자동으로 정리하고 공유합니다.",
+    },
+    links: {
+      product: {
+        title: "제품",
+        items: {
+          samples: "샘플",
+          pricing: "가격",
+          sitemap: "사이트맵",
+          sitemapTooltip: "추후지원예정",
+        },
+      },
+      info: {
+        title: "정보",
+        items: {
+          about: "소개",
+          blog: "블로그",
+        },
+      },
+      support: {
+        title: "서포트",
+        items: {
+          faq: "FAQ",
+          contact: "문의하기",
+          community: "커뮤니티",
+          communityTooltip: "추후지원예정",
+        },
+      },
+      legal: {
+        title: "법적 고지",
+        items: {
+          privacyPolicy: "개인정보처리방침",
+          termsOfService: "이용약관",
+          securityWhitepaper: "보안백서",
+        },
+      },
     },
   },
 };

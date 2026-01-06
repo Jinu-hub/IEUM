@@ -173,6 +173,13 @@ const ja: Translation = {
     en: "英語",
     kr: "韓国語",
     ja: "日本語",
+    links: {
+      about: "概要",
+      blog: "ブログ",
+      faq: "FAQ",
+      pricing: "価格",
+      contact: "お問い合わせ",
+    },
   },
   common: {
     confirmationComplete: "確認が完了しました",
@@ -1473,6 +1480,46 @@ const ja: Translation = {
     onboardingComplete: {
       title: "セットアップ完了！",
       description: "NexLetterのセットアップが完了しました。最初のニュースレターが正常に送信されました。 <br />次回のメールは{{schedule}}に自動送信されます。",
+    },
+  },
+  footer: {
+    brand: {
+      description: "チーム連携のためのスマートなニュースレターシステム。SlackチャンネルとGitHubリポジトリを統合し、チームの週次活動を自動的に整理して共有します。",
+    },
+    links: {
+      product: {
+        title: "製品",
+        items: {
+          samples: "サンプル",
+          pricing: "価格",
+          sitemap: "サイトマップ",
+          sitemapTooltip: "近日公開",
+        },
+      },
+      info: {
+        title: "情報",
+        items: {
+          about: "概要",
+          blog: "ブログ",
+        },
+      },
+      support: {
+        title: "サポート",
+        items: {
+          faq: "FAQ",
+          contact: "お問い合わせ",
+          community: "コミュニティ",
+          communityTooltip: "近日公開",
+        },
+      },
+      legal: {
+        title: "法的通知",
+        items: {
+          privacyPolicy: "プライバシーポリシー",
+          termsOfService: "利用規約",
+          securityWhitepaper: "セキュリティホワイトペーパー",
+        },
+      },
     },
   },
 };

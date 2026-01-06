@@ -173,6 +173,13 @@ const en: Translation = {
     en: "English",
     kr: "Korean",
     ja: "Japanese",
+    links: {
+      about: "About",
+      blog: "Blog",
+      faq: "FAQ",
+      pricing: "Pricing",
+      contact: "Contact",
+    },
   },
   common: {
     confirmationComplete: "Confirmation complete",
@@ -1473,6 +1480,46 @@ const en: Translation = {
     onboardingComplete: {
       title: "Setup Complete!",
       description: "Your NexLetter setup is complete. And your first newsletter has been sent successfully. <br />Next mail will be sent automatically at {{schedule}}.",
+    },
+  },
+  footer: {
+    brand: {
+      description: "Smart newsletter system for team collaboration. Integrates Slack channels and GitHub repositories to automatically organize and share your team's weekly activities.",
+    },
+    links: {
+      product: {
+        title: "Product",
+        items: {
+          samples: "Samples",
+          pricing: "Pricing",
+          sitemap: "Sitemap",
+          sitemapTooltip: "Coming soon",
+        },
+      },
+      info: {
+        title: "Info",
+        items: {
+          about: "About",
+          blog: "Blog",
+        },
+      },
+      support: {
+        title: "Support",
+        items: {
+          faq: "FAQ",
+          contact: "Contact",
+          community: "Community",
+          communityTooltip: "Coming soon",
+        },
+      },
+      legal: {
+        title: "Legal",
+        items: {
+          privacyPolicy: "Privacy Policy",
+          termsOfService: "Terms of Service",
+          securityWhitepaper: "Security Whitepaper",
+        },
+      },
     },
   },
 };

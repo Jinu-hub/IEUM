@@ -262,6 +262,7 @@ export function NavigationBar({
         {/* Desktop navigation menu (hidden on mobile) */}
         <div className="hidden h-full items-center gap-5 md:flex">
           {/* Main navigation links */}
+          {/*
           <Link
             to="/components"
             viewTransition
@@ -269,30 +270,42 @@ export function NavigationBar({
           >
             Components
           </Link>
+          */}
+          <Link
+            to="/about"
+            viewTransition
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+          >
+            {t("navigation.links.about")}
+          </Link>
           <Link
             to="/blog"
             viewTransition
             className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
-            Blog
+            {t("navigation.links.blog")}
           </Link>
-          {/*
+          <Link
+            to="/faq"
+            viewTransition
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+          >
+            {t("navigation.links.faq")}
+          </Link>
+          <Link
+            to="/payments/pricing"
+            viewTransition
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+          >
+            {t("navigation.links.pricing")}
+          </Link>
           <Link
             to="/contact"
             viewTransition
             className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
-            Contact
+            {t("navigation.links.contact")}
           </Link>
-          */}
-          <Link
-            to="/payments/checkout"
-            viewTransition
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-          >
-            Payments
-          </Link>
-          
           <Separator orientation="vertical" />
           
           {/* Settings, theme switcher, and language switcher */}
@@ -326,16 +339,19 @@ export function NavigationBar({
         <SheetContent>
           <SheetHeader>
             <SheetClose asChild>
-              <Link to="/samples">Components</Link>
+              <Link to="/about">{t("navigation.links.about")}</Link>
             </SheetClose>
             <SheetClose asChild>
-              <Link to="/blog">Blog</Link>
+              <Link to="/blog">{t("navigation.links.blog")}</Link>
             </SheetClose>
             <SheetClose asChild>
-              <Link to="/contact">Contact</Link>
+              <Link to="/faq">{t("navigation.links.faq")}</Link>
             </SheetClose>
             <SheetClose asChild>
-              <Link to="/payments/checkout">Payments</Link>
+              <Link to="/payments/pricing">{t("navigation.links.pricing")}</Link>
+            </SheetClose>
+            <SheetClose asChild>
+              <Link to="/contact">{t("navigation.links.contact")}</Link>
             </SheetClose>
           </SheetHeader>
           {loading ? (

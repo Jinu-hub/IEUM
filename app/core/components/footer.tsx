@@ -13,7 +13,8 @@
  * - Company branding and information
  * - Legal compliance links
  */
-import { Mail, MessageSquare } from "lucide-react";
+import { Mail } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { GitHubIcon, NexFooter, SlackIcon } from "~/core/components/nex";
 import { Actions } from "./navigation-bar";
 
@@ -30,6 +31,8 @@ import { Actions } from "./navigation-bar";
  * @returns A modern, comprehensive footer component
  */
 export default function Footer() {
+  const { t } = useTranslation();
+
   // Handle newsletter subscription
   const handleNewsletterSubscribe = async (email: string) => {
     // In a real application, this would make an API call
@@ -40,37 +43,37 @@ export default function Footer() {
   // Footer navigation links organized by sections
   const footerLinks = [
     {
-      title: "제품",
+      title: t("footer.links.product.title"),
       items: [
-        { label: "샘플", href: "/samples" },
-        { label: "가격", href: "/pricing" },
-        { label: "사이트맵", href: "/site-map", disabled: true, tooltip: "추후지원예정" },
+        { label: t("footer.links.product.items.samples"), href: "/samples" },
+        { label: t("footer.links.product.items.pricing"), href: "/pricing" },
+        { label: t("footer.links.product.items.sitemap"), href: "/site-map", disabled: true, tooltip: t("footer.links.product.items.sitemapTooltip") },
       ]
     },
     {
-      title: "정보",
+      title: t("footer.links.info.title"),
       items: [
-        { label: "소개", href: "/about" },
-        { label: "블로그", href: "/blog" },
+        { label: t("footer.links.info.items.about"), href: "/about" },
+        { label: t("footer.links.info.items.blog"), href: "/blog" },
         //{ label: "채용", href: "/careers" },
         //{ label: "연락처", href: "/contact" },
         //{ label: "뉴스", href: "/news" }
       ]
     },
     {
-      title: "서포트",
+      title: t("footer.links.support.title"),
       items: [
-        { label: "FAQ", href: "/faq" },
-        { label: "문의하기", href: "/contact" },
-        { label: "커뮤니티", href: "/forum", disabled: true, tooltip: "추후지원예정" },
+        { label: t("footer.links.support.items.faq"), href: "/faq" },
+        { label: t("footer.links.support.items.contact"), href: "/contact" },
+        { label: t("footer.links.support.items.community"), href: "/forum", disabled: true, tooltip: t("footer.links.support.items.communityTooltip") },
       ]
     },
     {
-      title: "법적 고지",
+      title: t("footer.links.legal.title"),
       items: [
-        { label: "개인정보처리방침", href: "/legal/privacy-policy" },
-        { label: "이용약관", href: "/legal/terms-of-service" },
-        { label: "보안백서", href: "/legal/security-whitepaper" },
+        { label: t("footer.links.legal.items.privacyPolicy"), href: "/legal/privacy-policy" },
+        { label: t("footer.links.legal.items.termsOfService"), href: "/legal/terms-of-service" },
+        { label: t("footer.links.legal.items.securityWhitepaper"), href: "/legal/security-whitepaper" },
         //{ label: "쿠키 정책", href: "/legal/cookies" }
       ]
     }
@@ -93,15 +96,17 @@ export default function Footer() {
     {
       platform: "email" as const,
       href: "mailto:support@company.com",
-      label: "이메일",
+      label: "Email",
       icon: <Mail className="h-5 w-5" />
     },
+    /*
     {
       platform: "custom" as const,
       href: "/feedback",
       label: "피드백",
       icon: <MessageSquare className="h-5 w-5" />
     }
+    */
   ];
 
   return (
@@ -109,7 +114,7 @@ export default function Footer() {
       variant="default"
       brand={{
         name: "Nexletter",
-        description: "팀 작업을 위한 스마트한 뉴스레터 시스템. Slack채널, GitHub레포지토리를 통합하여 팀의 주간 활동을 자동으로 정리하고 공유합니다.",
+        description: t("footer.brand.description"),
         logo: <Mail className="h-8 w-8" />
       }}
       links={footerLinks}
