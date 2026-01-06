@@ -949,6 +949,8 @@ export type Translation = {
       monthlyPayment: string;
       annualPayment: string;
       perMonth: string;
+      totalFor12Months: string;
+      saveAmount: string;
     };
     plans: {
       free: {

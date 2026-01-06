@@ -951,6 +951,8 @@ const en: Translation = {
       monthlyPayment: "Monthly payment",
       annualPayment: "Annual prepayment",
       perMonth: " / month",
+      totalFor12Months: "Total for 12 months",
+      saveAmount: "Save",
     },
     plans: {
       free: {

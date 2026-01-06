@@ -950,6 +950,8 @@ const ko: Translation = {
       monthlyPayment: "월별 결제",
       annualPayment: "연간 선결제",
       perMonth: " / 월",
+      totalFor12Months: "12개월 합산",
+      saveAmount: "절약",
     },
     plans: {
       free: {

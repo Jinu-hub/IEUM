@@ -293,7 +293,7 @@ export function NavigationBar({
             {t("navigation.links.faq")}
           </Link>
           <Link
-            to="/payments/pricing"
+            to="/pricing"
             viewTransition
             className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
@@ -348,7 +348,7 @@ export function NavigationBar({
               <Link to="/faq">{t("navigation.links.faq")}</Link>
             </SheetClose>
             <SheetClose asChild>
-              <Link to="/payments/pricing">{t("navigation.links.pricing")}</Link>
+              <Link to="/pricing">{t("navigation.links.pricing")}</Link>
             </SheetClose>
             <SheetClose asChild>
               <Link to="/contact">{t("navigation.links.contact")}</Link>

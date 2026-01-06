@@ -951,6 +951,8 @@ const ja: Translation = {
       monthlyPayment: "月額支払い",
       annualPayment: "年間前払い",
       perMonth: " / 月",
+      totalFor12Months: "12ヶ月合計",
+      saveAmount: "節約",
     },
     plans: {
       free: {

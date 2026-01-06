@@ -19,7 +19,6 @@ import {
   NexCardHeader,
   NexCardTitle,
   NexHero,
-  NexProgress,
   NexToggle
 } from "~/core/components/nex";
 import i18next from "~/core/lib/i18next.server";
@@ -59,9 +58,30 @@ type PricingPlan = {
   bestFor: string;
   highlighted?: boolean;
   badge?: string;
+  badgeVariant?: "default" | "success" | "warning" | "error" | "info" | "secondary" | "outline";
   comingSoon?: boolean;
   features: string[];
   cta: string;
+};
+
+// USD 기준 가격 정의
+const USD_PRICES = {
+  free: { monthly: 0, annual: 0 },
+  starter: { monthly: 5, annual: 4 },
+  pro: { monthly: 20, annual: 16 },
+} as const;
+
+// 환율 (USD 기준)
+const EXCHANGE_RATES = {
+  en: 1, // USD
+  ko: 1400, // KRW per USD
+  ja: 150, // JPY per USD
+} as const;
+
+// 가격 변환 함수
+const convertPrice = (usdPrice: number, language: string): number => {
+  const rate = EXCHANGE_RATES[language as keyof typeof EXCHANGE_RATES] ?? EXCHANGE_RATES.en;
+  return Math.round(usdPrice * rate);
 };
 
 export default function Pricing({ loaderData }: Route.ComponentProps) {
@@ -91,7 +111,10 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
       {
         name: t("pricing.plans.free.name"),
         description: t("pricing.plans.free.description"),
-        price: { monthly: 0, annual: 0 },
+        price: {
+          monthly: convertPrice(USD_PRICES.free.monthly, i18n.language),
+          annual: convertPrice(USD_PRICES.free.annual, i18n.language),
+        },
         seats: t("pricing.plans.free.seats"),
         bestFor: t("pricing.plans.free.bestFor"),
         features: t("pricing.plans.free.features", { returnObjects: true }) as string[],
@@ -100,26 +123,34 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
       {
         name: t("pricing.plans.starter.name"),
         description: t("pricing.plans.starter.description"),
-        price: { monthly: 9900, annual: 7900 },
+        price: {
+          monthly: convertPrice(USD_PRICES.starter.monthly, i18n.language),
+          annual: convertPrice(USD_PRICES.starter.annual, i18n.language),
+        },
         seats: t("pricing.plans.starter.seats"),
         bestFor: t("pricing.plans.starter.bestFor"),
         badge: t("pricing.plans.starter.badge"),
+        badgeVariant: "success",
         features: t("pricing.plans.starter.features", { returnObjects: true }) as string[],
         cta: t("pricing.plans.starter.cta"),
       },
       {
         name: t("pricing.plans.pro.name"),
         description: t("pricing.plans.pro.description"),
-        price: { monthly: 39900, annual: 31900 },
+        price: {
+          monthly: convertPrice(USD_PRICES.pro.monthly, i18n.language),
+          annual: convertPrice(USD_PRICES.pro.annual, i18n.language),
+        },
         seats: t("pricing.plans.pro.seats"),
         bestFor: t("pricing.plans.pro.bestFor"),
         comingSoon: true,
         badge: t("pricing.plans.pro.badge"),
+        badgeVariant: "warning",
         features: t("pricing.plans.pro.features", { returnObjects: true }) as string[],
         cta: t("pricing.plans.pro.cta"),
       },
     ],
-    [t]
+    [t, i18n.language]
   );
 
   const comparisonRows = useMemo(
@@ -208,6 +239,21 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
     return priceFormatter.format(value);
   };
 
+  const getAnnualTotal = (plan: PricingPlan) => {
+    return priceFormatter.format(plan.price.annual * 12);
+  };
+
+  const getMonthlyTotal = (plan: PricingPlan) => {
+    return priceFormatter.format(plan.price.monthly * 12);
+  };
+
+  const getSavings = (plan: PricingPlan) => {
+    const monthlyTotal = plan.price.monthly * 12;
+    const annualTotal = plan.price.annual * 12;
+    const savings = monthlyTotal - annualTotal;
+    return savings > 0 ? priceFormatter.format(savings) : null;
+  };
+
   return (
     <div className="space-y-16">
       <NexHero
@@ -247,6 +293,7 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
           </div>
         </div>
 
+        {/* pricing plans section */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {plans.map((plan) => {
             const isHighlighted = plan.highlighted;
@@ -261,24 +308,47 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
                 <NexCardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <NexCardTitle>{plan.name}</NexCardTitle>
+                      <NexCardTitle className="flex items-center gap-2">
+                        <span>{plan.name}</span>
+                        {plan.badge && (
+                          <NexBadge 
+                            variant={plan.badgeVariant || "info"} 
+                            size="sm"
+                          >
+                            {plan.badge}
+                          </NexBadge>
+                        )}
+                      </NexCardTitle>
                       <NexCardDescription>{plan.description}</NexCardDescription>
                     </div>
-                    {plan.badge && (
-                      <NexBadge variant="info" size="sm">
-                        {plan.badge}
-                      </NexBadge>
-                    )}
                   </div>
                 </NexCardHeader>
                 <NexCardContent className="flex h-full flex-col space-y-6">
                   <div>
                     <div className="text-4xl font-bold text-[#5E6AD2] dark:text-[#7C89F9]">
-                      {displayPrice(plan)}{t("pricing.billing.perMonth")}
+                      {displayPrice(plan)}{annualBilling ? "" : t("pricing.billing.perMonth")}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                     {annualBilling ? t("pricing.billing.annualPayment") : t("pricing.billing.monthlyPayment")}
-                    </p>
+                    {annualBilling ? (
+                      <div className="space-y-1 mt-2">
+                        <p className="text-sm text-muted-foreground">
+                          {t("pricing.billing.annualPayment")}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t("pricing.billing.totalFor12Months")}: {getAnnualTotal(plan)}
+                        </p>
+                        {getSavings(plan) ? (
+                          <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+                            {t("pricing.billing.saveAmount")} {getSavings(plan)} ({priceFormatter.format(plan.price.monthly)} × 12)
+                          </p>
+                        ) : (
+                          <p className="text-xs opacity-0">placeholder</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {t("pricing.billing.monthlyPayment")}
+                      </p>
+                    )}
                   </div>
                   <div className="rounded-lg bg-muted/50 p-3">
                     <p className="text-sm font-semibold">{plan.seats}</p>
@@ -313,6 +383,7 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
         </div>
       </section>
 
+      {/* comparison section */}
       <section>
         <NexCard variant="outlined">
           <NexCardHeader>
@@ -346,6 +417,8 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
         </NexCard>
       </section>
 
+      {/* roi section */}
+      {/* 
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <NexCard variant="outlined">
           <NexCardHeader>
@@ -385,9 +458,10 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
             </NexButton>
           </NexCardContent>
         </NexCard>
-
       </section>
+      */}
 
+      {/* faq section */}
       <section className="space-y-4">
         <div>
           <h2 className="text-3xl font-bold">{t("pricing.faq.title")}</h2>
@@ -414,6 +488,7 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
         </div>
       </section>
 
+      {/* cta section */}
       <section>
         <NexCard
           variant="elevated"
