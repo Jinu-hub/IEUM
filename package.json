@@ -26,6 +26,7 @@
     "slack:report": "tsx app/core/integrations/slack/genReport.ts",
     "test:slack": "tsx app/core/integrations/slack/tests/run-tests.ts",
     "migrate-secrets": "tsx scripts/migrate-to-secrets.ts",
+    "generate-favicon": "tsx scripts/generate-favicon.ts",
     "format": "prettier --write \"app/**/*.{ts,tsx,js,jsx,json,css,md,mdx}\""
   },
   "dependencies": {
@@ -103,11 +104,14 @@
     "@types/pg": "^8.11.11",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
+    "@types/to-ico": "^1.1.3",
     "drizzle-kit": "^0.30.5",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "react-router-devtools": "^1.1.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.0.17",
+    "to-ico": "^1.1.5",
     "tsx": "^4.20.4",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
