@@ -235,6 +235,11 @@ export default function Join({ actionData }: Route.ComponentProps) {
             <CardDescription className="text-base">
               {t("description")}
             </CardDescription>
+            <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 mt-4">
+              <AlertDescription className="text-amber-900 dark:text-amber-200 text-sm leading-relaxed whitespace-normal break-words">
+                {t("noticeMessage")}
+              </AlertDescription>
+            </Alert>
           </CardHeader>
           <CardContent className="grid gap-4">
             <Form
@@ -323,7 +328,7 @@ export default function Join({ actionData }: Route.ComponentProps) {
                 ) : null}
               </div>
               <FormButton label={t("createAccount")}
-                className="w-full cursor-pointer" />
+                className="w-full cursor-pointer" disabled={true} />
               {actionData && "error" in actionData && actionData.error ? (
                 <FormErrors errors={[actionData.error]} />
               ) : null}

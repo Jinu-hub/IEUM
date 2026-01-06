@@ -37,11 +37,26 @@ function AuthLoginButton({
   logo,
   label,
   href,
+  disabled = false,
 }: {
   logo: React.ReactNode;
   label: string;
   href: string;
+  disabled?: boolean;
 }) {
+  if (disabled) {
+    return (
+      <Button
+        variant="outline"
+        className="inline-flex items-center justify-center gap-2 pointer-events-none opacity-50 cursor-not-allowed"
+        disabled
+      >
+        <span>{logo}</span>
+        <span>Continue with {label}</span>
+      </Button>
+    );
+  }
+
   return (
     <Button
       variant="outline"
@@ -123,11 +138,13 @@ function SocialLoginButtons() {
         logo={<GoogleLogo className="size-4" />}
         label="Google"
         href="/auth/social/start/google"
+        disabled={true}
       />
       <AuthLoginButton
         logo={<GithubLogo className="size-4 scale-125 dark:text-white" />}
         label="Github"
         href="/auth/social/start/github"
+        disabled={true}
       />
       {/*
       <AuthLoginButton

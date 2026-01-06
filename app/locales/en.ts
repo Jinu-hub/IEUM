@@ -383,6 +383,7 @@ const en: Translation = {
     heroDescription: "Automatically analyze Slack conversations, GitHub activities, and project progress to create a weekly newsletter for your team. No more manual weekly reports.",
     title: "Create an account",
     description: "Enter your details to create an account",
+    noticeMessage: "We are currently conducting final testing and review, so registration is not available. Registration will be available soon, so please wait a moment.",
     name: "Name",
     email: "Email",
     password: "Password",

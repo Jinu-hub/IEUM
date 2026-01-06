@@ -281,7 +281,9 @@ export function NavigationBar({
           <Link
             to="/blog"
             viewTransition
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors pointer-events-none opacity-50 cursor-not-allowed"
+            aria-disabled="true"
+            onClick={(e) => e.preventDefault()}
           >
             {t("navigation.links.blog")}
           </Link>
@@ -342,7 +344,14 @@ export function NavigationBar({
               <Link to="/about">{t("navigation.links.about")}</Link>
             </SheetClose>
             <SheetClose asChild>
-              <Link to="/blog">{t("navigation.links.blog")}</Link>
+              <Link 
+                to="/blog" 
+                className="pointer-events-none opacity-50 cursor-not-allowed"
+                aria-disabled="true"
+                onClick={(e) => e.preventDefault()}
+              >
+                {t("navigation.links.blog")}
+              </Link>
             </SheetClose>
             <SheetClose asChild>
               <Link to="/faq">{t("navigation.links.faq")}</Link>

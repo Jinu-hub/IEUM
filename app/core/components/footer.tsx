@@ -54,7 +54,7 @@ export default function Footer() {
       title: t("footer.links.info.title"),
       items: [
         { label: t("footer.links.info.items.about"), href: "/about" },
-        { label: t("footer.links.info.items.blog"), href: "/blog" },
+        { label: t("footer.links.info.items.blog"), href: "/blog", disabled: true, tooltip: t("footer.links.product.items.sitemapTooltip") },
         //{ label: "채용", href: "/careers" },
         //{ label: "연락처", href: "/contact" },
         //{ label: "뉴스", href: "/news" }

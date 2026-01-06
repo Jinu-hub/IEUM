@@ -382,6 +382,7 @@ const ko: Translation = {
     heroDescription: "Slack 대화, GitHub 활동, 프로젝트 진행상황을 자동으로 분석하여 팀의 한 주를 정리한 뉴스레터를 생성합니다. 더 이상 수동으로 주간 보고서를 작성할 필요가 없습니다.",
     title: "계정 만들기",
     description: "계정 생성을 위한 정보를 입력하세요",
+    noticeMessage: "현재 최종 테스트 및 심사를 진행중이기에, 회원가입을 지원하지 않습니다. 곧 회원가입이 가능해지므로 조금만 기다려 주세요.",
     name: "이름",
     email: "이메일",
     password: "비밀번호",
@@ -1494,7 +1495,7 @@ const ko: Translation = {
           samples: "샘플",
           pricing: "가격",
           sitemap: "사이트맵",
-          sitemapTooltip: "추후지원예정",
+          sitemapTooltip: "추후공개예정",
         },
       },
       info: {
@@ -1510,7 +1511,7 @@ const ko: Translation = {
           faq: "FAQ",
           contact: "문의하기",
           community: "커뮤니티",
-          communityTooltip: "추후지원예정",
+          communityTooltip: "추후공개예정",
         },
       },
       legal: {

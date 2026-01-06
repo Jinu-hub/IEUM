@@ -381,6 +381,7 @@ export type Translation = {
     heroDescription: string;
     title: string;
     description: string;
+    noticeMessage: string;
     name: string;
     email: string;
     password: string;
