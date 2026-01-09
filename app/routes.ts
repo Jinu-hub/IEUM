@@ -19,11 +19,16 @@ export default [
   route("/robots.txt", "core/screens/robots.ts"),
   route("/sitemap.xml", "core/screens/sitemap.ts"),
   route("/samples", "features/home/screens/samples.tsx"),
-  ...prefix("/debug", [
-    // You should delete this in production.
-    route("/sentry", "debug/sentry.tsx"),
-    route("/analytics", "debug/analytics.tsx"),
-  ]),
+  
+  // Debug routes - only available in non-production environments
+  // Automatically disabled when NODE_ENV is set to "production"
+  ...(process.env.NODE_ENV !== "production"
+    ? prefix("/debug", [
+        route("/sentry", "debug/sentry.tsx"),
+        route("/analytics", "debug/analytics.tsx"),
+      ])
+    : []),
+  
   // API Routes. Routes that export actions and loaders but no UI.
   ...prefix("/api", [
     ...prefix("/settings", [

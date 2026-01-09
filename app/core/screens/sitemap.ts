@@ -17,6 +17,16 @@ import { readdir } from "node:fs/promises";
 import path from "node:path";
 
 /**
+ * URL entry configuration for sitemap
+ */
+interface SitemapUrl {
+  loc: string;
+  lastmod?: string;
+  changefreq?: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
+  priority?: number;
+}
+
+/**
  * Sitemap generator loader function
  * 
  * This React Router loader function dynamically generates an XML sitemap for the application.
@@ -37,44 +47,115 @@ export async function loader() {
   // Get the site domain from environment variables
   const DOMAIN = process.env.SITE_URL;
 
-  // Scan the blog directory for MDX files and convert to URLs
-  const blogUrls = (
-    await readdir(path.join(process.cwd(), "app", "features", "blog", "docs"))
-  )
-    .filter((file) => file.endsWith(".mdx")) // Only include MDX files
-    .map((file) => `/blog/${file.replace(".mdx", "")}`);
+  // Validate environment variable
+  if (!DOMAIN) {
+    throw new Error("SITE_URL environment variable is not defined");
+  }
 
-  // Scan the legal directory for MDX files and convert to URLs
-  const legalUrls = (
-    await readdir(path.join(process.cwd(), "app", "features", "legal", "docs"))
-  )
-    .filter((file) => file.endsWith(".mdx")) // Only include MDX files
-    .map((file) => `/legal/${file.replace(".mdx", "")}`);
+  // Initialize URL arrays
+  let blogUrls: SitemapUrl[] = [];
+  let legalUrls: SitemapUrl[] = [];
 
-  // Define static routes that should be included in the sitemap
-  const customUrls = ["/", "/login", "/join"];
+  // Scan the blog directory for MDX files and convert to URLs with error handling
+  try {
+    const blogFiles = await readdir(
+      path.join(process.cwd(), "app", "features", "blog", "docs")
+    );
+    blogUrls = blogFiles
+      .filter((file) => file.endsWith(".mdx"))
+      .map((file) => ({
+        loc: `/blog/${file.replace(".mdx", "")}`,
+        changefreq: "weekly" as const,
+        priority: 0.7,
+      }));
+  } catch (error) {
+    console.warn("Failed to read blog directory:", error);
+  }
+
+  // Scan the legal directory for MDX files and convert to URLs with error handling
+  try {
+    const legalFiles = await readdir(
+      path.join(process.cwd(), "app", "features", "legal", "docs")
+    );
+    legalUrls = legalFiles
+      .filter((file) => file.endsWith(".mdx"))
+      .map((file) => ({
+        loc: `/legal/${file.replace(".mdx", "")}`,
+        changefreq: "yearly" as const,
+        priority: 0.3,
+      }));
+  } catch (error) {
+    console.warn("Failed to read legal directory:", error);
+  }
+
+  // Define static routes that should be included in the sitemap with SEO metadata
+  const customUrls: SitemapUrl[] = [
+    {
+      loc: "/",
+      changefreq: "daily",
+      priority: 1.0,
+    },
+    {
+      loc: "/pricing",
+      changefreq: "weekly",
+      priority: 0.9,
+    },
+    {
+      loc: "/about",
+      changefreq: "monthly",
+      priority: 0.8,
+    },
+    {
+      loc: "/contact",
+      changefreq: "monthly",
+      priority: 0.7,
+    },
+    {
+      loc: "/faq",
+      changefreq: "monthly",
+      priority: 0.6,
+    },
+    {
+      loc: "/login",
+      changefreq: "yearly",
+      priority: 0.4,
+    },
+    {
+      loc: "/join",
+      changefreq: "yearly",
+      priority: 0.5,
+    },
+  ];
+
+  // Get current date for lastmod
+  const currentDate = new Date().toISOString();
 
   // Combine all URLs and format them according to sitemap protocol
-  const sitemapUrls = [...blogUrls, ...legalUrls, ...customUrls].map((url) => {
-    return `<url>
-      <loc>${DOMAIN}${url}</loc>
-      <lastmod>${new Date().toISOString()}</lastmod>
-    </url>`;
+  const allUrls = [...blogUrls, ...legalUrls, ...customUrls];
+  const sitemapUrls = allUrls.map((url) => {
+    return `  <url>
+    <loc>${DOMAIN}${url.loc}</loc>
+    <lastmod>${url.lastmod || currentDate}</lastmod>${
+      url.changefreq ? `\n    <changefreq>${url.changefreq}</changefreq>` : ""
+    }${url.priority !== undefined ? `\n    <priority>${url.priority}</priority>` : ""}
+  </url>`;
   });
 
   // Return an XML response with the sitemap
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?>
-    <urlset
-      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"
-    >
-      ${sitemapUrls.join("\n")}
-    </urlset>
-    `,
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"
+>
+${sitemapUrls.join("\n")}
+</urlset>`,
     {
-      headers: { "Content-Type": "application/xml" }, // Set proper content type for XML
-    },
+      headers: {
+        "Content-Type": "application/xml",
+        "Cache-Control": "public, max-age=3600", // Cache for 1 hour
+      },
+    }
   );
 }

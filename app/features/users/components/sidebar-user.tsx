@@ -86,7 +86,7 @@ export default function SidebarUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link to="/pricing" viewTransition>
+                <Link to="/payments/checkout" viewTransition>
                 <Sparkles />
                 {t("user.upgrade")}
                 </Link>
