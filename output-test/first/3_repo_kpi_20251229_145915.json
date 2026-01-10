@@ -1,0 +1,254 @@
+{
+  "overall": {
+    "commits": 34,
+    "closedPRs": 5,
+    "issuesOpened": 0,
+    "issuesClosed": 0
+  },
+  "perRepo": [
+    {
+      "repo": "digitalsheep/LEAD",
+      "commits": 34,
+      "closedPRs": 5,
+      "issuesOpened": 0,
+      "issuesClosed": 0
+    }
+  ],
+  "perUser": [
+    {
+      "user": "ikemit",
+      "repo": "digitalsheep/LEAD",
+      "commits": 3,
+      "prsMerged": 5,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "モジュール作成（5.3.2_0019）",
+        "#21695 superuser/masterの共有IDでの操作履歴",
+        "モジュール作成（5.3.2_0018）",
+        "#21621 eStudioの設問の文字",
+        "#21581 パネル表示時の配布資料",
+        "#21714 目次インポート",
+        "#22074 脆弱性診断　指摘事項 1.",
+        "#21579 メール送信画面に「パスワー"
+      ]
+    },
+    {
+      "user": "jinuSon",
+      "repo": "digitalsheep/LEAD",
+      "commits": 5,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#21999 LEAD管理者機能対1月-No2：査定達成状況制御（CLASSIC側オプション対応）",
+        "#20038 LEAD管理者機能対応その5_5-No67：キャリアカルテテーブル管理 エクスポート",
+        "#20038 LEAD管理者機能対応その5_5-No66：キャリアカルテテーブル管理 画面表示項目",
+        "#20038 LEAD管理者機能対応その5_4-No488：研修申請 キャンセル待ち繰上げ",
+        "#20038 LEAD管理者機能対応その5_4-No458：アンケート進捗インポート 添付ファイル"
+      ]
+    },
+    {
+      "user": "Katsuya-Matsuzaki",
+      "repo": "digitalsheep/LEAD",
+      "commits": 3,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#22086 [No.551] 同時にログイン処理が行われると、1つの処理が止まり、それ以降、DBロックでそのユーザのログインができなくなる",
+        "Revert \"#21766 [No.505] LEADログイン処理大改修\"",
+        "#21766 [No.505] LEADログイン処理大改修"
+      ]
+    },
+    {
+      "user": "furuta-fumitaka",
+      "repo": "digitalsheep/LEAD",
+      "commits": 1,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#21621 eStudioの設問の文字装飾対応"
+      ]
+    },
+    {
+      "user": "Neioumi",
+      "repo": "digitalsheep/LEAD",
+      "commits": 1,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#22073 【デザイン調整】パネル表示時の配布資料"
+      ]
+    },
+    {
+      "user": "YasuhiroOba",
+      "repo": "digitalsheep/LEAD",
+      "commits": 2,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#22084 「進捗率」でのソートした時に、進捗率の順で正しくソートされない",
+        "#22069 タスクの再実行を行った時に名前を付けると、元タスクの名前が上書き更新される"
+      ]
+    },
+    {
+      "user": "Yuuki-Imai",
+      "repo": "digitalsheep/LEAD",
+      "commits": 4,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#21714 目次インポート",
+        "#21581 パネル表示時の配布資料",
+        "#21579 メール送信画面に「パスワード：$PASSWORD」の説明を追加"
+      ]
+    },
+    {
+      "user": "TeradaMomoko",
+      "repo": "digitalsheep/LEAD",
+      "commits": 3,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#22078 LEAD人事データ連携：ユーザ情報の更新時にロールが上書きされてしまう",
+        "#20878 修正依頼表その6の2 No.40",
+        "#20878 修正依頼表その6の2 No.58"
+      ]
+    },
+    {
+      "user": "WatanabeTomoaki",
+      "repo": "digitalsheep/LEAD",
+      "commits": 1,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#21520 「研修終了日」から90日以上経過した「未申請」のユーザをdeliver_refから削除されるようにする"
+      ]
+    },
+    {
+      "user": "ManseonJeon",
+      "repo": "digitalsheep/LEAD",
+      "commits": 10,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#22074 脆弱性診断　指摘事項 1.クロスサイトスクリプティング(蓄積型)_記事投稿時",
+        "#21999 V5.3.2 修正依頼表対応 No.71",
+        "#21999 V5.3.2 修正依頼表対応 No.110",
+        "#21999 V5.3.2 修正依頼表対応 No.178,179",
+        "#21999 V5.3.2 修正依頼表対応 No.213",
+        "#21999 V5.3.2 修正依頼表対応 No.198",
+        "#21999 V5.3.2 修正依頼表対応 No.175",
+        "#21999 V5.3.2 修正依頼表対応 No.142",
+        "#21999 V5.3.2 修正依頼表対応 No.141",
+        "#21999 V5.3.2 修正依頼表対応 No.81"
+      ]
+    },
+    {
+      "user": "SuchonKou",
+      "repo": "digitalsheep/LEAD",
+      "commits": 1,
+      "prsMerged": 0,
+      "issuesOpened": 0,
+      "issuesClosed": 0,
+      "cases": [
+        "#20038 LEAD管理者機能対応5-5 No.60 修正"
+      ]
+    }
+  ],
+  "perCase": [
+    {
+      "case": "other",
+      "commits": 2,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#21999",
+      "commits": 10,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#20038",
+      "commits": 5,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#22086",
+      "commits": 1,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#21766",
+      "commits": 2,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#21695",
+      "commits": 1,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#21621",
+      "commits": 1,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#22073",
+      "commits": 1,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#22084",
+      "commits": 1,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#21714",
+      "commits": 1,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#22069",
+      "commits": 1,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#22078",
+      "commits": 1,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#21520",
+      "commits": 1,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#22074",
+      "commits": 1,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#20878",
+      "commits": 2,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#21581",
+      "commits": 2,
+      "repo": "digitalsheep/LEAD"
+    },
+    {
+      "case": "#21579",
+      "commits": 1,
+      "repo": "digitalsheep/LEAD"
+    }
+  ]
+}

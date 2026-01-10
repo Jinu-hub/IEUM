@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { CreateContentsInput, EnableCreateContents } from "~/core/lib/types";
 import { saveHighlight, updateNewsletterRunStep } from "~/features/contents/db/mutations";
 import { getUniquePeriodKey } from "~/features/contents/db/queries";
+//import { saveContentToFile } from "~/features/cron/api/test-api";
 import { logger } from "../lib/logger";
 import adminClient from "../lib/supa-admin-client.server";
 import type { KpiSnapshot, LinkedActivityDoc, UnifiedActivityDoc } from "../lib/types";
@@ -307,27 +308,13 @@ export async function generateContents(input: CreateContentsInput) {
 
     // 2. 데이터 분석 & 개선 & 요약(Analyze & Improve & Summarize)
     const { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData);
- 
-    //await saveContentToFile(linkedData, 'output-test', 'linked_', 'json');
-    //await saveContentToFile(topics, 'output-test', 'topics_', 'json');
-    //await saveContentToFile(kpiInfo, 'output-test', 'repo_kpi_', 'json');
-    //await saveContentToFile(highlights, 'output-test', 'highlights_', 'json');
-    //await saveContentToFile(activitySummary, 'output-test', 'activity_summary_', 'json');
-
-    // 3. 각 섹션 초안 생성(Drafting Sections)
-    const { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } = 
-        await draftingData(input, linkedData, kpiInfo, highlights, topics, ongoing, userActivity);
-    
-    // await saveContentToFile(kpiSection, 'output-sample/kpi', 'kpi_section_', 'md');
-    // await saveContentToFile(highlightsSection, 'output-sample/highlights', 'highlights_section_', 'md');
-    // await saveContentToFile(topicsSection, 'output-sample/topics', 'topics_section_', 'md');
-    // await saveContentToFile(memberSection, 'output-sample/member', 'member_activity_section_', 'md');
-    // await saveContentToFile(ongoingSection, 'output-sample/ongoing', 'ongoing_section_', 'md');
-    // await saveContentToFile(funCornerSection, 'output-sample/fun', 'fun_corner_section_', 'md');
-
-    // 4. 병합 
-    const mergedContents = await mergeContents(input, kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection);
-    // await saveContentToFile(mergedContents, 'output-sample', 'merged_contents_', 'md');
+ /*
+    await saveContentToFile(linkedData, 'output-test/first', '1_linked_', 'json');
+    await saveContentToFile(topics, 'output-test/first', '2_topics_', 'json');
+    await saveContentToFile(kpiInfo, 'output-test/first', '3_repo_kpi_', 'json');
+    await saveContentToFile(highlights, 'output-test/first', '4_highlights_', 'json');
+    await saveContentToFile(userActivity, 'output-test/first', '5_activity_summary_', 'json');
+*/
 
     if (input.runStepId) {
         await updateNewsletterRunStep(adminClient, { 
@@ -335,10 +322,30 @@ export async function generateContents(input: CreateContentsInput) {
             step: 'assemble_data',
         });
     }
+    // 3. 각 섹션 초안 생성(Drafting Sections)
+    const { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } = 
+        await draftingData(input, linkedData, kpiInfo, highlights, topics, ongoing, userActivity);
+  /*  
+    await saveContentToFile(kpiSection, 'output-test/second', '1_kpi_section_', 'md');
+    await saveContentToFile(highlightsSection, 'output-test/second', '2_highlights_section_', 'md');
+    await saveContentToFile(topicsSection, 'output-test/second', '3_topics_section_', 'md');
+    await saveContentToFile(memberSection, 'output-test/second', '4_member_activity_section_', 'md');
+    await saveContentToFile(ongoingSection, 'output-test/second', '5_ongoing_section_', 'md');
+    await saveContentToFile(closingSection, 'output-test/second', '6_closing_section_', 'md');
+*/
+    // 4. 병합 
+    const mergedContents = await mergeContents(input, kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection);
+   //await saveContentToFile(mergedContents, 'output-test/third', '1_merged_contents_', 'md');
 
+    if (input.runStepId) {
+        await updateNewsletterRunStep(adminClient, { 
+            runStepId: input.runStepId,
+            step: 'finalize_data',
+        });
+    }
     // 5. 콘텐츠 생성(Generate Contents)
     const finalContents = await generateFinalContents(input, mergedContents);
-    //await saveContentToFile(finalContents, 'output-sample', 'final_contents_html_', 'html');
+    //await saveContentToFile(finalContents, 'output-test/fourth', '1_final_contents_html_', 'html');
     
     return finalContents;
 }

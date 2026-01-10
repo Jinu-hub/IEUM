@@ -1,0 +1,855 @@
+[
+  {
+    "id": "bugfix-commit-lead-bugfix-5-3-1-0001",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766649781.371689",
+      "slack:1766647227.038299",
+      "slack:1766640422.986659",
+      "slack:1766640878.919059",
+      "slack:1766641135.718109",
+      "slack:1766641954.352099",
+      "slack:1766642131.008039",
+      "slack:1766642227.132759",
+      "slack:1766636736.658909",
+      "slack:1766636846.038019",
+      "slack:1766637002.075879"
+    ],
+    "signals": {
+      "count": 11,
+      "recencyScore": 0.95,
+      "crossLinkScore": 0.8,
+      "labelHits": [
+        "修正依頼表",
+        "コミット",
+        "バグ修正"
+      ],
+      "keywordHits": [
+        "bugfix",
+        "コミット",
+        "修正",
+        "バグ",
+        "LEAD_BugFix_5_3_1_0001"
+      ],
+      "participants": 3,
+      "relevance": 0.8,
+      "importance": 0.55
+    },
+    "summary": "1月対応分の修正依頼表に基づき「LEAD_BugFix_5_3_1_0001」ブランチへのコミットが進行中で、複数のバグ修正と調整が行われています。",
+    "channel": "C05CSNH7XKK:dev_cs_d3"
+  },
+  {
+    "id": "feature-time-line-submail-address",
+    "topic": "Feature",
+    "subcategory": "Request",
+    "audience": "engineering",
+    "impact": "low",
+    "items": [
+      "slack:1766712279.812539",
+      "slack:1766712279.812539"
+    ],
+    "signals": {
+      "count": 1,
+      "recencyScore": 0.9,
+      "crossLinkScore": 0.5,
+      "labelHits": [
+        "タイムライン",
+        "サブメールアドレス"
+      ],
+      "keywordHits": [
+        "feature",
+        "サブメールアドレス",
+        "タイムライン"
+      ],
+      "participants": 1,
+      "relevance": 0.6,
+      "importance": 0.3
+    },
+    "summary": "タイムライン表示におけるサブメールアドレス対応の作業が予定されており、次の修正として関連アイテムの修正も計画されています。",
+    "channel": "C05CSNH7XKK:dev_cs_d3"
+  },
+  {
+    "id": "decision-leadership-confirmation",
+    "topic": "Decision",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "low",
+    "items": [
+      "slack:1766737845.452689",
+      "slack:1766710429.846779",
+      "slack:1766711560.448579",
+      "slack:1766712222.389859",
+      "slack:1766713776.461779"
+    ],
+    "signals": {
+      "count": 5,
+      "recencyScore": 0.9,
+      "crossLinkScore": 0.6,
+      "labelHits": [
+        "仕様確認",
+        "方針決定"
+      ],
+      "keywordHits": [
+        "decision",
+        "仕様",
+        "対処方法",
+        "提案",
+        "承認"
+      ],
+      "participants": 3,
+      "relevance": 0.75,
+      "importance": 0.35
+    },
+    "summary": "ログインユーザ権限の計算処理と画面表示方法について、問題点の共有と対処方針が提案・承認され、実装方針の決定が進められています。",
+    "channel": "C05CSNH7XKK:dev_cs_d3"
+  },
+  {
+    "id": "research-html-tab-blank-opening",
+    "topic": "Research",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766629716.026649",
+      "slack:1766475862.102989",
+      "slack:1766476409.209189",
+      "slack:1766476758.906569",
+      "slack:1766479879.660789",
+      "slack:1766481113.190949",
+      "slack:1766481189.662119",
+      "slack:1766621022.034719",
+      "slack:1766625341.496969",
+      "slack:1766628299.271109",
+      "slack:1766628657.915559"
+    ],
+    "signals": {
+      "count": 11,
+      "recencyScore": 0.8,
+      "crossLinkScore": 0.65,
+      "labelHits": [
+        "技術検証",
+        "見積依頼"
+      ],
+      "keywordHits": [
+        "PDFビューア",
+        "externalLinkTarget",
+        "html",
+        "別タブ",
+        "検証"
+      ],
+      "participants": 2,
+      "relevance": 0.7,
+      "importance": 0.6
+    },
+    "summary": "eStudio外部ファイルのURL押下時に別タブで開くための技術検証と修正案が共有され、工数見積もりや実装方針の検討が行われています。",
+    "channel": "C05CSNH7XKK:dev_cs_d3"
+  },
+  {
+    "id": "bugfix-human-resources-data-integration",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766628988.502909",
+      "slack:1766569797.399609",
+      "slack:1766628859.994499",
+      "slack:1766620486.590459",
+      "slack:1766622164.587459",
+      "slack:1766622676.377579",
+      "slack:1766623006.908859",
+      "slack:1766623095.210279"
+    ],
+    "signals": {
+      "count": 8,
+      "recencyScore": 0.82,
+      "crossLinkScore": 0.7,
+      "labelHits": [
+        "ロール上書き",
+        "人事データ連携"
+      ],
+      "keywordHits": [
+        "bugfix",
+        "人事連携",
+        "ロール上書き",
+        "修正"
+      ],
+      "participants": 3,
+      "relevance": 0.75,
+      "importance": 0.55
+    },
+    "summary": "人事データ連携におけるユーザ情報更新時のロール上書き問題に関して修正が行われ、レビュー依頼とコミット調整が進められています。",
+    "channel": "C05CSNH7XKK:dev_cs_d3"
+  },
+  {
+    "id": "progress-task-management-and-communication",
+    "topic": "Announcement",
+    "subcategory": null,
+    "audience": "all",
+    "impact": "low",
+    "items": [
+      "slack:1766736798.518229",
+      "slack:1766735927.014879",
+      "slack:1766736798.518229"
+    ],
+    "signals": {
+      "count": 2,
+      "recencyScore": 0.9,
+      "crossLinkScore": 0.5,
+      "labelHits": [
+        "あいさつ",
+        "年末の挨拶"
+      ],
+      "keywordHits": [
+        "announcement",
+        "お世話になりました",
+        "よろしくお願いいたします"
+      ],
+      "participants": 3,
+      "relevance": 0.6,
+      "importance": 0.25
+    },
+    "summary": "年末年始に向けたあいさつと感謝のメッセージがチーム内で交わされ、良い年の締めくくりが共有されています。",
+    "channel": "C05CSNH7XKK:dev_cs_d3"
+  },
+  {
+    "id": "development-progress-report-december-2025",
+    "topic": "Progress",
+    "subcategory": null,
+    "audience": "internal",
+    "impact": "low",
+    "items": [
+      "slack:1766747134.472709",
+      "slack:1766744109.921179",
+      "slack:1766741208.837599",
+      "slack:1766752060.000000",
+      "slack:1766651616.539889",
+      "slack:1766651482.484399",
+      "slack:1766650196.934339",
+      "slack:1766647728.181499",
+      "slack:1766575266.535749",
+      "slack:1766569678.100149",
+      "slack:1766566804.972229",
+      "slack:1766550502.608259",
+      "slack:1766535801.768939",
+      "slack:1766534468.626639",
+      "slack:1766534185.589429",
+      "slack:1766534150.521209",
+      "slack:1766491673.654829",
+      "slack:1766485941.742719",
+      "slack:1766483943.700559",
+      "slack:1766480409.240109",
+      "slack:1766449498.141309",
+      "slack:1766448475.090139",
+      "slack:1766448360.154199",
+      "slack:1766447818.454809",
+      "slack:1766404641.621929",
+      "slack:1766398438.119279",
+      "slack:1766395260.505929",
+      "slack:1766394037.402969"
+    ],
+    "signals": {
+      "count": 28,
+      "recencyScore": 1,
+      "crossLinkScore": 0.2,
+      "labelHits": [
+        "Progress"
+      ],
+      "keywordHits": [
+        "作業実績",
+        "進捗",
+        "対応中",
+        "開発タスク",
+        "レビュー依頼",
+        "テスト"
+      ],
+      "participants": 8,
+      "relevance": 0.7,
+      "importance": 0.35
+    },
+    "summary": "2025年12月の開発状況や作業実績が共有されています。各チケットの対応状況やレビュー依頼、設問の文字装飾対応など進捗報告が主な内容です。",
+    "channel": "C05C1U59PPC:dev_cs_d1"
+  },
+  {
+    "id": "ticket-21621-issue-design-code-review",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766747134.472709",
+      "slack:1766741208.837599",
+      "slack:1766398438.119279",
+      "slack:1766569678.100149"
+    ],
+    "signals": {
+      "count": 4,
+      "recencyScore": 0.95,
+      "crossLinkScore": 0.4,
+      "labelHits": [
+        "Bugfix"
+      ],
+      "keywordHits": [
+        "#21621",
+        "設問の文字装飾対応",
+        "レビュー依頼",
+        "対応中"
+      ],
+      "participants": 4,
+      "relevance": 0.7,
+      "importance": 0.5
+    },
+    "summary": "チケット#21621のeStudio設問の文字装飾対応について、実装・レビュー・テストの進捗共有および対応中の問題点が議論されています。",
+    "channel": "C05C1U59PPC:dev_cs_d1"
+  },
+  {
+    "id": "development-tasks-and-planning",
+    "topic": "Progress",
+    "subcategory": null,
+    "audience": "internal",
+    "impact": "low",
+    "items": [
+      "slack:1766707072.586769",
+      "slack:1766706817.596289",
+      "slack:1766623719.755619",
+      "slack:1766623511.374059",
+      "slack:1766621448.048639",
+      "slack:1766620992.422629",
+      "slack:1766622397.707719"
+    ],
+    "signals": {
+      "count": 7,
+      "recencyScore": 0.9,
+      "crossLinkScore": 0.15,
+      "labelHits": [
+        "Progress"
+      ],
+      "keywordHits": [
+        "本日の作業予定",
+        "開発タスク",
+        "性能改善",
+        "MTG",
+        "見積",
+        "修正依頼表対応"
+      ],
+      "participants": 5,
+      "relevance": 0.6,
+      "importance": 0.3
+    },
+    "summary": "開発・性能改善タスクの当日の作業予定や関連ミーティング、修正依頼表対応の予定共有が行われています。",
+    "channel": "C05C1U59PPC:dev_cs_d1"
+  },
+  {
+    "id": "rich-text-editor-implementation-issues",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766478172.646919",
+      "slack:1766475682.094989",
+      "slack:1766475858.537729",
+      "slack:1766476043.891739",
+      "slack:1766476318.051119",
+      "slack:1766477089.164209"
+    ],
+    "signals": {
+      "count": 6,
+      "recencyScore": 0.8,
+      "crossLinkScore": 0.4,
+      "labelHits": [
+        "Bugfix"
+      ],
+      "keywordHits": [
+        "リッチテキストエディタ",
+        "Quill",
+        "不具合",
+        "実装相談",
+        "p:textEditor"
+      ],
+      "participants": 4,
+      "relevance": 0.7,
+      "importance": 0.5
+    },
+    "summary": "リッチテキストエディタ(Quill)の実装に関する問題が発生し、ソースコードやパラメータの追加など詳細な技術的相談が行われています。",
+    "channel": "C05C1U59PPC:dev_cs_d1"
+  },
+  {
+    "id": "support-22085-アンケート代理回答キャリアカルテ連携",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766744493.452979",
+      "slack:1766734613.006159",
+      "slack:1766652137.824039",
+      "slack:1766716800.830929"
+    ],
+    "signals": {
+      "count": 4,
+      "recencyScore": 1,
+      "crossLinkScore": 0.7,
+      "labelHits": [
+        "サポート",
+        "バグ"
+      ],
+      "keywordHits": [
+        "バグ",
+        "修正",
+        "代理回答",
+        "キャリアカルテ"
+      ],
+      "participants": 2,
+      "relevance": 0.6,
+      "importance": 0.55
+    },
+    "summary": "管理者ユーザによる非公開アンケートフェーズの代理実施時に、代理回答として誤ったコース修了記録がキャリアカルテに連携される問題の修正に関するチケット",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "bugfix-22078-roled-overwrite-issue",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766742850.179499",
+      "slack:1766636797.900389",
+      "slack:1766622468.446999",
+      "slack:1766562504.671179"
+    ],
+    "signals": {
+      "count": 4,
+      "recencyScore": 0.95,
+      "crossLinkScore": 0.85,
+      "labelHits": [
+        "バグ"
+      ],
+      "keywordHits": [
+        "ロール",
+        "上書き"
+      ],
+      "participants": 2,
+      "relevance": 0.6,
+      "importance": 0.55
+    },
+    "summary": "ユーザ情報更新時にロールが上書きされてしまう問題に対するバグ修正関連のチケット進捗。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "support-22084-進捗率ソート問題",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766742701.710219",
+      "slack:1766648348.981599",
+      "slack:1766713245.241579",
+      "slack:1766707546.027079",
+      "slack:1766644738.538779",
+      "slack:1766642685.333139",
+      "slack:1766647839.090249"
+    ],
+    "signals": {
+      "count": 7,
+      "recencyScore": 0.9,
+      "crossLinkScore": 0.8,
+      "labelHits": [
+        "サポート"
+      ],
+      "keywordHits": [
+        "進捗率",
+        "ソート",
+        "順序"
+      ],
+      "participants": 3,
+      "relevance": 0.65,
+      "importance": 0.6
+    },
+    "summary": "進捗率でのソート時に正しい順序でソートされない問題に関する複数のアップデートとバグ報告。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "feature-22082-受講不要任意アイテム指定機能",
+    "topic": "Feature",
+    "subcategory": "Request",
+    "audience": "engineering",
+    "impact": "low",
+    "items": [
+      "slack:1766734589.000679",
+      "slack:1766641850.109759",
+      "slack:1766641681.666189"
+    ],
+    "signals": {
+      "count": 3,
+      "recencyScore": 0.85,
+      "crossLinkScore": 0.75,
+      "labelHits": [
+        "要件定義"
+      ],
+      "keywordHits": [
+        "受講不要",
+        "任意アイテム",
+        "指定"
+      ],
+      "participants": 2,
+      "relevance": 0.5,
+      "importance": 0.4
+    },
+    "summary": "スキル項目に受講不要の任意アイテムを指定する機能の見積依頼に関する要件定義。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "feature-22031-二要素認証導入見積もり依頼",
+    "topic": "Feature",
+    "subcategory": "Request",
+    "audience": "engineering",
+    "impact": "low",
+    "items": [
+      "slack:1766717311.627439"
+    ],
+    "signals": {
+      "count": 1,
+      "recencyScore": 0.8,
+      "crossLinkScore": null,
+      "labelHits": [
+        "新規機能"
+      ],
+      "keywordHits": [
+        "二要素認証",
+        "見積もり依頼"
+      ],
+      "participants": 1,
+      "relevance": 0.5,
+      "importance": 0.4
+    },
+    "summary": "RFC6238準拠の二要素認証導入に関する見積もり依頼の通知。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "feature-22034-アンケート条件分岐導入見積もり",
+    "topic": "Feature",
+    "subcategory": "Request",
+    "audience": "engineering",
+    "impact": "low",
+    "items": [
+      "slack:1766636960.514999",
+      "slack:1766540842.198369"
+    ],
+    "signals": {
+      "count": 2,
+      "recencyScore": 0.8,
+      "crossLinkScore": 0.7,
+      "labelHits": [
+        "新規機能"
+      ],
+      "keywordHits": [
+        "アンケート",
+        "条件分岐",
+        "導入"
+      ],
+      "participants": 2,
+      "relevance": 0.5,
+      "importance": 0.4
+    },
+    "summary": "アンケートの条件分岐機能導入に対する見積もり依頼に関する告知。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "announcement-postgreSQLバージョンアップ指示",
+    "topic": "Announcement",
+    "subcategory": null,
+    "audience": "all",
+    "impact": "medium",
+    "items": [
+      "slack:1766646462.213539"
+    ],
+    "signals": {
+      "count": 1,
+      "recencyScore": 0.9,
+      "crossLinkScore": null,
+      "labelHits": [
+        "<!channel>",
+        "アナウンス"
+      ],
+      "keywordHits": [
+        "PostgreSQL",
+        "バージョンアップ"
+      ],
+      "participants": 1,
+      "relevance": 0.6,
+      "importance": 0.5
+    },
+    "summary": "開発者ミーティング共有のPostgreSQLバージョンアップに関するインストールファイル提供と指示。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "discussion-ui-ダウンロードボタンツールチップ調整",
+    "topic": "Decision",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "low",
+    "items": [
+      "slack:1766717983.706169",
+      "slack:1766551470.368909",
+      "slack:1766552032.484319",
+      "slack:1766552800.835459",
+      "slack:1766553009.133509",
+      "slack:1766553358.444699",
+      "slack:1766553682.851509",
+      "slack:1766553756.321789",
+      "slack:1766553880.840169",
+      "slack:1766643105.276309",
+      "slack:1766643452.105269",
+      "slack:1766643990.530139",
+      "slack:1766644269.819809",
+      "slack:1766644814.071479",
+      "slack:1766645057.361349",
+      "slack:1766709426.846879",
+      "slack:1766716346.317809",
+      "slack:1766716550.558279"
+    ],
+    "signals": {
+      "count": 18,
+      "recencyScore": 0.9,
+      "crossLinkScore": 0.85,
+      "labelHits": [
+        "デザイン調整",
+        "依頼",
+        "議論"
+      ],
+      "keywordHits": [
+        "ツールチップ",
+        "ダウンロードボタン",
+        "デザイン調整"
+      ],
+      "participants": 4,
+      "relevance": 0.7,
+      "importance": 0.45
+    },
+    "summary": "パネル表示のダウンロードボタンに関するツールチップ表示のUI仕様についてデザイナーと開発者間で行われた調整と意思決定のやりとり。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "bugfix-22069-タスク再実行名前上書き",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766742807.219929",
+      "slack:1766573200.212969",
+      "slack:1766548362.758489",
+      "slack:1766546425.348159",
+      "slack:1766550626.224379",
+      "slack:1766548918.781679"
+    ],
+    "signals": {
+      "count": 6,
+      "recencyScore": 0.85,
+      "crossLinkScore": 0.8,
+      "labelHits": [
+        "サポート"
+      ],
+      "keywordHits": [
+        "タスク",
+        "再実行",
+        "名前",
+        "上書き"
+      ],
+      "participants": 2,
+      "relevance": 0.6,
+      "importance": 0.55
+    },
+    "summary": "タスク再実行時に名前を付けると元タスクの名前が上書きされる問題に関するバグ修正チケットと更新情報。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "bugfix-21520-未申請ユーザdeliver_refから削除",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766742884.826519",
+      "slack:1766636032.662939",
+      "slack:1766626851.117079"
+    ],
+    "signals": {
+      "count": 3,
+      "recencyScore": 0.8,
+      "crossLinkScore": 0.7,
+      "labelHits": [
+        "機能改修"
+      ],
+      "keywordHits": [
+        "未申請",
+        "deliver_ref",
+        "削除"
+      ],
+      "participants": 2,
+      "relevance": 0.55,
+      "importance": 0.5
+    },
+    "summary": "研修終了日から90日以上経過した未申請ユーザをdeliver_refから削除する機能改修に関する議論。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "feature-21714-目次インポート機能改修",
+    "topic": "Feature",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "low",
+    "items": [
+      "slack:1766742476.954119",
+      "slack:1766716865.315119",
+      "slack:1766578895.827829"
+    ],
+    "signals": {
+      "count": 3,
+      "recencyScore": 0.8,
+      "crossLinkScore": 0.75,
+      "labelHits": [
+        "機能改修"
+      ],
+      "keywordHits": [
+        "目次インポート"
+      ],
+      "participants": 3,
+      "relevance": 0.6,
+      "importance": 0.4
+    },
+    "summary": "目次インポート機能の改修に関する複数のアップデートと進捗共有。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "bugfix-22076-グループ公開設定メッセージ非表示問題",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766741140.405869",
+      "slack:1766555842.473069",
+      "slack:1766545040.558639",
+      "slack:1766548918.781679"
+    ],
+    "signals": {
+      "count": 4,
+      "recencyScore": 0.85,
+      "crossLinkScore": 0.8,
+      "labelHits": [
+        "サポート"
+      ],
+      "keywordHits": [
+        "グループ",
+        "公開設定",
+        "メッセージ",
+        "非表示"
+      ],
+      "participants": 2,
+      "relevance": 0.6,
+      "importance": 0.55
+    },
+    "summary": "グループを対象に公開設定したメッセージが公開されない問題に関するバグ修正のチケット進捗。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "bugfix-22066-アンケートZipインポート結果ページダウンロード不可",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766633768.098349",
+      "slack:1766554100.686189",
+      "slack:1766537948.042889",
+      "slack:1766568130.417219"
+    ],
+    "signals": {
+      "count": 4,
+      "recencyScore": 0.75,
+      "crossLinkScore": 0.75,
+      "labelHits": [
+        "サポート"
+      ],
+      "keywordHits": [
+        "アンケート",
+        "Zipインポート",
+        "ダウンロードできない"
+      ],
+      "participants": 3,
+      "relevance": 0.6,
+      "importance": 0.55
+    },
+    "summary": "アンケート進捗で添付ファイル付きのZipインポート完了後、結果ページでファイルがダウンロードできない問題のバグ修正。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "support-22069-タスク再実行名前上書き問題複数言及",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766548362.758489",
+      "slack:1766546425.348159",
+      "slack:1766550626.224379"
+    ],
+    "signals": {
+      "count": 3,
+      "recencyScore": 0.7,
+      "crossLinkScore": 0.5,
+      "labelHits": [
+        "サポート"
+      ],
+      "keywordHits": [
+        "タスク",
+        "再実行",
+        "名前",
+        "上書き"
+      ],
+      "participants": 2,
+      "relevance": 0.55,
+      "importance": 0.5
+    },
+    "summary": "タスクの再実行時に名前が上書きされる問題についての複数のチケット更新と議論。",
+    "channel": "CDR68RY0L:dev_lead"
+  },
+  {
+    "id": "bugfix-22065-フェーズ一覧検索およびページング問題",
+    "topic": "Bugfix",
+    "subcategory": null,
+    "audience": "engineering",
+    "impact": "medium",
+    "items": [
+      "slack:1766536871.903929",
+      "slack:1766465790.712959",
+      "slack:1766465442.765109"
+    ],
+    "signals": {
+      "count": 3,
+      "recencyScore": 0.7,
+      "crossLinkScore": 0.7,
+      "labelHits": [
+        "サポート"
+      ],
+      "keywordHits": [
+        "フェーズ一覧",
+        "検索機能",
+        "ページング",
+        "正常挙動しない"
+      ],
+      "participants": 2,
+      "relevance": 0.6,
+      "importance": 0.5
+    },
+    "summary": "コース管理のフェーズ一覧表示時に検索機能やページングが正常に動作しない問題に関するバグ修正の情報。",
+    "channel": "CDR68RY0L:dev_lead"
+  }
+]

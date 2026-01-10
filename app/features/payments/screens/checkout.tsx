@@ -20,7 +20,6 @@ import {
 } from "@tosspayments/tosspayments-sdk";
 import { Loader2Icon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { redirect } from "react-router";
 
 import { Button } from "~/core/components/ui/button";
 import { requireAuthentication } from "~/core/lib/guards.server";
