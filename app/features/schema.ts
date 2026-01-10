@@ -30,6 +30,7 @@ import {
   DELIVERY_EVENT_TYPE_EMAIL,
   FIRST_MAIL_SEND,
   INTEGRATION_TYPE,
+  LANGUAGE,
   MAIL_STATUS,
   ONBOARDING_STEP,
   ONBOARDING_TYPE,
@@ -67,6 +68,7 @@ import {
   export const reviewStep = pgEnum("review_step", REVIEW_STEP);
   export const firstMailSend = pgEnum("first_mail_send", FIRST_MAIL_SEND);
   export const workspaceKind = pgEnum("workspace_kind", WORKSPACE_KIND);
+  export const language = pgEnum("language", LANGUAGE);
 
   // GitHub App 설치 요청 상태
   export const installationRequestStatus = pgEnum("installation_request_status", [
@@ -279,6 +281,7 @@ import {
        mailingListId: uuid("mailing_list_id").references(() => mailList.mailingListId, { onDelete: "set null" }),
        scheduleCron: text("schedule_cron"),
        timezone: text("timezone").notNull().default("Asia/Tokyo"),
+       language: language("language").notNull().default("ja"),
        scheduleHour: integer("schedule_hour").notNull().default(0),
        defaultRuleSetId: uuid("default_rule_set_id").references(() => ruleSets.ruleSetId, { onDelete: "set null" }),
        isActive: boolean("is_active").notNull().default(true),

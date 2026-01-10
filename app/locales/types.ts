@@ -272,6 +272,8 @@ export type Translation = {
     preview: string;
     download: string;
     code: string;
+    newsletterLanguage: string;
+    selectLanguage: string;
     mail: {
       numberOfEmails: string;
       statuses: string;
@@ -696,6 +698,17 @@ export type Translation = {
       botName: string;
       githubRepoLimitReached: string;
       slackChannelLimitReached: string;
+      messages: {
+        targetSaved: string;
+        sourcesConnected: string;
+        someSourcesFailed: string;
+      };
+      errors: {
+        invalidActionType: string;
+        saveError: string;
+        invalidDataFormat: string;
+        duplicateData: string;
+      };
     };
   };
   mailLists: {

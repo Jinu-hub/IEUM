@@ -274,6 +274,8 @@ const en: Translation = {
     preview: "Preview",
     download: "Download",
     code: "Code",
+    newsletterLanguage: "Newsletter creation language",
+    selectLanguage: "Select language",
     mail: {
       statuses: "Statuses",
       numberOfEmails: "{{count}} emails",
@@ -698,6 +700,17 @@ const en: Translation = {
       botName: "Bot name",
       githubRepoLimitReached: "Reached the limit for GitHub repositories per target. You can add up to {{count}}.",
       slackChannelLimitReached: "Reached the limit for Slack channels per target. You can add up to {{count}}.",
+      messages: {
+        targetSaved: 'Target "{{displayName}}" has been successfully saved.',
+        sourcesConnected: '{{successful}}/{{total}} sources connected successfully',
+        someSourcesFailed: 'Some source connections failed.',
+      },
+      errors: {
+        invalidActionType: 'Invalid action type',
+        saveError: 'An error occurred while saving.',
+        invalidDataFormat: 'Invalid data format. Please try again.',
+        duplicateData: 'Data already exists.',
+      },
     },
   },
   mailLists: {

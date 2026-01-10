@@ -273,6 +273,8 @@ const ko: Translation = {
     preview: "미리보기",
     download: "다운로드",
     code: "코드",
+    newsletterLanguage: "뉴스레터 작성 언어",
+    selectLanguage: "언어를 선택하세요",
     mail:{
       numberOfEmails: "{{count}}개의 이메일",
       statuses: "상태",
@@ -697,6 +699,17 @@ const ko: Translation = {
       botName: "봇이름",
       githubRepoLimitReached: "타겟당 GitHub 리포지토리의 제한에 도달했습니다. 최대 {{count}}개까지 추가할 수 있습니다.",
       slackChannelLimitReached: "타겟당 Slack 채널의 제한에 도달했습니다. 최대 {{count}}개까지 추가할 수 있습니다.",
+      messages: {
+        targetSaved: '타겟 "{{displayName}}"이(가) 성공적으로 저장되었습니다.',
+        sourcesConnected: '{{successful}}/{{total}} 소스 연결 성공',
+        someSourcesFailed: '일부 소스 연결에 실패했습니다.',
+      },
+      errors: {
+        invalidActionType: '유효하지 않은 액션 타입입니다',
+        saveError: '저장 중 오류가 발생했습니다.',
+        invalidDataFormat: '잘못된 데이터 형식입니다. 다시 시도해주세요.',
+        duplicateData: '이미 존재하는 데이터입니다.',
+      },
     },
   },
   mailLists: {

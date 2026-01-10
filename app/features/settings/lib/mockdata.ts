@@ -14,6 +14,7 @@ export const sampleTargets: TargetData[] = [
       mailingListId: "1",
       scheduleHour: "9",
       isMemberMail: true,
+      language: "ko",
     },
     {
       targetId: "2",
@@ -27,6 +28,7 @@ export const sampleTargets: TargetData[] = [
       mailingListId: "2",
       scheduleHour: "10",
       isMemberMail: true,
+      language: "ko",
     },
     {
       targetId: "3",
@@ -40,6 +42,7 @@ export const sampleTargets: TargetData[] = [
       mailingListId: "3",
       scheduleHour: "14",
       isMemberMail: true,
+      language: "ko",
     }
   ];
 

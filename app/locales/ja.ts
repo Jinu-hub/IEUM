@@ -274,6 +274,8 @@ const ja: Translation = {
     preview: "プレビュー",
     download: "ダウンロード",
     code: "コード",
+    newsletterLanguage: "ニュースレター作成言語",
+    selectLanguage: "言語を選択してください",
     mail: {
       numberOfEmails: "{{count}}個のメール",
       statuses: "状態",
@@ -698,6 +700,17 @@ const ja: Translation = {
       botName: "ボット名",
       githubRepoLimitReached: "ターゲットあたりのGitHubリポジトリの制限に達しました。最大{{count}}個まで追加できます。",
       slackChannelLimitReached: "ターゲットあたりのSlackチャンネルの制限に達しました。最大{{count}}個まで追加できます。",
+      messages: {
+        targetSaved: 'ターゲット「{{displayName}}」が正常に保存されました。',
+        sourcesConnected: '{{successful}}/{{total}} ソース接続成功',
+        someSourcesFailed: '一部のソース接続に失敗しました。',
+      },
+      errors: {
+        invalidActionType: '無効なアクションタイプです',
+        saveError: '保存中にエラーが発生しました。',
+        invalidDataFormat: '無効なデータ形式です。もう一度お試しください。',
+        duplicateData: '既に存在するデータです。',
+      },
     },
   },
   mailLists: {

@@ -23,7 +23,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/core/components/ui/tooltip";
-import { CATEGORY_TYPE, type PlanType } from '~/core/lib/constants';
+import { CATEGORY_TYPE, LANGUAGE, type PlanType } from '~/core/lib/constants';
 import makeServerClient from '~/core/lib/supa-client.server';
 import { OnboardingModeBanner, TargetsSectionGuide, TargetsSubProgress } from '../components/onboarding-guide';
 import { createTargetWithSources } from '../db/mutations';
@@ -129,6 +129,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         scheduleHour: formData.get('scheduleHour') as string || '0',
         mailingListId: formData.get('mailingListId') as string || '',
         timezone: formData.get('timezone') as string || systemTimezone,
+        language: formData.get('language') as string,
       };
 
       // Integration Sources 파싱
@@ -145,18 +146,16 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         sources: integrationSources
       });
 
-      // 성공 메시지 구성
-      let message: string[] = [`타겟 "${targetData.displayName}"이(가) 성공적으로 저장되었습니다.`];
-      if (result.totalSources > 0) {
-        message.push(`${result.successfulSources}/${result.totalSources} 소스 연결 성공`);
-      }
-      if (result.failedSources > 0) {
-        message.push(`일부 소스 연결에 실패했습니다.`);
-      }
-
+      // 성공 메시지 데이터 구성 (i18n은 클라이언트에서 처리)
       return {
         status: 'success',
-        message: message, // 배열 그대로 전달
+        messageKey: 'targetSaved',
+        messageData: {
+          displayName: targetData.displayName,
+          totalSources: result.totalSources,
+          successfulSources: result.successfulSources,
+          failedSources: result.failedSources
+        },
         showToast: true,
         redirectTo: '/settings/targets',
         redirectDelay: 500
@@ -165,34 +164,36 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
     return {
       status: 'error',
-      message: 'Invalid action type'
+      messageKey: 'invalidActionType'
     };
 
   } catch (error) {
     console.error('Target save error:', error);
     
-    // 에러 메시지 상세화
-    let errorMessage = '저장 중 오류가 발생했습니다.';
+    // 에러 메시지 키 결정
+    let errorMessageKey = 'saveError';
+    let errorDetails = '';
+    
     if (error instanceof Error) {
+      errorDetails = error.message;
       if (error.message.includes('uuid')) {
-        errorMessage = '잘못된 데이터 형식입니다. 다시 시도해주세요.';
+        errorMessageKey = 'invalidDataFormat';
       } else if (error.message.includes('duplicate')) {
-        errorMessage = '이미 존재하는 데이터입니다.';
-      } else {
-        errorMessage = error.message;
+        errorMessageKey = 'duplicateData';
       }
     }
     
     return {
       status: 'error',
-      message: errorMessage,
+      messageKey: errorMessageKey,
+      messageData: { details: errorDetails },
       error: true
     };
   }
 };
 
 export default function TargetDetailScreen( { loaderData }: Route.ComponentProps ) {
-  const { t } = useTranslation("common", { keyPrefix: "targets" });
+  const { t, i18n } = useTranslation("common", { keyPrefix: "targets" });
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { t: timesT } = useTranslation("common", { keyPrefix: "times" });
   const { t: errorsT } = useTranslation("common", { keyPrefix: "errors" });
@@ -236,6 +237,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     scheduleCron: '',
     mailingListName: '',
     timezone: systemTimezone,
+    language: i18n.language, // i18n에서 현재 언어 가져오기
   });
 
   // 타겟 편집 시 기존 데이터로 폼 초기화
@@ -252,6 +254,7 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
         //mailingListName: target.mailing_list_name ?? '',
         mailingListId: target.mailing_list_id ?? '',
         timezone: target.timezone,
+        language: target.language || i18n.language,
       }));
 
       // 스케줄 정보가 있으면 UI 상태도 초기화
@@ -347,24 +350,41 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     const isSubmitting = navigation.state === 'submitting';
     setIsSaving(isSubmitting);
 
-    // Action 결과 처리 (중복 방지)
+    // Action 結果 処理 (中複 防止)
     if (actionData && !isSubmitting && actionData !== processedActionData) {
       if (actionData.error || actionData.status === 'error') {
-        // 에러 처리
-        toast.error(actionData.message || errorsT("saveError"));
+        // エラー処理 - messageKeyで翻訳
+        const errorMessage = actionData.messageKey 
+          ? t(`detail.errors.${actionData.messageKey}`, actionData.messageData || {})
+          : actionData.message || errorsT("saveError");
+        toast.error(errorMessage);
         setIsSaving(false);
-        setProcessedActionData(actionData); // 처리 완료 표시
+        setProcessedActionData(actionData); // 処理完了表示
       } else if (actionData.status === 'success') {
-        // 성공 처리
-        if (actionData.showToast && actionData.message) {
-          // Toast 표시 (배열을 직접 처리)
-          const messageLines = Array.isArray(actionData.message) 
-            ? actionData.message 
-            : [actionData.message];
+        // 成功処理 - messageKeyで翻訳してメッセージ構成
+        if (actionData.showToast && actionData.messageKey) {
+          const data = actionData.messageData || {};
+          const messages: string[] = [];
+          
+          // メインメッセージ
+          messages.push(t(`detail.messages.${actionData.messageKey}`, { displayName: data.displayName }));
+          
+          // ソース連結成功メッセージ
+          if (data.totalSources > 0) {
+            messages.push(t('detail.messages.sourcesConnected', { 
+              successful: data.successfulSources, 
+              total: data.totalSources 
+            }));
+          }
+          
+          // ソース連結失敗メッセージ
+          if (data.failedSources > 0) {
+            messages.push(t('detail.messages.someSourcesFailed'));
+          }
 
           toast.success(
             <div className="text-left whitespace-pre-wrap">
-              {messageLines.join('\n')}
+              {messages.join('\n')}
             </div>
           );
           
@@ -520,7 +540,8 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
     submitFormData.append('scheduleHour', selectedHour || '0');
     submitFormData.append('scheduleCron', formData.scheduleCron || '');
     submitFormData.append('mailingListId', formData.mailingListId || '');
-    submitFormData.append('timezone', formData.timezone || 'Asia/Seoul');
+    submitFormData.append('timezone', formData.timezone || systemTimezone);
+    submitFormData.append('language', formData.language || i18n.language);
     submitFormData.append('isMemberMail', isMemberMail ? 'true' : 'false');
     
     // Integration Sources를 JSON 문자열로 변환
@@ -702,6 +723,27 @@ export default function TargetDetailScreen( { loaderData }: Route.ComponentProps
                       {t("detail.memberMailStatusDescription")}
                     </p>
                   )}
+                </div>
+
+                {/* 언어 선택 */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">{commonT("newsletterLanguage")}</label>
+                  <Select
+                    value={formData.language || i18n.language}
+                    onValueChange={(value) => handleInputChange('language', value)}
+                    disabled={isSaving}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={commonT("selectLanguage")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGE.map((lang) => (
+                        <SelectItem key={lang} value={lang}>
+                          {lang === 'en' ? 'English' : lang === 'ja' ? '日本語' : '한국어'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               

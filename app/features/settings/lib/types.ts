@@ -47,6 +47,7 @@ export interface TargetData {
     mailingListName?: string;
     mailingListId?: string;
     timezone: string;
+    language: string;
   }
 
 // 인테그레이션 소스 타입

@@ -4,6 +4,10 @@
 /* =========================================================
    Database Enums
    ========================================================= */
+export const LANGUAGE = [
+  "en", "ja", "ko",
+] as const;
+
 export const WORKSPACE_KIND = [
   "org", "team", "personal", "community", "company",
   "school", "government", "club", "nexletter", "app_review", "other",

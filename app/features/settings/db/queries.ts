@@ -174,6 +174,7 @@ export const getTargets = async (
     lastSentAt: target.last_sent_at ?? undefined,
     mailingListId: target.mailing_list_id ?? undefined,
     timezone: target.timezone,
+    language: target.language,
   }));
 };
 

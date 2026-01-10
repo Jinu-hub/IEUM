@@ -1170,6 +1170,7 @@ export type Database = {
           display_name: string
           is_active: boolean
           is_member_mail: boolean
+          language: Database["public"]["Enums"]["language"]
           last_run_id: string | null
           last_sent_at: string | null
           mailing_list_id: string | null
@@ -1188,6 +1189,7 @@ export type Database = {
           display_name: string
           is_active?: boolean
           is_member_mail?: boolean
+          language?: Database["public"]["Enums"]["language"]
           last_run_id?: string | null
           last_sent_at?: string | null
           mailing_list_id?: string | null
@@ -1206,6 +1208,7 @@ export type Database = {
           display_name?: string
           is_active?: boolean
           is_member_mail?: boolean
+          language?: Database["public"]["Enums"]["language"]
           last_run_id?: string | null
           last_sent_at?: string | null
           mailing_list_id?: string | null
@@ -1483,6 +1486,7 @@ export type Database = {
         | "discord"
         | "lineworks"
         | "slack_user"
+      language: "en" | "ja" | "ko"
       mail_status: "sending" | "delivered" | "partial" | "failed"
       onboarding_step:
         | "welcome"
@@ -1726,6 +1730,7 @@ export const Constants = {
         "lineworks",
         "slack_user",
       ],
+      language: ["en", "ja", "ko"],
       mail_status: ["sending", "delivered", "partial", "failed"],
       onboarding_step: [
         "welcome",
