@@ -64,10 +64,12 @@ const getSidebarData = (
           title: t("analytics"),
           url: "/dashboard/analytics",
         },
+        /*
         {
           title: t("test"),
           url: "/dashboard/test"
         }
+        */
       ],
     },
     /*

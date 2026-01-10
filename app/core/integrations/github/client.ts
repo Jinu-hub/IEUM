@@ -7,13 +7,24 @@ import { App } from "octokit";
 
 const APP_ID = Number(process.env.GITHUB_APP_ID);
 const APP_SLUG = process.env.GITHUB_APP_SLUG!;
-const PRIVATE_KEY = process.env.GITHUB_APP_PRIVATE_KEY!;
+
 export const GITHUB_APP_SLUG = APP_SLUG;
 
 let _app: App | null = null;
 export function getGitHubApp() {
   if (_app) return _app;
-  _app = new App({ appId: APP_ID, privateKey: PRIVATE_KEY });
+  
+  const raw = process.env.GITHUB_APP_PRIVATE_KEY;
+
+  if (!raw) {
+    throw new Error("GITHUB_APP_PRIVATE_KEY is not set");
+  }
+  
+  const privateKey = raw
+    .replace(/\\n/g, "\n")
+    .trim();
+
+  _app = new App({ appId: APP_ID, privateKey: privateKey });
   return _app;
 }
 

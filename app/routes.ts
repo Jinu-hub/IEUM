@@ -124,7 +124,7 @@ export default [
         index("features/users/screens/dashboard.tsx"),
         route("/analytics", "features/users/screens/analytics.tsx"),
         route("/payments", "features/payments/screens/payments.tsx"),
-        route("/test", "features/users/screens/test1.tsx"),
+        route("/test-klkl12", "features/users/screens/test1.tsx"),
       ]),
       ...prefix("/contents", [
         route("/sent-mail", "features/contents/screens/sent-mail.tsx"),  

@@ -2,11 +2,8 @@
  * 간단한 테스트용 API 엔드포인트
  */
 
-import { mkdir, writeFile } from "fs/promises";
 import type { App } from "octokit";
-import { join } from "path";
 import { type LoaderFunctionArgs, data } from "react-router";
-import { getGitHubApp } from "~/core/integrations/github/client";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   console.log('🚀 Test API 호출됨:', request.url);
@@ -25,7 +22,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     console.log('✅ 환경 변수 확인 완료');
 
-    // Octokit 인스턴스 생성
+    // Octokit 인스턴스 생성 (動的インポート)
+    const { getGitHubApp } = await import("~/core/integrations/github/client");
     const app = getGitHubApp();
     console.log('✅ Octokit 인스턴스 생성 완료');
 
@@ -224,10 +222,16 @@ async function handleTest(app: any) {
 
 /**
  * ファイル保存用のヘルパー関数
+ * サーバーサイドでのみ使用されることを想定
  */
 export async function saveContentToFile(content: any, outDir: string, 
   prefix: string = 'test_data_',
   ext: string = 'md'): Promise<string> {
+  
+  // 動的インポート（サーバーサイドでのみ実行される）
+  const { mkdir, writeFile } = await import("fs/promises");
+  const { join } = await import("path");
+  
   // 現在の日時でファイル名を生成 (yyyyMMdd_HHmmss)
   const now = new Date();
   const year = now.getFullYear();
