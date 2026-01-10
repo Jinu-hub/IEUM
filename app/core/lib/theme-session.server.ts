@@ -31,6 +31,8 @@ const sessionStorage = createCookieSessionStorage({
     path: "/",
     httpOnly: false,
     sameSite: "lax",
+    secure: process.env.NODE_ENV === "production", // secure attribute is enabled only in production
+    secrets: [process.env.SESSION_SECRET || "default-secret-change-in-production"], 
   },
 });
 

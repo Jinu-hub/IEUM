@@ -36,6 +36,9 @@ import ko from "~/locales/ko";
 export const localeCookie = createCookie("locale", {
   path: "/",
   sameSite: "lax",
+  secure: process.env.NODE_ENV === "production", // secure attribute is enabled only in production
+  httpOnly: false, // allows JavaScript to access the cookie
+  secrets: [process.env.SESSION_SECRET || "default-secret-change-in-production"], 
 });
 
 /**
@@ -59,6 +62,8 @@ const i18next = new RemixI18Next({
     supportedLanguages: i18n.supportedLngs as unknown as string[],
     // Fallback language when the requested language is not available
     fallbackLanguage: i18n.fallbackLng,
+    // order of language detection
+    order: ['cookie', 'searchParams', 'header'],
   },
   // i18next configuration
   i18next: {
