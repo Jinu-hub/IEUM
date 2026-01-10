@@ -34,7 +34,7 @@ export const meta: Route.MetaFunction = ({ data }) => {
     { title: data?.title ?? "Nexletter FAQ" },
     {
       name: "description",
-      content: data?.subtitle ?? data?.description ?? "도입 전에 가장 자주 묻는 질문들을 한 곳에서 확인하세요."
+      content: data?.description ?? "도입 전에 가장 자주 묻는 질문들을 한 곳에서 확인하세요."
     }
   ];
 };
@@ -43,8 +43,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   const t = await i18next.getFixedT(request);
 
   return {
+    // metaタグ用のみ保持
     title: t("faq.title", { defaultValue: "자주 묻는 질문" }),
-    subtitle: t("faq.subtitle", { defaultValue: "도입·보안·청구 관련 궁금증을 빠르게 해결하세요." }),
     description: t("faq.description", { defaultValue: "도입 전에 가장 자주 묻는 질문들을 한 곳에서 확인하세요." })
   };
 }
@@ -303,8 +303,8 @@ export default function FAQ({ loaderData }: Route.ComponentProps) {
     <div className="space-y-16">
       <NexHero
         variant="split"
-        title={loaderData.title}
-        subtitle={loaderData.subtitle}
+        title={t("faq.title")}
+        subtitle={t("faq.subtitle")}
         description={t("faq.heroDescription")}
         actions={{
           primary: {

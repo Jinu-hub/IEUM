@@ -84,7 +84,7 @@ const PLACEHOLDERS: Record<string, string> = {
   'company name': 'NexLetter',
   'company address': 'Seoul, South Korea',
   'service URL': import.meta.env.VITE_SERVICE_URL || 'https://nexletter.com',
-  'company or service provider': 'NexLetter',
+  'company or service provider': 'LinkVerse',
   // Add more placeholders as needed
 };
 
@@ -127,6 +127,17 @@ function replacePlaceholders(content: string): string {
 export async function loader({ request, params }: Route.LoaderArgs) {
   // Get the user's locale from the request (cookie or URL parameter)
   const locale = await i18next.getLocale(request);
+
+  // デバッグ: cookieとheaderを確認
+  const cookieHeader = request.headers.get('Cookie');
+  const acceptLanguage = request.headers.get('Accept-Language');
+  console.log('🔍 Locale detection debug:', {
+    detectedLocale: locale,
+    cookieHeader,
+    acceptLanguage,
+    url: request.url,
+  });
+
   const filename = `${params.slug}_${locale}.mdx`;
   
   // Construct the file path to the requested legal document

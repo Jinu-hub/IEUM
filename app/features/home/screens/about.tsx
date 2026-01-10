@@ -67,9 +67,7 @@ export const meta: Route.MetaFunction = (args) => {
     { title: pageData?.title ?? "NexLetter – About" },
     {
       name: "description",
-      content:
-        pageData?.subtitle ?? pageData?.description ??
-        "팀의 흐름을 기록하는 새로운 방식"
+      content: pageData?.description ?? "팀의 흐름을 기록하는 새로운 방식"
     }
   ];
 };
@@ -78,10 +76,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   const t = await i18next.getFixedT(request);
 
   return {
+    // metaタグ用のみ保持
     title: t("about.title", { defaultValue: "About Us" }),
-    subtitle: t("about.subtitle", {
-      defaultValue: "팀의 흐름을 기록하는 새로운 방식"
-    }),
     description: t("about.description", {
       defaultValue: "팀의 흐름을 기록하는 새로운 방식"
     })
@@ -97,8 +93,6 @@ type AboutProps = {
 export default function About({ loaderData }: AboutProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const title = loaderData.title;
-  const subtitle = loaderData.subtitle;
 
   const HERO_HIGHLIGHTS: IconCard[] = useMemo(
     () => [
@@ -287,8 +281,8 @@ export default function About({ loaderData }: AboutProps) {
     <div className="space-y-16">
       <NexHero
         variant="split"
-        title={title}
-        subtitle={subtitle}
+        title={t("about.title")}
+        subtitle={t("about.subtitle")}
         description={t("about.hero.description")}
         actions={{
           primary: {
