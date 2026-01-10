@@ -32,7 +32,9 @@ const sessionStorage = createCookieSessionStorage({
     httpOnly: false,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production", // secure attribute is enabled only in production
-    secrets: [process.env.SESSION_SECRET || "default-secret-change-in-production"], 
+    // NOTE: Removed secrets to prevent signature mismatch issues in production
+    // Theme preference is not sensitive data, so signing is not critical
+    // secrets: [process.env.SESSION_SECRET || "default-secret-change-in-production"], 
   },
 });
 

@@ -78,7 +78,9 @@ export default {
 
     return [
       // Core pages - highest priority
-      "/", // Homepage
+      // NOTE: Homepage "/" is excluded from prerendering because it contains
+      // locale-dependent and auth-dependent content that must be rendered dynamically
+      // to ensure correct language and authentication state for each user
       "/pricing", // Pricing page
       "/about", // About page
       "/faq", // FAQ page
@@ -88,8 +90,10 @@ export default {
       "/blog", // Blog index
       ...blogUrls, // Individual blog posts
 
-      // Legal pages - dynamically scanned
-      ...legalUrls,
+      // Legal pages - NOTE: These are excluded from prerendering because they
+      // contain locale-dependent content. The loader handles locale detection
+      // dynamically based on user's cookie/preferences
+      // ...legalUrls,
 
       // SEO files
       "/sitemap.xml",

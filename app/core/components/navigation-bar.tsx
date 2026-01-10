@@ -255,7 +255,8 @@ export function NavigationBar({
     >
       <div className="mx-auto flex h-full w-full max-w-screen-2xl items-center justify-between py-3">
         {/* Application logo/title with link to home */}
-        <Link to="/">
+        {/* reloadDocument forces a full page reload to ensure proper locale and auth state */}
+        <Link to="/" reloadDocument>
           <h1 className="text-lg font-extrabold">{t("home.title")}</h1>
         </Link>
         

@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
 import { Button } from '~/core/components/ui/button';
 
 const buildBaseStyles = (fontFamily: string) => `
@@ -1208,7 +1207,6 @@ export const meta = () => {
 }
 
 export default function Samples() {
-    const navigate = useNavigate();
     const { i18n } = useTranslation();
     const { t } = useTranslation("common", { keyPrefix: "common" });
     
@@ -1255,7 +1253,9 @@ export default function Samples() {
     return (
         <div className="mx-auto w-full max-w-screen-xl space-y-6 px-5 py-10 md:px-10">
             {/* Navigation button to go back */}
-            <Button variant="outline" onClick={() => navigate(-1)}>
+            {/* Using window.history.back() instead of navigate(-1) to ensure proper */}
+            {/* locale and auth state are preserved (avoiding prerendered page cache) */}
+            <Button variant="outline" onClick={() => window.history.back()}>
                 &larr; {t("back")}
             </Button>
             
