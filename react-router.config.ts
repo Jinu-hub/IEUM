@@ -32,15 +32,30 @@ async function getBlogUrls(): Promise<string[]> {
 /**
  * Scan legal directory for MDX files and generate URLs
  * Returns empty array if directory read fails
+ * 
+ * Note: Removes locale suffixes (_en, _ja, _ko) to avoid duplicate routes
+ * since the policy loader handles locale resolution dynamically
  */
 async function getLegalUrls(): Promise<string[]> {
   try {
     const legalFiles = await readdir(
       path.join(process.cwd(), "app", "features", "legal", "docs")
     );
-    return legalFiles
+    
+    // Get unique slugs by removing locale suffixes (_en, _ja, _ko)
+    const uniqueSlugs = new Set<string>();
+    
+    legalFiles
       .filter((file) => file.endsWith(".mdx"))
-      .map((file) => `/legal/${file.replace(".mdx", "")}`);
+      .forEach((file) => {
+        // Remove .mdx extension
+        const nameWithoutExt = file.replace(".mdx", "");
+        // Remove locale suffix (_en, _ja, _ko) if present
+        const slug = nameWithoutExt.replace(/_(en|ja|ko)$/, "");
+        uniqueSlugs.add(slug);
+      });
+    
+    return Array.from(uniqueSlugs).map((slug) => `/legal/${slug}`);
   } catch (error) {
     console.warn("Failed to read legal directory:", error);
     return [];
