@@ -5,11 +5,15 @@
  * Supabase의 내장 Secrets 기능을 활용하여 암호화된 저장소를 제공합니다.
  */
 
+// @ts-ignore - Deno runtime type definitions
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
+// @ts-ignore - Local Deno type definitions
 /// <reference path="../deno.d.ts" />
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+// @ts-ignore - Deno std library
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore - Supabase client for Deno
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 interface SecretRequest {
   action: 'store' | 'get' | 'update' | 'delete';

@@ -13,9 +13,8 @@
  * This is useful during development and after deployment to ensure that analytics
  * tracking is functioning as expected without having to perform actual user flows.
  */
-import type { Route } from "./+types/analytics";
-
 import { CheckCircle2Icon, LoaderCircleIcon } from "lucide-react";
+import type { ClientActionFunctionArgs, MetaFunction } from "react-router";
 import { Form, useNavigation } from "react-router";
 
 import { Button } from "~/core/components/ui/button";
@@ -29,7 +28,7 @@ import trackEvent from "~/core/lib/analytics.client";
  * 
  * @returns Array of metadata objects for the page
  */
-export const meta: Route.MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return [
     {
       title: `Google Tag Test | ${import.meta.env.VITE_APP_NAME}`,
@@ -47,7 +46,7 @@ export const meta: Route.MetaFunction = () => {
  * 
  * @returns Object indicating success status
  */
-export async function clientAction() {
+export async function clientAction({ request }: ClientActionFunctionArgs) {
   // Send a test event to Google Analytics with timestamp
   trackEvent("test_event", {
     test: "test",
@@ -73,7 +72,7 @@ export async function clientAction() {
  * @param actionData - Data returned from the clientAction function
  * @returns React component for testing Google Analytics
  */
-export default function TriggerEvent({ actionData }: Route.ComponentProps) {
+export default function TriggerEvent({ actionData }: { actionData?: { success: boolean } }) {
   // Get the current navigation state to show loading indicator
   const { state } = useNavigation();
   

@@ -13,8 +13,7 @@
  * is functioning as expected without having to create actual error conditions in production code.
  * It helps verify the complete error reporting pipeline from client to Sentry dashboard.
  */
-import type { Route } from "./+types/sentry";
-
+import type { MetaFunction } from "react-router";
 import { Form } from "react-router";
 
 import { Button } from "~/core/components/ui/button";
@@ -27,7 +26,7 @@ import { Button } from "~/core/components/ui/button";
  * 
  * @returns Array of metadata objects for the page
  */
-export const meta: Route.MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return [
     {
       title: `Sentry Test | ${import.meta.env.VITE_APP_NAME}`,
