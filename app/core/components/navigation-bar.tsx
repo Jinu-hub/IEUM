@@ -272,16 +272,17 @@ export function NavigationBar({
             Components
           </Link>
           */}
+          {/* reloadDocument ensures proper locale and auth state for prerendered pages */}
           <Link
             to="/about"
-            viewTransition
+            reloadDocument
             className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
             {t("navigation.links.about")}
           </Link>
           <Link
             to="/blog"
-            viewTransition
+            reloadDocument
             className="text-muted-foreground hover:text-foreground text-sm transition-colors pointer-events-none opacity-50 cursor-not-allowed"
             aria-disabled="true"
             onClick={(e) => e.preventDefault()}
@@ -290,21 +291,21 @@ export function NavigationBar({
           </Link>
           <Link
             to="/faq"
-            viewTransition
+            reloadDocument
             className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
             {t("navigation.links.faq")}
           </Link>
           <Link
             to="/pricing"
-            viewTransition
+            reloadDocument
             className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
             {t("navigation.links.pricing")}
           </Link>
           <Link
             to="/contact"
-            viewTransition
+            reloadDocument
             className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
             {t("navigation.links.contact")}
@@ -341,12 +342,14 @@ export function NavigationBar({
         </SheetTrigger>
         <SheetContent>
           <SheetHeader>
+            {/* reloadDocument ensures proper locale and auth state for prerendered pages */}
             <SheetClose asChild>
-              <Link to="/about">{t("navigation.links.about")}</Link>
+              <Link to="/about" reloadDocument>{t("navigation.links.about")}</Link>
             </SheetClose>
             <SheetClose asChild>
               <Link 
                 to="/blog" 
+                reloadDocument
                 className="pointer-events-none opacity-50 cursor-not-allowed"
                 aria-disabled="true"
                 onClick={(e) => e.preventDefault()}
@@ -355,13 +358,13 @@ export function NavigationBar({
               </Link>
             </SheetClose>
             <SheetClose asChild>
-              <Link to="/faq">{t("navigation.links.faq")}</Link>
+              <Link to="/faq" reloadDocument>{t("navigation.links.faq")}</Link>
             </SheetClose>
             <SheetClose asChild>
-              <Link to="/pricing">{t("navigation.links.pricing")}</Link>
+              <Link to="/pricing" reloadDocument>{t("navigation.links.pricing")}</Link>
             </SheetClose>
             <SheetClose asChild>
-              <Link to="/contact">{t("navigation.links.contact")}</Link>
+              <Link to="/contact" reloadDocument>{t("navigation.links.contact")}</Link>
             </SheetClose>
           </SheetHeader>
           {loading ? (
