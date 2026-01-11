@@ -101,7 +101,7 @@ export async function action({ request }: ActionFunctionArgs) {
     
     // 過去7日間のメッセージを取得
     const now = dayjs();
-    const oldestTs = now.subtract(100, "day").unix().toString();
+    const oldestTs = now.subtract(7, "day").unix().toString();
     
     const channelResults: Record<string, { 
       channelName: string;
@@ -125,7 +125,7 @@ export async function action({ request }: ActionFunctionArgs) {
         //saveContentToFile(messages, 'output-test', 'messages_', 'json');
         
         // レビュー用なので最大50件に制限
-        const limitedMessages = messages.slice(0, 50);
+        const limitedMessages = messages.slice(0, 100);
         
         channelResults[channelId] = {
           channelName: channelInfo?.name || channelId,

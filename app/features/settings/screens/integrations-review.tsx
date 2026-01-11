@@ -632,7 +632,7 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
                                 <ReviewGuideTooltip
                                   currentStep={isReviewMode ? currentReviewStep : null}
                                   targetStep="review_setup_channel"
-                                  position="top"
+                                  position="bottom"
                                 >
                                 <div className="flex flex-wrap gap-1">
                                   {integration.resourceCache.channels

@@ -37,7 +37,7 @@ const GUIDE_MESSAGES: Record<ReviewStep, { title: string; description: string; i
   },
   'review_connect': {
     title: 'Connect Slack',
-    description: 'Click the Connect button and link your Workspace (jinu-dev) in the settings page that appears.',
+    description: 'Click the Connect button and link your Slack Workspace in the settings page that appears.',
     icon: '🔗'
   },
   'review_setup_channel': {
