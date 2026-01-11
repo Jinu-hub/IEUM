@@ -401,7 +401,7 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
     if (isReviewMode && currentReviewStep === 'review_start' && slackStatus !== 'connected') {
       const timer = setTimeout(() => {
         updateReviewStep('review_connect');
-      }, 4000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [isReviewMode, currentReviewStep, slackStatus, updateReviewStep]);

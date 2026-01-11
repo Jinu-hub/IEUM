@@ -79,11 +79,11 @@ export const meta: Route.MetaFunction = ({ data }) => {
  * These values will replace placeholders in the MDX files
  */
 const PLACEHOLDERS: Record<string, string> = {
-  'YYYY-MM-DD': '2026-01-01',
-  'support email': import.meta.env.VITE_SUPPORT_EMAIL || 'support@nexletter.com',
+  'YYYY-MM-DD': '2026-01-06',
+  'support email': import.meta.env.VITE_SUPPORT_EMAIL || 'jinu30dev@gmail.com',
   'company name': 'NexLetter',
   'company address': 'Seoul, South Korea',
-  'service URL': import.meta.env.VITE_SERVICE_URL || 'https://nexletter.com',
+  'service URL': import.meta.env.VITE_SERVICE_URL || 'https://nexone.ink',
   'company or service provider': 'LinkVerse',
   // Add more placeholders as needed
 };
