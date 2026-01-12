@@ -349,6 +349,84 @@ export type Database = {
           },
         ]
       }
+      job_queue: {
+        Row: {
+          attempts: number
+          available_at: string
+          created_at: string
+          dedupe_key: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          job_type: string
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          payload: Json
+          priority: number
+          started_at: string | null
+          status: Database["public"]["Enums"]["job_status"]
+          target_id: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          attempts?: number
+          available_at?: string
+          created_at?: string
+          dedupe_key: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          job_type: string
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          payload?: Json
+          priority?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["job_status"]
+          target_id?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          attempts?: number
+          available_at?: string
+          created_at?: string
+          dedupe_key?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          job_type?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          payload?: Json
+          priority?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["job_status"]
+          target_id?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_queue_target_id_targets_target_id_fk"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["target_id"]
+          },
+          {
+            foreignKeyName: "job_queue_workspace_id_workspace_workspace_id_fk"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
       mail_list: {
         Row: {
           archived_at: string | null
@@ -1486,6 +1564,8 @@ export type Database = {
         | "discord"
         | "lineworks"
         | "slack_user"
+      job_status: "queued" | "processing" | "done" | "failed" | "canceled"
+      job_type: "nexletter_generate" | "nexletter_retry" | "maintenance"
       language: "en" | "ja" | "ko"
       mail_status: "sending" | "delivered" | "partial" | "failed"
       onboarding_step:
@@ -1730,6 +1810,8 @@ export const Constants = {
         "lineworks",
         "slack_user",
       ],
+      job_status: ["queued", "processing", "done", "failed", "canceled"],
+      job_type: ["nexletter_generate", "nexletter_retry", "maintenance"],
       language: ["en", "ja", "ko"],
       mail_status: ["sending", "delivered", "partial", "failed"],
       onboarding_step: [

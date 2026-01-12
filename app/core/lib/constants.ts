@@ -128,6 +128,20 @@ export const FIRST_MAIL_SEND = [
   'no',
 ] as const;
 
+export const JOB_STATUS = [
+  "queued",
+  "processing",
+  "done",
+  "failed",
+  "canceled",
+] as const;
+
+export const JOB_TYPE = [
+  "nexletter_generate",
+  "nexletter_retry",
+  "maintenance",
+] as const;
+
 /* =========================================================
    Type Definitions
    ========================================================= */
@@ -141,6 +155,8 @@ export type DeliveryEventTypeEmail = typeof DELIVERY_EVENT_TYPE_EMAIL[number];
 export type AuditAction = typeof AUDIT_ACTION[number];
 export type ConnectionStatus = typeof CONNECTION_STATUS[number];
 export type CategoryType = typeof CATEGORY_TYPE[number];
+export type JobStatus = typeof JOB_STATUS[number];
+export type JobType = typeof JOB_TYPE[number];
 
 
 /* =========================================================

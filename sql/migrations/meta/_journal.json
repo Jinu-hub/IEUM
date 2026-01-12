@@ -204,6 +204,20 @@
       "when": 1768023737814,
       "tag": "0028_thick_mephisto",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1768204107535,
+      "tag": "0029_hard_norman_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1768208788346,
+      "tag": "0030_spotty_silver_surfer",
+      "breakpoints": true
     }
   ]
 }

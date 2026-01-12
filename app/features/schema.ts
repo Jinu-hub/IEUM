@@ -30,6 +30,8 @@ import {
   DELIVERY_EVENT_TYPE_EMAIL,
   FIRST_MAIL_SEND,
   INTEGRATION_TYPE,
+  JOB_STATUS,
+  JOB_TYPE,
   LANGUAGE,
   MAIL_STATUS,
   ONBOARDING_STEP,
@@ -69,6 +71,8 @@ import {
   export const firstMailSend = pgEnum("first_mail_send", FIRST_MAIL_SEND);
   export const workspaceKind = pgEnum("workspace_kind", WORKSPACE_KIND);
   export const language = pgEnum("language", LANGUAGE);
+  export const jobStatus = pgEnum("job_status", JOB_STATUS);
+  export const jobType = pgEnum("job_type", JOB_TYPE);
 
   // GitHub App 설치 요청 상태
   export const installationRequestStatus = pgEnum("installation_request_status", [
@@ -695,6 +699,45 @@ export const onboardingStates = pgTable(
     pgPolicy("os_insert", { for: "insert", to: authenticatedRole, withCheck: isAdmin(table.workspaceId) }),
     pgPolicy("os_update", { for: "update", to: authenticatedRole, using: isAdmin(table.workspaceId), withCheck: isAdmin(table.workspaceId) }),
     pgPolicy("os_delete", { for: "delete", to: authenticatedRole, using: isAdmin(table.workspaceId) }),
+  ]
+);
+
+/* =========================================================
+   3.21 job_queue
+   ========================================================= */
+export const jobQueue = pgTable(
+  "job_queue",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    jobType: text("job_type").notNull(),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspace.workspaceId, { onDelete: "cascade" }),
+    targetId: uuid("target_id").references(() => targets.targetId, { onDelete: "cascade" }),
+    dedupeKey: text("dedupe_key").notNull(),
+    payload: jsonb("payload").notNull().default(sql`'{}'::jsonb`),
+    status: jobStatus("status").notNull().default("queued"),
+    priority: integer("priority").notNull().default(100),
+    attempts: integer("attempts").notNull().default(0),
+    maxAttempts: integer("max_attempts").notNull().default(3),
+    lockedBy: text("locked_by"),
+    lockedAt: timestamp("locked_at", { withTimezone: true }),
+    availableAt: timestamp("available_at", { withTimezone: true }).defaultNow().notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    error: text("error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_job_queue_dedupe_key").on(table.dedupeKey),
+    index("idx_job_queue_pick").on(table.status, table.availableAt, table.priority, table.createdAt),
+    index("idx_job_queue_workspace").on(table.workspaceId),
+    index("idx_job_queue_target").on(table.targetId),
+
+    // RLS: service_role only (Worker専用テーブル)
+    pgPolicy("jq_select", { for: "select", to: serviceRole, using: sql`true` }),
+    pgPolicy("jq_insert", { for: "insert", to: serviceRole, withCheck: sql`true` }),
+    pgPolicy("jq_update", { for: "update", to: serviceRole, using: sql`true`, withCheck: sql`true` }),
+    pgPolicy("jq_delete", { for: "delete", to: serviceRole, using: sql`true` }),
   ]
 );
 

@@ -44,7 +44,7 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
     let pollTimeout: NodeJS.Timeout;
     let errorCount = 0;
     const MAX_ERRORS = 5; // 최대 연속 에러 허용 횟수
-    const POLL_INTERVAL = 2000; // 폴링 간격을 2초로 증가 (rate limit 방지)
+    const POLL_INTERVAL = 3000; // 폴링 간격
 
     const pollStatus = async () => {
       if (!isMounted) return;

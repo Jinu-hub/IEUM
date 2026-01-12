@@ -304,10 +304,10 @@ export async function generateContents(input: CreateContentsInput) {
     }
 
     // 1. 데이터 정규화 & 중복 제거(Normalize & Deduplicate)
-    const linkedData = await normalizeData(input);
+    let linkedData: any = await normalizeData(input);
 
     // 2. 데이터 분석 & 개선 & 요약(Analyze & Improve & Summarize)
-    const { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData);
+    let { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData);
  /*
     await saveContentToFile(linkedData, 'output-test/first', '1_linked_', 'json');
     await saveContentToFile(topics, 'output-test/first', '2_topics_', 'json');
@@ -323,7 +323,7 @@ export async function generateContents(input: CreateContentsInput) {
         });
     }
     // 3. 각 섹션 초안 생성(Drafting Sections)
-    const { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } = 
+    let { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } = 
         await draftingData(input, linkedData, kpiInfo, highlights, topics, ongoing, userActivity);
   /*  
     await saveContentToFile(kpiSection, 'output-test/second', '1_kpi_section_', 'md');
@@ -333,9 +333,26 @@ export async function generateContents(input: CreateContentsInput) {
     await saveContentToFile(ongoingSection, 'output-test/second', '5_ongoing_section_', 'md');
     await saveContentToFile(closingSection, 'output-test/second', '6_closing_section_', 'md');
 */
+    
+    // 메모리 절약: 불필요해진 변수 초기화
+    linkedData = null;
+    kpiInfo = null;
+    highlights = null;
+    topics = null;
+    ongoing = null;
+    userActivity = null;
+
     // 4. 병합 
-    const mergedContents = await mergeContents(input, kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection);
+    let mergedContents = await mergeContents(input, kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection);
    //await saveContentToFile(mergedContents, 'output-test/third', '1_merged_contents_', 'md');
+
+    // 메모리 절약: 섹션 변수 초기화
+    kpiSection = null as any;
+    highlightsSection = null as any;
+    topicsSection = null as any;
+    memberSection = null as any;
+    ongoingSection = null as any;
+    closingSection = null as any;
 
     if (input.runStepId) {
         await updateNewsletterRunStep(adminClient, { 
@@ -346,6 +363,9 @@ export async function generateContents(input: CreateContentsInput) {
     // 5. 콘텐츠 생성(Generate Contents)
     const finalContents = await generateFinalContents(input, mergedContents);
     //await saveContentToFile(finalContents, 'output-test/fourth', '1_final_contents_html_', 'html');
+    
+    // 메모리 절약: 병합된 컨텐츠 초기화
+    mergedContents = null as any;
     
     return finalContents;
 }

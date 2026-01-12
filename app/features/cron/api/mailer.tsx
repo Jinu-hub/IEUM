@@ -137,7 +137,7 @@ export async function action({ request }: Route.LoaderArgs) {
       
       const { error } = await resendClient.emails.send({
         // Make sure this domain is the Resend domain.
-        from: "LinkVerse <hello@mail.linkverse.app>",
+        from: "Nexletter <hello@mail.nexone.ink>",
         to: [to],
         subject: subjectByLocale[validLocale],
         react: WelcomeEmail({
