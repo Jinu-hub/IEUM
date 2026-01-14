@@ -74,6 +74,7 @@ export default function Footer() {
         { label: t("footer.links.legal.items.privacyPolicy"), href: "/legal/privacy-policy" },
         { label: t("footer.links.legal.items.termsOfService"), href: "/legal/terms-of-service" },
         { label: t("footer.links.legal.items.securityWhitepaper"), href: "/legal/security-whitepaper" },
+        { label: t("pricing.faq.refundPolicyLink"), href: "/legal/refund-policy" },
         //{ label: "쿠키 정책", href: "/legal/cookies" }
       ]
     }

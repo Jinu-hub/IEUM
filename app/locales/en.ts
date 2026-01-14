@@ -1107,6 +1107,7 @@ const en: Translation = {
           answer: "Plan changes are possible at any time.<br />Even if you change plans during the period, only the difference will be charged or refunded based on the remaining period.",
         },
       },
+      refundPolicyLink: "Refund & Cancellation Policy",
     },
     cta: {
       badge: "Let's Start Your Journey plan?",

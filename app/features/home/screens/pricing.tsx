@@ -326,15 +326,19 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
                 <NexCardContent className="flex h-full flex-col space-y-6">
                   <div>
                     <div className="text-4xl font-bold text-[#5E6AD2] dark:text-[#7C89F9]">
-                      {displayPrice(plan)}{annualBilling ? "" : t("pricing.billing.perMonth")}
+                      {displayPrice(plan)}
+                      {annualBilling ? (
+                        <span className="text-lg font-normal text-muted-foreground ml-2">
+                          (Total {getAnnualTotal(plan)})
+                        </span>
+                      ) : (
+                        t("pricing.billing.perMonth")
+                      )}
                     </div>
                     {annualBilling ? (
                       <div className="space-y-1 mt-2">
                         <p className="text-sm text-muted-foreground">
                           {t("pricing.billing.annualPayment")}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {t("pricing.billing.totalFor12Months")}: {getAnnualTotal(plan)}
                         </p>
                         {getSavings(plan) ? (
                           <p className="text-xs text-green-600 dark:text-green-400 font-medium">
@@ -380,6 +384,14 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
               </NexCard>
             );
           })}
+        </div>
+        <div className="mt-6 text-center">
+          <a
+            href="/legal/refund-policy"
+            className="text-sm text-muted-foreground hover:text-[#5E6AD2] dark:hover:text-[#7C89F9] transition-colors underline"
+          >
+            {t("pricing.faq.refundPolicyLink")}
+          </a>
         </div>
       </section>
 

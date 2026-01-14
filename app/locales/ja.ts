@@ -1107,6 +1107,7 @@ const ja: Translation = {
           answer: "料金プラン変更はいつでも可能です。<br />期間途中でプランを変更しても、残りの期間を基準に差額のみ追加支払いまたは返金処理されます。",
         },
       },
+      refundPolicyLink: "返金・解約ポリシー",
     },
     cta: {
       badge: "Let's Start Your Journey plan?",

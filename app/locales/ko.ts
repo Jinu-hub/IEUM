@@ -1106,6 +1106,7 @@ const ko: Translation = {
           answer: "요금제 변경은 언제든지 가능합니다. <br />기간 도중 플랜을 변경하더라도, 남은 기간을 기준으로 차액만 추가 결제하거나 환불 처리됩니다.",
         },
       },
+      refundPolicyLink: "구독 취소 및 환불 정책",
     },
     cta: {
       badge: "Let's Start Your Journey plan?",

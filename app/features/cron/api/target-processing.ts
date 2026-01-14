@@ -48,7 +48,7 @@ export function createContentsInput(
     to: dateRange.endDate,
     runId: runMapping.runId,
     runStepId: runMapping.runStepId,
-    language: "ja",
+    language: target.language,
     source: "slack",
     timezone: target.timezone,
     enableCreateContents: fetchedData.enableCreateContents
