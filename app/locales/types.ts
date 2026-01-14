@@ -1082,6 +1082,7 @@ export type Translation = {
           answer: string;
         };
       };
+      refundPolicyLink: string;
     };
     cta: {
       badge: string;
