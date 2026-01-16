@@ -61,6 +61,9 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
   // ID 복사 상태
   const [copied, setCopied] = useState(false);
   
+  // HTML/Markdown 내용 복사 상태
+  const [contentCopied, setContentCopied] = useState(false);
+  
   if (!email) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
@@ -96,6 +99,16 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
     setTimeout(() => {
       setCopied(false);
     }, 2000);
+  };
+
+  // HTML/Markdown 내용 복사 핸들러
+  const handleCopyContent = () => {
+    const content = previewMode === 'html' ? email.htmlBody : email.textBody;
+    navigator.clipboard.writeText(content);
+    setContentCopied(true);
+    setTimeout(() => {
+      setContentCopied(false);
+    }, 3000);
   };
 
   // HTML 미리보기 핸들러
@@ -392,9 +405,30 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                 <div className="p-4 border-b border-[#E1E4E8] dark:border-[#2C2D30] bg-[#F8F9FA] dark:bg-[#2C2D30]">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground">HTML {t("code")}</span>
-                    <NexButton variant="ghost" size="sm" className="cursor-pointer" onClick={() => setPreviewMode('none')}>
-                      <X className="h-4 w-4" />
-                    </NexButton>
+                    <div className="flex items-center space-x-2">
+                      <NexButton 
+                        variant={contentCopied ? "primary" : "secondary"}
+                        size="sm"
+                        className="cursor-pointer transition-all"
+                        onClick={handleCopyContent}
+                        disabled={contentCopied}
+                      >
+                        {contentCopied ? (
+                          <>
+                            <Check className="h-4 w-4 mr-1" />
+                            {t("mail.copied")}
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-4 w-4 mr-1" />
+                            {t("copy")}
+                          </>
+                        )}
+                      </NexButton>
+                      <NexButton variant="ghost" size="sm" className="cursor-pointer" onClick={() => setPreviewMode('none')}>
+                        <X className="h-4 w-4" />
+                      </NexButton>
+                    </div>
                   </div>
                 </div>
                 <div className="max-h-[600px] overflow-y-auto">
@@ -408,15 +442,36 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                 <div className="p-4 border-b border-[#E1E4E8] dark:border-[#2C2D30] bg-[#F8F9FA] dark:bg-[#2C2D30]">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground">MARKDOWN {t("code")}</span>
-                    <NexButton variant="ghost" size="sm" className="cursor-pointer" onClick={() => setPreviewMode('none')}>
-                      <X className="h-4 w-4" />
-                    </NexButton>
+                    <div className="flex items-center space-x-2">
+                      <NexButton 
+                        variant={contentCopied ? "primary" : "secondary"}
+                        size="sm"
+                        className="cursor-pointer transition-all"
+                        onClick={handleCopyContent}
+                        disabled={contentCopied}
+                      >
+                        {contentCopied ? (
+                          <>
+                            <Check className="h-4 w-4 mr-1" />
+                            {t("mail.copied")}
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-4 w-4 mr-1" />
+                            {t("copy")}
+                          </>
+                        )}
+                      </NexButton>
+                      <NexButton variant="ghost" size="sm" className="cursor-pointer" onClick={() => setPreviewMode('none')}>
+                        <X className="h-4 w-4" />
+                      </NexButton>
+                    </div>
                   </div>
-                  <div className="max-h-[600px] overflow-y-auto">
-                    <pre className="text-sm text-foreground p-4 bg-[#F8F9FA] dark:bg-[#2C2D30] overflow-x-auto whitespace-pre-wrap">
-                      <code>{email.textBody}</code>
-                    </pre>
-                  </div>
+                </div>
+                <div className="max-h-[600px] overflow-y-auto">
+                  <pre className="text-sm text-foreground p-4 bg-[#F8F9FA] dark:bg-[#2C2D30] overflow-x-auto whitespace-pre-wrap">
+                    <code>{email.textBody}</code>
+                  </pre>
                 </div>
               </div>
             ) : null}

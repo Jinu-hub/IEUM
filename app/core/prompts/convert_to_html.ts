@@ -417,8 +417,26 @@ Use the markdown content from the input \`sections\` object to generate the foll
                 -->
                 
                 <!-- Use sections.ongoing → Convert to: 
+                     IMPORTANT: Preserve ALL markdown headers including main title (##) and subsection titles (###).
+                     
                      <div class="section">
-                       <h2 class="section-title">[Title]</h2>
+                       <!-- Main title: Convert ## Title → <h2 class="section-title">Title</h2> -->
+                       <h2 class="section-title">[Title from ##]</h2>
+                       
+                       <!-- CRITICAL: Convert ALL ### subsection titles to <h3> tags -->
+                       <!-- Examples (Japanese): ### 現在の進行状況 → <h3>現在の進行状況</h3> -->
+                       <!-- Examples (Japanese): ### 🗓️ ロードマップ → <h3>🗓️ ロードマップ</h3> -->
+                       <!-- Examples (Japanese): ### 📅 今後の予定 → <h3>📅 今後の予定</h3> -->
+                       <!-- Examples (Korean): ### 현재 진행 상황 → <h3>현재 진행 상황</h3> -->
+                       <!-- Examples (Korean): ### 🗓️ 로드맵 → <h3>🗓️ 로드맵</h3> -->
+                       <!-- Examples (Korean): ### 📅 향후 일정 → <h3>📅 향후 일정</h3> -->
+                       <!-- Examples (English): ### Current Progress → <h3>Current Progress</h3> -->
+                       <!-- Examples (English): ### 🗓️ Roadmap → <h3>🗓️ Roadmap</h3> -->
+                       <!-- Examples (English): ### 📅 Upcoming Schedule → <h3>📅 Upcoming Schedule</h3> -->
+                       <!-- DO NOT skip or ignore ### subsection titles -->
+                       <h3>[Subsection Title from ###]</h3>
+                       
+                       <!-- Content after ### subsection: road-card, roadmap-table, or ul lists -->
                        <div class="road-card">
                          <h3>[Item title]</h3>
                          <p>[Description]</p>
@@ -432,6 +450,14 @@ Use the markdown content from the input \`sections\` object to generate the foll
                          <!-- If no progress, only date -->
                          <div class="road-meta">[Date/status]</div>
                        </div>
+                       
+                       <!-- If subsection has roadmap table after ### -->
+                       <table class="roadmap-table">...</table>
+                       
+                       <!-- If subsection has list after ### -->
+                       <ul>...</ul>
+                       
+                       <!-- Repeat for EACH ### subsection found in the markdown -->
                      </div>
                 -->
                 
