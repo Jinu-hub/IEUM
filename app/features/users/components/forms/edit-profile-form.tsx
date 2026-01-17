@@ -61,8 +61,15 @@ export default function EditProfileForm({
     >
       <NexCard variant="elevated" padding="lg">
         <NexCardHeader>
-          <NexCardTitle>{t("title")}</NexCardTitle>
-          <NexCardDescription>{t("description")}</NexCardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-gradient-to-r from-purple-500 to-blue-500 p-3 shadow-lg">
+              <UserIcon className="size-6 text-white" />
+            </div>
+            <div>
+              <NexCardTitle>{t("title")}</NexCardTitle>
+              <NexCardDescription>{t("description")}</NexCardDescription>
+            </div>
+          </div>
         </NexCardHeader>
         <NexCardContent>
           <div className="flex w-full flex-col gap-8">

@@ -10,7 +10,8 @@ import ChangePasswordForm from "../components/forms/change-password-form";
 //import ConnectSocialAccountsForm from "../components/forms/connect-social-accounts-form";
 import DeleteAccountForm from "../components/forms/delete-account-form";
 import EditProfileForm from "../components/forms/edit-profile-form";
-import { getUserProfile } from "../queries";
+import PlanSection from "../components/forms/plan-info-form";
+import { getUserProfile, getUserSubscription } from "../queries";
 
 export const meta: Route.MetaFunction = () => {
   return [{ title: `Account | ${import.meta.env.VITE_APP_NAME}` }];
@@ -23,15 +24,17 @@ export async function loader({ request }: Route.LoaderArgs) {
   } = await client.auth.getUser();
   const identities = client.auth.getUserIdentities();
   const profile = getUserProfile(client, { userId: user!.id });
+  const subscription = getUserSubscription(client, { userId: user!.id });
   return {
     user,
     identities,
     profile,
+    subscription,
   };
 }
 
 export default function Account({ loaderData }: Route.ComponentProps) {
-  const { user, identities, profile } = loaderData;
+  const { user, identities, profile, subscription } = loaderData;
   const hasEmailIdentity = user?.identities?.some(
     (identity) => identity.provider === "email",
   );
@@ -61,6 +64,24 @@ export default function Account({ loaderData }: Route.ComponentProps) {
               />
             );
           }}
+        </Await>
+      </Suspense>
+
+      {/* Plan Settings Section */}
+      <Suspense
+        fallback={
+          <div className="bg-card animate-fast-pulse h-60 w-full max-w-screen-md rounded-xl border shadow-sm" />
+        }
+      >
+        <Await
+          resolve={subscription}
+          errorElement={
+            <div className="text-red-500">プラン情報を読み込めませんでした</div>
+          }
+        >
+          {(subscription) => (
+            <PlanSection subscription={subscription} />
+          )}
         </Await>
       </Suspense>
 

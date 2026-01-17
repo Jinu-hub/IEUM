@@ -487,6 +487,30 @@ export type Translation = {
     passwordRequirementsUppercaseAndLowercase: string;
     passwordRequirementsNumber: string;
   };
+  planInfo: {
+    title: string;
+    description: string;
+    status: {
+      trialing: string;
+      active: string;
+      paused: string;
+      expired: string;
+      canceled: string;
+    };
+    trialRemaining: string;
+    validUntil: string;
+    upgradeToStarter: string;
+    startDate: string;
+    trialEndDate: string;
+    nextRenewalDate: string;
+    upgradePrompt: {
+      title: string;
+      description: string;
+    };
+    comparePlans: string;
+    managePayments: string;
+    cancelSubscription: string;
+  };
   connectSocialAccounts: {
     title: string;
     description: string;
@@ -513,6 +537,8 @@ export type Translation = {
     sentMail: string;
     user: {
       upgrade: string;
+      upgradeToStarter: string;
+      upgradeToPro: string;
       account: string;
       payments: string;
       notifications: string;

@@ -42,12 +42,19 @@ export default function ChangeEmailForm({ email }: { email: string }) {
     >
       <NexCard variant="elevated" padding="lg">
         <NexCardHeader>
-          <NexCardTitle>{email ? t("title") : t("addEmailTitle")}</NexCardTitle>
-          <NexCardDescription>
-            {email
-              ? t("description")
-              : t("addEmailDescription")}
-          </NexCardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-gradient-to-r from-blue-500 to-purple-500 p-3 shadow-lg">
+              <MailIcon className="size-6 text-white" />
+            </div>
+            <div>
+              <NexCardTitle>{email ? t("title") : t("addEmailTitle")}</NexCardTitle>
+              <NexCardDescription>
+                {email
+                  ? t("description")
+                  : t("addEmailDescription")}
+              </NexCardDescription>
+            </div>
+          </div>
         </NexCardHeader>
         <NexCardContent>
           <div className="flex w-full flex-col gap-6">

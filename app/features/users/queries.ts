@@ -1,6 +1,27 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "database.types";
 
+export async function getUserSubscription(
+  client: SupabaseClient<Database>,
+  { userId }: { userId: string | null },
+) {
+  if (!userId) {
+    return null;
+  }
+  const { data, error } = await client
+    .from("subscriptions")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.log("getUserSubscription error:", error);
+    return null;
+  }
+  return data;
+}
+
 export async function getUserProfile(
   client: SupabaseClient<Database>,
   { userId }: { userId: string | null },

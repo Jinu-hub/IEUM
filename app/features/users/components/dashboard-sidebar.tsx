@@ -169,8 +169,16 @@ const getSidebarData = (
   ],
 });
 
+import type { PlanType, SubscriptionMode } from "~/core/lib/constants";
+
+type SubscriptionInfo = {
+  plan_type: PlanType;
+  mode: SubscriptionMode;
+} | null;
+
 export default function DashboardSidebar({
   user,
+  subscription,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   user: {
@@ -178,6 +186,7 @@ export default function DashboardSidebar({
     email: string;
     avatarUrl: string;
   };
+  subscription: SubscriptionInfo;
 }) {
   const { t } = useTranslation("common", { keyPrefix: "sidebar" });
   const { t: commonT } = useTranslation("common");
@@ -206,6 +215,7 @@ export default function DashboardSidebar({
               email: user.email,
               avatarUrl: user.avatarUrl,
             }}
+            subscription={subscription}
           />
           <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:hidden">
             <ThemeSwitcher />
