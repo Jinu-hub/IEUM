@@ -19,6 +19,17 @@ import { FINAL_KPI_INSTRUCTIONS_V1 } from './final_kpi_ins_v1';
 import { FINAL_RESULT_INSTRUCTIONS } from './final_res_ins';
 import { FINAL_RESULT_INSTRUCTIONS_NO_KPI } from './final_res_ins_no_kpi';
 import type { PromptType } from './types';
+// セクション別HTML変換プロンプト（並列処理用）
+import {
+    HEADER_TO_HTML_INSTRUCTIONS,
+    SUMMARY_TO_HTML_INSTRUCTIONS,
+    KPI_TO_HTML_INSTRUCTIONS,
+    HIGHLIGHTS_TO_HTML_INSTRUCTIONS,
+    TOPICS_TO_HTML_INSTRUCTIONS,
+    ONGOING_TO_HTML_INSTRUCTIONS,
+    MEMBER_ACTIVITY_TO_HTML_INSTRUCTIONS,
+    CLOSING_TO_HTML_INSTRUCTIONS,
+} from './toHtml';
 
 export { buildPrompt } from './prompt-builder';
 
@@ -58,6 +69,23 @@ export function getPrompt(
       return FINAL_RESULT_INSTRUCTIONS_NO_KPI;
     case 'convert_to_html_no_kpi':
       return CONVERT_TO_HTML_INSTRUCTIONS_NO_KPI;
+    // セクション別HTML変換（並列処理用）
+    case 'toHtml_header':
+      return HEADER_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_summary':
+      return SUMMARY_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_kpi':
+      return KPI_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_highlights':
+      return HIGHLIGHTS_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_topics':
+      return TOPICS_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_ongoing':
+      return ONGOING_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_memberActivity':
+      return MEMBER_ACTIVITY_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_closing':
+      return CLOSING_TO_HTML_INSTRUCTIONS;
   }
   return '';
 }

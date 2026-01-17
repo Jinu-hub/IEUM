@@ -16,3 +16,12 @@ export type PromptType =
     | 'convert_to_html'
     | 'convert_to_html_kpi'
     | 'convert_to_html_no_kpi'
+    // セクション別HTML変換（並列処理用）
+    | 'toHtml_header'
+    | 'toHtml_summary'
+    | 'toHtml_kpi'
+    | 'toHtml_highlights'
+    | 'toHtml_topics'
+    | 'toHtml_ongoing'
+    | 'toHtml_memberActivity'
+    | 'toHtml_closing'
