@@ -31,7 +31,7 @@ import { Actions } from "./navigation-bar";
  * @returns A modern, comprehensive footer component
  */
 export default function Footer() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Handle newsletter subscription
   const handleNewsletterSubscribe = async (email: string) => {
@@ -39,6 +39,17 @@ export default function Footer() {
     console.log("Newsletter subscription for:", email);
     // You could integrate with your email service here
   };
+
+  // Company information - language dependent
+  const companyInfo = i18n.language === "ko"
+    ? [
+        "링크버스(LinkVerse) | 사업자번호 844-64-00886 | 통신판매업 제2025-부산수영-0058호 | 대표: 송진우",
+        "부산 수영구 남천바다로21번길 69-5 | 문의: jinu30dev@gmail.com (010-6454-8896)"
+      ]
+    : [
+        "LinkVerse | Business Registration No. 844-64-00886 | Representative: Jinu Song",
+        "Address: 69-5 Namcheondong-ro 21beon-gil, Suyeong-gu, Busan, South Korea | Contact: jinu30dev@gmail.com"
+      ];
 
   // Footer navigation links organized by sections
   const footerLinks = [
@@ -122,6 +133,7 @@ export default function Footer() {
       social={socialLinks}
       legal={{
         copyright: "© 2026 LinkVerse. All rights reserved.",
+        companyInfo: companyInfo,
       }}
       actions={<Actions />}
       /*

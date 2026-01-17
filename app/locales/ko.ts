@@ -506,7 +506,7 @@ const ko: Translation = {
     nextRenewalDate: "다음 갱신일",
     upgradePrompt: {
       title: "Starter 플랜으로 업그레이드하시겠습니까?",
-      description: "지속적으로 뉴스레터를 자동 생성 및 발송할 수 있습니다.",
+      description: "Starter로 업그레이드하면, 트라이얼 이후에도 뉴스레터 자동 생성·발송이 계속됩니다.",
     },
     comparePlans: "플랜 비교",
     managePayments: "결제 관리",

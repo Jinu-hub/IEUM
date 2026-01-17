@@ -507,7 +507,7 @@ const ja: Translation = {
     nextRenewalDate: "次回更新日",
     upgradePrompt: {
       title: "Starterプランにアップグレードしませんか？",
-      description: "継続的にニュースレターを自動生成・配信できます。",
+      description: "Starterにアップグレードすると、トライアル期間後もニュースレターを自動生成・配信できます。",
     },
     comparePlans: "プランを比較",
     managePayments: "お支払い管理",

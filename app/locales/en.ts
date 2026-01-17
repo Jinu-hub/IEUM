@@ -507,7 +507,7 @@ const en: Translation = {
     nextRenewalDate: "Next Renewal Date",
     upgradePrompt: {
       title: "Upgrade to Starter Plan?",
-      description: "Continuously generate and deliver newsletters automatically.",
+      description: "After upgrading to Starter, you can continue to automatically generate and deliver newsletters.",
     },
     comparePlans: "Compare Plans",
     managePayments: "Manage Payments",

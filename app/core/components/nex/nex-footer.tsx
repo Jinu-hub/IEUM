@@ -37,6 +37,7 @@ export interface NexFooterProps extends React.HTMLAttributes<HTMLElement> {
   };
   legal?: {
     copyright?: string;
+    companyInfo?: string[];
     links?: {
       label: string;
       href: string;
@@ -131,8 +132,15 @@ export const NexFooter: React.FC<NexFooterProps> = ({
             <div className="flex items-center gap-4">
               {/* Copyright */}
               {legal?.copyright && (
-                <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
-                  {legal.copyright}
+                <div className="flex flex-col gap-1">
+                  <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
+                    {legal.copyright}
+                  </div>
+                  {legal?.companyInfo && legal.companyInfo.map((info, index) => (
+                    <div key={index} className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">
+                      {info}
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -271,8 +279,15 @@ export const NexFooter: React.FC<NexFooterProps> = ({
             <div className="flex flex-wrap items-center gap-4">
               {/* Copyright */}
               {legal?.copyright && (
-                <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
-                  {legal.copyright}
+                <div className="flex flex-col gap-1">
+                  <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
+                    {legal.copyright}
+                  </div>
+                  {legal?.companyInfo && legal.companyInfo.map((info, index) => (
+                    <div key={index} className="text-xs text-[#8B92B5] dark:text-[#6C6F7E]">
+                      {info}
+                    </div>
+                  ))}
                 </div>
               )}
 
