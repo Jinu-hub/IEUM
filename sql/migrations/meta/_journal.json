@@ -225,6 +225,20 @@
       "when": 1768722292180,
       "tag": "0031_clammy_doctor_faustus",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1768734640812,
+      "tag": "0032_rapid_paper_doll",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1768735828412,
+      "tag": "0033_dizzy_kylun",
+      "breakpoints": true
     }
   ]
 }

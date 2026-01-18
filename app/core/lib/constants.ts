@@ -140,6 +140,8 @@ export const JOB_TYPE = [
   "nexletter_generate",
   "nexletter_retry",
   "maintenance",
+  "billing_renewal",
+  "billing_all_renewals",
 ] as const;
 
 /* =========================================================
@@ -266,3 +268,42 @@ export const PAYMENT_METHOD_STATUS = [
 ] as const;
 
 export type PaymentMethodStatus = typeof PAYMENT_METHOD_STATUS[number];
+
+/* =========================================================
+   Billing & Pricing Constants
+   ========================================================= */
+
+/**
+ * Plan prices in USD
+ * - monthly: price per month (billed monthly)
+ * - yearly: total price for 12 months (billed annually)
+ */
+export const PLAN_PRICES = {
+  free: { monthly: 0, yearly: 0 },
+  starter: { monthly: 5, yearly: 48 },   // $4/mo x 12 = $48/year (20% discount)
+  pro: { monthly: 20, yearly: 192 },     // $16/mo x 12 = $192/year (20% discount)
+  enterprise: { monthly: 0, yearly: 0 }, // Custom pricing
+} as const;
+
+/**
+ * Exchange rates from USD to other currencies
+ */
+export const EXCHANGE_RATES = {
+  USD: 1,
+  KRW: 1400,
+  JPY: 150,
+} as const;
+
+export type Currency = keyof typeof EXCHANGE_RATES;
+
+/**
+ * Helper function to calculate price in a specific currency
+ */
+export function calculatePrice(
+  plan: keyof typeof PLAN_PRICES,
+  interval: "monthly" | "yearly",
+  currency: Currency = "USD"
+): number {
+  const basePrice = PLAN_PRICES[plan][interval];
+  return Math.round(basePrice * EXCHANGE_RATES[currency]);
+}

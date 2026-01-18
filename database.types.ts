@@ -792,6 +792,7 @@ export type Database = {
         Row: {
           billing_key: string
           created_at: string
+          currency: string | null
           customer_key: string | null
           display_brand: string | null
           display_last4: string | null
@@ -802,6 +803,7 @@ export type Database = {
           method_type: Database["public"]["Enums"]["payment_method_type"]
           pg_provider: string
           raw_data: Json | null
+          region: string | null
           revoked_at: string | null
           status: Database["public"]["Enums"]["payment_method_status"]
           updated_at: string
@@ -810,6 +812,7 @@ export type Database = {
         Insert: {
           billing_key: string
           created_at?: string
+          currency?: string | null
           customer_key?: string | null
           display_brand?: string | null
           display_last4?: string | null
@@ -820,6 +823,7 @@ export type Database = {
           method_type: Database["public"]["Enums"]["payment_method_type"]
           pg_provider: string
           raw_data?: Json | null
+          region?: string | null
           revoked_at?: string | null
           status: Database["public"]["Enums"]["payment_method_status"]
           updated_at?: string
@@ -828,6 +832,7 @@ export type Database = {
         Update: {
           billing_key?: string
           created_at?: string
+          currency?: string | null
           customer_key?: string | null
           display_brand?: string | null
           display_last4?: string | null
@@ -838,6 +843,7 @@ export type Database = {
           method_type?: Database["public"]["Enums"]["payment_method_type"]
           pg_provider?: string
           raw_data?: Json | null
+          region?: string | null
           revoked_at?: string | null
           status?: Database["public"]["Enums"]["payment_method_status"]
           updated_at?: string
@@ -1147,7 +1153,9 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          billing_currency: string
           billing_interval: Database["public"]["Enums"]["billing_interval"]
+          billing_region: string
           created_at: string
           ends_at: string | null
           latest_payment_id: number | null
@@ -1162,7 +1170,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          billing_currency?: string
           billing_interval?: Database["public"]["Enums"]["billing_interval"]
+          billing_region?: string
           created_at?: string
           ends_at?: string | null
           latest_payment_id?: number | null
@@ -1177,7 +1187,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          billing_currency?: string
           billing_interval?: Database["public"]["Enums"]["billing_interval"]
+          billing_region?: string
           created_at?: string
           ends_at?: string | null
           latest_payment_id?: number | null
@@ -1636,7 +1648,12 @@ export type Database = {
         | "lineworks"
         | "slack_user"
       job_status: "queued" | "processing" | "done" | "failed" | "canceled"
-      job_type: "nexletter_generate" | "nexletter_retry" | "maintenance"
+      job_type:
+        | "nexletter_generate"
+        | "nexletter_retry"
+        | "maintenance"
+        | "billing_renewal"
+        | "billing_all_renewals"
       language: "en" | "ja" | "ko"
       mail_status: "sending" | "delivered" | "partial" | "failed"
       onboarding_step:
@@ -1885,7 +1902,13 @@ export const Constants = {
         "slack_user",
       ],
       job_status: ["queued", "processing", "done", "failed", "canceled"],
-      job_type: ["nexletter_generate", "nexletter_retry", "maintenance"],
+      job_type: [
+        "nexletter_generate",
+        "nexletter_retry",
+        "maintenance",
+        "billing_renewal",
+        "billing_all_renewals",
+      ],
       language: ["en", "ja", "ko"],
       mail_status: ["sending", "delivered", "partial", "failed"],
       onboarding_step: [

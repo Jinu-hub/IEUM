@@ -137,6 +137,10 @@ export const paymentMethods = pgTable(
     method_type: paymentMethodType().notNull(),
     // Payment gateway customer identification key
     customer_key: text(),
+    // Payment gateway region (e.g., "KR", "JP", "OTHER(Global)")
+    region: text(),
+    // Payment gateway currency (e.g., "KRW", "USD", "JPY")
+    currency: text(),
     // Billing key (token) issued by payment gateway
     billing_key: text().notNull(),
     // Payment method status: active, suspended, expired, revoked
@@ -201,6 +205,10 @@ export const subscriptions = pgTable(
     }),
     // Billing interval: weekly, monthly, yearly
     billing_interval: billingInterval().notNull().default("monthly"),
+    // Billing region (e.g., "KR", "JP", "OTHER(Global)")
+    billing_region: text().notNull().default("KR"),
+    // Billing currency (e.g., "KRW", "JPY", "USD")
+    billing_currency: text().notNull().default("KRW"),
     // When the plan started
     started_at: timestamp({ withTimezone: true }).notNull(),
     // When the plan ends (null if ongoing)

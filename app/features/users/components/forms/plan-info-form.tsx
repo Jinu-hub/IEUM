@@ -120,7 +120,7 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
               )}
             </div>
             {!isPaidPlan && (
-              <Link to="/payments/checkout">
+              <Link to="/payments/billing-country?plan=starter">
                 <NexButton
                   variant="gradient"
                   size="md"

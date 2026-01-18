@@ -104,7 +104,7 @@ export default function SidebarUser({
             <DropdownMenuGroup>
               {!isPaidPlan && (
                 <DropdownMenuItem asChild>
-                  <Link to="/payments/checkout" viewTransition>
+                  <Link to="/payments/billing-country?plan=starter" viewTransition>
                     <Sparkles className="text-indigo-500" />
                     {t("user.upgradeToStarter")}
                   </Link>

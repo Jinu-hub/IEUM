@@ -17,7 +17,6 @@ import type { Route } from "./+types/payments";
 
 import { Link } from "react-router";
 
-import { Button } from "~/core/components/ui/button";
 import { Card } from "~/core/components/ui/card";
 import {
   Table,
@@ -113,9 +112,11 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
         {payments.length === 0 ? (
           <div className="flex flex-col items-center gap-4">
             <p className="text-muted-foreground text-lg">No payments found.</p>
+            {/*
             <Button asChild>
               <Link to="/payments/checkout">Make a test payment &rarr;</Link>
             </Button>
+            */}
           </div>
         ) : (
           /* Payment history table */
