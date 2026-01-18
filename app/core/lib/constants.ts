@@ -241,3 +241,28 @@ export const PERIOD_TYPE = [
 ] as const;
 
 export type PeriodType = typeof PERIOD_TYPE[number];
+
+export const BILLING_INTERVAL = [
+  "weekly",
+  "monthly",
+  "yearly",
+] as const;
+
+export type BillingInterval = typeof BILLING_INTERVAL[number];
+
+export const PAYMENT_METHOD_TYPE = [
+  "card",
+  "bank",
+  "wallet",
+] as const;
+
+export type PaymentMethodType = typeof PAYMENT_METHOD_TYPE[number];
+
+export const PAYMENT_METHOD_STATUS = [
+  "active",
+  "suspended",
+  "expired",
+  "revoked",
+] as const;
+
+export type PaymentMethodStatus = typeof PAYMENT_METHOD_STATUS[number];

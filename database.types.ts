@@ -788,6 +788,63 @@ export type Database = {
           },
         ]
       }
+      payment_methods: {
+        Row: {
+          billing_key: string
+          created_at: string
+          customer_key: string | null
+          display_brand: string | null
+          display_last4: string | null
+          is_default: boolean
+          issued_at: string | null
+          metadata: Json | null
+          method_id: string
+          method_type: Database["public"]["Enums"]["payment_method_type"]
+          pg_provider: string
+          raw_data: Json | null
+          revoked_at: string | null
+          status: Database["public"]["Enums"]["payment_method_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_key: string
+          created_at?: string
+          customer_key?: string | null
+          display_brand?: string | null
+          display_last4?: string | null
+          is_default: boolean
+          issued_at?: string | null
+          metadata?: Json | null
+          method_id?: string
+          method_type: Database["public"]["Enums"]["payment_method_type"]
+          pg_provider: string
+          raw_data?: Json | null
+          revoked_at?: string | null
+          status: Database["public"]["Enums"]["payment_method_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_key?: string
+          created_at?: string
+          customer_key?: string | null
+          display_brand?: string | null
+          display_last4?: string | null
+          is_default?: boolean
+          issued_at?: string | null
+          metadata?: Json | null
+          method_id?: string
+          method_type?: Database["public"]["Enums"]["payment_method_type"]
+          pg_provider?: string
+          raw_data?: Json | null
+          revoked_at?: string | null
+          status?: Database["public"]["Enums"]["payment_method_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           approved_at: string
@@ -1090,10 +1147,12 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          billing_interval: Database["public"]["Enums"]["billing_interval"]
           created_at: string
           ends_at: string | null
           latest_payment_id: number | null
           mode: Database["public"]["Enums"]["subscription_mode"]
+          payment_method_id: string | null
           plan_type: Database["public"]["Enums"]["plan_type"]
           started_at: string
           status: Database["public"]["Enums"]["subscription_status"]
@@ -1103,10 +1162,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          billing_interval?: Database["public"]["Enums"]["billing_interval"]
           created_at?: string
           ends_at?: string | null
           latest_payment_id?: number | null
           mode: Database["public"]["Enums"]["subscription_mode"]
+          payment_method_id?: string | null
           plan_type: Database["public"]["Enums"]["plan_type"]
           started_at: string
           status: Database["public"]["Enums"]["subscription_status"]
@@ -1116,10 +1177,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          billing_interval?: Database["public"]["Enums"]["billing_interval"]
           created_at?: string
           ends_at?: string | null
           latest_payment_id?: number | null
           mode?: Database["public"]["Enums"]["subscription_mode"]
+          payment_method_id?: string | null
           plan_type?: Database["public"]["Enums"]["plan_type"]
           started_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
@@ -1135,6 +1198,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "payments"
             referencedColumns: ["payment_id"]
+          },
+          {
+            foreignKeyName: "subscriptions_payment_method_id_payment_methods_method_id_fk"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["method_id"]
           },
         ]
       }
@@ -1520,6 +1590,7 @@ export type Database = {
     }
     Enums: {
       audit_action: "insert" | "update" | "delete"
+      billing_interval: "weekly" | "monthly" | "yearly"
       category_type:
         | "development"
         | "infrastructure"
@@ -1576,6 +1647,8 @@ export type Database = {
         | "first_mail_sending"
         | "completed"
       onboarding_type: "default" | "slack_review"
+      payment_method_status: "active" | "suspended" | "expired" | "revoked"
+      payment_method_type: "card" | "bank" | "wallet"
       period: "daily" | "weekly" | "monthly" | "yearly"
       period_type: "hourly" | "daily" | "weekly" | "monthly"
       plan_type: "trial" | "free" | "starter" | "pro" | "enterprise"
@@ -1761,6 +1834,7 @@ export const Constants = {
   public: {
     Enums: {
       audit_action: ["insert", "update", "delete"],
+      billing_interval: ["weekly", "monthly", "yearly"],
       category_type: [
         "development",
         "infrastructure",
@@ -1823,6 +1897,8 @@ export const Constants = {
         "completed",
       ],
       onboarding_type: ["default", "slack_review"],
+      payment_method_status: ["active", "suspended", "expired", "revoked"],
+      payment_method_type: ["card", "bank", "wallet"],
       period: ["daily", "weekly", "monthly", "yearly"],
       period_type: ["hourly", "daily", "weekly", "monthly"],
       plan_type: ["trial", "free", "starter", "pro", "enterprise"],

@@ -835,8 +835,8 @@ const en: Translation = {
       },
     },
     cta: {
-      badge: "Average onboarding within 1 hour",
-      title: "Get started quickly with an onboarding session within 1 hour.",
+      badge: "Average onboarding within 10 minutes",
+      title: "Get started quickly with an onboarding session within 10 minutes.",
       description: "We'll set up only the essentials together, without complicated configurations.",
       startButton: "Get Started",
       contactButton: "Contact Us",
@@ -856,7 +856,7 @@ const en: Translation = {
           },
           duration: {
             question: "How long does the onboarding process take?",
-            answer: "Standard onboarding consists of 3 sessions (integration setup, mailing list setup, target setup).<br />It is completed within an average of 1 hour, and may finish faster depending on the team environment.",
+            answer: "Standard onboarding consists of 3 sessions (integration setup, mailing list setup, target setup).<br />It is completed within an average of 10 minutes.",
           },
           usage: {
             question: "Can it be used by teams other than development?",
