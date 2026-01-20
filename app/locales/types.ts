@@ -510,6 +510,25 @@ export type Translation = {
     comparePlans: string;
     managePayments: string;
     cancelSubscription: string;
+    cancelDialog: {
+      title: string;
+      monthlyWarning: string;
+      yearlyWarning: string;
+      validUntil: string;
+      monthlyNoRefund: string;
+      refundDetails: {
+        title: string;
+        yearlyAmount: string;
+        usedMonths: string;
+        monthsUnit: string;
+        deduction: string;
+        refundAmount: string;
+      };
+      buttons: {
+        cancel: string;
+        confirm: string;
+      };
+    };
   };
   connectSocialAccounts: {
     title: string;

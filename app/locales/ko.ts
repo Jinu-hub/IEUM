@@ -511,6 +511,25 @@ const ko: Translation = {
     comparePlans: "플랜 비교",
     managePayments: "결제 관리",
     cancelSubscription: "구독 취소",
+    cancelDialog: {
+      title: "구독 해지",
+      monthlyWarning: "해지하시면 다음 결제부터 자동결제가 중단됩니다.",
+      yearlyWarning: "해지하시면 사용 기간에 따라 환불됩니다.",
+      validUntil: "{{date}}까지 {{plan}} 플랜의 모든 기능을 이용하실 수 있습니다.",
+      monthlyNoRefund: "월 단위 구독은 서비스 이용 개시 후 중도 환불이 불가합니다.",
+      refundDetails: {
+        title: "환불 예상 금액",
+        yearlyAmount: "연간 결제 금액",
+        usedMonths: "사용 기간",
+        monthsUnit: "{{count}}개월",
+        deduction: "차감 금액",
+        refundAmount: "환불 금액",
+      },
+      buttons: {
+        cancel: "취소",
+        confirm: "구독 해지",
+      },
+    },
   },
   connectSocialAccounts: {
     title: "소셜 계정 연결",

@@ -512,6 +512,25 @@ const en: Translation = {
     comparePlans: "Compare Plans",
     managePayments: "Manage Payments",
     cancelSubscription: "Cancel Subscription",
+    cancelDialog: {
+      title: "Cancel Subscription",
+      monthlyWarning: "If you cancel, automatic billing will stop from the next payment.",
+      yearlyWarning: "If you cancel, you will be refunded based on your usage period.",
+      validUntil: "You can continue using all {{plan}} plan features until {{date}}.",
+      monthlyNoRefund: "Monthly subscriptions are not eligible for mid-term refunds after service activation.",
+      refundDetails: {
+        title: "Estimated Refund",
+        yearlyAmount: "Annual Payment",
+        usedMonths: "Usage Period",
+        monthsUnit: "{{count}} month(s)",
+        deduction: "Deduction",
+        refundAmount: "Refund Amount",
+      },
+      buttons: {
+        cancel: "Cancel",
+        confirm: "Cancel Subscription",
+      },
+    },
   },
   connectSocialAccounts: {
     title: "Connect social accounts",

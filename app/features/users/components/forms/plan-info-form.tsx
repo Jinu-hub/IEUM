@@ -1,4 +1,5 @@
 import { ArrowUpRight, Calendar, Clock, Crown, Sparkles, Zap } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
@@ -12,17 +13,23 @@ import {
   NexCardHeader,
   NexCardTitle,
 } from "~/core/components/nex";
-import type { PlanType, SubscriptionMode, SubscriptionStatus } from "~/core/lib/constants";
+import type { BillingInterval, Currency, PlanType, SubscriptionMode, SubscriptionStatus } from "~/core/lib/constants";
 import { PLAN_TYPE_LABEL } from "~/core/lib/constants";
+import CancelSubscriptionDialog from "../dialogs/cancel-subscription-dialog";
 
 interface PlanSectionProps {
   subscription: {
-    plan_type: PlanType;
-    status: SubscriptionStatus;
-    mode: SubscriptionMode;
+    plan_type: string;
+    status: string;
+    mode: string;
     started_at: string;
     ends_at: string | null;
     trial_ends_at: string | null;
+    billing_interval: string | null;
+    billing_currency: string | null;
+    payments: {
+      total_amount: number;
+    } | null;
   } | null;
 }
 
@@ -68,17 +75,28 @@ function getDaysRemaining(dateString: string | null | undefined): number | null 
 
 export default function PlanSection({ subscription }: PlanSectionProps) {
   const { t, i18n } = useTranslation("common", { keyPrefix: "planInfo" });
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
-  // デフォルト値（サブスクリプションがない場合）
-  const planType = subscription?.plan_type ?? "free";
-  const status = subscription?.status ?? "active";
-  const mode = subscription?.mode ?? "free";
+  // デフォルト値（サブスクリプションがない場合）+ type casting for DB values
+  const planType = (subscription?.plan_type ?? "free") as PlanType;
+  const status = (subscription?.status ?? "active") as SubscriptionStatus;
+  const mode = (subscription?.mode ?? "free") as SubscriptionMode;
   const trialEndsAt = subscription?.trial_ends_at;
   const endsAt = subscription?.ends_at;
+  const startedAt = subscription?.started_at ?? new Date().toISOString();
+  const billingInterval = (subscription?.billing_interval ?? null) as BillingInterval | null;
+  const billingCurrency = (subscription?.billing_currency ?? null) as Currency | null;
+  const paidAmount = subscription?.payments?.total_amount ?? null;
 
   const isTrialing = status === "trialing";
   const isPaidPlan = mode === "paid";
   const daysRemaining = isTrialing ? getDaysRemaining(trialEndsAt) : getDaysRemaining(endsAt);
+
+  const handleCancelConfirm = () => {
+    // TODO: Implement actual cancellation API call
+    console.log("Cancel subscription confirmed");
+    setCancelDialogOpen(false);
+  };
 
   return (
       <NexCard variant="elevated" padding="lg" className="w-full max-w-screen-md">
@@ -182,14 +200,32 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
               {t("managePayments")}
             </NexButton>
           </Link>
-          <Link to="/dashboard/payments/cancel" className="flex-1">
-            <NexButton variant="secondary" size="md" className="w-full cursor-pointer">
+          <div className="flex-1">
+            <NexButton
+              variant="secondary"
+              size="md"
+              className="w-full cursor-pointer"
+              onClick={() => setCancelDialogOpen(true)}
+            >
               {t("cancelSubscription")}
             </NexButton>
-          </Link>
+          </div>
           </>
         )}
       </NexCardFooter>
+
+      {/* Cancel Subscription Dialog */}
+      <CancelSubscriptionDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        planType={planType}
+        billingInterval={billingInterval}
+        billingCurrency={billingCurrency}
+        startedAt={startedAt}
+        endsAt={endsAt ?? null}
+        paidAmount={paidAmount}
+        onConfirm={handleCancelConfirm}
+      />
     </NexCard>
   );
 }

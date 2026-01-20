@@ -512,6 +512,25 @@ const ja: Translation = {
     comparePlans: "プランを比較",
     managePayments: "お支払い管理",
     cancelSubscription: "サブスクリプション解約",
+    cancelDialog: {
+      title: "サブスクリプション解約",
+      monthlyWarning: "解約すると、次回の決済から自動決済が停止されます。",
+      yearlyWarning: "解約すると、使用期間に応じて返金されます。",
+      validUntil: "{{date}}まで{{plan}}プランのすべての機能をご利用いただけます。",
+      monthlyNoRefund: "月額サブスクリプションは、サービス利用開始後の途中返金はできません。",
+      refundDetails: {
+        title: "返金予定額",
+        yearlyAmount: "年間お支払い金額",
+        usedMonths: "使用期間",
+        monthsUnit: "{{count}}ヶ月",
+        deduction: "差引金額",
+        refundAmount: "返金金額",
+      },
+      buttons: {
+        cancel: "キャンセル",
+        confirm: "解約する",
+      },
+    },
   },
   connectSocialAccounts: {
     title: "ソーシャルアカウント接続",

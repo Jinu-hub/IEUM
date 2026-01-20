@@ -10,7 +10,12 @@ export async function getUserSubscription(
   }
   const { data, error } = await client
     .from("subscriptions")
-    .select("*")
+    .select(`
+      *,
+      payments:latest_payment_id (
+        total_amount
+      )
+    `)
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(1)

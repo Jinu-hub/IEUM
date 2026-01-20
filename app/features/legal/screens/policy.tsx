@@ -129,6 +129,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const locale = await i18next.getLocale(request);
 
   // デバッグ: cookieとheaderを確認
+  /*
   const cookieHeader = request.headers.get('Cookie');
   const acceptLanguage = request.headers.get('Accept-Language');
   console.log('🔍 Locale detection debug:', {
@@ -137,6 +138,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     acceptLanguage,
     url: request.url,
   });
+  */
 
   const filename = `${params.slug}_${locale}.mdx`;
   
