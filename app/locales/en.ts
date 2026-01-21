@@ -2,7 +2,7 @@ import type { Translation } from "./types";
 
 const en: Translation = {
   home: {
-    title: "Nexletter",
+    title: "NexLetter",
     subtitle: "For Team Newsletters",
     hero: {
       description: "Automatically analyze Slack conversations, GitHub activities, and project progress to create a weekly newsletter that summarizes your team's week. No more manual weekly reports.",
@@ -380,7 +380,7 @@ const en: Translation = {
     searchSentMailList: "Search by target or subject...",
   },
   join: {
-    heroTitle: "Nexletter",
+    heroTitle: "NexLetter",
     heroSubtitle: "Start your smarter team newsletter",
     heroDescription: "Automatically analyze Slack conversations, GitHub activities, and project progress to create a weekly newsletter for your team. No more manual weekly reports.",
     title: "Create an account",
@@ -695,7 +695,7 @@ const en: Translation = {
       slackConnectionDescription1: "After completion, a Slack bot will be created in the workspace.",
       slackConnectionDescription2: "Private channels require manually inviting the bot to collect data.",
       slackConnectionDescription3: "Bot invitation method: Users belonging to the channel move to the channel in Slack",
-      slackConnectionDescription4: "Input [/invite @Nexletter] and press Enter.",
+      slackConnectionDescription4: "Input [/invite @NexLetter] and press Enter.",
     },
   },
   targets: {
@@ -992,11 +992,11 @@ const en: Translation = {
     },
   },
   pricing: {
-    title: "Nexletter - Pricing",
+    title: "NexLetter - Pricing",
     subtitle: "Pricing plans for AI-based internal newsletter automation",
-    description: "Flexible Nexletter pricing plans that scale with your team size",
+    description: "Flexible NexLetter pricing plans that scale with your team size",
     hero: {
-      title: "Transparent and Scalable Nexletter Pricing",
+      title: "Transparent and Scalable NexLetter Pricing",
       subtitle: "Start AI newsletter automation now and continue based on your team size and workflow.",
       description: "All plans include Slack · GitHub integration, KPI widgets, and multilingual newsletters by default. After the Free trial, you can continue using the same automation with the Starter plan.",
       primaryButton: "Start Free Trial",

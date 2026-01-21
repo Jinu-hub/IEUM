@@ -1,4 +1,4 @@
-# Nexletter Project Structure
+# NexLetter Project Structure
 
 ```
 /Users/jinwoosmacair/developments/Nexletter/

@@ -25,10 +25,10 @@ import i18next from "~/core/lib/i18next.server";
 
 export const meta: Route.MetaFunction = ({ data }) => {
   return [
-    { title: data?.title ?? "Nexletter Pricing" },
+    { title: data?.title ?? "NexLetter Pricing" },
     {
       name: "description",
-      content: data?.subtitle ?? data?.description ?? "팀 규모에 맞춰 유연하게 확장되는 Nexletter 요금제"
+      content: data?.subtitle ?? data?.description ?? "팀 규모에 맞춰 유연하게 확장되는 NexLetter 요금제"
     }
   ];
 };
@@ -38,13 +38,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   return {
     title: t("pricing.title", {
-      defaultValue: "Nexletter - 가격 정책"
+      defaultValue: "NexLetter - 가격 정책"
     }),
     subtitle: t("pricing.subtitle", {
       defaultValue: "AI 기반 사내 뉴스레터 자동화를 위한 요금제"
     }),
     description: t("pricing.description", {
-      defaultValue: "팀 규모에 맞춰 유연하게 확장되는 Nexletter 요금제"
+      defaultValue: "팀 규모에 맞춰 유연하게 확장되는 NexLetter 요금제"
     }),
     discountRate: 0.2
   };

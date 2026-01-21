@@ -2,7 +2,7 @@ import type { Translation } from "./types";
 
 const ko: Translation = {
   home: {
-    title: "Nexletter",
+    title: "NexLetter",
     subtitle: "팀을 위한 스마트한 뉴스레터",
     hero: {
       description: "Slack 대화, GitHub 활동, 프로젝트 진행상황을 자동으로 분석하여 팀의 한 주를 정리한 뉴스레터를 생성합니다. 더 이상 수동으로 주간 보고서를 작성할 필요가 없습니다.",
@@ -379,7 +379,7 @@ const ko: Translation = {
     searchSentMailList: "대상 또는 제목으로 검색...",
   },
   join: {
-    heroTitle: "Nexletter",
+    heroTitle: "NexLetter",
     heroSubtitle: "스마트한 팀 뉴스레터를 시작해보세요",
     heroDescription: "Slack 대화, GitHub 활동, 프로젝트 진행상황을 자동으로 분석하여 팀의 한 주를 정리한 뉴스레터를 생성합니다. 더 이상 수동으로 주간 보고서를 작성할 필요가 없습니다.",
     title: "계정 만들기",
@@ -694,7 +694,7 @@ const ko: Translation = {
       slackConnectionDescription1: "연결이 완료되면 Slack봇이 워크스페이스에 생성됩니다.",
       slackConnectionDescription2: "프라이빗 채널은 봇을 수동으로 초대해야 데이터를 수집가능합니다.",
       slackConnectionDescription3: "봇 초대 방법: 채널에 소속된 사용자가 Slack에서 해당 채널로 이동",
-      slackConnectionDescription4: "[/invite @Nexletter] 입력 후 엔터.",
+      slackConnectionDescription4: "[/invite @NexLetter] 입력 후 엔터.",
     },
   },
   targets: {
@@ -991,11 +991,11 @@ const ko: Translation = {
     },
   },
   pricing: {
-    title: "Nexletter - 가격 정책",
+    title: "NexLetter - 가격 정책",
     subtitle: "AI 기반 사내 뉴스레터 자동화를 위한 요금제",
-    description: "팀 규모에 맞춰 유연하게 확장되는 Nexletter 요금제",
+    description: "팀 규모에 맞춰 유연하게 확장되는 NexLetter 요금제",
     hero: {
-      title: "투명하고 확장 가능한 Nexletter 가격 정책",
+      title: "투명하고 확장 가능한 NexLetter 가격 정책",
       subtitle: "팀 규모와 워크플로에 맞춰 AI 뉴스레터 자동화를 지금 시작하고, 계속 이어가세요.",
       description: "모든 요금제는 Slack · GitHub 통합, KPI 위젯, 다국어 뉴스레터를 기본 제공합니다. Free 체험 이후에도 동일한 자동화를 Starter 플랜에서 계속 이용할 수 있습니다.",
       primaryButton: "무료 체험 시작하기",

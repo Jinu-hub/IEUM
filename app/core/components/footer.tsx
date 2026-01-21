@@ -1,7 +1,7 @@
 /**
  * Newsletter System Footer Component
  *
- * A comprehensive footer for the Nexletter internal newsletter system.
+ * A comprehensive footer for the NexLetter internal newsletter system.
  * This component provides navigation links, company information, social links,
  * and newsletter subscription functionality.
  *
@@ -125,7 +125,7 @@ export default function Footer() {
     <NexFooter
       variant="default"
       brand={{
-        name: "Nexletter",
+        name: "NexLetter",
         description: t("footer.brand.description"),
         logo: <Mail className="h-8 w-8" />
       }}

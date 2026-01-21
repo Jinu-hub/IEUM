@@ -31,7 +31,7 @@ import { cn } from "~/core/lib/utils";
 
 export const meta: Route.MetaFunction = ({ data }) => {
   return [
-    { title: data?.title ?? "Nexletter FAQ" },
+    { title: data?.title ?? "NexLetter FAQ" },
     {
       name: "description",
       content: data?.description ?? "도입 전에 가장 자주 묻는 질문들을 한 곳에서 확인하세요."
