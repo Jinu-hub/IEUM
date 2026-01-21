@@ -47,8 +47,8 @@ export default function Footer() {
         "부산 수영구 남천바다로21번길 69-5 | 문의: jinu30dev@gmail.com (010-6454-8896)"
       ]
     : [
-        "LinkVerse | Business Registration No. 844-64-00886 | Representative: Jinu Song",
-        "Address: 69-5 Namcheondong-ro 21beon-gil, Suyeong-gu, Busan, South Korea | Contact: jinu30dev@gmail.com"
+        "Representative: Jinu Song | Contact: jinu30dev@gmail.com (080-3841-8896)",
+        "Address: #804, Higashiobase Building, 5-16 Higashiobase 2-chome, Higashinari-ku, Osaka 537-0024, Japan"
       ];
 
   // Footer navigation links organized by sections
@@ -107,7 +107,7 @@ export default function Footer() {
     },
     {
       platform: "email" as const,
-      href: "mailto:support@company.com",
+      href: "mailto:jinu30dev@gmail.com",
       label: "Email",
       icon: <Mail className="h-5 w-5" />
     },
@@ -132,7 +132,7 @@ export default function Footer() {
       links={footerLinks}
       social={socialLinks}
       legal={{
-        copyright: "© 2026 LinkVerse. All rights reserved.",
+        copyright: "© 2026 LinkVerse. All rights reserved.\nNexLetter is a service operated by LinkVerse.",
         companyInfo: companyInfo,
       }}
       actions={<Actions />}

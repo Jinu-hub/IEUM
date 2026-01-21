@@ -133,7 +133,7 @@ export const NexFooter: React.FC<NexFooterProps> = ({
               {/* Copyright */}
               {legal?.copyright && (
                 <div className="flex flex-col gap-1">
-                  <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
+                  <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E] whitespace-pre-line">
                     {legal.copyright}
                   </div>
                   {legal?.companyInfo && legal.companyInfo.map((info, index) => (
@@ -280,7 +280,7 @@ export const NexFooter: React.FC<NexFooterProps> = ({
               {/* Copyright */}
               {legal?.copyright && (
                 <div className="flex flex-col gap-1">
-                  <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E]">
+                  <div className="text-sm text-[#8B92B5] dark:text-[#6C6F7E] whitespace-pre-line">
                     {legal.copyright}
                   </div>
                   {legal?.companyInfo && legal.companyInfo.map((info, index) => (
