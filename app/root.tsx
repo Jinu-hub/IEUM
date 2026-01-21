@@ -25,6 +25,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  data,
   isRouteErrorResponse,
   useLocation,
   useNavigate,
@@ -42,10 +43,11 @@ import { Toaster } from "sonner";
 
 import { Dialog } from "./core/components/ui/dialog";
 import { Sheet } from "./core/components/ui/sheet";
-import i18next from "./core/lib/i18next.server";
+import i18next, { localeCookie } from "./core/lib/i18next.server";
 import { themeSessionResolver } from "./core/lib/theme-session.server";
 import { cn } from "./core/lib/utils";
 import NotFound from "./core/screens/404";
+import i18n from "./i18n";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.ico" },
@@ -94,16 +96,33 @@ export async function loader({ request }: Route.LoaderArgs) {
     throw new Error("Missing Supabase environment variables");
   }
 
+  // Check for language parameter in URL (e.g., ?lang=ja)
+  const url = new URL(request.url);
+  const langParam = url.searchParams.get("lang");
+
   // Concurrently load theme and locale preferences for better performance
   const [{ getTheme }, locale] = await Promise.all([
     themeSessionResolver(request),
     i18next.getLocale(request),
   ]);
 
-  return {
-    theme: getTheme(),
-    locale,
-  };
+  // If lang parameter is present and valid, update the locale cookie
+  // This ensures the language preference persists across page navigations
+  const headers: HeadersInit = {};
+  if (
+    langParam &&
+    (i18n.supportedLngs as readonly string[]).includes(langParam)
+  ) {
+    headers["Set-Cookie"] = await localeCookie.serialize(langParam);
+  }
+
+  return data(
+    {
+      theme: getTheme(),
+      locale,
+    },
+    { headers }
+  );
 }
 
 /**

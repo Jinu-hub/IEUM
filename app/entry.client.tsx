@@ -65,7 +65,8 @@ async function hydrate() {
       ...i18n, // Spread base i18n configuration
       ns: getInitialNamespaces(), // Get namespaces from server-rendered content
       detection: {
-        order: ["htmlTag"], // Detect language from HTML lang attribute
+        order: ["querystring", "htmlTag", "cookie", "localStorage", "navigator"], // Detect language from URL parameter first, then HTML lang attribute
+        lookupQuerystring: "lang", // URL search parameter for language switching (e.g., ?lang=ja)
         caches: [], // Disable caching for language detection
       },
       // Configure language resources for all supported languages

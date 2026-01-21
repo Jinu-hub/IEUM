@@ -64,8 +64,10 @@ const i18next = new RemixI18Next({
     supportedLanguages: i18n.supportedLngs as unknown as string[],
     // Fallback language when the requested language is not available
     fallbackLanguage: i18n.fallbackLng,
-    // order of language detection
-    order: ['cookie', 'searchParams', 'header'],
+    // order of language detection (searchParams first to allow URL-based language switching)
+    order: ['searchParams', 'cookie', 'header'],
+    // URL search parameter for language switching (e.g., ?lang=ja)
+    searchParamKey: "lang",
   },
   // i18next configuration
   i18next: {
