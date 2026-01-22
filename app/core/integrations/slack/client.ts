@@ -4,7 +4,7 @@ import { LogLevel, WebClient } from "@slack/web-api";
 export const SCOPES = [
   "channels:read","channels:history","groups:read","groups:history",
   "users:read","team:read","reactions:read",
-  "channels:join","users:read.email"
+  "channels:join","users:read.email","chat:write"
 ].join(",");
 
 export const USER_SCOPES = [
