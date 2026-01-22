@@ -46,10 +46,25 @@ export default function Footer() {
         "링크버스(LinkVerse) | 사업자번호 844-64-00886 | 통신판매업 제2025-부산수영-0058호 | 대표: 송진우",
         "부산 수영구 남천바다로21번길 69-5 | 문의: jinu30dev@gmail.com (010-6454-8896)"
       ]
-    : [
-        "Representative: Jinu Song | Contact: jinu30dev@gmail.com (080-3841-8896)",
-        "Address: #804, Higashiobase Building, 5-16 Higashiobase 2-chome, Higashinari-ku, Osaka 537-0024, Japan"
-      ];
+    : undefined;
+
+  // Build legal links - Commercial Disclosure only for non-Korean languages
+  const legalItems = [
+    { label: t("footer.links.legal.items.privacyPolicy"), href: "/legal/privacy-policy" },
+    { label: t("footer.links.legal.items.termsOfService"), href: "/legal/terms-of-service" },
+    { label: t("pricing.faq.refundPolicyLink"), href: "/legal/refund-policy" },
+  ];
+
+  // Add Commercial Disclosure link for non-Korean languages
+  if (i18n.language !== "ko") {
+    const commercialDisclosureLabel = i18n.language === "ja" 
+      ? "特定商取引法に基づく表記" 
+      : "Commercial Disclosure";
+    legalItems.push({
+      label: commercialDisclosureLabel,
+      href: "/legal/commercial-disclosure"
+    });
+  }
 
   // Footer navigation links organized by sections
   const footerLinks = [
@@ -81,13 +96,7 @@ export default function Footer() {
     },
     {
       title: t("footer.links.legal.title"),
-      items: [
-        { label: t("footer.links.legal.items.privacyPolicy"), href: "/legal/privacy-policy" },
-        { label: t("footer.links.legal.items.termsOfService"), href: "/legal/terms-of-service" },
-        { label: t("footer.links.legal.items.securityWhitepaper"), href: "/legal/security-whitepaper" },
-        { label: t("pricing.faq.refundPolicyLink"), href: "/legal/refund-policy" },
-        //{ label: "쿠키 정책", href: "/legal/cookies" }
-      ]
+      items: legalItems
     }
   ];
 

@@ -244,3 +244,30 @@ export function TypographyInlineCode({
     </code>
   );
 }
+
+/**
+ * Link Typography Component
+ * 
+ * Renders a link with appropriate styling for MDX content.
+ * Includes primary color, underline, and hover effects to clearly indicate clickable links.
+ * 
+ * @param children - The content to be rendered within the link
+ * @param props - Additional HTML attributes including href
+ * @returns A styled anchor element
+ */
+export function TypographyLink({
+  children,
+  ...props
+}: {
+  children: React.ReactNode;
+  href?: string;
+} & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+  return (
+    <a
+      className="text-[#5E6AD2] dark:text-[#7C89F9] underline underline-offset-4 hover:text-[#4C5BC7] dark:hover:text-[#6B78E8] transition-colors font-medium"
+      {...props}
+    >
+      {children}
+    </a>
+  );
+}

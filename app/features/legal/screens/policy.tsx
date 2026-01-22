@@ -20,6 +20,7 @@ import { getMDXComponent } from "mdx-bundler/client";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { data } from "react-router";
+import remarkGfm from "remark-gfm";
 import i18next from "~/core/lib/i18next.server";
 
 import { useTranslation } from "react-i18next";
@@ -30,11 +31,22 @@ import {
   TypographyH3,
   TypographyH4,
   TypographyInlineCode,
+  TypographyLink,
   TypographyList,
   TypographyOrderedList,
   TypographyP,
 } from "~/core/components/mdx-typography"; // Typography components for consistent MDX styling
 import { Button } from "~/core/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/core/components/ui/table";
 
 /**
  * Meta function for setting page metadata
@@ -79,7 +91,7 @@ export const meta: Route.MetaFunction = ({ data }) => {
  * These values will replace placeholders in the MDX files
  */
 const PLACEHOLDERS: Record<string, string> = {
-  'YYYY-MM-DD': '2026-01-06',
+  'YYYY-MM-DD': '2026-01-22',
   'support email': import.meta.env.VITE_SUPPORT_EMAIL || 'jinu30dev@gmail.com',
   'company name': 'NexLetter',
   'company address': 'Seoul, South Korea',
@@ -162,6 +174,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     // Bundle the processed MDX content
     const { code, frontmatter } = await bundleMDX({
       source: processedContent,
+      mdxOptions(options) {
+        // Add remark-gfm plugin to support GitHub Flavored Markdown features
+        // This enables tables, strikethrough, autolinks, and task lists
+        options.remarkPlugins = [...(options.remarkPlugins ?? []), remarkGfm];
+        return options;
+      },
     });
     
     // Return the compiled code and frontmatter metadata
@@ -226,6 +244,16 @@ export default function Policy({
             ul: TypographyList,
             ol: TypographyOrderedList,
             code: TypographyInlineCode,
+            a: TypographyLink,
+            // Table components for MDX table support
+            table: Table,
+            thead: TableHeader,
+            tbody: TableBody,
+            tfoot: TableFooter,
+            tr: TableRow,
+            th: TableHead,
+            td: TableCell,
+            caption: TableCaption,
           }}
         />
       </div>
