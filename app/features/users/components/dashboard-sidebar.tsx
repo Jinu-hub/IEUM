@@ -216,6 +216,7 @@ export default function DashboardSidebar({
               avatarUrl: user.avatarUrl,
             }}
             subscription={subscription}
+            isReviewMode={isReviewMode}
           />
           <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:hidden">
             <ThemeSwitcher />

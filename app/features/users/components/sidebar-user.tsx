@@ -41,6 +41,7 @@ type SubscriptionInfo = {
 export default function SidebarUser({
   user,
   subscription,
+  isReviewMode = false,
 }: {
   user: {
     name: string;
@@ -48,6 +49,8 @@ export default function SidebarUser({
     avatarUrl: string;
   };
   subscription: SubscriptionInfo;
+  /** Force all menu items except logout to be disabled (e.g., in review mode) */
+  isReviewMode?: boolean;
 }) {
   const { isMobile } = useSidebar();
   const { t } = useTranslation("common", { keyPrefix: "sidebar" });
@@ -103,11 +106,22 @@ export default function SidebarUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               {!isPaidPlan && (
-                <DropdownMenuItem asChild>
-                  <Link to="/payments/billing-country?plan=starter" viewTransition>
-                    <Sparkles className="text-indigo-500" />
-                    {t("user.upgradeToStarter")}
-                  </Link>
+                <DropdownMenuItem 
+                  asChild={!isReviewMode}
+                  disabled={isReviewMode}
+                  className={isReviewMode ? "opacity-60 cursor-not-allowed" : ""}
+                >
+                  {isReviewMode ? (
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="text-indigo-500" />
+                      {t("user.upgradeToStarter")}
+                    </span>
+                  ) : (
+                    <Link to="/payments/billing-country?plan=starter" viewTransition>
+                      <Sparkles className="text-indigo-500" />
+                      {t("user.upgradeToStarter")}
+                    </Link>
+                  )}
                 </DropdownMenuItem>
               )}
               {isStarter && (
@@ -124,19 +138,44 @@ export default function SidebarUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link to="/account/edit" viewTransition>
-                  <UserCircle2Icon />
-                  {t("user.account")}
-                </Link>
+              <DropdownMenuItem 
+                asChild={!isReviewMode}
+                disabled={isReviewMode}
+                className={isReviewMode ? "opacity-60 cursor-not-allowed" : ""}
+              >
+                {isReviewMode ? (
+                  <span className="flex items-center gap-2">
+                    <UserCircle2Icon />
+                    {t("user.account")}
+                  </span>
+                ) : (
+                  <Link to="/account/edit" viewTransition>
+                    <UserCircle2Icon />
+                    {t("user.account")}
+                  </Link>
+                )}
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/dashboard/payments">
-                  <CreditCard />
-                  {t("user.payments")}
-                </Link>
+              <DropdownMenuItem 
+                asChild={!isReviewMode}
+                disabled={isReviewMode}
+                className={isReviewMode ? "opacity-60 cursor-not-allowed" : ""}
+              >
+                {isReviewMode ? (
+                  <span className="flex items-center gap-2">
+                    <CreditCard />
+                    {t("user.payments")}
+                  </span>
+                ) : (
+                  <Link to="/dashboard/payments">
+                    <CreditCard />
+                    {t("user.payments")}
+                  </Link>
+                )}
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem 
+                disabled={isReviewMode}
+                className={isReviewMode ? "opacity-60 cursor-not-allowed" : ""}
+              >
                 <Bell />
                 {t("user.notifications")}
               </DropdownMenuItem>
