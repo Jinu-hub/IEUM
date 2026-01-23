@@ -21,7 +21,7 @@ import { getIntegrationsInfo, getWorkspace } from "../db/queries";
 /**
  * レビュー用サンプルデータ取得期間（日数）
  */
-const REVIEW_SAMPLE_DAYS = 200;
+const REVIEW_SAMPLE_DAYS = 7;
 
 /**
  * OpenAI APIキーを初期化
@@ -345,30 +345,51 @@ export async function action({ request }: ActionFunctionArgs) {
             keyPoints = keyPointsMatch[1].trim();
             // Key Pointsセクションをsummaryから除外
             summaryWithoutKeyPoints = summary.replace(/💡\s*\*\*Key Points\*\*\s*\n[\s\S]*?(?=\n\n|$)/i, '').trim();
-            // 200文字まで短縮
-            const maxKeyPointsLength = 200;
-            if (keyPoints.length > maxKeyPointsLength) {
-              keyPoints = keyPoints.substring(0, maxKeyPointsLength) + '...';
-            }
-          } else {
-            // Key Pointsセクションが見つからない場合は、summary全体から最初の文字を取得
-            const maxSummaryLength = 200;
-            keyPoints = summary.length > maxSummaryLength 
-              ? summary.substring(0, maxSummaryLength) + '...'
-              : summary;
           }
           
           // トピック数をカウント（- で始まる行を数える、Key Pointsセクションは除外）
           const topicCount = (summaryWithoutKeyPoints.match(/^[-•]\s/gm) || []).length;
           
+          // Key PointsをSlack用にフォーマット
+          // 長いテキストの場合は適切に短縮し、改行を処理
+          let formattedKeyPoints = '';
+          if (keyPoints) {
+            // 最大500文字まで（Slackのメッセージ制限を考慮）
+            const maxKeyPointsLength = 500;
+            let processedKeyPoints = keyPoints;
+            if (processedKeyPoints.length > maxKeyPointsLength) {
+              processedKeyPoints = processedKeyPoints.substring(0, maxKeyPointsLength) + '...';
+            }
+            // 改行を保持し、Markdown形式で見やすく
+            // 複数行の場合は各行を適切にフォーマット
+            formattedKeyPoints = processedKeyPoints
+              .split('\n')
+              .map(line => line.trim())
+              .filter(line => line.length > 0)
+              .map(line => {
+                // 既にリスト形式の場合はそのまま、そうでない場合は適切にフォーマット
+                if (line.startsWith('-') || line.startsWith('•')) {
+                  return line;
+                }
+                return `• ${line}`;
+              })
+              .join('\n');
+          }
+          
           // 通知メッセージを作成（英語）
-          const notificationMessage = `✅ *Review sample data processing completed*\n\n` +
+          let notificationMessage = `✅ *Review sample data processing completed*\n\n` +
             `📊 *Statistics:*\n` +
             `• Channels processed: ${stats.channelCount}\n` +
             `• Total messages: ${stats.totalMessages}\n` +
             `• This channel: ${messageCount} messages processed\n` +
-            `• Topics identified: ${topicCount}\n\n` +
-            `Full details are available in the NexLetter dashboard.`;
+            `• Topics identified: ${topicCount}`;
+          
+          // Key Pointsがある場合は追加
+          if (formattedKeyPoints) {
+            notificationMessage += `\n\n💡 *Key Points:*\n${formattedKeyPoints}`;
+          }
+          
+          notificationMessage += `\n\nFull details are available in the NexLetter dashboard.`;
 
           const postResult = await slack.chat.postMessage({
             channel: channelId,
@@ -438,4 +459,3 @@ export async function action({ request }: ActionFunctionArgs) {
     }, { status: 500 });
   }
 }
-

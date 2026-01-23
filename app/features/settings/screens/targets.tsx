@@ -173,6 +173,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
   const navigate = useNavigate();
   const submit = useSubmit();
   const fetcher = useFetcher();
+  const isReviewMode = onboardingState?.onboarding_mode === "slack_review" ? true : false;
   
   // Onboarding hook
   const { 
@@ -254,6 +255,10 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
 
   // 타겟 추가 핸들러
   const handleAddTarget = () => {
+    if (isReviewMode) {
+      toast.error('You are in review mode, so you cannot add target');
+      return;
+    }
     // 제한 체크（DB에서 가져온 planLimits 사용）
     const limitCheck = checkTargetLimit(targets.length, planType, planLimits, t);
     
@@ -694,7 +699,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
           "focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2",
           "dark:focus:ring-offset-background cursor-pointer"
         )}
-        title="새 타겟 추가"
+        title="Add new target"
       >
         <PlusIcon className="h-6 w-6" />
       </button>
