@@ -22,6 +22,7 @@ import { useLocation } from "react-router";
 import LangSwitcher from "~/core/components/lang-switcher";
 import ThemeSwitcher from "~/core/components/theme-switcher";
 
+import type { SubscriptionInfo } from "../lib/types";
 import SidebarMain from "./sidebar-main";
 import TeamSwitcher from "./sidebar-team-switcher";
 import SidebarUser from "./sidebar-user";
@@ -169,12 +170,6 @@ const getSidebarData = (
   ],
 });
 
-import type { PlanType, SubscriptionMode } from "~/core/lib/constants";
-
-type SubscriptionInfo = {
-  plan_type: PlanType;
-  mode: SubscriptionMode;
-} | null;
 
 export default function DashboardSidebar({
   user,

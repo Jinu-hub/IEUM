@@ -1,3 +1,5 @@
+import type { PlanType, SubscriptionMode, SubscriptionStatus } from "~/core/lib/constants";
+
 export type EmailMetadataRow = {
   stats_json?: unknown;
   period_key?: unknown;
@@ -40,3 +42,9 @@ export type GithubDeveloperEntry = {
   commits?: unknown;
   count?: unknown;
 };
+
+export type SubscriptionInfo = {
+  plan_type: PlanType;
+  mode: SubscriptionMode;
+  status: SubscriptionStatus;
+} | null;

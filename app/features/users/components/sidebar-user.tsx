@@ -32,13 +32,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "~/core/components/ui/sidebar";
-import type { PlanType, SubscriptionMode, SubscriptionStatus } from "~/core/lib/constants";
 
-type SubscriptionInfo = {
-  plan_type: PlanType;
-  mode: SubscriptionMode;
-  status: SubscriptionStatus;
-} | null;
+import type { SubscriptionInfo } from "../lib/types";
 
 export default function SidebarUser({
   user,
