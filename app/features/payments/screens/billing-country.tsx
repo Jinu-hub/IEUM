@@ -13,6 +13,7 @@ import type { Route } from "./+types/billing-country";
 
 import { CheckIcon, GlobeIcon } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, redirect, useNavigate } from "react-router";
 import { z } from "zod";
 
@@ -109,6 +110,7 @@ const COUNTRY_OPTIONS: CountryOption[] = [
  * Billing Country Selection component
  */
 export default function BillingCountry({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("common", { keyPrefix: "billing.country" });
   const navigate = useNavigate();
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
@@ -129,10 +131,10 @@ export default function BillingCountry({ loaderData }: Route.ComponentProps) {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-semibold tracking-tight">
-            Select your billing country
+            {t("title")}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Choose the country for your {loaderData.planLabel} plan subscription
+            {t("description", { plan: loaderData.planLabel })}
           </p>
         </div>
 
@@ -170,7 +172,7 @@ export default function BillingCountry({ loaderData }: Route.ComponentProps) {
               {/* Coming soon badge */}
               {!country.supported && (
                 <span className="shrink-0 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                  Coming Soon
+                  {t("comingSoon")}
                 </span>
               )}
 
@@ -195,10 +197,10 @@ export default function BillingCountry({ loaderData }: Route.ComponentProps) {
             )}
           >
             <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
-              {selectedOption?.name || "This region"} support is coming soon!
+              {selectedOption?.name || "This region"} {t("comingSoonMessage")}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Please check back later or select Korea for now.
+              {t("comingSoonSubMessage")}
             </p>
           </div>
         </div>
@@ -211,7 +213,7 @@ export default function BillingCountry({ loaderData }: Route.ComponentProps) {
             onClick={handleContinue}
             disabled={!selectedCountry || !isSupported}
           >
-            Continue to Payment
+            {t("continueToPayment")}
           </Button>
 
           <Button
@@ -220,15 +222,14 @@ export default function BillingCountry({ loaderData }: Route.ComponentProps) {
             className="w-full"
             asChild
           >
-            <Link to="/pricing">Back to Plans</Link>
+            <Link to="/pricing">{t("backToPlans")}</Link>
           </Button>
         </div>
 
         {/* Info note */}
         <p className="text-center text-xs text-muted-foreground">
           <GlobeIcon className="mr-1 inline-block size-3" />
-          Your billing country determines the available payment methods and
-          currency.
+          {t("infoNote")}
         </p>
       </div>
     </div>

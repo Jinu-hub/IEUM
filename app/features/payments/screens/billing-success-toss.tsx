@@ -19,6 +19,7 @@
 import type { Route } from "./+types/billing-success-toss";
 
 import { CheckCircle2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link, redirect } from "react-router";
 import { z } from "zod";
 
@@ -349,6 +350,8 @@ export async function loader({ request }: Route.LoaderArgs) {
  * Billing Success component
  */
 export default function BillingSuccessToss({ loaderData }: Route.ComponentProps) {
+  const { t, i18n } = useTranslation("common", { keyPrefix: "billing.success" });
+  
   const formattedPrice = new Intl.NumberFormat(
     loaderData.currency === "JPY"
       ? "ja-JP"
@@ -362,12 +365,15 @@ export default function BillingSuccessToss({ loaderData }: Route.ComponentProps)
     }
   ).format(loaderData.price);
 
+  const localeMap: Record<string, string> = {
+    en: "en-US",
+    ja: "ja-JP",
+    ko: "ko-KR",
+  };
+  const dateLocale = localeMap[i18n.language] || "en-US";
+  
   const formattedEndsAt = new Date(loaderData.endsAt).toLocaleDateString(
-    loaderData.currency === "JPY"
-      ? "ja-JP"
-      : loaderData.currency === "USD"
-        ? "en-US"
-        : "ko-KR",
+    dateLocale,
     {
       year: "numeric",
       month: "long",
@@ -385,38 +391,37 @@ export default function BillingSuccessToss({ loaderData }: Route.ComponentProps)
 
         {/* Success message */}
         <h1 className="text-3xl font-semibold tracking-tight">
-          Welcome to {loaderData.planLabel}!
+          {t("title", { plan: loaderData.planLabel })}
         </h1>
 
         <p className="text-muted-foreground">
-          Your subscription has been activated successfully. Thank you for
-          subscribing!
+          {t("description")}
         </p>
 
         {/* Subscription details */}
         <div className="w-full rounded-2xl border border-border bg-card p-6">
-          <h2 className="mb-4 text-lg font-medium">Subscription Details</h2>
+          <h2 className="mb-4 text-lg font-medium">{t("subscriptionDetails")}</h2>
           <dl className="space-y-3 text-left">
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Plan</dt>
+              <dt className="text-muted-foreground">{t("plan")}</dt>
               <dd className="font-medium">{loaderData.planLabel}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Billing</dt>
+              <dt className="text-muted-foreground">{t("billingCycle")}</dt>
               <dd className="font-medium">
-                {loaderData.interval === "yearly" ? "Annual" : "Monthly"}
+                {loaderData.interval === "yearly" ? t("annual") : t("monthly")}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Amount</dt>
+              <dt className="text-muted-foreground">{t("amount")}</dt>
               <dd className="font-medium">{formattedPrice}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Next billing date</dt>
+              <dt className="text-muted-foreground">{t("nextBillingDate")}</dt>
               <dd className="font-medium">{formattedEndsAt}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Order ID</dt>
+              <dt className="text-muted-foreground">{t("orderId")}</dt>
               <dd className="font-mono text-sm">{loaderData.orderId}</dd>
             </div>
           </dl>
@@ -425,11 +430,11 @@ export default function BillingSuccessToss({ loaderData }: Route.ComponentProps)
         {/* Action buttons */}
         <div className="flex w-full flex-col gap-3 sm:flex-row">
           <Button asChild className="flex-1" size="lg">
-            <Link to="/dashboard">Go to Dashboard</Link>
+            <Link to="/dashboard">{t("goToDashboard")}</Link>
           </Button>
           <Button asChild variant="outline" className="flex-1" size="lg">
             <a href={loaderData.receiptUrl} target="_blank" rel="noreferrer">
-              View Receipt
+              {t("viewReceipt")}
             </a>
           </Button>
         </div>

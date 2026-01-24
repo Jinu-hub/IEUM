@@ -1551,4 +1551,99 @@ export type Translation = {
       };
     };
   };
+  billing: {
+    country: {
+      title: string;
+      description: string;
+      comingSoon: string;
+      comingSoonMessage: string;
+      comingSoonSubMessage: string;
+      continueToPayment: string;
+      backToPlans: string;
+      infoNote: string;
+    };
+    checkout: {
+      title: string;
+      description: string;
+      intervalToggle: {
+        monthly: string;
+        yearly: string;
+        save: string;
+      };
+      plan: string;
+      price: {
+        perMonth: string;
+        perYear: string;
+        monthlyEquivalent: string;
+      };
+      includes: string;
+      features: {
+        starter: string[];
+        pro: string[];
+      };
+      renewalNotice: string;
+      cardRegistration: {
+        title: string;
+        description: string;
+      };
+      security: {
+        encryption: string;
+        pciCompliant: string;
+        cancelAnytime: string;
+      };
+      subscribeButton: string;
+      processing: string;
+      termsNotice: string;
+      paymentError: string;
+    };
+    success: {
+      title: string;
+      description: string;
+      subscriptionDetails: string;
+      plan: string;
+      billingCycle: string;
+      amount: string;
+      nextBillingDate: string;
+      orderId: string;
+      annual: string;
+      monthly: string;
+      goToDashboard: string;
+      viewReceipt: string;
+    };
+    failure: {
+      title: string;
+      description: string;
+      errorDetails: string;
+      errorCode: string;
+      helpText: string;
+      tryAgain: string;
+      backToPlans: string;
+      errorMessages: {
+        invalid_params: string;
+        auth_error: string;
+        billing_key_error: string;
+        payment_error: string;
+        validation_error: string;
+        db_error: string;
+        REJECT_CARD_COMPANY: string;
+        EXCEED_MAX_DAILY_PAYMENT_COUNT: string;
+        NOT_SUPPORTED_INSTALLMENT_PLAN: string;
+        INVALID_CARD_EXPIRATION: string;
+        INVALID_STOPPED_CARD: string;
+        INSUFFICIENT_BALANCE: string;
+        unknown_error: string;
+      };
+    };
+    history: {
+      noPayments: string;
+      tableCaption: string;
+      orderId: string;
+      status: string;
+      product: string;
+      amount: string;
+      date: string;
+      receipt: string;
+      viewReceipt: string;
+    };
+  };
 };

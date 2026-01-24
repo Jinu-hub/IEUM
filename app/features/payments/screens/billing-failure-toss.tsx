@@ -13,6 +13,7 @@
  */
 
 import { AlertCircleIcon, ArrowLeftIcon, RefreshCwIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link, type MetaFunction, useSearchParams } from "react-router";
 
 import { Button } from "~/core/components/ui/button";
@@ -24,42 +25,17 @@ export const meta: MetaFunction = () => {
   return [{ title: `Subscription Error | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
-/**
- * Error messages mapping for common error codes
- */
-const ERROR_MESSAGES: Record<string, string> = {
-  invalid_params: "The request parameters were invalid. Please try again.",
-  auth_error: "Authentication failed. Please log in and try again.",
-  billing_key_error:
-    "Failed to register your payment method. Please try a different card.",
-  payment_error:
-    "The payment could not be processed. Please check your card details and try again.",
-  validation_error:
-    "There was a problem verifying the payment. Please try again.",
-  db_error:
-    "A system error occurred. Please try again or contact support if the problem persists.",
-  REJECT_CARD_COMPANY:
-    "The card was rejected by the card company. Please try a different card.",
-  EXCEED_MAX_DAILY_PAYMENT_COUNT:
-    "You have exceeded the maximum number of daily payments. Please try again tomorrow.",
-  NOT_SUPPORTED_INSTALLMENT_PLAN:
-    "The selected installment plan is not supported. Please try a different option.",
-  INVALID_CARD_EXPIRATION: "The card has expired. Please use a valid card.",
-  INVALID_STOPPED_CARD: "This card has been suspended. Please use a different card.",
-  INSUFFICIENT_BALANCE:
-    "Insufficient balance. Please check your card limit or try a different card.",
-};
 
 /**
  * Billing Failure component
  */
 export default function BillingFailureToss() {
+  const { t } = useTranslation("common", { keyPrefix: "billing.failure" });
   const [searchParams] = useSearchParams();
   const errorCode = searchParams.get("code") || "unknown_error";
   const errorMessage =
     searchParams.get("message") ||
-    ERROR_MESSAGES[errorCode] ||
-    "An unexpected error occurred.";
+    t(`errorMessages.${errorCode}`, { defaultValue: t("errorMessages.unknown_error") });
   const plan = searchParams.get("plan");
   const interval = searchParams.get("interval");
 
@@ -78,7 +54,7 @@ export default function BillingFailureToss() {
 
         {/* Error heading */}
         <h1 className="text-3xl font-semibold tracking-tight text-red-600 dark:text-red-400">
-          Subscription Failed
+          {t("title")}
         </h1>
 
         {/* Error description */}
@@ -87,11 +63,11 @@ export default function BillingFailureToss() {
         {/* Error details card */}
         <div className="w-full rounded-2xl border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950/30">
           <h2 className="mb-3 text-sm font-medium text-red-800 dark:text-red-300">
-            Error Details
+            {t("errorDetails")}
           </h2>
           <dl className="space-y-2 text-left text-sm">
             <div className="flex justify-between">
-              <dt className="text-red-600 dark:text-red-400">Error Code</dt>
+              <dt className="text-red-600 dark:text-red-400">{t("errorCode")}</dt>
               <dd className="font-mono text-red-800 dark:text-red-300">
                 {errorCode}
               </dd>
@@ -110,8 +86,7 @@ export default function BillingFailureToss() {
         {/* Help text */}
         <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground">
           <p>
-            If this problem persists, please try using a different payment
-            method or contact our support team for assistance.
+            {t("helpText")}
           </p>
         </div>
 
@@ -120,13 +95,13 @@ export default function BillingFailureToss() {
           <Button asChild className="flex-1" size="lg">
             <Link to={retryUrl}>
               <RefreshCwIcon className="mr-2 size-4" />
-              Try Again
+              {t("tryAgain")}
             </Link>
           </Button>
           <Button asChild variant="outline" className="flex-1" size="lg">
             <Link to="/pricing">
               <ArrowLeftIcon className="mr-2 size-4" />
-              Back to Plans
+              {t("backToPlans")}
             </Link>
           </Button>
         </div>

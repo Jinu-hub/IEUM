@@ -15,6 +15,7 @@
 
 import type { Route } from "./+types/payments";
 
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import { Card } from "~/core/components/ui/card";
@@ -101,8 +102,18 @@ export async function loader({ request }: Route.LoaderArgs) {
  * @returns JSX element representing the payments history page
  */
 export default function Payments({ loaderData }: Route.ComponentProps) {
+  const { t, i18n } = useTranslation("common", { keyPrefix: "billing.history" });
+  
   // Extract payment history from loader data
   const { payments } = loaderData;
+
+  // Locale mapping for date formatting
+  const localeMap: Record<string, string> = {
+    en: "en-US",
+    ja: "ja-JP",
+    ko: "ko-KR",
+  };
+  const dateLocale = localeMap[i18n.language] || "en-US";
   
   return (
     <div className="flex w-full flex-col items-center gap-10 pt-0 pb-8">
@@ -111,27 +122,22 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
         {/* Handle empty state when no payments exist */}
         {payments.length === 0 ? (
           <div className="flex flex-col items-center gap-4">
-            <p className="text-muted-foreground text-lg">No payments found.</p>
-            {/*
-            <Button asChild>
-              <Link to="/payments/checkout">Make a test payment &rarr;</Link>
-            </Button>
-            */}
+            <p className="text-muted-foreground text-lg">{t("noPayments")}</p>
           </div>
         ) : (
           /* Payment history table */
           <Table>
-            <TableCaption>A list of your recent payments.</TableCaption>
+            <TableCaption>{t("tableCaption")}</TableCaption>
             
             {/* Table header with column titles */}
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Order ID</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Receipt</TableHead>
+                <TableHead className="w-[100px]">{t("orderId")}</TableHead>
+                <TableHead>{t("status")}</TableHead>
+                <TableHead>{t("product")}</TableHead>
+                <TableHead>{t("amount")}</TableHead>
+                <TableHead>{t("date")}</TableHead>
+                <TableHead>{t("receipt")}</TableHead>
               </TableRow>
             </TableHeader>
             
@@ -152,7 +158,7 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
                   
                   {/* Amount column with currency formatting */}
                   <TableCell>
-                    {payment.total_amount.toLocaleString("en-US", {
+                    {payment.total_amount.toLocaleString(dateLocale, {
                       style: "currency",
                       currency: "KRW",
                     })}
@@ -160,7 +166,7 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
                   
                   {/* Date column with localized formatting */}
                   <TableCell>
-                    {new Date(payment.created_at).toLocaleDateString("ko-KR", {
+                    {new Date(payment.created_at).toLocaleDateString(dateLocale, {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
@@ -174,7 +180,7 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
                       target="_blank"
                       className="hover:underline"
                     >
-                      View receipt &rarr;
+                      {t("viewReceipt")} &rarr;
                     </Link>
                   </TableCell>
                 </TableRow>

@@ -17,6 +17,7 @@ import type { Route } from "./+types/billing-checkout-toss";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { CheckIcon, CreditCardIcon, Loader2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { redirect, useNavigate } from "react-router";
 import { z } from "zod";
 
@@ -96,31 +97,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 }
 
-/**
- * Plan features for display
- */
-const PLAN_FEATURES: Record<string, string[]> = {
-  starter: [
-    "3 workspaces",
-    "5 targets per workspace",
-    "2 Slack channels per target",
-    "1 GitHub repo per target",
-    "Weekly & Monthly newsletters",
-  ],
-  pro: [
-    "Unlimited workspaces",
-    "Unlimited targets",
-    "10 Slack channels per target",
-    "5 GitHub repos per target",
-    "Daily, Weekly & Monthly newsletters",
-    "Priority support",
-  ],
-};
 
 /**
  * Billing Checkout component for subscription registration
  */
 export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps) {
+  const { t } = useTranslation("common", { keyPrefix: "billing.checkout" });
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -172,6 +154,9 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
       { replace: true } 
     );
   };
+
+  // Get plan features from translation
+  const features = t(`features.${loaderData.plan}`, { returnObjects: true }) as string[];
 
   /**
    * Handle billing authorization request
@@ -228,14 +213,14 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
       
       if (!isCancelled) {
         // Show error only for actual errors (not user cancellation)
-        alert(`결제창 오류: ${errorMessage}\n\n이 키가 '빌링(정기결제)' 서비스에 등록되어 있는지 확인하세요.`);
+        alert(t("paymentError", { message: errorMessage }));
       }
       
       setIsLoading(false);
     }
   };
 
-  const features = PLAN_FEATURES[loaderData.plan] || [];
+  const intervalLabel = loaderData.interval === "yearly" ? t("price.perYear") : t("price.perMonth");
 
   return (
     <div className="flex flex-col items-center gap-20">
@@ -255,7 +240,7 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                Monthly
+                {t("intervalToggle.monthly")}
               </button>
               <button
                 type="button"
@@ -267,10 +252,10 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <span>Yearly</span>
+                <span>{t("intervalToggle.yearly")}</span>
                 {yearlySavings > 0 && (
                   <span className="ml-2 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
-                    Save {yearlySavings}%
+                    {t("intervalToggle.save")} {yearlySavings}%
                   </span>
                 )}
               </button>
@@ -281,7 +266,7 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
             {/* Plan badge */}
             <div className="mb-4">
               <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                {loaderData.planLabel} Plan
+                {loaderData.planLabel} {t("plan")}
               </span>
             </div>
 
@@ -290,21 +275,21 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-bold">{formattedPrice}</span>
                 <span className="text-muted-foreground">
-                  /{loaderData.interval === "yearly" ? "year" : "month"}
+                  {intervalLabel}
                 </span>
               </div>
               {monthlyEquivalent && (
                 <p className="mt-1 text-sm text-muted-foreground">
-                  ({monthlyEquivalent}/month when billed annually)
+                  {t("price.monthlyEquivalent", { price: monthlyEquivalent })}
                 </p>
               )}
             </div>
 
             {/* Features list */}
             <div className="space-y-3">
-              <h3 className="font-medium">Includes:</h3>
+              <h3 className="font-medium">{t("includes")}</h3>
               <ul className="space-y-2">
-                {features.map((feature, index) => (
+                {Array.isArray(features) && features.map((feature, index) => (
                   <li key={index} className="flex items-center gap-2">
                     <CheckIcon className="size-4 text-green-500" />
                     <span className="text-sm text-muted-foreground">
@@ -319,9 +304,7 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
           {/* Billing info notice */}
           <div className="rounded-xl bg-muted/50 p-4">
             <p className="text-sm text-muted-foreground">
-              Your subscription will automatically renew{" "}
-              {loaderData.interval === "yearly" ? "annually" : "monthly"}. You
-              can cancel anytime from your account settings.
+              {t("renewalNotice", { interval: loaderData.interval === "yearly" ? t("intervalToggle.yearly").toLowerCase() : t("intervalToggle.monthly").toLowerCase() })}
             </p>
           </div>
         </div>
@@ -329,12 +312,11 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
         {/* Payment section */}
         <div className="flex flex-col items-start gap-6">
           <h1 className="text-3xl font-semibold tracking-tight">
-            Complete your subscription
+            {t("title")}
           </h1>
 
           <p className="text-muted-foreground">
-            Click the button below to register your payment method and subscribe
-            to the {loaderData.planLabel} plan.
+            {t("description", { plan: loaderData.planLabel })}
           </p>
 
           {/* Payment info card */}
@@ -344,24 +326,24 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
                 <CreditCardIcon className="size-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-medium">Card Registration</h3>
+                <h3 className="font-medium">{t("cardRegistration.title")}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Securely register your card for automatic billing
+                  {t("cardRegistration.description")}
                 </p>
               </div>
             </div>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-4 text-green-500" />
-                256-bit SSL encryption
+                {t("security.encryption")}
               </li>
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-4 text-green-500" />
-                PCI DSS compliant
+                {t("security.pciCompliant")}
               </li>
               <li className="flex items-center gap-2">
                 <CheckIcon className="size-4 text-green-500" />
-                Cancel anytime
+                {t("security.cancelAnytime")}
               </li>
             </ul>
           </div>
@@ -376,19 +358,17 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
             {isLoading ? (
               <>
                 <Loader2Icon className="mr-2 size-5 animate-spin" />
-                Processing...
+                {t("processing")}
               </>
             ) : (
               <>
-                Subscribe for {formattedPrice}
-                {loaderData.interval === "yearly" ? "/year" : "/month"}
+                {t("subscribeButton", { price: formattedPrice, interval: intervalLabel })}
               </>
             )}
           </Button>
 
           <p className="text-xs text-muted-foreground text-center w-full">
-            By subscribing, you agree to our Terms of Service and authorize
-            recurring charges to your payment method.
+            {t("termsNotice")}
           </p>
         </div>
       </div>
