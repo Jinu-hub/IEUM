@@ -497,7 +497,7 @@ const ja: Translation = {
       active: "アクティブ",
       paused: "一時停止中",
       expired: "期限切れ",
-      canceled: "解約済み",
+      canceled: "解約予定",
     },
     trialRemaining: "トライアル残り {{days}} 日",
     validUntil: "{{date}} まで有効",
@@ -506,6 +506,7 @@ const ja: Translation = {
     startDate: "開始日",
     trialEndDate: "トライアル終了日",
     nextRenewalDate: "次回更新日",
+    planEndDate: "プラン終了日",
     upgradePrompt: {
       title: "Starterプランにアップグレードしませんか？",
       description: "Starterにアップグレードすると、トライアル期間後もニュースレターを自動生成・配信できます。",

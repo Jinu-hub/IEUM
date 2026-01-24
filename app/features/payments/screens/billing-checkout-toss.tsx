@@ -210,8 +210,8 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
       // @see https://docs.tosspayments.com/sdk/v2/js#paymentrequestbillingauth
       await payment.requestBillingAuth({
         method: "CARD", // 자동결제(빌링)는 카드만 지원
-        successUrl: `${window.location.origin}/payments/billing-success?plan=${loaderData.plan}&interval=${loaderData.interval}&currency=${loaderData.currency}&region=${loaderData.region}`,
-        failUrl: `${window.location.origin}/payments/billing-failure?plan=${loaderData.plan}&interval=${loaderData.interval}`,
+        successUrl: `${window.location.origin}/payments/billing-success-toss?plan=${loaderData.plan}&interval=${loaderData.interval}&currency=${loaderData.currency}&region=${loaderData.region}`,
+        failUrl: `${window.location.origin}/payments/billing-failure-toss?plan=${loaderData.plan}&interval=${loaderData.interval}`,
         customerEmail: loaderData.userEmail,
         customerName: loaderData.userName,
       });

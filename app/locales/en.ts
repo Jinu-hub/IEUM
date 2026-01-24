@@ -497,7 +497,7 @@ const en: Translation = {
       active: "Active",
       paused: "Paused",
       expired: "Expired",
-      canceled: "Canceled",
+      canceled: "Canceled soon",
     },
     trialRemaining: "{{days}} days remaining in trial",
     validUntil: "Valid until {{date}}",
@@ -505,6 +505,7 @@ const en: Translation = {
     startDate: "Start Date",
     trialEndDate: "Trial End Date",
     nextRenewalDate: "Next Renewal Date",
+    planEndDate: "Plan End Date",
     upgradePrompt: {
       title: "Upgrade to Starter Plan?",
       description: "After upgrading to Starter, you can continue to automatically generate and deliver newsletters.",

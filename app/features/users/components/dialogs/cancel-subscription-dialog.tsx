@@ -27,6 +27,10 @@ import {
   PLAN_PRICES,
   PLAN_TYPE_LABEL,
 } from "~/core/lib/constants";
+import {
+  calculateNewEndsAt,
+  calculateUsedMonths,
+} from "~/features/users/lib/paymentUtils";
 
 interface CancelSubscriptionDialogProps {
   open: boolean;
@@ -68,12 +72,8 @@ function calculateRefund(
     (PLAN_PRICES[priceablePlan]?.yearly ?? 0) * EXCHANGE_RATES[currency]
   );
 
-  // Calculate used months (rounded up)
-  const startDate = new Date(startedAt);
-  const now = new Date();
-  const diffTime = now.getTime() - startDate.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  const usedMonths = Math.max(1, Math.ceil(diffDays / 30));
+  // Calculate used months using shared utility
+  const usedMonths = calculateUsedMonths(startedAt);
 
   // Calculate deduction and refund
   const deduction = monthlyPrice * usedMonths;
@@ -152,7 +152,16 @@ export default function CancelSubscriptionDialog({
     return calculateRefund(planType, currency, startedAt, paidAmount);
   }, [isYearly, planType, currency, startedAt, paidAmount]);
 
-  const formattedEndsAt = formatDate(endsAt, i18n.language);
+  // For yearly plans, show the new ends_at based on used months
+  // For monthly plans, show the original ends_at
+  const displayEndsAt = useMemo(() => {
+    if (isYearly) {
+      return calculateNewEndsAt(startedAt).toISOString();
+    }
+    return endsAt;
+  }, [isYearly, startedAt, endsAt]);
+
+  const formattedEndsAt = formatDate(displayEndsAt, i18n.language);
 
   // Handle subscription cancellation
   const handleConfirm = async () => {

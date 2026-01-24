@@ -503,6 +503,7 @@ export type Translation = {
     startDate: string;
     trialEndDate: string;
     nextRenewalDate: string;
+    planEndDate: string;
     upgradePrompt: {
       title: string;
       description: string;

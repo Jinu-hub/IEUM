@@ -163,7 +163,7 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
               </div>
               <div className="flex flex-col gap-1 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
                 <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                  {isTrialing ? t("trialEndDate") : t("nextRenewalDate")}
+                  {isTrialing ? t("trialEndDate") : isCanceled ? t("planEndDate") : t("nextRenewalDate")}
                 </span>
                 <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {isTrialing ? formatDate(trialEndsAt, i18n.language) : formatDate(endsAt, i18n.language)}

@@ -19,6 +19,7 @@ import { data } from "react-router";
 import { requireAuthentication, requireMethod } from "~/core/lib/guards.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import makeServerClient from "~/core/lib/supa-client.server";
+import { calculateNewEndsAtISO } from "~/features/users/lib/paymentUtils";
 
 interface CancelRequestBody {
   subscriptionId: string;
@@ -161,11 +162,17 @@ export async function action({ request }: Route.ActionArgs) {
     }
   }
 
-  // Update subscription status to canceled
+  // Calculate new ends_at based on used months for yearly subscriptions
+  const newEndsAt = isYearly && subscription.started_at
+    ? calculateNewEndsAtISO(subscription.started_at)
+    : undefined;
+
+  // Update subscription status to canceled (and ends_at for yearly plans)
   const { error: updateError } = await adminClient
     .from("subscriptions")
     .update({
       status: "canceled",
+      ...(newEndsAt && { ends_at: newEndsAt }),
       updated_at: new Date().toISOString(),
     })
     .eq("subscription_id", subscriptionId);
@@ -196,5 +203,6 @@ export async function action({ request }: Route.ActionArgs) {
       ? "Subscription canceled and refund processed"
       : "Subscription canceled successfully",
     refundAmount: hasRefund ? refundAmount : 0,
+    newEndsAt: newEndsAt || null,
   });
 }

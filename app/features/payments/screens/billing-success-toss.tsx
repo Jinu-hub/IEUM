@@ -49,9 +49,15 @@ const paramsSchema = z.object({
   customerKey: z.string(),
   plan: z.enum(["starter", "pro"]),
   interval: z.enum(["monthly", "yearly"]),
-  currency: z.enum(["USD", "KRW", "JPY"]).default("KRW"),
-  region: z.enum(["KR", "JP", "GLOBAL"]).default("KR"),
+  currency: z.enum(["USD", "KRW", "JPY"]).optional(),
+  region: z.enum(["KR", "JP", "GLOBAL"]).optional(),
 });
+
+/**
+ * Default values for region/currency when not provided
+ */
+const DEFAULT_REGION = "KR" as const;
+const DEFAULT_CURRENCY = "KRW" as const;
 
 /**
  * Validation schema for Toss billingKey response
@@ -107,7 +113,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   } = await client.auth.getUser();
 
   if (!user) {
-    throw redirect("/payments/billing-failure?code=auth_error&message=User not found");
+    throw redirect("/payments/billing-failure-toss?code=auth_error&message=User not found");
   }
 
   // Parse URL parameters
@@ -117,18 +123,21 @@ export async function loader({ request }: Route.LoaderArgs) {
     customerKey: url.searchParams.get("customerKey"),
     plan: url.searchParams.get("plan"),
     interval: url.searchParams.get("interval"),
-    currency: url.searchParams.get("currency") || "KRW",
-    region: url.searchParams.get("region") || "KR",
+    currency: url.searchParams.get("currency") || undefined,
+    region: url.searchParams.get("region") || undefined,
   });
 
   if (!result.success) {
     throw redirect(
-      `/payments/billing-failure?code=invalid_params&message=${encodeURIComponent("Invalid parameters")}`
+      `/payments/billing-failure-toss?code=invalid_params&message=${encodeURIComponent("Invalid parameters")}`
     );
   }
 
-  const { authKey, customerKey, plan, interval, currency, region } = result.data;
-  const price = calculatePrice(plan, interval, currency as Currency);
+  const { authKey, customerKey, plan, interval } = result.data;
+  // Apply default values for region and currency if not provided
+  const region = result.data.region ?? DEFAULT_REGION;
+  const currency = result.data.currency ?? DEFAULT_CURRENCY;
+  const price = calculatePrice(plan, interval, currency);
 
   // Prepare authorization header for Toss Payments API
   const encryptedSecretKey =
@@ -155,14 +164,14 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   if (!billingKeyResponse.ok) {
     throw redirect(
-      `/payments/billing-failure?code=${encodeURIComponent(billingKeyData.code || "billing_key_error")}&message=${encodeURIComponent(billingKeyData.message || "Failed to issue billing key")}`
+      `/payments/billing-failure-toss?code=${encodeURIComponent(billingKeyData.code || "billing_key_error")}&message=${encodeURIComponent(billingKeyData.message || "Failed to issue billing key")}`
     );
   }
 
   const billingKeyResult = billingKeyResponseSchema.safeParse(billingKeyData);
   if (!billingKeyResult.success) {
     throw redirect(
-      `/payments/billing-failure?code=validation_error&message=${encodeURIComponent("Invalid billing key response")}`
+      `/payments/billing-failure-toss?code=validation_error&message=${encodeURIComponent("Invalid billing key response")}`
     );
   }
 
@@ -193,7 +202,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (pmError) {
     console.error("Failed to save payment method:", pmError);
     throw redirect(
-      `/payments/billing-failure?code=db_error&message=${encodeURIComponent("Failed to save payment method")}`
+      `/payments/billing-failure-toss?code=db_error&message=${encodeURIComponent("Failed to save payment method")}`
     );
   }
 
@@ -231,14 +240,14 @@ export async function loader({ request }: Route.LoaderArgs) {
       .eq("method_id", paymentMethod.method_id);
 
     throw redirect(
-      `/payments/billing-failure?code=${encodeURIComponent(paymentData.code || "payment_error")}&message=${encodeURIComponent(paymentData.message || "Payment failed")}`
+      `/payments/billing-failure-toss?code=${encodeURIComponent(paymentData.code || "payment_error")}&message=${encodeURIComponent(paymentData.message || "Payment failed")}`
     );
   }
 
   const paymentResult = billingPaymentResponseSchema.safeParse(paymentData);
   if (!paymentResult.success) {
     throw redirect(
-      `/payments/billing-failure?code=validation_error&message=${encodeURIComponent("Invalid payment response")}`
+      `/payments/billing-failure-toss?code=validation_error&message=${encodeURIComponent("Invalid payment response")}`
     );
   }
 
@@ -416,7 +425,7 @@ export default function BillingSuccessToss({ loaderData }: Route.ComponentProps)
         {/* Action buttons */}
         <div className="flex w-full flex-col gap-3 sm:flex-row">
           <Button asChild className="flex-1" size="lg">
-            <Link to="/app/dashboard">Go to Dashboard</Link>
+            <Link to="/dashboard">Go to Dashboard</Link>
           </Button>
           <Button asChild variant="outline" className="flex-1" size="lg">
             <a href={loaderData.receiptUrl} target="_blank" rel="noreferrer">

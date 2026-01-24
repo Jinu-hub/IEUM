@@ -496,7 +496,7 @@ const ko: Translation = {
       active: "활성",
       paused: "일시중지",
       expired: "만료됨",
-      canceled: "해지됨",
+      canceled: "해지예정",
     },
     trialRemaining: "트라이얼 남은 기간 {{days}}일",
     validUntil: "{{date}}까지 유효",
@@ -504,6 +504,7 @@ const ko: Translation = {
     startDate: "시작일",
     trialEndDate: "트라이얼 종료일",
     nextRenewalDate: "다음 갱신일",
+    planEndDate: "플랜 종료일",
     upgradePrompt: {
       title: "Starter 플랜으로 업그레이드하시겠습니까?",
       description: "Starter로 업그레이드하면, 트라이얼 이후에도 뉴스레터 자동 생성·발송이 계속됩니다.",

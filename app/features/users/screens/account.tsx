@@ -76,7 +76,7 @@ export default function Account({ loaderData }: Route.ComponentProps) {
         <Await
           resolve={subscription}
           errorElement={
-            <div className="text-red-500">プラン情報を読み込めませんでした</div>
+            <div className="text-red-500">Could not load plan information</div>
           }
         >
           {(subscription) => (
