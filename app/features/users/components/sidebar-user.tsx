@@ -4,6 +4,7 @@ import {
   CreditCard,
   Crown,
   LogOut,
+  RefreshCcw,
   Sparkles,
   UserCircle2Icon
 } from "lucide-react";
@@ -31,11 +32,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "~/core/components/ui/sidebar";
-import type { PlanType, SubscriptionMode } from "~/core/lib/constants";
+import type { PlanType, SubscriptionMode, SubscriptionStatus } from "~/core/lib/constants";
 
 type SubscriptionInfo = {
   plan_type: PlanType;
   mode: SubscriptionMode;
+  status: SubscriptionStatus;
 } | null;
 
 export default function SidebarUser({
@@ -60,6 +62,7 @@ export default function SidebarUser({
   const mode = subscription?.mode ?? "free";
   const isPaidPlan = mode === "paid";
   const isStarter = planType === "starter";
+  const isExpired = subscription?.status === "expired";
 
   return (
     <SidebarMenu>
@@ -133,6 +136,16 @@ export default function SidebarUser({
                   <Badge variant="secondary" className="text-xs px-1.5 py-0">
                     {commonT("soon")}
                   </Badge>
+                </DropdownMenuItem>
+              )}
+              {isStarter && isExpired && (
+                <DropdownMenuItem asChild={!isReviewMode}
+                  disabled={isReviewMode}
+                  className={isReviewMode ? "opacity-60 cursor-not-allowed" : ""}>
+                    <Link to="/payments/billing-country?plan=starter" viewTransition>
+                      <RefreshCcw className="text-indigo-500" />
+                      {t("user.renewSubscription")}
+                    </Link>
                 </DropdownMenuItem>
               )}
             </DropdownMenuGroup>

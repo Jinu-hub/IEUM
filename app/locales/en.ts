@@ -509,9 +509,14 @@ const en: Translation = {
       title: "Upgrade to Starter Plan?",
       description: "After upgrading to Starter, you can continue to automatically generate and deliver newsletters.",
     },
+    renewPrompt: {
+      title: "Renew Subscription?",
+      description: "By renewing your subscription, you can continue to automatically generate and deliver newsletters.",
+    },
     comparePlans: "Compare Plans",
-    managePayments: "Manage Payments",
+    managePayments: "Payment History",
     cancelSubscription: "Cancel Subscription",
+    renewSubscription: "Renew Subscription",
     cancelDialog: {
       title: "Cancel Subscription",
       monthlyWarning: "If you cancel, automatic billing will stop from the next payment.",
@@ -529,6 +534,10 @@ const en: Translation = {
       buttons: {
         cancel: "Cancel",
         confirm: "Cancel Subscription",
+      },
+      success: {
+        withRefund: "Your subscription has been canceled. {{amount}} will be refunded.",
+        noRefund: "Your subscription has been successfully canceled.",
       },
     },
   },
@@ -559,6 +568,7 @@ const en: Translation = {
     user: {
       upgrade: "Upgrade",
       upgradeToStarter: "Upgrade to Starter",
+      renewSubscription: "Renew Subscription",
       upgradeToPro: "Upgrade to Pro",
       account: "Account",
       payments: "Payments",

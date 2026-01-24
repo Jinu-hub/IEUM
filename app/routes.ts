@@ -54,6 +54,7 @@ export default [
         "/providers/:provider",
         "features/users/api/disconnect-provider.tsx",
       ),
+      route("/subscription/cancel", "features/users/api/cancel-subscription.ts"),
     ]),
     ...prefix("/cron", [
       route("/mailer", "features/cron/api/mailer.tsx"),

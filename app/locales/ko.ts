@@ -494,9 +494,9 @@ const ko: Translation = {
     status: {
       trialing: "트라이얼 중",
       active: "활성",
-      paused: "일시 중지",
+      paused: "일시중지",
       expired: "만료됨",
-      canceled: "취소됨",
+      canceled: "해지됨",
     },
     trialRemaining: "트라이얼 남은 기간 {{days}}일",
     validUntil: "{{date}}까지 유효",
@@ -508,9 +508,14 @@ const ko: Translation = {
       title: "Starter 플랜으로 업그레이드하시겠습니까?",
       description: "Starter로 업그레이드하면, 트라이얼 이후에도 뉴스레터 자동 생성·발송이 계속됩니다.",
     },
+    renewPrompt: {
+      title: "구독 재개하시겠습니까?",
+      description: "구독을 활성화 해서, 뉴스레터 자동 생성·발송을 계속 진행할 수 있습니다.",
+    },
     comparePlans: "플랜 비교",
-    managePayments: "결제 관리",
-    cancelSubscription: "구독 취소",
+    managePayments: "결제 내역",
+    cancelSubscription: "구독 해지",
+    renewSubscription: "구독 재개",
     cancelDialog: {
       title: "구독 해지",
       monthlyWarning: "해지하시면 다음 결제부터 자동결제가 중단됩니다.",
@@ -528,6 +533,10 @@ const ko: Translation = {
       buttons: {
         cancel: "취소",
         confirm: "구독 해지",
+      },
+      success: {
+        withRefund: "구독이 해지되었습니다. {{amount}}이(가) 환불 처리됩니다.",
+        noRefund: "구독이 성공적으로 해지되었습니다.",
       },
     },
   },
@@ -558,6 +567,7 @@ const ko: Translation = {
     user: {
       upgrade: "업그레이드",
       upgradeToStarter: "Starter로 업그레이드",
+      renewSubscription: "구독 재개",
       upgradeToPro: "Pro로 업그레이드",
       account: "계정 관리",
       payments: "결제",

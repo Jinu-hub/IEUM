@@ -4,10 +4,13 @@
  * Displays a confirmation dialog when user attempts to cancel their subscription.
  * Shows different content based on billing interval (monthly vs yearly).
  * For yearly subscriptions, calculates and displays the estimated refund amount.
+ * Handles API call to cancel subscription and process refunds.
  */
-import { AlertTriangle, Calculator, Calendar } from "lucide-react";
-import { useMemo } from "react";
+import { AlertTriangle, Calculator, Calendar, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useRevalidator } from "react-router";
+import { toast } from "sonner";
 
 import { NexButton } from "~/core/components/nex";
 import {
@@ -28,13 +31,14 @@ import {
 interface CancelSubscriptionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  subscriptionId: string | null;
   planType: PlanType;
   billingInterval: BillingInterval | null;
   billingCurrency: Currency | null;
   startedAt: string;
   endsAt: string | null;
   paidAmount: number | null;  // Actual paid amount from DB
-  onConfirm: () => void;
+  onSuccess?: () => void;
 }
 
 /**
@@ -124,15 +128,19 @@ function formatDate(dateString: string | null, locale: string): string {
 export default function CancelSubscriptionDialog({
   open,
   onOpenChange,
+  subscriptionId,
   planType,
   billingInterval,
   billingCurrency,
   startedAt,
   endsAt,
   paidAmount,
-  onConfirm,
+  onSuccess,
 }: CancelSubscriptionDialogProps) {
   const { t, i18n } = useTranslation("common", { keyPrefix: "planInfo.cancelDialog" });
+  const revalidator = useRevalidator();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isYearly = billingInterval === "yearly";
   const currency = billingCurrency || "KRW";
@@ -145,6 +153,55 @@ export default function CancelSubscriptionDialog({
   }, [isYearly, planType, currency, startedAt, paidAmount]);
 
   const formattedEndsAt = formatDate(endsAt, i18n.language);
+
+  // Handle subscription cancellation
+  const handleConfirm = async () => {
+    if (!subscriptionId) {
+      setError("Subscription ID is missing");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/users/subscription/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          subscriptionId,
+          refundAmount: isYearly && refund ? refund.refundAmount : undefined,
+          cancelReason: "User requested cancellation",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to cancel subscription");
+      }
+
+      // Success - show toast, close dialog and refresh data
+      const hasRefund = isYearly && refund && refund.refundAmount > 0;
+      toast.success(
+        hasRefund
+          ? t("success.withRefund", {
+              amount: formatCurrency(refund.refundAmount, currency, i18n.language),
+            })
+          : t("success.noRefund")
+      );
+      
+      onOpenChange(false);
+      revalidator.revalidate();
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -217,20 +274,36 @@ export default function CancelSubscriptionDialog({
           )}
         </div>
 
+        {/* Error message */}
+        {error && (
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+            {error}
+          </div>
+        )}
+
         <DialogFooter className="gap-3">
           <NexButton
             variant="secondary"
             onClick={() => onOpenChange(false)}
             className="cursor-pointer"
+            disabled={isLoading}
           >
             {t("buttons.cancel")}
           </NexButton>
           <NexButton
             variant="primary"
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className="cursor-pointer bg-red-600 hover:bg-red-700"
+            disabled={isLoading}
           >
-            {t("buttons.confirm")}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              t("buttons.confirm")
+            )}
           </NexButton>
         </DialogFooter>
       </DialogContent>

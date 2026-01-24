@@ -497,11 +497,12 @@ const ja: Translation = {
       active: "アクティブ",
       paused: "一時停止中",
       expired: "期限切れ",
-      canceled: "キャンセル済み",
+      canceled: "解約済み",
     },
     trialRemaining: "トライアル残り {{days}} 日",
     validUntil: "{{date}} まで有効",
     upgradeToStarter: "Starterプランにアップグレード",
+
     startDate: "開始日",
     trialEndDate: "トライアル終了日",
     nextRenewalDate: "次回更新日",
@@ -509,9 +510,14 @@ const ja: Translation = {
       title: "Starterプランにアップグレードしませんか？",
       description: "Starterにアップグレードすると、トライアル期間後もニュースレターを自動生成・配信できます。",
     },
+    renewPrompt: {
+      title: "サブスクリプションを再開しませんか？",
+      description: "サブスクリプションを再開すると、ニュースレターを自動生成・配信できます。",
+    },
     comparePlans: "プランを比較",
-    managePayments: "お支払い管理",
+    managePayments: "お支払い履歴",
     cancelSubscription: "サブスクリプション解約",
+    renewSubscription: "サブスクリプション再開",
     cancelDialog: {
       title: "サブスクリプション解約",
       monthlyWarning: "解約すると、次回の決済から自動決済が停止されます。",
@@ -529,6 +535,10 @@ const ja: Translation = {
       buttons: {
         cancel: "キャンセル",
         confirm: "解約する",
+      },
+      success: {
+        withRefund: "サブスクリプションが解約されました。{{amount}}が返金されます。",
+        noRefund: "サブスクリプションが正常に解約されました。",
       },
     },
   },
@@ -559,6 +569,7 @@ const ja: Translation = {
     user: {
       upgrade: "アップグレード",
       upgradeToStarter: "Starterにアップグレード",
+      renewSubscription: "サブスクリプション再開",
       upgradeToPro: "Proにアップグレード",
       account: "アカウント管理",
       payments: "支払い",

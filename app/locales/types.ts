@@ -507,9 +507,14 @@ export type Translation = {
       title: string;
       description: string;
     };
+    renewPrompt: {
+      title: string;
+      description: string;
+    };
     comparePlans: string;
     managePayments: string;
     cancelSubscription: string;
+    renewSubscription: string;
     cancelDialog: {
       title: string;
       monthlyWarning: string;
@@ -527,6 +532,10 @@ export type Translation = {
       buttons: {
         cancel: string;
         confirm: string;
+      };
+      success: {
+        withRefund: string;
+        noRefund: string;
       };
     };
   };
@@ -557,6 +566,7 @@ export type Translation = {
     user: {
       upgrade: string;
       upgradeToStarter: string;
+      renewSubscription: string;
       upgradeToPro: string;
       account: string;
       payments: string;

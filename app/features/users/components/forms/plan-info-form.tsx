@@ -19,6 +19,7 @@ import CancelSubscriptionDialog from "../dialogs/cancel-subscription-dialog";
 
 interface PlanSectionProps {
   subscription: {
+    subscription_id: string;
     plan_type: string;
     status: string;
     mode: string;
@@ -78,6 +79,7 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   // デフォルト値（サブスクリプションがない場合）+ type casting for DB values
+  const subscriptionId = subscription?.subscription_id ?? null;
   const planType = (subscription?.plan_type ?? "free") as PlanType;
   const status = (subscription?.status ?? "active") as SubscriptionStatus;
   const mode = (subscription?.mode ?? "free") as SubscriptionMode;
@@ -90,13 +92,10 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
 
   const isTrialing = status === "trialing";
   const isPaidPlan = mode === "paid";
+  const isActive = status === "active";
+  const isExpired = status === "expired";
+  const isCanceled = status === "canceled";
   const daysRemaining = isTrialing ? getDaysRemaining(trialEndsAt) : getDaysRemaining(endsAt);
-
-  const handleCancelConfirm = () => {
-    // TODO: Implement actual cancellation API call
-    console.log("Cancel subscription confirmed");
-    setCancelDialogOpen(false);
-  };
 
   return (
       <NexCard variant="elevated" padding="lg" className="w-full max-w-screen-md">
@@ -152,24 +151,26 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
           </div>
 
           {/* Plan Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
-              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                {t("startDate")}
-              </span>
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {formatDate(subscription?.started_at ?? null, i18n.language)}
-              </span>
+          {!isExpired && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  {t("startDate")}
+                </span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {formatDate(subscription?.started_at ?? null, i18n.language)}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  {isTrialing ? t("trialEndDate") : t("nextRenewalDate")}
+                </span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {isTrialing ? formatDate(trialEndsAt, i18n.language) : formatDate(endsAt, i18n.language)}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col gap-1 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
-              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                {isTrialing ? t("trialEndDate") : t("nextRenewalDate")}
-              </span>
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {isTrialing ? formatDate(trialEndsAt, i18n.language) : formatDate(endsAt, i18n.language)}
-              </span>
-            </div>
-          </div>
+          )}
 
           {/* Upgrade Prompt for Free/Trial users */}
           {!isPaidPlan && (
@@ -185,6 +186,19 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
               </div>
             </div>
           )}
+          {isExpired && (
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 rounded-xl border-2 border-dashed border-indigo-200 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-900/20">
+              <Sparkles className="size-8 text-indigo-500 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                  {t("renewPrompt.title")}
+                </p>
+                <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
+                  {t("renewPrompt.description")}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </NexCardContent>
       <NexCardFooter className="flex flex-col sm:flex-row gap-3">
@@ -193,13 +207,12 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
             {t("comparePlans")}
           </NexButton>
         </Link>
-        {isPaidPlan && (
-          <>
-          <Link to="/dashboard/payments" className="flex-1">
-            <NexButton variant="secondary" size="md" className="w-full cursor-pointer">
-              {t("managePayments")}
-            </NexButton>
-          </Link>
+        <Link to="/dashboard/payments" className="flex-1">
+          <NexButton variant="secondary" size="md" className="w-full cursor-pointer">
+            {t("managePayments")}
+          </NexButton>
+        </Link>
+        {isActive && (
           <div className="flex-1">
             <NexButton
               variant="secondary"
@@ -210,7 +223,18 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
               {t("cancelSubscription")}
             </NexButton>
           </div>
-          </>
+        )}
+        {isExpired && (
+          <Link to="/payments/billing-country?plan=starter" className="flex-1">
+            <div className="flex-1">
+              <NexButton variant="secondary" 
+                size="md" 
+                className="w-full cursor-pointer"
+              >
+                {t("renewSubscription")}
+              </NexButton>
+            </div>
+          </Link>
         )}
       </NexCardFooter>
 
@@ -218,13 +242,13 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
       <CancelSubscriptionDialog
         open={cancelDialogOpen}
         onOpenChange={setCancelDialogOpen}
+        subscriptionId={subscriptionId}
         planType={planType}
         billingInterval={billingInterval}
         billingCurrency={billingCurrency}
         startedAt={startedAt}
         endsAt={endsAt ?? null}
         paidAmount={paidAmount}
-        onConfirm={handleCancelConfirm}
       />
     </NexCard>
   );
