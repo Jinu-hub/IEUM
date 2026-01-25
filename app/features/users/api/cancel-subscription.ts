@@ -3,23 +3,32 @@
  *
  * This file implements an API endpoint for canceling a user's subscription.
  * For yearly subscriptions with refund amounts, it processes refunds through
- * Toss Payments API before updating the subscription status.
+ * Toss Payments API or Stripe API based on the payment provider.
  *
  * Key features:
  * - Request method validation (POST only)
  * - Authentication protection
- * - Toss Payments refund API integration (for yearly plans with refunds)
+ * - Toss Payments refund API integration (for Korean users)
+ * - Stripe subscription cancel & refund API integration (for Global/Japan users)
  * - Subscription and payment method status updates
  * - Error handling for API errors
  */
 import type { Route } from "./+types/cancel-subscription";
 
 import { data } from "react-router";
+import Stripe from "stripe";
 
 import { requireAuthentication, requireMethod } from "~/core/lib/guards.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import makeServerClient from "~/core/lib/supa-client.server";
-import { calculateNewEndsAtISO } from "~/features/users/lib/paymentUtils";
+import { calculateNewEndsAtISO } from "~/features/payments/lib/Utils";
+
+/**
+ * Initialize Stripe client
+ */
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-12-15.clover",
+});
 
 interface CancelRequestBody {
   subscriptionId: string;
@@ -82,8 +91,11 @@ export async function action({ request }: Route.ActionArgs) {
       payments:latest_payment_id (
         payment_id,
         payment_key,
+        pg_provider,
         total_amount,
-        status
+        currency,
+        status,
+        stripe_payment_intent_id
       )
     `)
     .eq("subscription_id", subscriptionId)
@@ -102,12 +114,81 @@ export async function action({ request }: Route.ActionArgs) {
     return data({ error: "Subscription is already canceled" }, { status: 400 });
   }
 
-  // For yearly subscriptions with refund amount, process refund via Toss Payments
+  // For yearly subscriptions with refund amount, process refund
   const isYearly = subscription.billing_interval === "yearly";
   const hasRefund = refundAmount && refundAmount > 0;
   const payment = subscription.payments;
+  
+  // Determine payment provider (Stripe or Toss)
+  const isStripe = !!subscription.stripe_subscription_id || payment?.pg_provider === "stripe";
 
-  if (isYearly && hasRefund && payment?.payment_key) {
+  // ========================================
+  // STRIPE: Cancel subscription and process refund
+  // ========================================
+  if (isStripe && subscription.stripe_subscription_id) {
+    try {
+      // 1. Set metadata to indicate this is a user-initiated cancel (not admin)
+      // This flag tells the webhook handler NOT to update ends_at
+      await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+        metadata: { cancel_immediately: "false" },
+      });
+
+      // 2. Cancel Stripe subscription immediately
+      // Both monthly and yearly plans: cancel immediately on Stripe side
+      // NexLetter side maintains the ends_at (validity period) separately
+      await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
+      console.log(`Stripe subscription ${subscription.stripe_subscription_id} canceled`);
+
+      // 2. Process refund for yearly plans with refund amount
+      if (isYearly && hasRefund && payment?.stripe_payment_intent_id) {
+        // Zero-decimal currencies (JPY, KRW) don't need multiplication
+        const currency = payment.currency || subscription.billing_currency || "USD";
+        const isZeroDecimalCurrency = ["JPY", "KRW"].includes(currency);
+        const refundAmountInSmallestUnit = isZeroDecimalCurrency
+          ? Math.round(refundAmount)
+          : Math.round(refundAmount * 100); // Convert to cents for USD, etc.
+
+        const stripeRefund = await stripe.refunds.create({
+          payment_intent: payment.stripe_payment_intent_id,
+          amount: refundAmountInSmallestUnit,
+          reason: "requested_by_customer",
+        });
+
+        console.log(`Stripe refund created: ${stripeRefund.id}, amount: ${refundAmountInSmallestUnit}`);
+
+        // Update payment record with refund information
+        await adminClient
+          .from("payments")
+          .update({
+            status: "refunded",
+            raw_data: {
+              ...((payment as Record<string, unknown>).raw_data || {}),
+              refund: {
+                id: stripeRefund.id,
+                amount: stripeRefund.amount,
+                status: stripeRefund.status,
+              },
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq("payment_id", payment.payment_id);
+      }
+    } catch (error) {
+      console.error("Stripe API error:", error);
+      const stripeError = error as Stripe.errors.StripeError;
+      return data(
+        {
+          error: `Stripe error: ${stripeError.message || "Failed to cancel subscription"}`,
+          code: stripeError.code,
+        },
+        { status: 400 }
+      );
+    }
+  }
+  // ========================================
+  // TOSS: Process refund via Toss Payments API
+  // ========================================
+  else if (isYearly && hasRefund && payment?.payment_key) {
     // Prepare authorization header for Toss Payments API
     const encryptedSecretKey =
       "Basic " +

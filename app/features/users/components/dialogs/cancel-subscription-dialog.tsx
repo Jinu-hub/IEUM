@@ -22,15 +22,11 @@ import {
   DialogTitle,
 } from "~/core/components/ui/dialog";
 import type { BillingInterval, Currency, PlanType } from "~/core/lib/constants";
-import {
-  EXCHANGE_RATES,
-  PLAN_PRICES,
-  PLAN_TYPE_LABEL,
-} from "~/core/lib/constants";
+import { PLAN_TYPE_LABEL } from "~/core/lib/constants";
 import {
   calculateNewEndsAt,
-  calculateUsedMonths,
-} from "~/features/users/lib/paymentUtils";
+  calculateRefund,
+} from "~/features/payments/lib/Utils";
 
 interface CancelSubscriptionDialogProps {
   open: boolean;
@@ -43,49 +39,6 @@ interface CancelSubscriptionDialogProps {
   endsAt: string | null;
   paidAmount: number | null;  // Actual paid amount from DB
   onSuccess?: () => void;
-}
-
-/**
- * Calculate refund amount for yearly subscriptions
- * Uses actual paid amount from DB if available, otherwise falls back to price constants
- */
-function calculateRefund(
-  planType: PlanType,
-  currency: Currency,
-  startedAt: string,
-  paidAmount: number | null
-): {
-  yearlyAmount: number;
-  monthlyPrice: number;
-  usedMonths: number;
-  deduction: number;
-  refundAmount: number;
-} {
-  // Only starter, pro, enterprise have prices - trial/free return 0
-  const priceablePlan = planType as keyof typeof PLAN_PRICES;
-  const monthlyPrice = Math.round(
-    (PLAN_PRICES[priceablePlan]?.monthly ?? 0) * EXCHANGE_RATES[currency]
-  );
-  
-  // Use actual paid amount from DB if available, otherwise calculate from constants
-  const yearlyAmount = paidAmount ?? Math.round(
-    (PLAN_PRICES[priceablePlan]?.yearly ?? 0) * EXCHANGE_RATES[currency]
-  );
-
-  // Calculate used months using shared utility
-  const usedMonths = calculateUsedMonths(startedAt);
-
-  // Calculate deduction and refund
-  const deduction = monthlyPrice * usedMonths;
-  const refundAmount = Math.max(0, yearlyAmount - deduction);
-
-  return {
-    yearlyAmount,
-    monthlyPrice,
-    usedMonths,
-    deduction,
-    refundAmount,
-  };
 }
 
 /**
