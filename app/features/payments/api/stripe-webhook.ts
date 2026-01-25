@@ -21,11 +21,14 @@ import adminClient from "~/core/lib/supa-admin-client.server";
 import type { Route } from "./+types/stripe-webhook";
 
 /**
- * Initialize Stripe client
+ * Get Stripe client (lazy initialization)
+ * This prevents build-time errors when STRIPE_SECRET_KEY is not set
  */
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-12-15.clover",
-});
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2025-12-15.clover",
+  });
+}
 
 /**
  * Map Stripe subscription status to our subscription status
@@ -63,6 +66,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   let event: Stripe.Event;
+  const stripe = getStripe();
 
   try {
     // Verify webhook signature
@@ -235,6 +239,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }
 
   // Get subscription to find userId
+  const stripe = getStripe();
   const stripeSubscription = await stripe.subscriptions.retrieve(subscription);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stripeSubAny = stripeSubscription as any;
@@ -329,6 +334,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   }
 
   // Get subscription to find userId
+  const stripe = getStripe();
   const stripeSubscription = await stripe.subscriptions.retrieve(subscription);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stripeSubAny = stripeSubscription as any;

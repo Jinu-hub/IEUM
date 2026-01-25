@@ -24,11 +24,14 @@ import makeServerClient from "~/core/lib/supa-client.server";
 import { calculateNewEndsAtISO } from "~/features/payments/lib/Utils";
 
 /**
- * Initialize Stripe client
+ * Get Stripe client (lazy initialization)
+ * This prevents build-time errors when STRIPE_SECRET_KEY is not set
  */
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-12-15.clover",
-});
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2025-12-15.clover",
+  });
+}
 
 interface CancelRequestBody {
   subscriptionId: string;
@@ -126,6 +129,7 @@ export async function action({ request }: Route.ActionArgs) {
   // STRIPE: Cancel subscription and process refund
   // ========================================
   if (isStripe && subscription.stripe_subscription_id) {
+    const stripe = getStripe();
     try {
       // 1. Set metadata to indicate this is a user-initiated cancel (not admin)
       // This flag tells the webhook handler NOT to update ends_at
