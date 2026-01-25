@@ -1648,7 +1648,7 @@ const en: Translation = {
         pciCompliant: "PCI DSS compliant",
         cancelAnytime: "Cancel anytime",
       },
-      subscribeButton: "Subscribe for {{price}}{{interval}}",
+      subscribeButton: "Subscribe",
       processing: "Processing...",
       termsNotice: "By subscribing, you agree to our Terms of Service and authorize recurring charges to your payment method.",
       paymentError: "Payment error: {{message}}\n\nPlease verify that this key is registered for the 'Billing' service.",

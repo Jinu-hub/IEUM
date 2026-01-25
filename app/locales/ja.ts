@@ -1649,7 +1649,7 @@ const ja: Translation = {
         pciCompliant: "PCI DSS準拠",
         cancelAnytime: "いつでもキャンセル可能",
       },
-      subscribeButton: "{{price}}{{interval}}で購読する",
+      subscribeButton: "購読する",
       processing: "処理中...",
       termsNotice: "購読することで、利用規約に同意し、支払い方法への定期的な請求を承認したことになります。",
       paymentError: "決済エラー: {{message}}\n\nこのキーが「ビリング（定期決済）」サービスに登録されているか確認してください。",

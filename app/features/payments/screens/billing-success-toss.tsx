@@ -135,6 +135,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const { authKey, customerKey, plan, interval } = result.data;
+
+  // Pro plan is not yet available - redirect to pricing page
+  if (plan === "pro") {
+    throw redirect("/pricing?error=pro_not_available");
+  }
   // Apply default values for region and currency if not provided
   const region = result.data.region ?? DEFAULT_REGION;
   const currency = result.data.currency ?? DEFAULT_CURRENCY;

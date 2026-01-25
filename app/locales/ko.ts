@@ -1647,7 +1647,7 @@ const ko: Translation = {
         pciCompliant: "PCI DSS 준수",
         cancelAnytime: "언제든지 취소 가능",
       },
-      subscribeButton: "{{price}}{{interval}} 구독하기",
+      subscribeButton: "구독하기",
       processing: "처리 중...",
       termsNotice: "구독하시면 이용약관에 동의하고 결제 수단에 대한 정기 청구를 승인하게 됩니다.",
       paymentError: "결제창 오류: {{message}}\n\n이 키가 '빌링(정기결제)' 서비스에 등록되어 있는지 확인하세요.",

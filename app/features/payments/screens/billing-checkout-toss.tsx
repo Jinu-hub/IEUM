@@ -76,6 +76,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const { plan, interval, currency, region } = result.data;
+
+  // Pro plan is not yet available - redirect to pricing page
+  if (plan === "pro") {
+    throw redirect("/pricing?error=pro_not_available");
+  }
   
   // Calculate prices for both intervals
   const monthlyPrice = calculatePrice(plan, "monthly", currency);
@@ -362,7 +367,7 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
               </>
             ) : (
               <>
-                {t("subscribeButton", { price: formattedPrice, interval: intervalLabel })}
+                {formattedPrice}{intervalLabel} {t("subscribeButton")}
               </>
             )}
           </Button>

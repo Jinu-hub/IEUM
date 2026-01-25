@@ -14,7 +14,7 @@ import type { Route } from "./+types/billing-country";
 import { CheckIcon, GlobeIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, redirect, useNavigate } from "react-router";
+import { redirect, useNavigate } from "react-router";
 import { z } from "zod";
 
 import { Button } from "~/core/components/ui/button";
@@ -56,6 +56,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const { plan, interval } = result.data;
+
+  // Pro plan is not yet available - redirect to pricing page
+  if (plan === "pro") {
+    throw redirect("/pricing?error=pro_not_available");
+  }
 
   return {
     plan,
@@ -111,11 +116,13 @@ const COUNTRY_OPTIONS: CountryOption[] = [
  */
 export default function BillingCountry({ loaderData }: Route.ComponentProps) {
   const { t } = useTranslation("common", { keyPrefix: "billing.country" });
+  const { t: tCommon } = useTranslation("common", { keyPrefix: "common" });
   const navigate = useNavigate();
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
   const selectedOption = COUNTRY_OPTIONS.find((c) => c.id === selectedCountry);
   const isSupported = selectedOption?.supported ?? false;
+  const isGlobalOrJapan = selectedOption?.code === "GLOBAL" || selectedOption?.code === "JP";
 
   const handleContinue = () => {
     if (!selectedOption || !isSupported) return;
@@ -216,6 +223,7 @@ export default function BillingCountry({ loaderData }: Route.ComponentProps) {
             {t("continueToPayment")}
           </Button>
 
+        {/*
           <Button
             variant="ghost"
             size="lg"
@@ -223,6 +231,15 @@ export default function BillingCountry({ loaderData }: Route.ComponentProps) {
             asChild
           >
             <Link to="/pricing">{t("backToPlans")}</Link>
+          </Button>
+          */}
+          <Button             
+            variant="ghost"
+            size="lg"
+            className="w-full"
+            onClick={() => window.history.back()}
+          >
+            &larr; {tCommon("back")}
           </Button>
         </div>
 
