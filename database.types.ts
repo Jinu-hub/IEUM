@@ -112,6 +112,36 @@ export type Database = {
           },
         ]
       }
+      external_events: {
+        Row: {
+          external_event_id: string
+          payload: Json
+          processed_at: string | null
+          received_at: string
+          source: string
+          status: string
+          type: string
+        }
+        Insert: {
+          external_event_id: string
+          payload: Json
+          processed_at?: string | null
+          received_at?: string
+          source: string
+          status?: string
+          type: string
+        }
+        Update: {
+          external_event_id?: string
+          payload?: Json
+          processed_at?: string | null
+          received_at?: string
+          source?: string
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
       github_installation_requests: {
         Row: {
           account_login: string | null
@@ -855,15 +885,19 @@ export type Database = {
         Row: {
           approved_at: string
           created_at: string
+          currency: string | null
           metadata: Json
           order_id: string
           order_name: string
           payment_id: number
           payment_key: string
+          pg_provider: string
           raw_data: Json
           receipt_url: string
           requested_at: string
           status: string
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
           total_amount: number
           updated_at: string
           user_id: string | null
@@ -871,15 +905,19 @@ export type Database = {
         Insert: {
           approved_at: string
           created_at?: string
+          currency?: string | null
           metadata: Json
           order_id: string
           order_name: string
           payment_id?: never
           payment_key: string
+          pg_provider: string
           raw_data: Json
           receipt_url: string
           requested_at: string
           status: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
           total_amount: number
           updated_at?: string
           user_id?: string | null
@@ -887,15 +925,19 @@ export type Database = {
         Update: {
           approved_at?: string
           created_at?: string
+          currency?: string | null
           metadata?: Json
           order_id?: string
           order_name?: string
           payment_id?: never
           payment_key?: string
+          pg_provider?: string
           raw_data?: Json
           receipt_url?: string
           requested_at?: string
           status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
           total_amount?: number
           updated_at?: string
           user_id?: string | null
@@ -1164,6 +1206,8 @@ export type Database = {
           plan_type: Database["public"]["Enums"]["plan_type"]
           started_at: string
           status: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
           subscription_id: string
           trial_ends_at: string | null
           updated_at: string
@@ -1181,6 +1225,8 @@ export type Database = {
           plan_type: Database["public"]["Enums"]["plan_type"]
           started_at: string
           status: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_id?: string
           trial_ends_at?: string | null
           updated_at?: string
@@ -1198,6 +1244,8 @@ export type Database = {
           plan_type?: Database["public"]["Enums"]["plan_type"]
           started_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_id?: string
           trial_ends_at?: string | null
           updated_at?: string

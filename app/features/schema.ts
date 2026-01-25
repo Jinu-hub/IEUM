@@ -16,6 +16,7 @@ import {
   pgEnum,
   pgPolicy,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -738,6 +739,54 @@ export const jobQueue = pgTable(
     pgPolicy("jq_insert", { for: "insert", to: serviceRole, withCheck: sql`true` }),
     pgPolicy("jq_update", { for: "update", to: serviceRole, using: sql`true`, withCheck: sql`true` }),
     pgPolicy("jq_delete", { for: "delete", to: serviceRole, using: sql`true` }),
+  ]
+);
+
+/* =========================================================
+   3.22 external_events
+   ========================================================= */
+/**
+ * 외부 시스템(Stripe, Toss, Slack, GitHub 등)에서 유입되는
+ * 모든 Webhook/비동기 이벤트를 저장·관리하는 범용 이벤트 로그 테이블
+ * 
+ * 목적:
+ * - Webhook 멱등성 보장 (중복 이벤트 처리 방지)
+ * - 비동기 이벤트 처리 안정성 확보
+ * - 장애/타임아웃 발생 시 재처리(Replay) 가능
+ * - 운영/디버깅/감사(Audit) 로그로 활용
+ */
+export const externalEvents = pgTable(
+  "external_events",
+  {
+    // 이벤트 출처 (예: stripe, toss, slack, github)
+    source: text("source").notNull(),
+    // 외부 시스템의 이벤트 ID (예: Stripe: evt_xxx, Slack: event_id)
+    externalEventId: text("external_event_id").notNull(),
+    // 이벤트 타입 (예: invoice.paid, customer.subscription.updated)
+    type: text("type").notNull(),
+    // 이벤트 최초 수신 시각
+    receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
+    // 이벤트 처리 완료 시각
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    // 이벤트 처리 상태 (received, processed, failed)
+    status: text("status").notNull().default("received"),
+    // 외부 시스템에서 전달된 원본 이벤트 Payload
+    payload: jsonb("payload").notNull(),
+  },
+  (table) => [
+    // 복합 PK: 외부 시스템별 이벤트 ID는 서로 다른 네임스페이스를 가지므로
+    // (source, external_event_id)를 사용하여 중복 Webhook에 대한 멱등성 보장
+    primaryKey({ columns: [table.source, table.externalEventId] }),
+    // Provider별 이벤트 필터링
+    index("idx_external_events_source").on(table.source),
+    // 미처리(received, failed) 이벤트 재처리 시 조회 성능 확보
+    index("idx_external_events_status").on(table.status),
+
+    // RLS: service_role only (Webhook 처리 전용 테이블)
+    pgPolicy("ee_select", { for: "select", to: serviceRole, using: sql`true` }),
+    pgPolicy("ee_insert", { for: "insert", to: serviceRole, withCheck: sql`true` }),
+    pgPolicy("ee_update", { for: "update", to: serviceRole, using: sql`true`, withCheck: sql`true` }),
+    pgPolicy("ee_delete", { for: "delete", to: serviceRole, using: sql`true` }),
   ]
 );
 

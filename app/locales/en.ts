@@ -1604,6 +1604,7 @@ const en: Translation = {
       comingSoonSubMessage: "Please check back later or select Korea for now.",
       continueToPayment: "Continue to Payment",
       backToPlans: "Back to Plans",
+      backToDashboard: "Back to Dashboard",
       infoNote: "Your billing country determines the available payment methods and currency.",
     },
     checkout: {
@@ -1675,6 +1676,7 @@ const en: Translation = {
       helpText: "If this problem persists, please try using a different payment method or contact our support team for assistance.",
       tryAgain: "Try Again",
       backToPlans: "Back to Plans",
+      backToDashboard: "Back to Dashboard",
       errorMessages: {
         invalid_params: "The request parameters were invalid. Please try again.",
         auth_error: "Authentication failed. Please log in and try again.",

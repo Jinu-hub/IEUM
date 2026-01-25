@@ -1560,6 +1560,7 @@ export type Translation = {
       comingSoonSubMessage: string;
       continueToPayment: string;
       backToPlans: string;
+      backToDashboard: string;
       infoNote: string;
     };
     checkout: {
@@ -1618,6 +1619,7 @@ export type Translation = {
       helpText: string;
       tryAgain: string;
       backToPlans: string;
+      backToDashboard: string;
       errorMessages: {
         invalid_params: string;
         auth_error: string;

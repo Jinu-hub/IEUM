@@ -27,7 +27,10 @@
     "test:slack": "tsx app/core/integrations/slack/tests/run-tests.ts",
     "migrate-secrets": "tsx scripts/migrate-to-secrets.ts",
     "generate-favicon": "tsx scripts/generate-favicon.ts",
-    "format": "prettier --write \"app/**/*.{ts,tsx,js,jsx,json,css,md,mdx}\""
+    "format": "prettier --write \"app/**/*.{ts,tsx,js,jsx,json,css,md,mdx}\"",
+    "worker": "tsx --env-file=.env workers/job-queue-worker.ts",
+    "worker:dev": "tsx watch --env-file=.env workers/job-queue-worker.ts",
+    "worker:health": "tsx --env-file=.env workers/health-server.ts"
   },
   "dependencies": {
     "@hcaptcha/react-hcaptcha": "^1.12.0",
@@ -52,6 +55,8 @@
     "@sentry/profiling-node": "^9.10.1",
     "@sentry/react-router": "^9.10.1",
     "@slack/web-api": "^7.10.0",
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.6.4",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.1",
     "@tosspayments/tosspayments-sdk": "^2.3.4",
@@ -91,6 +96,7 @@
     "resend": "^4.2.0",
     "satori": "^0.12.2",
     "sonner": "^2.0.1",
+    "stripe": "^20.2.0",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.25.76"

@@ -1605,6 +1605,7 @@ const ja: Translation = {
       comingSoonSubMessage: "後ほど再度ご確認いただくか、現在は韓国を選択してください。",
       continueToPayment: "お支払いに進む",
       backToPlans: "プランに戻る",
+      backToDashboard: "ダッシュボードに戻る",
       infoNote: "請求国によって利用可能な支払い方法と通貨が決まります。",
     },
     checkout: {
@@ -1676,6 +1677,7 @@ const ja: Translation = {
       helpText: "この問題が続く場合は、別の支払い方法をお試しいただくか、サポートチームにお問い合わせください。",
       tryAgain: "再試行",
       backToPlans: "プランに戻る",
+      backToDashboard: "ダッシュボードに戻る",
       errorMessages: {
         invalid_params: "リクエストパラメータが無効です。もう一度お試しください。",
         auth_error: "認証に失敗しました。ログインして再度お試しください。",

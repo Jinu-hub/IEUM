@@ -99,7 +99,7 @@ const COUNTRY_OPTIONS: CountryOption[] = [
     name: "Japan",
     flag: "🇯🇵",
     currency: "JPY",
-    supported: false,
+    supported: true,
   },
   {
     id: "global",
@@ -107,7 +107,7 @@ const COUNTRY_OPTIONS: CountryOption[] = [
     name: "Other (Global)",
     flag: "🌍",
     currency: "USD",
-    supported: false,
+    supported: true,
   },
 ];
 
@@ -127,9 +127,15 @@ export default function BillingCountry({ loaderData }: Route.ComponentProps) {
   const handleContinue = () => {
     if (!selectedOption || !isSupported) return;
 
-    navigate(
-      `/payments/billing-checkout-toss?plan=${loaderData.plan}&interval=${loaderData.interval}&currency=${selectedOption.currency}&region=${selectedOption.code}`
-    );
+    const baseParams = `plan=${loaderData.plan}&interval=${loaderData.interval}&currency=${selectedOption.currency}&region=${selectedOption.code}`;
+
+    if (isGlobalOrJapan) {
+      // Stripe for Japan and Global
+      navigate(`/payments/billing-checkout-stripe?${baseParams}`);
+    } else {
+      // Toss for Korea
+      navigate(`/payments/billing-checkout-toss?${baseParams}`);
+    }
   };
 
   return (

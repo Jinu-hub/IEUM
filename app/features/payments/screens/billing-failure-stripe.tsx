@@ -1,12 +1,12 @@
 /**
- * Billing Failure Page Component
+ * Billing Failure Page Component (Stripe)
  *
- * This file implements the billing authorization/payment failure page that displays
- * error information when a billing process fails. It provides users with clear feedback
- * about what went wrong and options to retry.
+ * This file implements the billing/payment failure page that displays
+ * error information when a Stripe payment process fails. It provides users 
+ * with clear feedback about what went wrong and options to retry.
  *
  * Key features:
- * - Displays billing error codes and messages from Toss Payments
+ * - Displays billing error codes and messages from Stripe
  * - Extracts error details from URL parameters
  * - Provides clear visual feedback with error styling
  * - Offers retry option to attempt subscription again
@@ -25,15 +25,14 @@ export const meta: MetaFunction = () => {
   return [{ title: `Subscription Error | ${import.meta.env.VITE_APP_NAME}` }];
 };
 
-
 /**
- * Billing Failure component
+ * Billing Failure component for Stripe
  */
-export default function BillingFailureToss() {
+export default function BillingFailureStripe() {
   const { t } = useTranslation("common", { keyPrefix: "billing.failure" });
   const { t: tCommon } = useTranslation("common", { keyPrefix: "common" });
   const [searchParams] = useSearchParams();
-  const errorCode = searchParams.get("code") || "unknown_error";
+  const errorCode = searchParams.get("code") || searchParams.get("reason") || "unknown_error";
   const errorMessage =
     searchParams.get("message") ||
     t(`errorMessages.${errorCode}`, { defaultValue: t("errorMessages.unknown_error") });
@@ -42,7 +41,7 @@ export default function BillingFailureToss() {
 
   // Build retry URL with plan parameters if available
   const retryUrl = plan
-    ? `/payments/billing-checkout-toss?plan=${plan}${interval ? `&interval=${interval}` : ""}`
+    ? `/payments/billing-checkout-stripe?plan=${plan}${interval ? `&interval=${interval}` : ""}&currency=USD&region=GLOBAL`
     : "/pricing";
 
   return (
@@ -100,7 +99,7 @@ export default function BillingFailureToss() {
             </Link>
           </Button>
           <Button asChild variant="outline" className="flex-1" size="lg">
-            <Link to="/pricing">
+            <Link to="/dashboard">
               <ArrowLeftIcon className="mr-2 size-4" />
               {t("backToDashboard")}
             </Link>

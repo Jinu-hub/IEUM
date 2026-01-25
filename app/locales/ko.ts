@@ -1603,6 +1603,7 @@ const ko: Translation = {
       comingSoonSubMessage: "나중에 다시 확인하시거나 지금은 한국을 선택해주세요.",
       continueToPayment: "결제 진행",
       backToPlans: "플랜으로 돌아가기",
+      backToDashboard: "대시보드로 돌아가기",
       infoNote: "결제 국가에 따라 사용 가능한 결제 수단과 통화가 결정됩니다.",
     },
     checkout: {
@@ -1674,6 +1675,7 @@ const ko: Translation = {
       helpText: "이 문제가 계속되면 다른 결제 수단을 사용하거나 지원팀에 문의해주세요.",
       tryAgain: "다시 시도",
       backToPlans: "플랜으로 돌아가기",
+      backToDashboard: "대시보드로 돌아가기",
       errorMessages: {
         invalid_params: "요청 파라미터가 유효하지 않습니다. 다시 시도해주세요.",
         auth_error: "인증에 실패했습니다. 로그인 후 다시 시도해주세요.",

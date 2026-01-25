@@ -63,6 +63,8 @@ export const payments = pgTable(
     payment_id: bigint({ mode: "number" })
       .primaryKey()
       .generatedAlwaysAsIdentity(),
+    // Payment processor: toss, stripe
+    pg_provider: text().notNull(),
     // Payment processor's unique identifier for the transaction
     payment_key: text().notNull(),
     // Unique identifier for the order in your system
@@ -71,6 +73,8 @@ export const payments = pgTable(
     order_name: text().notNull(),
     // Total amount of the payment transaction
     total_amount: doublePrecision().notNull(),
+    // Currency of the payment transaction
+    currency: text(),
     // Custom metadata about the payment (product details, etc.)
     metadata: jsonb().notNull(),
     // Complete raw response from the payment processor
@@ -84,6 +88,10 @@ export const payments = pgTable(
     user_id: uuid().references(() => authUsers.id, {
       onDelete: "cascade",
     }),
+    // Stripe invoice ID
+    stripe_invoice_id: text(),
+    // Stripe payment intent ID
+    stripe_payment_intent_id: text(),
     // When the payment was approved by the processor
     approved_at: timestamp().notNull(),
     // When the payment was initially requested
@@ -223,6 +231,10 @@ export const subscriptions = pgTable(
         onDelete: "set null",
       }
     ),
+    // Stripe subscription ID
+    stripe_subscription_id: text(),
+    // Stripe price ID
+    stripe_price_id: text(),
     // Adds created_at and updated_at timestamp columns
     ...timestamps,
   },

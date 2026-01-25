@@ -261,10 +261,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   const { data: payment, error: payError } = await adminClient
     .from("payments")
     .insert({
+      pg_provider: "toss",
       payment_key: paymentResult.data.paymentKey,
       order_id: paymentResult.data.orderId,
       order_name: paymentResult.data.orderName,
       total_amount: paymentResult.data.totalAmount,
+      currency: "KRW", // Toss Payments is Korea only
       receipt_url: paymentResult.data.receipt.url,
       status: paymentResult.data.status,
       approved_at: paymentResult.data.approvedAt,

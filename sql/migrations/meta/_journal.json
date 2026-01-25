@@ -239,6 +239,20 @@
       "when": 1768735828412,
       "tag": "0033_dizzy_kylun",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1769331161740,
+      "tag": "0034_odd_sheva_callister",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1769333133960,
+      "tag": "0035_uneven_gauntlet",
+      "breakpoints": true
     }
   ]
 }

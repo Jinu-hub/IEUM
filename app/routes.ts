@@ -64,6 +64,9 @@ export default [
       route("/run-status", "features/cron/api/run-status.tsx"),
     ]),
     ...prefix("/blog", [route("/og", "features/blog/api/og.tsx")]),
+    ...prefix("/stripe", [
+      route("/webhook", "features/payments/api/stripe-webhook.ts"),
+    ]),
   ]),
 
   layout("core/layouts/navigation.layout.tsx", [
@@ -114,11 +117,14 @@ export default [
       route("/checkout", "features/payments/screens/checkout.tsx"),
       route("/billing-country", "features/payments/screens/billing-country.tsx"),
       route("/billing-checkout-toss", "features/payments/screens/billing-checkout-toss.tsx"),
+      route("/billing-checkout-stripe", "features/payments/screens/billing-checkout-stripe.tsx"),
       layout("core/layouts/private.layout.tsx", { id: "private-payments" }, [
         route("/success", "features/payments/screens/success.tsx"),
         route("/failure", "features/payments/screens/failure.tsx"),
         route("/billing-success-toss", "features/payments/screens/billing-success-toss.tsx"),
         route("/billing-failure-toss", "features/payments/screens/billing-failure-toss.tsx"),
+        route("/billing-success-stripe", "features/payments/screens/billing-success-stripe.tsx"),
+        route("/billing-failure-stripe", "features/payments/screens/billing-failure-stripe.tsx"),
       ]),
     ]),
   ]),

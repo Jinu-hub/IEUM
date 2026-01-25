@@ -176,6 +176,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   
   // Record the verified payment in the database
   await adminClient.from("payments").insert({
+    pg_provider: "toss",
     payment_key: paymentResponse.data.paymentKey,
     order_id: paymentResponse.data.orderId,
     order_name: paymentResponse.data.orderName,
