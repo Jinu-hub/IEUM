@@ -6,38 +6,38 @@ import type { FetchedRepoData } from "../integrations/github/types";
 import { CFG_RANKER } from "../lib/constants";
 import { logger } from "../lib/logger";
 import type {
-  CaseKpi,
-  ChatroomActivityMetaJson,
-  KpiSnapshot,
-  LinkedActivityDoc,
-  LinkedItem,
-  RankedHighlight,
-  RepoKpi,
-  UserRepoKpi
+    CaseKpi,
+    ChatroomActivityMetaJson,
+    KpiSnapshot,
+    LinkedActivityDoc,
+    LinkedItem,
+    RankedHighlight,
+    RepoKpi,
+    UserRepoKpi
 } from "../lib/types";
 import {
-  createActivitySummaryAgent,
-  createHighlightsSummaryAgent,
-  createOngoingProgressAgent,
-  createTopicClusteringAgent
+    createActivitySummaryAgent,
+    createHighlightsSummaryAgent,
+    createOngoingProgressAgent,
+    createTopicClusteringAgent
 } from "../openai/agents/analyze-agents";
 import {
-  ActivityOutput,
-  Cluster,
-  CommonInput,
-  OngoingProgressOutput,
-  TopicOutput
+    ActivityOutput,
+    Cluster,
+    CommonInput,
+    OngoingProgressOutput,
+    TopicOutput
 } from "../openai/models";
 import {
-  baseScore,
-  buildKpiIndex,
-  countMessagesIncludingReplies,
-  countReactionsIncludingReplies,
-  extractCaseId,
-  kpiFactorOf,
-  prepareHighlightsWithMessages,
-  prepareMemberDataWithMessages,
-  smallBonuses
+    baseScore,
+    buildKpiIndex,
+    countMessagesIncludingReplies,
+    countReactionsIncludingReplies,
+    extractCaseId,
+    kpiFactorOf,
+    prepareHighlightsWithMessages,
+    prepareMemberDataWithMessages,
+    smallBonuses
 } from "./utils";
 
 /**
@@ -218,7 +218,7 @@ export async function topicClustering(
         const messageCount = countMessagesIncludingReplies(channelData);
         const reactionCount = countReactionsIncludingReplies(channelData);
 
-        logger.info(`🔍 channel processing (${index + 1}/${channelKeys.length})`, {
+        logger.info(`🔍 topic clustering channel processing (${index + 1}/${channelKeys.length})`, {
             "channel": channelKey,
             "message count": channelData.length,
         });
@@ -246,7 +246,7 @@ export async function topicClustering(
             channel: channelKey,
         }));
         
-        logger.info(`✅ channel processing completed (${index + 1}/${channelKeys.length})`, {
+        logger.info(`✅ topic clustering channel processing completed (${index + 1}/${channelKeys.length})`, {
             "channel": channelKey,
             "created cluster count": clustersWithChannel.length,
         });
@@ -438,7 +438,7 @@ export async function ongoingProgressRoadmapExtracte(
             return null;
         }
         
-        logger.info(`🔍 channel processing (${index + 1}/${channelKeys.length})`, {
+        logger.info(`🔍 ongoing progress channel processing (${index + 1}/${channelKeys.length})`, {
             "channel": channelKey,
             "message count": channelData.length,
         });

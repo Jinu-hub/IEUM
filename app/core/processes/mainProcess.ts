@@ -3,6 +3,7 @@ import type { CreateContentsInput, EnableCreateContents } from "~/core/lib/types
 import { saveHighlight, updateNewsletterRunStep } from "~/features/contents/db/mutations";
 import { getUniquePeriodKey } from "~/features/contents/db/queries";
 //import { saveContentToFile } from "~/features/cron/api/test-api";
+import { encoding_for_model } from "tiktoken";
 import { logger } from "../lib/logger";
 import adminClient from "../lib/supa-admin-client.server";
 import type { KpiSnapshot, LinkedActivityDoc, UnifiedActivityDoc } from "../lib/types";
@@ -30,6 +31,25 @@ import { convertToHTML, convertToHTMLOnlyKpi, createFinalContents, divideContent
 import { createChatroomHighlightMetaJson, createGithubHighlightMetaJson, generatePeriodKey } from "./utils";
 
 /**
+ * 토큰 수 추정 함수
+ * @param data - JSON 직렬화 가능한 데이터
+ * @returns 추정 토큰 수
+ */
+export function estimateTokens(data: any): number {
+    const jsonString = JSON.stringify(data);
+    const charCount = jsonString.length;
+    // 한국어/일본어/영어 혼합 기준 약 3문자당 1토큰으로 추정
+    return Math.ceil(charCount / 3);
+}
+export function countTokensAccurate(data: any): number {
+    const enc = encoding_for_model("gpt-4o-mini");
+    const jsonString = JSON.stringify(data);
+    const tokens = enc.encode(jsonString);
+    enc.free();
+    return tokens.length;
+}
+
+/**
  * 1. 데이터 정규화 & 중복 제거(Normalize & Deduplicate)
  * @param input 
  * @returns 
@@ -44,6 +64,21 @@ export async function normalizeData(input: CreateContentsInput) {
     const linkedData = await crossLinker({ ...githubData, ...slackData } as UnifiedActivityDoc);
     //await saveContentToFile(linkedData, 'output-test', 'linked_', 'json');
     //console.log('👤 Members:', Object.keys(linkedData.items.member || {}));
+
+    // 토큰 수 추정 로그
+    const accurateTokenCount = countTokensAccurate(linkedData);
+    logger.info('📊 Accurate token count for linkedData', { 
+        accurateTokens: accurateTokenCount,
+        charCount: JSON.stringify(linkedData).length,
+        itemCounts: {
+            commits: linkedData.items.commit?.length ?? 0,
+            prs: linkedData.items.pr?.length ?? 0,
+            issues: linkedData.items.issue?.length ?? 0,
+            slackChannels: Object.keys(linkedData.items.slack ?? {}).length,
+            members: Object.keys(linkedData.items.member ?? {}).length
+        }
+    });
+    input.accuratedTokens = accurateTokenCount;
 
     logger.info('📝 Normalizing and reducing data completed');
     return linkedData;

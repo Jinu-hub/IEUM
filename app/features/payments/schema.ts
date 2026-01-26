@@ -205,7 +205,7 @@ export const subscriptions = pgTable(
     // Subscription status: trialing, active, paused, expired, canceled
     status: subscriptionStatus().notNull(),
     // Subscription mode: experiment, free, paid
-    mode: subscriptionMode().notNull(),
+    mode: subscriptionMode().notNull().default("free"),
     // Foreign key to the payment method used for this subscription
     // References payment_methods.method_id
     payment_method_id: uuid().references(() => paymentMethods.method_id, {
@@ -344,6 +344,8 @@ export const usageCounters = pgTable(
     period_end: timestamp({ withTimezone: true }).notNull(),
     // Number of processing pipelines executed
     process_count: integer().notNull(),
+    // Accurately calculated number of tokens used
+    accurated_token_count: bigint({ mode: "number" }).notNull().default(0),
     // Number of emails sent
     email_sent_count: integer().notNull(),
     // When the counter record was created

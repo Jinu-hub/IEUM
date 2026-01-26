@@ -27,6 +27,7 @@ export type CreateContentsInput = {
   source: string;
   timezone?: string;
   enableCreateContents?: EnableCreateContents;
+  accuratedTokens?: number;
 };
 
 /** 파이프라인 공용 루트 문서 */

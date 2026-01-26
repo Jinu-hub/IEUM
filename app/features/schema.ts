@@ -495,6 +495,8 @@ import {
       tryCount: integer("try_count").notNull().default(0),
       idempotencyKey: text("idempotency_key"),
       errorSummary: text("error_summary"),
+      accuratedTokens: integer("accurated_tokens").notNull().default(0),
+      processTimeJson: jsonb("process_time_json").notNull().default(sql`'{}'::jsonb`),
       logRef: uuid("log_ref").references(() => runLogs.runLogId, { onDelete: "set null" }),
     },
     (table) => [

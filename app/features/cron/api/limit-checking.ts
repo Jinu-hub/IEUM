@@ -2,11 +2,11 @@
  * 제한 확인 함수
  */
 
+import type { Database } from "database.types";
 import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
-import { incrementUsageCounterForEmail } from "~/features/contents/db/mutations";
-import { getPlanLimits, getUserSubscriptionPlanType } from "~/features/settings/db/queries";
-import { getWorkspaceOwnerUserId } from "~/features/users/queries";
+import { initializeUsageCounterForEmail } from "~/features/contents/db/mutations";
+import { getPlanLimits } from "~/features/settings/db/queries";
 import type { EmailLimitCheck } from "./types";
 
 /**
@@ -14,14 +14,14 @@ import type { EmailLimitCheck } from "./types";
  */
 export async function checkEmailLimit(
   workspaceId: string,
-  userId: string
+  ownerUserId: string,
+  planType: Database["public"]["Enums"]["plan_type"]
 ): Promise<EmailLimitCheck> {
-  const ownerUserId = await getWorkspaceOwnerUserId(adminClient, { workspaceId });
-  const planType = await getUserSubscriptionPlanType(adminClient, { userId: ownerUserId as string }) || 'free';
+  
   const planLimit = await getPlanLimits(adminClient, { planType });
 
-  // usage_counters 등록/업데이트
-  const usageCounter = await incrementUsageCounterForEmail(adminClient, { 
+  // usage_counters 초기화
+  const usageCounter = await initializeUsageCounterForEmail(adminClient, { 
     workspaceId, 
     userId: ownerUserId as string 
   });

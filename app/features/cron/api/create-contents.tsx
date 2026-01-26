@@ -49,7 +49,7 @@ function createSlackStats(slackResult : Record<string, FetchedMessage[]>) {
 /**
  * コンテンツを生成する関数（直接呼び出し可能）
  */
-export async function createContents(input: CreateContentsInput, runStepId?: string) {
+export async function createContents(input: CreateContentsInput) {
 
   initializeOpenAI();
 
@@ -95,7 +95,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   try {
     const body = await request.json();
-    const result = await createContents(body, '');
+    const result = await createContents(body);
     
     return data(result, { status: 200 });
   } catch (error: any) {

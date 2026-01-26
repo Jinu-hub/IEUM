@@ -315,24 +315,24 @@ export const getTargetLastSentAt = async (
 export const getUserSubscriptionPlanType = async (
   client: SupabaseClient<Database>,
   { userId }: { userId: string },
-): Promise<Database["public"]["Enums"]["plan_type"]> => {
+): Promise<Database["public"]["Enums"]["plan_type"] | null> => {
   const { data, error } = await client
     .from('subscriptions')
     .select('plan_type')
     .eq('user_id', userId)
-    .eq('status', 'active')
+    .not('status', 'in', '(expired,paused)')
+    //.eq('status', 'active')
     .or('ends_at.is.null,ends_at.gt.now()')
     .order('created_at', { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
   
   if (error) {
-    // If no subscription found, default to 'free'
-    console.log('getUserSubscriptionPlanType error (defaulting to free):', error);
-    return 'free';
+    console.log('getUserSubscriptionPlanType error:', error);
+    return null;
   }
   
-  return data?.plan_type || 'free';
+  return data?.plan_type || null;
 };
 
 /**

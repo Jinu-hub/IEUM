@@ -2,11 +2,13 @@
  * 타겟 처리 함수
  */
 
+import type { Database } from "database.types";
 import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import type { CreateContentsInput } from "~/core/lib/types";
-import { updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
-import { getIntegrationsInfo, getTargetSources } from "~/features/settings/db/queries";
+import { incrementUsageCounter, updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
+import { getIntegrationsInfo, getTargetSources, getUserSubscriptionPlanType } from "~/features/settings/db/queries";
+import { getWorkspaceOwnerUserId } from "~/features/users/queries";
 import { createContents } from "./create-contents";
 import { fetchIntegrationData } from "./integration-fetching";
 import { checkEmailLimit } from "./limit-checking";
@@ -66,15 +68,41 @@ export async function processTarget(
   logger.info(`--- target: ${target.display_name} ---`);
   logger.info('--------------------------------');
 
-  await updateNewsletterRun(adminClient, { 
-    runId: runMapping.runId, 
-    runStepId: runMapping.runStepId,
-    status: 'running', 
-    step: 'collect_data', 
-    metricsJson: {} 
-  });
+  const ownerUserId = await getWorkspaceOwnerUserId(adminClient, { workspaceId: target.workspace_id });
+  const planType = await getUserSubscriptionPlanType(adminClient, { userId: ownerUserId as string });
+
+  if (!planType) {
+    logger.warn('Skipping target processing: No valid subscription found', {
+      targetId: target.target_id,
+      targetName: target.display_name,
+      workspaceId: target.workspace_id,
+      ownerUserId
+    });
+    return;
+  }
 
   try {
+
+    // 이메일 제한 확인
+    const limitCheck = await checkEmailLimit(target.workspace_id, ownerUserId as string
+      , planType as Database["public"]["Enums"]["plan_type"]);
+    
+    if (!limitCheck.allowed) {
+      logger.info('Email limit exceeded, skipping target', {
+        target_id: target.target_id,
+        email_sent_count: limitCheck.usageCounter?.email_sent_count,
+        max_weekly_emails_per_month: limitCheck.planLimit?.max_weekly_emails_per_month
+      });
+      return;
+    }
+
+    await updateNewsletterRun(adminClient, { 
+      runId: runMapping.runId, 
+      runStepId: runMapping.runStepId,
+      status: 'running', 
+      step: 'collect_data', 
+      metricsJson: {} 
+    });
     // 통합 정보 조회
     const integrationsInfo = await getIntegrationsInfo(adminClient, { workspaceId: target.workspace_id });
     const githubData = integrationsInfo?.find((integration: any) => integration.type === 'github')?.resource_cache_json as any;
@@ -127,18 +155,6 @@ export async function processTarget(
     // CreateContentsInput 생성
     const input = createContentsInput(target, runMapping, fetchedData, dateRange);
 
-    // 이메일 제한 확인
-    const limitCheck = await checkEmailLimit(target.workspace_id, target.workspace_id);
-    
-    if (!limitCheck.allowed) {
-      logger.info('Email limit exceeded, skipping target', {
-        target_id: target.target_id,
-        email_sent_count: limitCheck.usageCounter?.email_sent_count,
-        max_weekly_emails_per_month: limitCheck.planLimit?.max_weekly_emails_per_month
-      });
-      return;
-    }
-
     // 컨텐츠 생성
     const content = await createContents(input);
     logger.info('Contents generation completed', { 
@@ -151,7 +167,8 @@ export async function processTarget(
       runStepId: runMapping.runStepId, 
       status: 'success', 
       step: 'send_email',
-      metricsJson: {} 
+      metricsJson: {},
+      accuratedTokens: input.accuratedTokens || 0
     });
 
     // 이메일 전송
@@ -161,9 +178,22 @@ export async function processTarget(
       target.mailing_list_id || '',
       fetchedData.slackResult,
       content.data as { finalContents: string, htmlContents: string },
-      limitCheck.planType,
+      planType as Database["public"]["Enums"]["plan_type"],
       limitCheck.maxMembers
     );
+
+    // 사용량 카운터 업데이트
+    if (limitCheck.usageCounter?.counter_id) {
+      await incrementUsageCounter(adminClient, { 
+        counterId: limitCheck.usageCounter.counter_id,
+        accuratedTokens: input.accuratedTokens || 0
+      });
+    } else {
+      logger.warn('Skipping usage counter update: missing counter_id', {
+        counterId: limitCheck.usageCounter?.counter_id
+      });
+    }
+
   } catch (error: any) {
     logger.error('Cron actions target running error', { error: error.message });
     await updateNewsletterRunError(adminClient, { 

@@ -48,8 +48,8 @@ export const createNewsletterRun = async (client: SupabaseClient<Database>,
 }
 
 export const updateNewsletterRun = async (client: SupabaseClient<Database>, 
-    { runId, runStepId, status, step, metricsJson }: 
-    { runId: string, runStepId: string, status: string, step: string, metricsJson: any }) => {
+    { runId, runStepId, status, step, metricsJson, accuratedTokens }: 
+    { runId: string, runStepId: string, status: string, step: string, metricsJson: any, accuratedTokens?: number }) => {
     try {
         const now = new Date().toISOString();
         if (status === "running") {
@@ -89,6 +89,7 @@ export const updateNewsletterRun = async (client: SupabaseClient<Database>,
                     status: status as Database["public"]["Enums"]["run_status"],
                     finished_at: now,
                     metrics_json: metricsJson,
+                    accurated_tokens: accuratedTokens,
                 })
                 .eq('run_id', runId)
                 .select().single();
@@ -248,31 +249,31 @@ export const saveHighlight = async (client: SupabaseClient<Database>,
  * usage_counters 등록/업데이트
  * 
  * workspace_id를 기반으로 owner user의 usage counter를 업데이트합니다.
- * 현재 시간보다 period_end가 작은 monthly 레코드가 있으면 email_sent_count를 증가시키고,
+ * 현재 시간보다 period_end가 작은 monthly 레코드가 있으면 process_count를 증가시키고,
  * 없으면 새로운 monthly 레코드를 생성합니다.
  * 
  * @param client - Supabase client instance (admin client 권장)
  * @param workspaceId - workspace ID
  * @returns 업데이트 또는 생성된 usage counter 레코드, 실패 시 null
  */
-export const incrementUsageCounterForEmail = async (
+export const initializeUsageCounterForEmail = async (
     client: SupabaseClient<Database>,
     { workspaceId, userId }: { workspaceId: string, userId: string }
 ): Promise<Database["public"]["Tables"]["usage_counters"]["Row"] | null> => {
     try {
 
-        // user의 active subscription mode 가져오기
+        // user의 active 상태의 subscription mode 가져오기
         const { data: subscriptionData, error: subscriptionError } = await client
             .from('subscriptions')
             .select('mode')
             .eq('user_id', userId)
-            .eq('status', 'active')
+            .not('status', 'in', '(expired,paused)')
             .or('ends_at.is.null,ends_at.gt.now()')
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
-        const mode = subscriptionError ? 'free' : (subscriptionData?.mode || 'free');
+        const mode = subscriptionData?.mode || 'free';
 
         // 현재 시간
         const now = new Date();
@@ -280,13 +281,13 @@ export const incrementUsageCounterForEmail = async (
         const periodEnd = new Date(now);
         periodEnd.setMonth(periodEnd.getMonth() + 1);
 
-        // 현재 시간보다 period_end가 작은 monthly 레코드가 있는지 확인
+        // 현재 시간보다 period_end가 지나지 않은 monthly 레코드가 있는지 확인
         const { data: existingCounter, error: checkError } = await client
             .from('usage_counters')
-            .select('counter_id, email_sent_count')
+            .select('counter_id, process_count, email_sent_count')
             .eq('user_id', userId)
             .eq('period_type', 'monthly')
-            .lt('period_end', now.toISOString())
+            .gt('period_end', now.toISOString())
             .order('period_end', { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -297,10 +298,10 @@ export const incrementUsageCounterForEmail = async (
         }
 
         if (existingCounter) {
-            // 기존 레코드가 있으면 email_sent_count만 increment
+            // 기존 레코드가 있으면 process_count만 increment
             const { data: usageCounter, error: updateError } = await client
                 .from('usage_counters')
-                .update({ email_sent_count: (existingCounter.email_sent_count || 0) + 1 })
+                .update({ process_count: (existingCounter.process_count || 0) + 1 })
                 .eq('counter_id', existingCounter.counter_id)
                 .select()
                 .single();
@@ -322,8 +323,9 @@ export const incrementUsageCounterForEmail = async (
                     period_type: 'monthly',
                     period_start: now.toISOString(),
                     period_end: periodEnd.toISOString(),
-                    email_sent_count: 1,
-                    process_count: 0,
+                    process_count: 1,
+                    email_sent_count: 0,
+                    estimated_tokens: 0,
                 })
                 .select()
                 .single();
@@ -339,6 +341,48 @@ export const incrementUsageCounterForEmail = async (
     } catch (error: any) {
         logger.error('Usage counter update error', { error: error.message });
         // usage counter 오류는 전체 프로세스를 중단하지 않음
+        return null;
+    }
+}
+
+/**
+ * usage_counters 이메일 전송 카운트 증가 및 추정 토큰 수 증가
+ * 
+ * @param client - Supabase client instance
+ * @param counterId - usage counter ID
+ * @param estimatedTokens - 추정 토큰 수
+ * @returns 업데이트된 usage counter 레코드, 실패 시 null
+ */
+export const incrementUsageCounter = async (client: SupabaseClient<Database>, 
+    { counterId, accuratedTokens }: { counterId: string, accuratedTokens: number }) => {
+    try {
+        // 현재 카운터 값 조회
+        const { data: existingCounter, error: fetchError } = await client
+            .from('usage_counters')
+            .select('email_sent_count, accurated_token_count')
+            .eq('counter_id', counterId)
+            .single();
+        
+        if (fetchError) {
+            logger.error('Failed to fetch usage counter', { error: fetchError });
+            return null;
+        }
+
+        const { data: usageCounter, error: updateError } = await client
+            .from('usage_counters')
+            .update({ email_sent_count: (existingCounter?.email_sent_count || 0) + 1
+                , accurated_token_count: (existingCounter?.accurated_token_count || 0) + accuratedTokens })
+            .eq('counter_id', counterId)
+            .select()
+            .single();
+            
+        if (updateError) {
+            logger.error('Failed to increment usage counter', { error: updateError });
+            return null;
+        }
+        return usageCounter;
+    } catch (error: any) {
+        logger.error('Usage counter update error', { error: error.message });
         return null;
     }
 }

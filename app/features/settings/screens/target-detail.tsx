@@ -69,12 +69,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   }
 
   // Get user's subscription plan type
-  let planType: PlanType = 'free';
+  let planType: PlanType;
   try {
-    planType = await getUserSubscriptionPlanType(client, { userId: user.id });
+    planType = await getUserSubscriptionPlanType(client, { userId: user.id }) as PlanType;
+    if (!planType) {
+      planType = 'free';
+    }
   } catch (error) {
     // If subscription not found, default to 'free'
     console.log('Failed to get subscription plan type, defaulting to free:', error);
+    planType = 'free';
   }
 
   // Get target source policy for the user's plan type

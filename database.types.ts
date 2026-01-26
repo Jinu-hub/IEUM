@@ -611,10 +611,12 @@ export type Database = {
       }
       newsletter_run_steps: {
         Row: {
+          accurated_tokens: number
           error_summary: string | null
           finished_at: string | null
           idempotency_key: string | null
           log_ref: string | null
+          process_time_json: Json
           run_id: string
           run_step_id: string
           started_at: string | null
@@ -624,10 +626,12 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          accurated_tokens?: number
           error_summary?: string | null
           finished_at?: string | null
           idempotency_key?: string | null
           log_ref?: string | null
+          process_time_json?: Json
           run_id: string
           run_step_id?: string
           started_at?: string | null
@@ -637,10 +641,12 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          accurated_tokens?: number
           error_summary?: string | null
           finished_at?: string | null
           idempotency_key?: string | null
           log_ref?: string | null
+          process_time_json?: Json
           run_id?: string
           run_step_id?: string
           started_at?: string | null
@@ -1220,7 +1226,7 @@ export type Database = {
           created_at?: string
           ends_at?: string | null
           latest_payment_id?: number | null
-          mode: Database["public"]["Enums"]["subscription_mode"]
+          mode?: Database["public"]["Enums"]["subscription_mode"]
           payment_method_id?: string | null
           plan_type: Database["public"]["Enums"]["plan_type"]
           started_at: string
@@ -1461,6 +1467,7 @@ export type Database = {
       }
       usage_counters: {
         Row: {
+          accurated_token_count: number
           counter_id: string
           created_at: string
           email_sent_count: number
@@ -1472,6 +1479,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          accurated_token_count?: number
           counter_id?: string
           created_at?: string
           email_sent_count: number
@@ -1483,6 +1491,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          accurated_token_count?: number
           counter_id?: string
           created_at?: string
           email_sent_count?: number

@@ -30,6 +30,7 @@ export type CronActionResponse = {
     targets: Target[];
     totalTargets: number;
     scheduledTargets: number;
+    enqueuedJobs?: number;
   };
   error?: string;
 };
@@ -74,7 +75,7 @@ export type EmailLimitCheck = {
   allowed: boolean;
   usageCounter: any;
   planLimit: any;
-  planType: Database["public"]["Enums"]["plan_type"];
+  planType: Database["public"]["Enums"]["plan_type"] | null;
   maxMembers: number;
 };
 

@@ -253,6 +253,20 @@
       "when": 1769333133960,
       "tag": "0035_uneven_gauntlet",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1769401956465,
+      "tag": "0036_wide_union_jack",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1769410971298,
+      "tag": "0037_mighty_stingray",
+      "breakpoints": true
     }
   ]
 }
