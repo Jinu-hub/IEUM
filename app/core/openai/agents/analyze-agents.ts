@@ -1,6 +1,7 @@
 import { Agent } from "@openai/agents";
 import type { SupportedLanguage } from "../../config/style-guide";
 import { buildPrompt } from "../../prompts";
+import { AGENT_MODELS } from "../index";
 import {
   ActivityOutput,
   HighlightsOutput,
@@ -23,7 +24,7 @@ export function createTopicClusteringAgent(
   return new Agent({
     name: 'topic_clustering_agent',
     instructions: instructions,
-    model: 'gpt-4.1-mini',
+    model: AGENT_MODELS.topic_clustering,
     outputType: TopicOutput,
   });
 }
@@ -43,7 +44,7 @@ export function createActivitySummaryAgent(
   return new Agent({
     name: 'activity_summary_agent',
     instructions: instructions,
-    model: 'gpt-4.1-mini',
+    model: AGENT_MODELS.activity_summary,
     outputType: ActivityOutput,
   });
 }
@@ -60,7 +61,7 @@ export function createHighlightsSummaryAgent(
   return new Agent({
     name: 'highlights_summary_agent',
     instructions: instructions,
-    model: 'gpt-4.1-mini',
+    model: AGENT_MODELS.highlights_summary,
     outputType: HighlightsOutput,
   });
 }
@@ -77,7 +78,7 @@ export function createOngoingProgressAgent(
   return new Agent({
     name: 'ongoing_progress_agent',
     instructions: instructions,
-    model: 'gpt-4.1-mini',
+    model: AGENT_MODELS.ongoing_progress,
     outputType: OngoingProgressOutput,
   });
 }

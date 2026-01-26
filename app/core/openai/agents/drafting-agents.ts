@@ -1,6 +1,7 @@
 import { Agent } from "@openai/agents";
 import type { SupportedLanguage } from "../../config/style-guide";
 import { buildPrompt } from "../../prompts";
+import { AGENT_MODELS } from "../index";
 
 
 export function createKpiSectionAgent(
@@ -10,7 +11,7 @@ export function createKpiSectionAgent(
     return new Agent({
         name: 'kpi_section_agent',
         instructions: instructions,
-        model: 'gpt-4.1-mini',
+        model: AGENT_MODELS.kpi_section,
     });
 }
 
@@ -21,7 +22,7 @@ export function createHighlightsSectionAgent(
     return new Agent({
         name: 'highlights_section_agent',
         instructions: instructions,
-        model: 'gpt-4.1-mini',
+        model: AGENT_MODELS.highlights_section,
     });
 }
 
@@ -32,7 +33,7 @@ export function createTopicsSectionAgent(
     return new Agent({
         name: 'topics_section_agent',
         instructions: instructions,
-        model: 'gpt-4.1-mini',
+        model: AGENT_MODELS.topics_section,
     });
 }
 
@@ -43,7 +44,7 @@ export function createMemberActivitySectionAgent(
     return new Agent({
         name: 'member_activity_section_agent',
         instructions: instructions,
-        model: 'gpt-4.1-mini',
+        model: AGENT_MODELS.member_activity_section,
     });
 }
 
@@ -54,7 +55,7 @@ export function createOngoingSectionAgent(
     return new Agent({
         name: 'ongoing_section_agent',
         instructions: instructions,
-        model: 'gpt-4.1-mini',
+        model: AGENT_MODELS.ongoing_section,
     });
 }
 
@@ -65,6 +66,6 @@ export function createClosingSectionAgent(
     return new Agent({
         name: 'closing_section_agent',
         instructions: instructions,
-        model: 'gpt-4.1-mini',
+        model: AGENT_MODELS.closing_section,
     });
 }

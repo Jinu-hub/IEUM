@@ -4,6 +4,7 @@ import type { SupportedLanguage } from "../../config/style-guide";
 import { buildPrompt } from "../../prompts";
 import type { SectionName } from "../../prompts/toHtml";
 import type { PromptType } from "../../prompts/types";
+import { AGENT_MODELS } from "../index";
 
 export function createFinalContentsAgent(
     language: SupportedLanguage = 'en',
@@ -20,7 +21,7 @@ export function createFinalContentsAgent(
     return new Agent({
         name: 'final_contents_agent',
         instructions: instructions,
-        model: 'gpt-4.1-mini',
+        model: AGENT_MODELS.final_contents,
     });
 }
 
@@ -39,7 +40,7 @@ export function createConvertToHTMLAgent(
     return new Agent({
         name: 'convert_to_html_agent',
         instructions: instructions,
-        model: 'gpt-5-mini-2025-08-07',
+        model: AGENT_MODELS.convert_to_html,
     });
 }
 
@@ -60,6 +61,6 @@ export function createSectionHTMLAgent(
     return new Agent({
         name: `section_html_agent_${sectionName}`,
         instructions: instructions,
-        model: 'gpt-4.1-mini', // 軽量モデルで高速化
+        model: AGENT_MODELS.section_html,
     });
 }
