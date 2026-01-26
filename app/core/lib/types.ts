@@ -122,7 +122,7 @@ export type LinkedActivityDoc = {
   };
 
   index?: {
-    byId: Record<string, LinkedItem>;
+    byId?: Record<string, LinkedItem>;
     edges: LinkEdge[];
   };
 

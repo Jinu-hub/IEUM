@@ -366,9 +366,10 @@ export function rankHighlights(
 export async function createHighlightsSummary(
     linkedData: LinkedActivityDoc, 
     highlights: RankedHighlight[],
-    language: 'en' | 'ko' | 'ja' = 'en') {
+    language: 'en' | 'ko' | 'ja' = 'en',
+    messageIndexById: Record<string, LinkedItem> | undefined) {
 
-    const highlightsWithMessages = prepareHighlightsWithMessages(linkedData, highlights);
+    const highlightsWithMessages = prepareHighlightsWithMessages(messageIndexById, highlights);
     //await saveContentToFile(highlightsWithMessages, 'output-test', 'highlights_with_messages_', 'json');
     
     const input = CommonInput.parse({
@@ -388,10 +389,11 @@ export async function createHighlightsSummary(
 
 export async function summarizeMemberActivity(
     linkedData: LinkedActivityDoc,
-    language: 'en' | 'ko' | 'ja' = 'en'
+    language: 'en' | 'ko' | 'ja' = 'en',
+    messageIndexById: Record<string, LinkedItem> | undefined
 ): Promise<typeof ActivityOutput> {
 
-    const memberDataWithMessages = prepareMemberDataWithMessages(linkedData);
+    const memberDataWithMessages = prepareMemberDataWithMessages(linkedData, messageIndexById);
 
     //await saveContentToFile(memberDataWithMessages, 'output-test', 'member_data_with_messages_', 'json');
     const input = CommonInput.parse({

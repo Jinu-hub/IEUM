@@ -78,13 +78,12 @@ export function smallBonuses(c: z.infer<typeof Cluster>): number {
 }
 
 /** highlights를 메시지와 함께 준비 */
-export function prepareHighlightsWithMessages(linkedData: LinkedActivityDoc, highlights: RankedHighlight[]): RankedHighlight[]  {
-  const messageIndexIdArray = linkedData.index?.byId;
+export function prepareHighlightsWithMessages(messageIndexById: Record<string, LinkedItem> | undefined, highlights: RankedHighlight[]): RankedHighlight[]  {
   let highlightsWithMessages: RankedHighlight[] = [];
 
-  if (highlights && messageIndexIdArray) {
+  if (highlights && messageIndexById) {
       for (const highlight of highlights) {
-          const messages = highlight.items?.map((item) => messageIndexIdArray[item]);
+          const messages = highlight.items?.map((item) => messageIndexById[item]);
           highlightsWithMessages.push({
               ...highlight,
               messages,
@@ -102,11 +101,11 @@ export function prepareHighlightsWithMessages(linkedData: LinkedActivityDoc, hig
  * - 각 멤버의 메시지 ID를 실제 메시지 객체로 변환
  * 
  * @param linkedData - 링크된 활동 데이터
+ * @param messageIndexById - 메시지 ID를 키로 하는 메시지 객체 맵
  * @returns 멤버 ID를 키로 하고, displayName과 messages 배열을 포함하는 객체
  */
-export function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc): Record<string, any> {
+export function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc, messageIndexById: Record<string, LinkedItem> | undefined): Record<string, any> {
   const memberData = linkedData.items.member;
-  const messageIndexIdArray = linkedData.index?.byId;
   let memberDataWithMessages: Record<string, any> = {};
 
   // Build a lookup for Slack replies (not present in index.byId)
@@ -143,8 +142,8 @@ export function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc): Re
       }
   }
 
-  // Select members with total messages > 4 and attach their LinkedItem messages from index.byId
-  if (memberData && messageIndexIdArray) {
+  // Select members with total messages > 4 and attach their LinkedItem messages from messageIndexById
+  if (memberData && messageIndexById) {
       for (const member of Object.values(memberData)) {
           const total = member?.messageCount?.total ?? 0;
           if (member.displayName === "GitHub" 
@@ -159,7 +158,7 @@ export function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc): Re
                   reactionsGiven: reactionsByUser[member.memberId] || 0,
               };
               const messages = member.messageIds
-                  .map((mid) => messageIndexIdArray[mid] || replyIndex[mid])
+                  .map((mid) => messageIndexById[mid] || replyIndex[mid])
                   .filter((it): it is NonNullable<typeof it> => Boolean(it));
               (memberDataWithMessages[member.memberId] as any).messages = messages;
           }
@@ -173,10 +172,11 @@ export function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc): Re
  * 펀코너 리더보드 데이터 추출
  * @param linkedData 
  * @param kpiData 
+ * @param messageIndexById 
  * @returns 
  */
-export function getFunCornerLeaderboardData(linkedData: LinkedActivityDoc, kpiData: KpiSnapshot): Record<string, any> {
-    const memberDataWithMessages = prepareMemberDataWithMessages(linkedData);
+export function getFunCornerLeaderboardData(linkedData: LinkedActivityDoc, kpiData: KpiSnapshot, messageIndexById: Record<string, LinkedItem> | undefined): Record<string, any> {
+    const memberDataWithMessages = prepareMemberDataWithMessages(linkedData, messageIndexById);
     
     // 커밋수가 가장 많은 유저 찾기
     const topCommitUserEntry = (kpiData.perUser || [])

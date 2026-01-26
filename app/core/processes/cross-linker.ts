@@ -5,6 +5,7 @@ import {
   type UnifiedActivityDoc,
   type userActivity,
 } from "../lib/types";
+import type { FetchedMessage } from "../integrations/slack/types";
   
   /**
    * CrossLinker options
@@ -32,6 +33,11 @@ import {
        */
       timeWindowMs?: number; // default 10 * 60 * 1000
     };
+    /**
+     * index.byIdを作成するかどうか
+     * @default false
+     */
+    includeIndexById?: boolean;
     /**
      * 간단한 로거
      */
@@ -82,13 +88,14 @@ import {
   const ISSUE_NUMBER_RE = /#(\d+)/g;
   
   // 기본 옵션
-  const DEFAULT_OPTS: Required<CrossLinkerOptions> = {
+  const DEFAULT_OPTS: Required<Omit<CrossLinkerOptions, "logger">> & { logger: Pick<Console, "debug" | "warn" | "error"> } = {
     channelRepoMap: {},
     dedup: {
       enableSoftDedup: true,
       similarityThreshold: 0.95,
       timeWindowMs: 10 * 60 * 1000,
     },
+    includeIndexById: false,
     logger: console,
   };
   
@@ -188,10 +195,59 @@ import {
       : Object.entries(unified.slack ?? {}).flatMap(([channelId, messages]) => 
           messages.map(m => ({ message: m, channelId }))
         );
-    // 중복 방지를 위한 처리된 메시지 추적
+    
+    // 軽量化データ対応: thread_tsからスレッド構造を再構築
+    // 1. すべてのメッセージをthread_tsでグループ化
+    const threadsByThreadTs = new Map<string, Array<{ message: FetchedMessage; channelId: string }>>();
+    for (const { message: m, channelId } of slackMessages) {
+      const threadTs = m.thread_ts || m.ts; // thread_tsがない場合はtsを使用（非スレッドメッセージ）
+      if (!threadsByThreadTs.has(threadTs)) {
+        threadsByThreadTs.set(threadTs, []);
+      }
+      threadsByThreadTs.get(threadTs)!.push({ message: m, channelId });
+    }
+
+    // 2. 各スレッドグループを処理して、軽量化データからスレッド構造を再構築
+    for (const [threadTs, threadMessages] of threadsByThreadTs) {
+      // ルートメッセージを特定（thread_ts == ts）
+      const rootMessage = threadMessages.find(({ message: m }) => m.ts === threadTs);
+      
+      if (rootMessage && !rootMessage.message.thread?.replies) {
+        // 軽量化データ: thread.repliesがない場合、同じthread_tsの他のメッセージを返信として構築
+        const replies: FetchedMessage[] = [];
+        for (const { message: replyMsg } of threadMessages) {
+          if (replyMsg.ts === threadTs) continue; // ルートメッセージはスキップ
+          
+          // 返信メッセージをFetchedMessageとして構築
+          replies.push({
+            ts: replyMsg.ts,
+            user: replyMsg.user,
+            userInfo: replyMsg.userInfo,
+            text: replyMsg.text,
+            reactions: replyMsg.reactions,
+            files: replyMsg.files,
+            thread_ts: replyMsg.thread_ts,
+            reply_count: replyMsg.reply_count,
+            latest_reply: replyMsg.latest_reply,
+          });
+        }
+        
+        // ルートメッセージにrepliesを設定
+        if (replies.length > 0) {
+          rootMessage.message.thread = { replies };
+        }
+      }
+    }
+
+    // 중복 방지를 위한 처리된 메ッセージ 추적
     const processedTs = new Set<string>();
 
     for (const { message: m, channelId } of slackMessages) {
+      // 返信メッセージ（thread_ts !== ts）はスキップ（ルートメッセージのrepliesとして処理される）
+      if (m.thread_ts && m.thread_ts !== m.ts) {
+        continue;
+      }
+      
       // 이미 처리된 메시지는 건너뛰기
       if (processedTs.has(m.ts)) {
         continue;
@@ -199,9 +255,11 @@ import {
 
       const tsISO = toISOFromSlackTs(m.ts);
       const refs: Reference[] = [];
-      if (m.thread_root_ts && m.thread_root_ts !== m.ts) {
+      // thread_root_tsまたはthread_tsから親メッセージを判定
+      const parentThreadTs = m.thread_root_ts || (m.thread_ts && m.thread_ts !== m.ts ? m.thread_ts : undefined);
+      if (parentThreadTs) {
         refs.push({
-          targetId: `slack:${m.thread_root_ts}`,
+          targetId: `slack:${parentThreadTs}`,
           rel: "thread_root",
           confidence: 1.0,
           via: "unfurl",
@@ -228,7 +286,7 @@ import {
             id: `slack:${reply.ts}`,
             type: "slack_reply",
             title: (reply.text || "").slice(0, 120) || "Slack reply",
-            url: m.permalink, // 부모 메시지와 같은 permalink 사용
+            url: m.permalink, // 부모 메시지와 같은 permalink 사용（undefinedでもOK）
             tsISO: replyTsISO,
             references: [],
             meta: {
@@ -253,7 +311,7 @@ import {
         id: `slack:${m.ts}`,
         type: "slack",
         title: (m.text || "").slice(0, 120) || "Slack message",
-        url: m.permalink,
+        url: m.permalink, // undefinedでもOK（軽量化データ対応）
         tsISO,
         references: refs,
         meta: {
@@ -460,7 +518,7 @@ import {
       },
       
       index: {
-        byId: Object.fromEntries(allItems.map((i) => [i.id, i])),
+        ...(opts.includeIndexById && { byId: Object.fromEntries(allItems.map((i) => [i.id, i])) }),
         edges,
       },
       

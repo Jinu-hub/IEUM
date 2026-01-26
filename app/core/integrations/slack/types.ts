@@ -22,6 +22,10 @@ export type FetchedMessage = {
   thread?: {
     replies: FetchedMessage[];
   };
+  // スレッドメタ情報（conversations.historyから取得可能）
+  thread_ts?: string;        // スレッドの親メッセージのタイムスタンプ
+  reply_count?: number;      // スレッドの返信数（親メッセージの場合）
+  latest_reply?: string;     // 最新の返信のタイムスタンプ（親メッセージの場合）
 };
 
 export type ChannelData = {

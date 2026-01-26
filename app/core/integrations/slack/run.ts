@@ -107,7 +107,10 @@ export async function runSlackFetch(overrides?: {
         
         logger.info(`[${index + 1}/${channelIds.length}] 💬 Fetching channel messages...`);
         const messagesStartTime = Date.now();
-        const messages = await fetchChannelMessages(slack, ch, oldestTs);
+        const messages = await fetchChannelMessages(slack, ch, oldestTs, {
+          includeThread: false,
+          includePermalink: false,
+        });
         logger.info(`[${index + 1}/${channelIds.length}] ✅ Fetched ${messages.length} messages (${Date.now() - messagesStartTime}ms)`);
         
         result[key] = { messages, emailList };

@@ -17,10 +17,10 @@ export const AGENT_MODELS = {
     // ============================================
     // 2. analyzeData（データ分析）
     // ============================================
-    topic_clustering: 'gpt-5-mini',      // トピッククラスタリング
-    highlights_summary: 'gpt-5-mini',    // ハイライト要約
+    topic_clustering: 'gpt-4.1-mini',      // トピッククラスタリング
+    highlights_summary: 'gpt-4.1-mini',    // ハイライト要約
     activity_summary: 'gpt-4.1-mini',     // メンバー活動要約
-    ongoing_progress: 'gpt-5-mini',      // 進行中タスク抽出
+    ongoing_progress: 'gpt-4.1-mini',      // 進行中タスク抽出
     
     // ============================================
     // 3. draftingData（セクション初稿生成）

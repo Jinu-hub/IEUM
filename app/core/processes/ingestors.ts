@@ -171,6 +171,10 @@ function sanitizeMessage(m: FetchedMessage): FetchedMessage {
     reactions,
     files,
     thread,
+    // スレッドメタ情報を保持（threadがなくても）
+    thread_ts: m.thread_ts,
+    reply_count: m.reply_count,
+    latest_reply: m.latest_reply,
   };
 }
 

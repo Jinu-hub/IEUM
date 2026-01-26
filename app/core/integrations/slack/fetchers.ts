@@ -1,13 +1,32 @@
 import type { WebClient } from "@slack/web-api";
 import pLimit from "p-limit";
-import { logger } from "../../lib/logger";
+import { logger } from "~/core/lib/logger";
 import type { FetchedMessage, UserInfo } from "./types";
 
 const userCache = new Map<string, UserInfo>();
 const pendingUser = new Map<string, Promise<UserInfo | null>>();
-const userLimit = pLimit(5);
-const messageLimit = pLimit(5);
-const replyLimit = pLimit(5);
+
+// ============================================
+// Slack API フェッチ設定
+// ここで一括管理して、レート制限を考慮した調整が可能
+// ============================================
+const SLACK_FETCH_CONFIG = {
+  // 테스트 : 5 -> 7
+  // 同時実行数設定
+  concurrency: {
+    user: 5,        // ユーザー情報取得の同時実行数
+    message: 5,     // メッセージ処理の同時実行数
+    reply: 5,       // スレッド返信処理の同時実行数
+  },
+  // 테스트 : 350 -> 280
+  // ページネーション待機時間（ミリ秒）
+  paginationDelay: 350,  // ページネーション間の待機時間
+} as const;
+
+// 設定値を使用してpLimitを作成
+const userLimit = pLimit(SLACK_FETCH_CONFIG.concurrency.user);
+const messageLimit = pLimit(SLACK_FETCH_CONFIG.concurrency.message);
+const replyLimit = pLimit(SLACK_FETCH_CONFIG.concurrency.reply);
 
 export async function fetchUserInfo(slack: WebClient, userId: string): Promise<UserInfo | null> {
   if (userCache.has(userId)) return userCache.get(userId)!;
@@ -138,18 +157,33 @@ export async function fetchReplies(
         })
       )
     );
-    replies.push(...batch);
-    cursor = (res.response_metadata?.next_cursor as string) || undefined;
-    if (cursor) await new Promise((r) => setTimeout(r, 350));
+      replies.push(...batch);
+      cursor = (res.response_metadata?.next_cursor as string) || undefined;
+      if (cursor) await new Promise((r) => setTimeout(r, SLACK_FETCH_CONFIG.paginationDelay));
   } while (cursor);
   return replies;
+}
+
+export interface FetchChannelMessagesOptions {
+  /**
+   * スレッドの返信を取得するかどうか
+   * @default true
+   */
+  includeThread?: boolean;
+  /**
+   * パーマリンクを取得するかどうか
+   * @default true
+   */
+  includePermalink?: boolean;
 }
 
 export async function fetchChannelMessages(
   slack: WebClient,
   channel: string,
-  oldestTs: string
+  oldestTs: string,
+  options: FetchChannelMessagesOptions = {}
 ): Promise<FetchedMessage[]> {
+  const { includeThread = true, includePermalink = true } = options;
   const collected: FetchedMessage[] = [];
   let cursor: string | undefined;
   do {
@@ -173,19 +207,32 @@ export async function fetchChannelMessages(
               text: m.text,
               reactions: (m.reactions as any)?.map((r: any) => ({ name: r.name, count: r.count, users: r.users })),
               files: (m.files as any)?.map((f: any) => ({ name: f.name, url: f.url_private })),
+              // スレッドメタ情報（conversations.historyから取得可能、追加のAPI呼び出し不要）
+              thread_ts: m.thread_ts as string | undefined,
+              reply_count: m.reply_count as number | undefined,
+              latest_reply: m.latest_reply as string | undefined,
             };
-            const thread_ts = m.thread_ts as string | undefined;
-            if (thread_ts) {
-              base.thread = { replies: await fetchReplies(slack, channel, thread_ts, oldestTs) };
+            
+            // スレッドの返信を取得（オプション）
+            if (includeThread) {
+              const thread_ts = m.thread_ts as string | undefined;
+              if (thread_ts) {
+                base.thread = { replies: await fetchReplies(slack, channel, thread_ts, oldestTs) };
+              }
             }
-            base.permalink = await fetchPermalink(slack, channel, m.ts!);
+            
+            // パーマリンクを取得（オプション）
+            if (includePermalink) {
+              base.permalink = await fetchPermalink(slack, channel, m.ts!);
+            }
+            
             return base;
           })
         )
       );
       collected.push(...batch);
       cursor = res.response_metadata?.next_cursor || undefined;
-      if (cursor) await new Promise((r) => setTimeout(r, 350));
+      if (cursor) await new Promise((r) => setTimeout(r, SLACK_FETCH_CONFIG.paginationDelay));
     } catch (e: any) {
       if (e.data?.error === "ratelimited") {
         const retry = Number(e.data?.headers?.["retry-after"] || 3) * 1000;
@@ -198,6 +245,34 @@ export async function fetchChannelMessages(
     }
   } while (cursor);
   return collected;
+}
+
+/**
+ * チャンネルIDとtsを使って、メッセージのpermalinkを取得する
+ * @param slack Slack WebClient
+ * @param channel チャンネルID
+ * @param ts メッセージのタイムスタンプ
+ * @returns permalinkを含むオブジェクト
+ */
+export async function enrichMessageWithThreadAndPermalink(
+  slack: WebClient,
+  channel: string,
+  ts: string
+): Promise<{
+  permalink?: string;
+}> {
+  const result: {
+    permalink?: string;
+  } = {};
+
+  // パーマリンクを取得
+  try {
+    result.permalink = await fetchPermalink(slack, channel, ts);
+  } catch (error) {
+    logger.warn(`Failed to fetch permalink for ${ts}`, { error: String(error), channel, ts });
+  }
+
+  return result;
 }
 
 /**
@@ -232,7 +307,7 @@ export async function fetchChannelMembers(
       members.push(...memberInfos.filter((info): info is UserInfo => info !== null));
       
       cursor = res.response_metadata?.next_cursor || undefined;
-      if (cursor) await new Promise((r) => setTimeout(r, 350));
+      if (cursor) await new Promise((r) => setTimeout(r, SLACK_FETCH_CONFIG.paginationDelay));
     } while (cursor);
     
     return members;

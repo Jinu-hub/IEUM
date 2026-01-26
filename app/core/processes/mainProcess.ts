@@ -1,12 +1,11 @@
+import { encoding_for_model } from "tiktoken";
 import { z } from "zod";
 import type { CreateContentsInput, EnableCreateContents } from "~/core/lib/types";
 import { saveHighlight, updateNewsletterRunStep } from "~/features/contents/db/mutations";
 import { getUniquePeriodKey } from "~/features/contents/db/queries";
-//import { saveContentToFile } from "~/features/cron/api/test-api";
-import { encoding_for_model } from "tiktoken";
 import { logger } from "../lib/logger";
 import adminClient from "../lib/supa-admin-client.server";
-import type { KpiSnapshot, LinkedActivityDoc, UnifiedActivityDoc } from "../lib/types";
+import type { KpiSnapshot, LinkedActivityDoc, LinkedItem, UnifiedActivityDoc } from "../lib/types";
 import { ActivityOutput, HighlightsOutput, OngoingProgressOutput, TopicOutput } from "../openai/models";
 import { getBaseTemplate, getMainTemplate } from "../openai/templates";
 import {
@@ -61,38 +60,53 @@ export async function normalizeData(input: CreateContentsInput) {
     const slackData = await slackIngestor(input.slackResult || {});
 
     // 1-2. 중복 제거 & 연결(Deduplication & Linking)
-    const linkedData = await crossLinker({ ...githubData, ...slackData } as UnifiedActivityDoc);
-    //await saveContentToFile(linkedData, 'output-test', 'linked_', 'json');
-    //console.log('👤 Members:', Object.keys(linkedData.items.member || {}));
+    const linkedData = await crossLinker({ ...githubData, ...slackData } as UnifiedActivityDoc, {
+        includeIndexById: true,
+    });
+
+    // index.byIdを抽出して別オブジェクトとして保持
+    const messageIndexById: Record<string, LinkedItem> | undefined = linkedData.index?.byId;
+    
+    // linkedDataからindex.byIdを削除（分離）
+    const { index, ...linkedDataWithoutIndex } = linkedData;
+    const linkedDataCleaned = {
+        ...linkedDataWithoutIndex,
+        index: index ? { edges: index.edges } : undefined,
+    };
+    //await saveContentToFile(linkedDataCleaned, 'output-test', 'linked_data_', 'json');
+    
+    //console.log('👤 Members:', Object.keys(linkedDataCleaned.items.member || {}));
 
     // 토큰 수 추정 로그
-    const accurateTokenCount = countTokensAccurate(linkedData);
+    const accurateTokenCount = countTokensAccurate(linkedDataCleaned);
     logger.info('📊 Accurate token count for linkedData', { 
         accurateTokens: accurateTokenCount,
-        charCount: JSON.stringify(linkedData).length,
+        charCount: JSON.stringify(linkedDataCleaned).length,
         itemCounts: {
-            commits: linkedData.items.commit?.length ?? 0,
-            prs: linkedData.items.pr?.length ?? 0,
-            issues: linkedData.items.issue?.length ?? 0,
-            slackChannels: Object.keys(linkedData.items.slack ?? {}).length,
-            members: Object.keys(linkedData.items.member ?? {}).length
+            commits: linkedDataCleaned.items.commit?.length ?? 0,
+            prs: linkedDataCleaned.items.pr?.length ?? 0,
+            issues: linkedDataCleaned.items.issue?.length ?? 0,
+            slackChannels: Object.keys(linkedDataCleaned.items.slack ?? {}).length,
+            members: Object.keys(linkedDataCleaned.items.member ?? {}).length
         }
     });
     input.accuratedTokens = accurateTokenCount;
 
     logger.info('📝 Normalizing and reducing data completed');
-    return linkedData;
+    return { linkedData: linkedDataCleaned, messageIndexById };
 }
 
 /**
  * 2. 데이터 분석 & 개선 & 요약(Analyze & Improve & Summarize)
  * @param input 
  * @param linkedData 
+ * @param messageIndexById 
  * @returns 
  */
 export async function analyzeData(
     input: CreateContentsInput, 
     linkedData: LinkedActivityDoc,
+    messageIndexById: Record<string, LinkedItem> | undefined,
 ): Promise<any> {
     logger.info('📝 Analyzing data started');
     const language = input.language;
@@ -168,7 +182,7 @@ export async function analyzeData(
     // 2-4, 2-5, 2-6을 병렬로 실행
     const [highlights, ongoing, userActivity] = await Promise.all([
         // 2-4. highlights summary을 생성
-        createHighlightsSummary(linkedData, highlightsTemp, language).then(result => {
+        createHighlightsSummary(linkedData, highlightsTemp, language, messageIndexById).then(result => {
             logger.info('📝 Highlights summary created');
             return result;
         }),
@@ -178,7 +192,7 @@ export async function analyzeData(
             return result;
         }),
         // 2-6. slack data를 기반으로 member activity summary을 생성
-        summarizeMemberActivity(linkedData, language).then(result => {
+        summarizeMemberActivity(linkedData, language, messageIndexById).then(result => {
             logger.info('📝 Member activity summary created');
             return result;
         })
@@ -191,13 +205,14 @@ export async function analyzeData(
 
 /**
  * 3. 데이터 정리 & 편집(Drafting)
- * @param language 
+ * @param input 
  * @param linkedData activity doc
  * @param kpiInfo kpi info
  * @param highlights highlights
  * @param topics topics
  * @param ongoing ongoing
  * @param userActivity user activity
+ * @param messageIndexById 
  * @returns 
  */
 export async function draftingData(
@@ -207,7 +222,8 @@ export async function draftingData(
     highlights: z.infer<typeof HighlightsOutput>, 
     topics: z.infer<typeof TopicOutput>,
     ongoing: z.infer<typeof OngoingProgressOutput>,
-    userActivity: z.infer<typeof ActivityOutput>) {
+    userActivity: z.infer<typeof ActivityOutput>,
+    messageIndexById: Record<string, LinkedItem> | undefined) {
     logger.info('📝 Drafting data started');
 
     const language = input.language;
@@ -252,7 +268,7 @@ export async function draftingData(
             return result;
         }),
         // 3-6. Closing Section을 생성
-        createClosingSection(linkedData, kpiInfo, ongoing, language).then(result => {
+        createClosingSection(linkedData, kpiInfo, ongoing, language, messageIndexById).then(result => {
             logger.info('📝 Closing section created');
             return result;
         })
@@ -339,10 +355,10 @@ export async function generateContents(input: CreateContentsInput) {
     }
 
     // 1. 데이터 정규화 & 중복 제거(Normalize & Deduplicate)
-    let linkedData: any = await normalizeData(input);
+    let { linkedData, messageIndexById } = await normalizeData(input);
 
     // 2. 데이터 분석 & 개선 & 요약(Analyze & Improve & Summarize)
-    let { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData);
+    let { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData, messageIndexById);
  /*
     await saveContentToFile(linkedData, 'output-test/first', '1_linked_', 'json');
     await saveContentToFile(topics, 'output-test/first', '2_topics_', 'json');
@@ -359,7 +375,7 @@ export async function generateContents(input: CreateContentsInput) {
     }
     // 3. 각 섹션 초안 생성(Drafting Sections)
     let { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } = 
-        await draftingData(input, linkedData, kpiInfo, highlights, topics, ongoing, userActivity);
+        await draftingData(input, linkedData, kpiInfo, highlights, topics, ongoing, userActivity, messageIndexById);
   /*  
     await saveContentToFile(kpiSection, 'output-test/second', '1_kpi_section_', 'md');
     await saveContentToFile(highlightsSection, 'output-test/second', '2_highlights_section_', 'md');
@@ -370,12 +386,12 @@ export async function generateContents(input: CreateContentsInput) {
 */
     
     // 메모리 절약: 불필요해진 변수 초기화
-    linkedData = null;
-    kpiInfo = null;
-    highlights = null;
-    topics = null;
-    ongoing = null;
-    userActivity = null;
+    linkedData = null as any;
+    kpiInfo = null as any;
+    highlights = null as any;
+    topics = null as any;
+    ongoing = null as any;
+    userActivity = null as any;
 
     // 4. 병합 
     let mergedContents = await mergeContents(input, kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection);
@@ -403,4 +419,5 @@ export async function generateContents(input: CreateContentsInput) {
     mergedContents = null as any;
     
     return finalContents;
+
 }
