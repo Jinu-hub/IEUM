@@ -573,7 +573,7 @@ const ja: Translation = {
       renewSubscription: "サブスクリプション再開",
       upgradeToPro: "Proにアップグレード",
       account: "アカウント管理",
-      payments: "支払い",
+      payments: "お支払い履歴",
       notifications: "通知",
       logout: "ログアウト",
     },

@@ -572,7 +572,7 @@ const en: Translation = {
       renewSubscription: "Renew Subscription",
       upgradeToPro: "Upgrade to Pro",
       account: "Account",
-      payments: "Payments",
+      payments: "Payment History",
       notifications: "Notifications",
       logout: "Logout",
     },

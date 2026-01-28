@@ -571,7 +571,7 @@ const ko: Translation = {
       renewSubscription: "구독 재개",
       upgradeToPro: "Pro로 업그레이드",
       account: "계정 관리",
-      payments: "결제",
+      payments: "결제 내역",
       notifications: "알림",
       logout: "로그아웃",
     },

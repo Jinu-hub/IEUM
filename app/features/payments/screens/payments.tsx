@@ -15,9 +15,11 @@
 
 import type { Route } from "./+types/payments";
 
+import { ExternalLink, Receipt } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 
+import type { NexBadgeProps } from "~/core/components/nex";
+import { NexBadge, NexButton } from "~/core/components/nex";
 import { Card } from "~/core/components/ui/card";
 import {
   Table,
@@ -31,6 +33,8 @@ import {
 import { requireAuthentication } from "~/core/lib/guards.server";
 import makeServerClient from "~/core/lib/supa-client.server";
 
+import type { Currency } from "../lib/types";
+import { getCurrencyLocale, getLocalMap } from "../lib/Utils";
 import { getPayments } from "../queries"; // Database query function for payments
 
 /**
@@ -82,6 +86,24 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { payments };
 }
 
+function getPaymentStatusVariant(status: string): NexBadgeProps["variant"] {
+  const normalized = status.toLowerCase();
+
+  if (["paid", "succeeded", "completed", "done"].includes(normalized)) {
+    return "success";
+  }
+
+  if (["pending", "processing", "partial_canceled"].includes(normalized)) {
+    return "warning";
+  }
+
+  if (["failed", "cancelled", "canceled", "refunded"].includes(normalized)) {
+    return "error";
+  }
+
+  return "default";
+}
+
 /**
  * Payments component for displaying payment history
  *
@@ -107,13 +129,8 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
   // Extract payment history from loader data
   const { payments } = loaderData;
 
-  // Locale mapping for date formatting
-  const localeMap: Record<string, string> = {
-    en: "en-US",
-    ja: "ja-JP",
-    ko: "ko-KR",
-  };
-  const dateLocale = localeMap[i18n.language] || "en-US";
+  // Get locale string for date formatting (UI language based)
+  const dateLocale = getLocalMap()[i18n.language] || "en-US";
   
   return (
     <div className="flex w-full flex-col items-center gap-10 pt-0 pb-8">
@@ -121,23 +138,36 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
       <Card className="w-full max-w-screen-xl p-8">
         {/* Handle empty state when no payments exist */}
         {payments.length === 0 ? (
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
+            <Receipt className="h-12 w-12 text-muted-foreground" />
             <p className="text-muted-foreground text-lg">{t("noPayments")}</p>
           </div>
         ) : (
           /* Payment history table */
-          <Table>
+          <Table className="table-fixed">
             <TableCaption>{t("tableCaption")}</TableCaption>
             
             {/* Table header with column titles */}
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">{t("orderId")}</TableHead>
-                <TableHead>{t("status")}</TableHead>
-                <TableHead>{t("product")}</TableHead>
-                <TableHead>{t("amount")}</TableHead>
-                <TableHead>{t("date")}</TableHead>
-                <TableHead>{t("receipt")}</TableHead>
+            <TableHeader className="[&_tr]:border-b-2 [&_tr]:border-border [&_tr]:bg-muted/60 dark:[&_tr]:bg-[#2C2D30]">
+              <TableRow className="hover:bg-transparent border-b-0">
+                <TableHead className="w-[24%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("orderId")}
+                </TableHead>
+                <TableHead className="w-[12%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("status")}
+                </TableHead>
+                <TableHead className="w-[26%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("product")}
+                </TableHead>
+                <TableHead className="w-[14%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("amount")}
+                </TableHead>
+                <TableHead className="w-[16%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("date")}
+                </TableHead>
+                <TableHead className="w-[8%] text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("receipt")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             
@@ -151,17 +181,26 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
                   </TableCell>
                   
                   {/* Payment status column */}
-                  <TableCell>{payment.status}</TableCell>
+                  <TableCell>
+                    <NexBadge variant={getPaymentStatusVariant(payment.status)}>
+                      {payment.status}
+                    </NexBadge>
+                  </TableCell>
                   
                   {/* Product name column */}
                   <TableCell>{payment.order_name}</TableCell>
                   
                   {/* Amount column with currency formatting */}
                   <TableCell>
-                    {payment.total_amount.toLocaleString(dateLocale, {
-                      style: "currency",
-                      currency: "KRW",
-                    })}
+                    {(() => {
+                      const currency = (payment.currency ?? "KRW") as Currency;
+                      const currencyLocale = getCurrencyLocale(currency);
+                      
+                      return payment.total_amount.toLocaleString(currencyLocale, {
+                        style: "currency",
+                        currency,
+                      });
+                    })()}
                   </TableCell>
                   
                   {/* Date column with localized formatting */}
@@ -175,13 +214,21 @@ export default function Payments({ loaderData }: Route.ComponentProps) {
                   
                   {/* Receipt link column */}
                   <TableCell>
-                    <Link
-                      to={payment.receipt_url}
-                      target="_blank"
-                      className="hover:underline"
+                    <NexButton
+                      variant="secondary"
+                      size="sm"
+                      rightIcon={<ExternalLink className="h-3.5 w-3.5" />}
+                      className="underline-offset-2 hover:underline cursor-pointer"
+                      onClick={() => {
+                        window.open(
+                          payment.receipt_url,
+                          "_blank",
+                          "noopener,noreferrer",
+                        );
+                      }}
                     >
-                      {t("viewReceipt")} &rarr;
-                    </Link>
+                      {t("viewReceipt")}
+                    </NexButton>
                   </TableCell>
                 </TableRow>
               ))}

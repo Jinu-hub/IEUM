@@ -20,6 +20,14 @@ export function getCurrencyLocale(currency: Currency): string {
   return "ko-KR";
 }
 
+export function getLocalMap(): Record<string, string> {
+  return {
+    en: "en-US",
+    ja: "ja-JP",
+    ko: "ko-KR",
+  };
+}
+
 /**
  * Refund calculation result
  */
