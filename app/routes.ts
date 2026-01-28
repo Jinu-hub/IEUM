@@ -28,6 +28,11 @@ export default [
         route("/analytics", "debug/analytics.tsx"),
       ])
     : []),
+
+  // Admin routes - for internal monitoring
+  ...prefix("/admin", [
+    route("/monitoring", "features/admin/screens/monitoring.tsx"),
+  ]),
   
   // API Routes. Routes that export actions and loaders but no UI.
   ...prefix("/api", [
