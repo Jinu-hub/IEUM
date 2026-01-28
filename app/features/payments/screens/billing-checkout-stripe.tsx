@@ -13,11 +13,11 @@
  */
 import type { Route } from "./+types/billing-checkout-stripe";
 
-import Stripe from "stripe";
 import { CheckIcon, CreditCardIcon, Loader2Icon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { redirect, useFetcher, useNavigate } from "react-router";
+import Stripe from "stripe";
 import { z } from "zod";
 
 import { Button } from "~/core/components/ui/button";
@@ -25,6 +25,8 @@ import { PLAN_TYPE_LABEL, calculatePrice } from "~/core/lib/constants";
 import { requireAuthentication } from "~/core/lib/guards.server";
 import makeServerClient from "~/core/lib/supa-client.server";
 import { cn } from "~/core/lib/utils";
+import { CURRENCY_VALUES } from "~/core/prompts/types";
+import { getCurrencyLocale } from "~/features/payments/lib/Utils";
 
 /**
  * Validation schema for URL parameters
@@ -32,7 +34,7 @@ import { cn } from "~/core/lib/utils";
 const paramsSchema = z.object({
   plan: z.enum(["starter", "pro"]),
   interval: z.enum(["monthly", "yearly"]).default("monthly"),
-  currency: z.enum(["USD", "KRW", "JPY"]).default("USD"),
+  currency: z.enum(CURRENCY_VALUES).default("USD"),
   region: z.enum(["KR", "JP", "GLOBAL"]).default("GLOBAL"),
 });
 
@@ -214,11 +216,7 @@ export default function CheckoutBillingStripe({ loaderData }: Route.ComponentPro
   // Format price based on currency
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat(
-      loaderData.currency === "JPY"
-        ? "ja-JP"
-        : loaderData.currency === "USD"
-          ? "en-US"
-          : "ko-KR",
+      getCurrencyLocale(loaderData.currency),
       {
         style: "currency",
         currency: loaderData.currency,

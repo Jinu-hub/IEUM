@@ -5,8 +5,20 @@
  * These functions are shared between server-side API and client-side components.
  */
 
-import type { Currency, PlanType } from "~/core/lib/constants";
+import type { PlanType } from "~/core/lib/constants";
 import { EXCHANGE_RATES, PLAN_PRICES } from "~/core/lib/constants";
+import type { Currency } from "~/core/prompts/types";
+
+/**
+ * Get locale string for a given currency
+ * Used for Intl.NumberFormat in billing screens
+ */
+export function getCurrencyLocale(currency: Currency): string {
+  if (currency === "JPY") return "ja-JP";
+  if (currency === "USD") return "en-US";
+  // Default: Korean locale for KRW and others
+  return "ko-KR";
+}
 
 /**
  * Refund calculation result

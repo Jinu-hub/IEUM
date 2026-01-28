@@ -26,6 +26,8 @@ import { PLAN_TYPE_LABEL, calculatePrice } from "~/core/lib/constants";
 import { requireAuthentication } from "~/core/lib/guards.server";
 import makeServerClient from "~/core/lib/supa-client.server";
 import { cn } from "~/core/lib/utils";
+import { CURRENCY_VALUES } from "~/core/prompts/types";
+import { getCurrencyLocale } from "~/features/payments/lib/Utils";
 
 /**
  * Validation schema for URL parameters
@@ -33,7 +35,7 @@ import { cn } from "~/core/lib/utils";
 const paramsSchema = z.object({
   plan: z.enum(["starter", "pro"]),
   interval: z.enum(["monthly", "yearly"]).default("monthly"),
-  currency: z.enum(["USD", "KRW", "JPY"]).default("KRW"),
+  currency: z.enum(CURRENCY_VALUES).default("KRW"),
   region: z.enum(["KR", "JP", "GLOBAL"]).default("KR"),
 });
 
@@ -114,11 +116,7 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
   // Format price based on currency
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat(
-      loaderData.currency === "JPY"
-        ? "ja-JP"
-        : loaderData.currency === "USD"
-          ? "en-US"
-          : "ko-KR",
+      getCurrencyLocale(loaderData.currency),
       {
         style: "currency",
         currency: loaderData.currency,

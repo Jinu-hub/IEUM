@@ -25,13 +25,14 @@ import { z } from "zod";
 
 import { Button } from "~/core/components/ui/button";
 import {
-  type Currency,
   PLAN_TYPE_LABEL,
   calculatePrice
 } from "~/core/lib/constants";
 import { requireAuthentication } from "~/core/lib/guards.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import makeServerClient from "~/core/lib/supa-client.server";
+import { CURRENCY_VALUES } from "~/core/prompts/types";
+import { getCurrencyLocale } from "~/features/payments/lib/Utils";
 
 /**
  * Meta function for setting page metadata
@@ -50,7 +51,7 @@ const paramsSchema = z.object({
   customerKey: z.string(),
   plan: z.enum(["starter", "pro"]),
   interval: z.enum(["monthly", "yearly"]),
-  currency: z.enum(["USD", "KRW", "JPY"]).optional(),
+  currency: z.enum(CURRENCY_VALUES).optional(),
   region: z.enum(["KR", "JP", "GLOBAL"]).optional(),
 });
 
@@ -360,11 +361,7 @@ export default function BillingSuccessToss({ loaderData }: Route.ComponentProps)
   const { t, i18n } = useTranslation("common", { keyPrefix: "billing.success" });
   
   const formattedPrice = new Intl.NumberFormat(
-    loaderData.currency === "JPY"
-      ? "ja-JP"
-      : loaderData.currency === "USD"
-        ? "en-US"
-        : "ko-KR",
+    getCurrencyLocale(loaderData.currency),
     {
       style: "currency",
       currency: loaderData.currency,

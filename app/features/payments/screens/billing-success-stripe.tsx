@@ -16,21 +16,22 @@
 
 import type { Route } from "./+types/billing-success-stripe";
 
-import Stripe from "stripe";
 import { CheckCircle2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, redirect } from "react-router";
+import Stripe from "stripe";
 import { z } from "zod";
 
 import { Button } from "~/core/components/ui/button";
 import {
-  type Currency,
   PLAN_TYPE_LABEL,
   calculatePrice
 } from "~/core/lib/constants";
 import { requireAuthentication } from "~/core/lib/guards.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import makeServerClient from "~/core/lib/supa-client.server";
+import { CURRENCY_VALUES, isZeroDecimalCurrency } from "~/core/prompts/types";
+import { getCurrencyLocale } from "~/features/payments/lib/Utils";
 
 /**
  * Meta function for setting page metadata
@@ -48,7 +49,7 @@ const paramsSchema = z.object({
   session_id: z.string(),
   plan: z.enum(["starter", "pro"]),
   interval: z.enum(["monthly", "yearly"]),
-  currency: z.enum(["USD", "KRW", "JPY"]).optional(),
+  currency: z.enum(CURRENCY_VALUES).optional(),
   region: z.enum(["KR", "JP", "GLOBAL"]).optional(),
 });
 
@@ -192,8 +193,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       : null;
 
     // Zero-decimal currencies (JPY, KRW) don't need division by 100
-    const isZeroDecimalCurrency = ["JPY", "KRW"].includes(currency);
-    const totalAmount = isZeroDecimalCurrency 
+    const totalAmount = isZeroDecimalCurrency(currency)
       ? (session.amount_total || 0) 
       : (session.amount_total || 0) / 100;
 
@@ -337,11 +337,7 @@ export default function BillingSuccessStripe({ loaderData }: Route.ComponentProp
   const { t, i18n } = useTranslation("common", { keyPrefix: "billing.success" });
   
   const formattedPrice = new Intl.NumberFormat(
-    loaderData.currency === "JPY"
-      ? "ja-JP"
-      : loaderData.currency === "USD"
-        ? "en-US"
-        : "ko-KR",
+    getCurrencyLocale(loaderData.currency),
     {
       style: "currency",
       currency: loaderData.currency,

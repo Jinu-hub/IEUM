@@ -21,8 +21,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/core/components/ui/dialog";
-import type { BillingInterval, Currency, PlanType } from "~/core/lib/constants";
+import type { BillingInterval, PlanType } from "~/core/lib/constants";
 import { PLAN_TYPE_LABEL } from "~/core/lib/constants";
+import type { Currency } from "~/core/prompts/types";
 import {
   calculateNewEndsAt,
   calculateRefund,

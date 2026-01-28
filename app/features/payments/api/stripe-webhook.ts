@@ -18,6 +18,7 @@
 
 import Stripe from "stripe";
 import adminClient from "~/core/lib/supa-admin-client.server";
+import { isZeroDecimalCurrency } from "~/core/prompts/types";
 import type { Route } from "./+types/stripe-webhook";
 
 /**
@@ -271,8 +272,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   // Zero-decimal currencies (JPY, KRW) don't need division by 100
   const invoiceCurrency = invoice.currency?.toUpperCase() || "USD";
-  const isZeroDecimalCurrency = ["JPY", "KRW"].includes(invoiceCurrency);
-  const totalAmount = isZeroDecimalCurrency 
+  const totalAmount = isZeroDecimalCurrency(invoiceCurrency)
     ? invoice.amount_paid 
     : invoice.amount_paid / 100;
 

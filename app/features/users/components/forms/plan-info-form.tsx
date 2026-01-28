@@ -13,8 +13,9 @@ import {
   NexCardHeader,
   NexCardTitle,
 } from "~/core/components/nex";
-import type { BillingInterval, Currency, PlanType, SubscriptionMode, SubscriptionStatus } from "~/core/lib/constants";
+import type { BillingInterval, PlanType, SubscriptionMode, SubscriptionStatus } from "~/core/lib/constants";
 import { PLAN_TYPE_LABEL } from "~/core/lib/constants";
+import type { Currency } from "~/core/prompts/types";
 import CancelSubscriptionDialog from "../dialogs/cancel-subscription-dialog";
 
 interface PlanSectionProps {

@@ -21,6 +21,7 @@ import Stripe from "stripe";
 import { requireAuthentication, requireMethod } from "~/core/lib/guards.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import makeServerClient from "~/core/lib/supa-client.server";
+import { isZeroDecimalCurrency } from "~/core/prompts/types";
 import { calculateNewEndsAtISO } from "~/features/payments/lib/Utils";
 
 /**
@@ -147,8 +148,7 @@ export async function action({ request }: Route.ActionArgs) {
       if (isYearly && hasRefund && payment?.stripe_payment_intent_id) {
         // Zero-decimal currencies (JPY, KRW) don't need multiplication
         const currency = payment.currency || subscription.billing_currency || "USD";
-        const isZeroDecimalCurrency = ["JPY", "KRW"].includes(currency);
-        const refundAmountInSmallestUnit = isZeroDecimalCurrency
+        const refundAmountInSmallestUnit = isZeroDecimalCurrency(currency)
           ? Math.round(refundAmount)
           : Math.round(refundAmount * 100); // Convert to cents for USD, etc.
 

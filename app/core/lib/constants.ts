@@ -1,6 +1,8 @@
 // constants.ts — NexLetter v0.1
 // 앱 전체에서 사용되는 상수들
 
+import type { Currency } from "~/core/prompts/types";
+
 /* =========================================================
    Database Enums
    ========================================================= */
@@ -293,8 +295,6 @@ export const EXCHANGE_RATES = {
   KRW: 1400,
   JPY: 150,
 } as const;
-
-export type Currency = keyof typeof EXCHANGE_RATES;
 
 /**
  * Helper function to calculate price in a specific currency

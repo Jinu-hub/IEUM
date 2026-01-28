@@ -25,3 +25,14 @@ export type PromptType =
     | 'toHtml_ongoing'
     | 'toHtml_memberActivity'
     | 'toHtml_closing'
+
+// =========================================================
+// Shared domain types (re-export)
+// =========================================================
+
+export {
+    CURRENCY_VALUES,
+    ZERO_DECIMAL_CURRENCY_VALUES,
+    isZeroDecimalCurrency
+} from "~/features/payments/lib/types";
+export type { Currency, ZeroDecimalCurrency } from "~/features/payments/lib/types";
