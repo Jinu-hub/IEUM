@@ -119,6 +119,7 @@ export async function analyzeData(
     const metaJson = createGithubHighlightMetaJson(kpiInfo, input.range);
     await saveHighlight(adminClient, {
         workspaceId: input.workspaceId,
+        targetId: input.targetId,
         runId: input.runId,
         source: 'github-kpi',
         title: 'Github Kpi snapshot',
@@ -141,6 +142,7 @@ export async function analyzeData(
     const topicsTemp = await topicClustering(linkedData, language, input.source, input.range);
     await saveHighlight(adminClient, {
         workspaceId: input.workspaceId,
+        targetId: input.targetId,
         runId: input.runId,
         source: 'slack-activity',
         title: 'Slack channel activity',
@@ -162,6 +164,7 @@ export async function analyzeData(
         const metaJson = createChatroomHighlightMetaJson(highlight, period, input.range);
         await saveHighlight(adminClient, {
             workspaceId: input.workspaceId,
+            targetId: input.targetId,
             runId: input.runId,
             source: input.source,
             title: highlight.title,

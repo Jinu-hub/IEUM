@@ -211,8 +211,8 @@ export const saveNewsletterEditions = async (client: SupabaseClient<Database>,
 }
 
 export const saveHighlight = async (client: SupabaseClient<Database>, 
-    { workspaceId, runId, source, title, url, weight, metaJson, dedupKey, tags, period, periodKey }: 
-    { workspaceId: string, runId: string, source: string, title: string
+    { workspaceId, targetId, runId, source, title, url, weight, metaJson, dedupKey, tags, period, periodKey }: 
+    { workspaceId: string, targetId: string, runId: string, source: string, title: string
         , url: string | null, weight: number, metaJson: any, dedupKey: string, tags: string[]
         , period: string, periodKey: string }) => {
     try {
@@ -220,6 +220,7 @@ export const saveHighlight = async (client: SupabaseClient<Database>,
             .from('highlights')
             .insert({
                 workspace_id: workspaceId,
+                target_id: targetId,
                 run_id: runId,
                 source: source,
                 title: title,

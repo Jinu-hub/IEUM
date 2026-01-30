@@ -135,6 +135,9 @@ export async function action({ request }: Route.ActionArgs) {
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId;
 
+  // TODO(jinwoo): Stripe에서 NexLetter 유저와 매핑되지 않은 테스트/샘플 구독 이벤트는
+  // userId가 없으므로 여기서 조용히 무시한다. 나중에 livemode, 추가 metadata 등을 함께 보고
+  // 처리/무시 기준을 더 엄격하게 가져갈지 검토할 것.
   if (!userId) {
     console.error("No userId in subscription metadata:", subscription.id);
     return;
@@ -182,6 +185,8 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
 async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId;
 
+  // TODO(jinwoo): userId가 없는 구독 이벤트는 NexLetter와 연결되지 않은 것으로 보고
+  // DB를 수정하지 않고 무시한다. 필요 시 livemode, metadata 기반으로 알림/추가 처리 검토.
   if (!userId) {
     console.error("No userId in subscription metadata:", subscription.id);
     return;
@@ -246,6 +251,9 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const stripeSubAny = stripeSubscription as any;
   const userId = stripeSubAny.metadata?.userId;
 
+  // TODO(jinwoo): invoice.paid인데 userId가 없으면 데이터 연동 이상 상황으로 간주하고
+  // DB에는 손대지 않는다. 추후 livemode + 환경 값을 함께 보고 Sentry/Slack 알림을 붙이는 등
+  // 운영 대응 방식을 정할 것.
   if (!userId) {
     console.error("No userId in subscription metadata for invoice:", invoice.id);
     return;
@@ -340,6 +348,9 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const stripeSubAny = stripeSubscription as any;
   const userId = stripeSubAny.metadata?.userId;
 
+  // TODO(jinwoo): invoice.payment_failed인데 userId가 없으면 단순 결제 실패가 아니라
+  // Stripe/NexLetter 연동 이상으로 본다. 현재는 DB를 건드리지 않고 무시만 하며,
+  // 나중에 stripe_subscription_id로 user를 역추적하거나 알림을 보내는 로직을 검토할 것.
   if (!userId) {
     console.error("No userId in subscription metadata for failed invoice:", invoice.id);
     return;
