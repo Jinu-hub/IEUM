@@ -267,6 +267,13 @@
       "when": 1769410971298,
       "tag": "0037_mighty_stingray",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1769760615435,
+      "tag": "0038_workable_major_mapleleaf",
+      "breakpoints": true
     }
   ]
 }

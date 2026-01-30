@@ -202,6 +202,7 @@ export type Database = {
           run_id: string
           source: string
           tags: string[] | null
+          target_id: string
           title: string
           url: string | null
           weight: number
@@ -219,6 +220,7 @@ export type Database = {
           run_id: string
           source: string
           tags?: string[] | null
+          target_id: string
           title: string
           url?: string | null
           weight?: number
@@ -236,6 +238,7 @@ export type Database = {
           run_id?: string
           source?: string
           tags?: string[] | null
+          target_id?: string
           title?: string
           url?: string | null
           weight?: number
@@ -248,6 +251,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "newsletter_runs"
             referencedColumns: ["run_id"]
+          },
+          {
+            foreignKeyName: "highlights_target_id_targets_target_id_fk"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["target_id"]
           },
           {
             foreignKeyName: "highlights_workspace_id_workspace_workspace_id_fk"

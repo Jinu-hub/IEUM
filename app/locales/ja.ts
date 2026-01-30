@@ -598,6 +598,8 @@ const ja: Translation = {
   analytics: {
     title: "分析",
     description: "システムの状況を一目で確認してください",
+    targetAll: "全体",
+    targetLabel: "表示対象",
     noData: "まだデータが準備されていません",
     noDataDescription: "最近送信されたメールがないか、データ収集が進行中です。",
     noDataDescription2: "ニュースレターを送信すると、ここで統計を確認できます。",

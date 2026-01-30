@@ -595,6 +595,8 @@ export type Translation = {
   analytics: {
     title: string;
     description: string;
+    targetAll: string;
+    targetLabel: string;
     noData: string;
     noDataDescription: string;
     noDataDescription2: string;

@@ -153,13 +153,16 @@ export const getIntegrationsInfo = async (
 
 export const getTargets = async (
   client: SupabaseClient<Database>,
-  { workspaceId }: { workspaceId: string },
+  { workspaceId, isActive }: { workspaceId: string, isActive?: boolean },
 ) => {
-  const { data, error } = await client
+  let query = client
     .from('targets')
     .select('*')
     .eq('workspace_id', workspaceId)
-    .order('created_at', { ascending: false });
+  if (isActive) {
+    query = query.eq('is_active', isActive);
+  }
+  const { data, error } = await query.order('created_at', { ascending: false });
   if (error) {
     console.log('getTargets error', error);
     throw error;

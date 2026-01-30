@@ -93,8 +93,8 @@ export const getSentEmail = async (
 
 export async function getHighlightsMetadata(
   client: SupabaseClient<Database>,
-  { workspaceId, period, periodNumber, source }: 
-  { workspaceId: string, period: string, periodNumber: number, source?: string },
+  { workspaceId, period, periodNumber, source, targetId }: 
+  { workspaceId: string, period: string, periodNumber: number, source?: string, targetId?: string },
 ) {
   const { startKey, endKey } = getPeriodKeyRange(period, periodNumber);
 
@@ -108,6 +108,9 @@ export async function getHighlightsMetadata(
   if (source) {
     query = query.eq("source", source)
   }
+  if (targetId) {
+    query = query.eq('target_id', targetId);
+  }
   query = query.order("created_at", { ascending: false });
   const { data, error } = await query;
   if (error) {
@@ -120,8 +123,8 @@ export async function getHighlightsMetadata(
 
 export async function getHighlightsCount(
   client: SupabaseClient<Database>,
-  { workspaceId, period, periodNumber, source }: 
-  { workspaceId: string, period: string, periodNumber: number, source?: string },
+  { workspaceId, period, periodNumber, source, targetId }: 
+  { workspaceId: string, period: string, periodNumber: number, source?: string, targetId?: string },
 ) {
   const { startKey, endKey } = getPeriodKeyRange(period, periodNumber);
   let query = client
@@ -133,6 +136,9 @@ export async function getHighlightsCount(
     .lte('period_key', endKey);
   if (source) {
     query = query.eq('source', source);
+  }
+  if (targetId) {
+    query = query.eq('target_id', targetId);
   }
   const { count, error } = await query;
   if (error) {
@@ -152,6 +158,9 @@ export async function getHighlightsCount(
     if (source) {
       query2 = query2.eq('source', source);
     }
+    if (targetId) {
+      query2 = query2.eq('target_id', targetId);
+    }
     const { count: count2, error: error2 } = await query2;
     if (error2) {
       console.log('getHighlightsCount error2', error2);
@@ -163,15 +172,20 @@ export async function getHighlightsCount(
 }
 
 export async function getSentEmailMetadata(client: SupabaseClient<Database>, 
-  { workspaceId, period, periodNumber }: { workspaceId: string, period: string, periodNumber: number }) {
+  { workspaceId, period, periodNumber, targetId }: 
+  { workspaceId: string, period: string, periodNumber: number, targetId?: string }) {
   const { startKey, endKey } = getPeriodKeyRange(period, periodNumber);
-  const { data, error } = await client
+  let query = client
     .from('newsletter_editions')
     .select('period_key, stats_json')
     .eq('workspace_id', workspaceId)
     .eq('period', period as Database["public"]["Enums"]["period"])
     .gte('period_key', startKey)
     .lte('period_key', endKey);
+  if (targetId) {
+    query = query.eq('target_id', targetId);
+  }
+  const { data, error } = await query;
   if (error) {
     console.log('getSentEmails error', error);
     throw error;

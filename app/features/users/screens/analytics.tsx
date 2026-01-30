@@ -1,6 +1,6 @@
 import { CalendarRange, GitCommit, MailCheck, MessageSquareDot, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { data, redirect } from 'react-router';
+import { data, redirect, useNavigate, useSearchParams } from 'react-router';
 import {
   NexAreaChart,
   NexAreaChartGradient,
@@ -13,13 +13,20 @@ import {
   NexLineChart,
   NexPieChartLabelList
 } from '~/core/components/nex';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/core/components/ui/select';
 import makeServerClient from '~/core/lib/supa-client.server';
 import {
   getHighlightsCount,
   getHighlightsMetadata,
   getSentEmailMetadata
 } from '~/features/contents/db/queries';
-import { getWorkspace } from '~/features/settings/db/queries';
+import { getTargets, getWorkspace } from '~/features/settings/db/queries';
 import {
   addColorToGithubCaseData,
   calculateMemberStats,
@@ -47,18 +54,56 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   }
   const workspace = await getWorkspace(client, { userId: user.id });
   const workspaceId = workspace[0].workspace_id;
-  const emailMetadata = await getSentEmailMetadata(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 4 });
-  const slackActivity = await getHighlightsMetadata(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 8, source: 'slack-activity' });
-  const githubKpi = await getHighlightsMetadata(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 8, source: 'github-kpi' });
-  const highlightsCount = await getHighlightsCount(client, { workspaceId: workspaceId, period: 'weekly', periodNumber: 1, source: 'slack' });
-  return data({ emailMetadata: emailMetadata || null, slackActivity, githubKpi, highlightsCount });
+  const targets = await getTargets(client, { workspaceId: workspaceId });
+  const url = new URL(request.url);
+  const targetParam = url.searchParams.get('target');
+  const validTargetId =
+    targetParam && targets.some((t) => t.targetId === targetParam) ? targetParam : undefined;
+    console.log('validTargetId', validTargetId);
+  const emailMetadata = await getSentEmailMetadata(client, {
+    workspaceId,
+    period: 'weekly',
+    periodNumber: 4,
+    ...(validTargetId && { targetId: validTargetId }),
+  });
+  const slackActivity = await getHighlightsMetadata(client, {
+    workspaceId,
+    period: 'weekly',
+    periodNumber: 8,
+    source: 'slack-activity',
+    ...(validTargetId && { targetId: validTargetId }),
+  });
+  const githubKpi = await getHighlightsMetadata(client, {
+    workspaceId,
+    period: 'weekly',
+    periodNumber: 8,
+    source: 'github-kpi',
+    ...(validTargetId && { targetId: validTargetId }),
+  });
+  const highlightsCount = await getHighlightsCount(client, {
+    workspaceId,
+    period: 'weekly',
+    periodNumber: 1,
+    source: 'slack',
+    ...(validTargetId && { targetId: validTargetId }),
+  });
+  return data({
+    targets,
+    selectedTargetId: validTargetId ?? null,
+    emailMetadata: emailMetadata || null,
+    slackActivity,
+    githubKpi,
+    highlightsCount,
+  });
 };
 
 export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) {
   const { t, i18n } = useTranslation("common", { keyPrefix: "analytics" });
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { t: tTimes } = useTranslation("common", { keyPrefix: "times" });
-  const { emailMetadata, slackActivity, githubKpi, highlightsCount } = loaderData;
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { targets, selectedTargetId, emailMetadata, slackActivity, githubKpi, highlightsCount } = loaderData;
   const emailSummary = extractEmailSentData(emailMetadata) || {
     emailSentCount: 0,
     emailSentMemberCount: 0,
@@ -130,6 +175,37 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
         {/* 배경 장식 요소 */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-2xl"></div>
+      </div>
+
+      {/* ターゲット選択 */}
+      <div className="flex items-center gap-2">
+        <label htmlFor="analytics-target" className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+          {t("targetLabel")}
+        </label>
+        <Select
+          value={selectedTargetId ?? "all"}
+          onValueChange={(value) => {
+            const next = new URLSearchParams(searchParams);
+            if (value && value !== "all") {
+              next.set("target", value);
+            } else {
+              next.delete("target");
+            }
+            navigate({ search: next.toString() || undefined }, { replace: true });
+          }}
+        >
+          <SelectTrigger id="analytics-target" className="w-[220px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600">
+            <SelectValue placeholder={t("targetAll")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("targetAll")}</SelectItem>
+            {targets.map((target) => (
+              <SelectItem key={target.targetId} value={target.targetId}>
+                {target.displayName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {!hasEmailMetadata ? (

@@ -596,6 +596,8 @@ const ko: Translation = {
   analytics: {
     title: "분석",
     description: "시스템의 현황을 한눈에 확인 하세요",
+    targetAll: "전체",
+    targetLabel: "표시 대상",
     noData: "아직 통계 데이터가 준비되지 않았어요",
     noDataDescription: "최근 기간에 발송된 메일이 없거나 데이터 수집이 진행중입니다.",
     noDataDescription2: "뉴스레터를 발송하면 이곳에서 통계를 확인 할 수 있습니다.",

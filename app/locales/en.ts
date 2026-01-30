@@ -597,6 +597,8 @@ const en: Translation = {
   analytics: {
     title: "Analytics",
     description: "Check the status of the system at a glance",
+    targetAll: "All",
+    targetLabel: "Target",
     noData: "Still preparing statistics data",
     noDataDescription: "No emails sent yet, or data collection is in progress.",
     noDataDescription2: "When you send a newsletter, you can check the statistics here.",

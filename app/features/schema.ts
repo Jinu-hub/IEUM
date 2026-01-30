@@ -555,6 +555,7 @@ import {
       highlightId: uuid("highlight_id").defaultRandom().primaryKey(),
       workspaceId: uuid("workspace_id").notNull().references(() => workspace.workspaceId, { onDelete: "cascade" }),
       runId: uuid("run_id").notNull().references(() => newsletterRuns.runId, { onDelete: "cascade" }),
+      targetId: uuid("target_id").notNull().references(() => targets.targetId, { onDelete: "cascade" }),
       source: text("source").notNull(), // 'slack'|'github'
       title: text("title").notNull(),
       url: text("url"),
