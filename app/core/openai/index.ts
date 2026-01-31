@@ -54,7 +54,7 @@ export type AgentModelKey = keyof typeof AGENT_MODELS;
 // ============================================
 // Agents
 // ============================================
-export { summarizerAgent } from './test-agent';
+export { summarizerAgent } from './agents/test-agent';
 
 // Prompt Builders
 export {
