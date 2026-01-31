@@ -22,6 +22,8 @@ import {
   NexToggle
 } from "~/core/components/nex";
 import i18next from "~/core/lib/i18next.server";
+import type { Currency } from "~/core/prompts/types";
+import { calculatePrice, getCurrencyLocale } from "~/features/payments/lib/utils";
 
 export const meta: Route.MetaFunction = ({ data }) => {
   return [
@@ -64,46 +66,22 @@ type PricingPlan = {
   cta: string;
 };
 
-// USD 기준 가격 정의
-const USD_PRICES = {
-  free: { monthly: 0, annual: 0 },
-  starter: { monthly: 5, annual: 4 },
-  pro: { monthly: 20, annual: 16 },
-} as const;
-
-// 환율 (USD 기준)
-const EXCHANGE_RATES = {
-  en: 1, // USD
-  ko: 1400, // KRW per USD
-  ja: 150, // JPY per USD
-} as const;
-
-// 가격 변환 함수
-const convertPrice = (usdPrice: number, language: string): number => {
-  const rate = EXCHANGE_RATES[language as keyof typeof EXCHANGE_RATES] ?? EXCHANGE_RATES.en;
-  return Math.round(usdPrice * rate);
-};
-
 export default function Pricing({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
   const { i18n, t } = useTranslation();
   const [annualBilling, setAnnualBilling] = useState(true);
 
+  const currency: Currency =
+    i18n.language === "en" ? "USD" : i18n.language === "ja" ? "JPY" : "KRW";
+
   const priceFormatter = useMemo(
     () =>
-      new Intl.NumberFormat(
-        i18n.language === "ja"
-          ? "ja-JP"
-          : i18n.language === "en"
-            ? "en-US"
-            : "ko-KR",
-        {
-          style: "currency",
-          currency: i18n.language === "en" ? "USD" : i18n.language === "ja" ? "JPY" : "KRW",
-          maximumFractionDigits: 0
-        }
-      ),
-    [i18n.language]
+      new Intl.NumberFormat(getCurrencyLocale(currency), {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 0
+      }),
+    [currency]
   );
 
   const plans: PricingPlan[] = useMemo(
@@ -112,8 +90,8 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
         name: t("pricing.plans.free.name"),
         description: t("pricing.plans.free.description"),
         price: {
-          monthly: convertPrice(USD_PRICES.free.monthly, i18n.language),
-          annual: convertPrice(USD_PRICES.free.annual, i18n.language),
+          monthly: calculatePrice("free", "monthly", currency),
+          annual: Math.round(calculatePrice("free", "yearly", currency) / 12),
         },
         seats: t("pricing.plans.free.seats"),
         bestFor: t("pricing.plans.free.bestFor"),
@@ -124,8 +102,8 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
         name: t("pricing.plans.starter.name"),
         description: t("pricing.plans.starter.description"),
         price: {
-          monthly: convertPrice(USD_PRICES.starter.monthly, i18n.language),
-          annual: convertPrice(USD_PRICES.starter.annual, i18n.language),
+          monthly: calculatePrice("starter", "monthly", currency),
+          annual: Math.round(calculatePrice("starter", "yearly", currency) / 12),
         },
         seats: t("pricing.plans.starter.seats"),
         bestFor: t("pricing.plans.starter.bestFor"),
@@ -138,8 +116,8 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
         name: t("pricing.plans.pro.name"),
         description: t("pricing.plans.pro.description"),
         price: {
-          monthly: convertPrice(USD_PRICES.pro.monthly, i18n.language),
-          annual: convertPrice(USD_PRICES.pro.annual, i18n.language),
+          monthly: calculatePrice("pro", "monthly", currency),
+          annual: Math.round(calculatePrice("pro", "yearly", currency) / 12),
         },
         seats: t("pricing.plans.pro.seats"),
         bestFor: t("pricing.plans.pro.bestFor"),
@@ -150,7 +128,7 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
         cta: t("pricing.plans.pro.cta"),
       },
     ],
-    [t, i18n.language]
+    [t, currency]
   );
 
   const comparisonRows = useMemo(

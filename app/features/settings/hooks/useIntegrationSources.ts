@@ -47,6 +47,7 @@ export function useIntegrationSources(integrations: any[]) {
 
   /**
    * 새로운 integration 소스를 추가하는 함수
+   * 이미 추가된 채널/소스 ID는 무시함
    */
   const handleAddSource = useCallback((newIntegration: {
     integrationType: string;
@@ -58,20 +59,29 @@ export function useIntegrationSources(integrations: any[]) {
       newIntegration.integrationType !== 'no-integrations' &&
       newIntegration.sourceIdent !== 'no-sources-available'
     ) {
-      const integration = integrations.find((i: any) => i.type === newIntegration.integrationType);
-      const sourceType = integration?.type === 'github' ? 'github_repo' : 'slack_channel';
-      
-      const newSource: IntegrationSource = {
-        id: Date.now().toString(),
-        integrationId: integration?.integration_id || '',
-        integrationType: newIntegration.integrationType,
-        sourceType,
-        sourceIdent: newIntegration.sourceIdent,
-        isMemberMail: true,
-      };
+      let actuallyAdded = false;
+      setIntegrationSources(prev => {
+        const alreadyAdded = prev.some(
+          s => s.sourceIdent === newIntegration.sourceIdent && s.integrationType === newIntegration.integrationType
+        );
+        if (alreadyAdded) return prev;
 
-      setIntegrationSources(prev => [...prev, newSource]);
-      return true; // 성공적으로 추가됨을 알림
+        const integration = integrations.find((i: any) => i.type === newIntegration.integrationType);
+        const sourceType = integration?.type === 'github' ? 'github_repo' : 'slack_channel';
+        
+        const newSource: IntegrationSource = {
+          id: Date.now().toString(),
+          integrationId: integration?.integration_id || '',
+          integrationType: newIntegration.integrationType,
+          sourceType,
+          sourceIdent: newIntegration.sourceIdent,
+          isMemberMail: true,
+        };
+
+        actuallyAdded = true;
+        return [...prev, newSource];
+      });
+      return actuallyAdded;
     }
     return false; // 추가 실패
   }, [integrations]);

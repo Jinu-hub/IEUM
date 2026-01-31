@@ -22,12 +22,12 @@ import { redirect, useNavigate } from "react-router";
 import { z } from "zod";
 
 import { Button } from "~/core/components/ui/button";
-import { PLAN_TYPE_LABEL, calculatePrice } from "~/core/lib/constants";
+import { PLAN_TYPE_LABEL } from "~/core/lib/constants";
 import { requireAuthentication } from "~/core/lib/guards.server";
 import makeServerClient from "~/core/lib/supa-client.server";
 import { cn } from "~/core/lib/utils";
 import { CURRENCY_VALUES } from "~/core/prompts/types";
-import { getCurrencyLocale } from "~/features/payments/lib/Utils";
+import { calculatePrice, getCurrencyLocale } from "~/features/payments/lib/utils";
 
 /**
  * Validation schema for URL parameters

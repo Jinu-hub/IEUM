@@ -22,7 +22,7 @@ import { requireAuthentication, requireMethod } from "~/core/lib/guards.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import makeServerClient from "~/core/lib/supa-client.server";
 import { isZeroDecimalCurrency } from "~/core/prompts/types";
-import { calculateNewEndsAtISO } from "~/features/payments/lib/Utils";
+import { calculateNewEndsAtISO } from "~/features/payments/lib/utils";
 
 /**
  * Get Stripe client (lazy initialization)

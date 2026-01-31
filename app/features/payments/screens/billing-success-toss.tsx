@@ -24,15 +24,12 @@ import { Link, redirect } from "react-router";
 import { z } from "zod";
 
 import { Button } from "~/core/components/ui/button";
-import {
-  PLAN_TYPE_LABEL,
-  calculatePrice
-} from "~/core/lib/constants";
+import { PLAN_TYPE_LABEL } from "~/core/lib/constants";
 import { requireAuthentication } from "~/core/lib/guards.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import makeServerClient from "~/core/lib/supa-client.server";
 import { CURRENCY_VALUES } from "~/core/prompts/types";
-import { getCurrencyLocale } from "~/features/payments/lib/Utils";
+import { calculatePrice, getCurrencyLocale } from "~/features/payments/lib/utils";
 
 /**
  * Meta function for setting page metadata

@@ -1047,8 +1047,8 @@ const en: Translation = {
         features: [
           "Weekly newsletter auto-generation and delivery",
           "1 workspace",
-          "Up to 3 active targets",
-          "1 GitHub repository + 3 Slack channels per target",
+          "Up to 2 active targets",
+          "1 GitHub repository + 2 Slack channels per target",
           "Basic newsletter template (no customization)",
         ],
         cta: "Start with Starter",
@@ -1061,9 +1061,9 @@ const en: Translation = {
         badge: "Coming soon",
         features: [
           "Weekly · Monthly newsletter auto-generation",
-          "3 workspaces",
-          "Up to 10 active targets",
-          "2 GitHub repositories + 5 Slack channels per target",
+          "2 workspaces",
+          "Up to 5 active targets",
+          "1 GitHub repository + 3 Slack channels per target",
           "Newsletter template customization",
           "3 tone options available",
           "Manual sending and resending",

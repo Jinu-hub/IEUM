@@ -27,7 +27,7 @@ import type { Currency } from "~/core/prompts/types";
 import {
   calculateNewEndsAt,
   calculateRefund,
-} from "~/features/payments/lib/Utils";
+} from "~/features/payments/lib/utils";
 
 interface CancelSubscriptionDialogProps {
   open: boolean;

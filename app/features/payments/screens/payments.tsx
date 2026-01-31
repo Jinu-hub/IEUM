@@ -34,7 +34,7 @@ import { requireAuthentication } from "~/core/lib/guards.server";
 import makeServerClient from "~/core/lib/supa-client.server";
 
 import type { Currency } from "../lib/types";
-import { getCurrencyLocale, getLocalMap } from "../lib/Utils";
+import { getCurrencyLocale, getLocalMap } from "../lib/utils";
 import { getPayments } from "../queries"; // Database query function for payments
 
 /**

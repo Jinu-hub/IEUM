@@ -29,6 +29,18 @@ export function getLocalMap(): Record<string, string> {
 }
 
 /**
+ * Helper function to calculate price in a specific currency
+ */
+export function calculatePrice(
+  plan: keyof typeof PLAN_PRICES,
+  interval: "monthly" | "yearly",
+  currency: Currency = "USD"
+): number {
+  const basePrice = PLAN_PRICES[plan][interval];
+  return Math.round(basePrice * EXCHANGE_RATES[currency]);
+}
+
+/**
  * Refund calculation result
  */
 export interface RefundCalculation {
