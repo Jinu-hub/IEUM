@@ -3,7 +3,7 @@ import { logger } from "~/core/lib/logger";
 import resendClient from "~/core/lib/resend-client.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import type { CreateContentsInput } from "~/core/lib/types";
-import { generatePeriodKey } from "~/core/processes/utils";
+import { generatePeriodKey } from "~/core/processes/lib/utils";
 import { saveNewsletterEditions } from "~/features/contents/db/mutations";
 import { getUniquePeriodKey } from "~/features/contents/db/queries";
 import { getMailingListMembers, getUserEmail, getWorkspaceOwner } from "~/features/settings/db/queries";

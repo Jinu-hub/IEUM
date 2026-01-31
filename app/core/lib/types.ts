@@ -270,6 +270,7 @@ export type GithubHighlightMetaJson = {
   totalCommits: number;
   commitsByDeveloper: { developer: string; commits: number }[];
   commitsByCase: { case: string; commits: number }[];
+  commitsByKind: { kind: string; commits: number }[];
 };
 
 export type ChatroomActivityMetaJson = {

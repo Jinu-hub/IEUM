@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "database.types";
-import { getPeriodKeyRange } from "~/core/processes/utils";
+import { getPeriodKeyRange } from "~/core/processes/lib/utils";
 
 export const getSentEmailList = async (
   client: SupabaseClient<Database>,

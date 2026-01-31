@@ -1,6 +1,6 @@
 import { run } from "@openai/agents";
 import { z } from "zod";
-import type { KpiSnapshot, LinkedActivityDoc } from "../lib/types";
+import type { KpiSnapshot, LinkedActivityDoc, LinkedItem } from "../lib/types";
 import {
     createClosingSectionAgent,
     createHighlightsSectionAgent,
@@ -10,8 +10,7 @@ import {
     createTopicsSectionAgent,
 } from "../openai/agents/drafting-agents";
 import { ActivityOutput, CommonInput, HighlightsOutput, OngoingProgressOutput, TopicOutput } from "../openai/models";
-import type { LinkedItem } from "../lib/types";
-import { getFunCornerLeaderboardData } from "./utils";
+import { getFunCornerLeaderboardData } from "./lib/utils";
 
 export async function createKpiSection(
     kpiData: KpiSnapshot,

@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { CFG_RANKER, IMPACT_MAP, type ImpactKey } from "../lib/constants";
-import type { ChatroomHighlightMetaJson, GithubHighlightMetaJson, KpiSnapshot, LinkedActivityDoc, LinkedItem, RankedHighlight } from "../lib/types";
-import { Cluster } from "../openai/models";
+import { CFG_RANKER, IMPACT_MAP, type ImpactKey } from "../../lib/constants";
+import type { ChatroomHighlightMetaJson, GithubHighlightMetaJson, KpiSnapshot, LinkedActivityDoc, LinkedItem, RankedHighlight } from "../../lib/types";
+import { Cluster } from "../../openai/models";
+import { KIND_OF_COMMITS, KIND_OF_COMMITS_MAP, type KindOfCommit } from "./constants";
 
 export const CLAMP01 = (x?: number | null) => Math.max(0, Math.min(1, x ?? 0));
 export const TO_IMPACT = (i: typeof Cluster.shape.impact) => IMPACT_MAP[(i as unknown as ImpactKey) ?? "low"] ?? 0.3;
@@ -175,7 +176,8 @@ export function prepareMemberDataWithMessages(linkedData: LinkedActivityDoc, mes
  * @param messageIndexById 
  * @returns 
  */
-export function getFunCornerLeaderboardData(linkedData: LinkedActivityDoc, kpiData: KpiSnapshot, messageIndexById: Record<string, LinkedItem> | undefined): Record<string, any> {
+export function getFunCornerLeaderboardData(linkedData: LinkedActivityDoc, kpiData: KpiSnapshot
+    , messageIndexById: Record<string, LinkedItem> | undefined): Record<string, any> {
     const memberDataWithMessages = prepareMemberDataWithMessages(linkedData, messageIndexById);
     
     // 커밋수가 가장 많은 유저 찾기
@@ -205,13 +207,53 @@ export function getFunCornerLeaderboardData(linkedData: LinkedActivityDoc, kpiDa
     return { topCommitUserEntry, topReactionGiverEntry, topReactionsReceivedEntry, mostMessagesUser };
 }
 
+/** キーワード文字列からシングルクォートで囲まれたパターンを取り出す */
+function parseKeywordPatterns(keywordStr: string): string[] {
+    if (!keywordStr?.trim()) return [];
+    const matches = keywordStr.matchAll(/'([^']*)'/g);
+    return [...matches].map((m) => m[1].trim()).filter(Boolean);
+}
+
+/** テキストがキーワード文字列のいずれかのパターンにマッチするか */
+function textMatchesKeywordString(text: string, keywordStr: string): boolean {
+    const patterns = parseKeywordPatterns(keywordStr);
+    const lower = text.toLowerCase();
+    for (const pattern of patterns) {
+        try {
+            if (new RegExp(pattern, "i").test(text)) return true;
+        } catch {
+            if (lower.includes(pattern.toLowerCase())) return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * perUser.cases の1件を kind に分類（
+ * Incident → Release → Bugfix → Security → Refactor、どれにも当たらなければ Feature）
+ * @param caseText 
+ * @param language 
+ * @returns 
+ */
+function classifyCaseToKind(caseText: string, language: "en" | "ko" | "ja"): KindOfCommit {
+    const langKey = language === "ja" ? "keywords_ja" : language === "ko" ? "keywords_ko" : "keywords";
+    const kindsToTry: KindOfCommit[] = ["Incident", "Release", "Bugfix", "Security", "Refactor"];
+    for (const kind of kindsToTry) {
+        const keywordStr = KIND_OF_COMMITS_MAP[kind][langKey];
+        if (keywordStr && textMatchesKeywordString(caseText, keywordStr)) return kind;
+    }
+    return "Feature";
+}
+
 /**
  * github data를 기반으로 highlight meta json을 생성
  * @param kpiData 
  * @param range 
+ * @param language 
  * @returns 
  */
-export function createGithubHighlightMetaJson(kpiData: KpiSnapshot, range: string): GithubHighlightMetaJson {
+export function createGithubHighlightMetaJson(kpiData: KpiSnapshot, range: string
+    , language: "en" | "ko" | "ja" = "en"): GithubHighlightMetaJson {
     const totalCommits = kpiData?.overall?.commits ?? 0;
 
     const perUser = [...(kpiData?.perUser ?? [])].sort(
@@ -247,11 +289,31 @@ export function createGithubHighlightMetaJson(kpiData: KpiSnapshot, range: strin
         });
     }
 
+    // perUser の全 cases を kind 別に集計（ユーザ別ではなく全体でカウント）
+    const allCases = (kpiData?.perUser ?? []).flatMap((u) => u.cases ?? []);
+    const countsByKind: Record<KindOfCommit, number> = {
+        Incident: 0,
+        Release: 0,
+        Bugfix: 0,
+        Security: 0,
+        Refactor: 0,
+        Feature: 0,
+    };
+    for (const caseText of allCases) {
+        const kind = classifyCaseToKind(caseText, language);
+        countsByKind[kind] += 1;
+    }
+    const commitsByKind = KIND_OF_COMMITS.map((kind) => ({
+        kind,
+        commits: countsByKind[kind] ?? 0,
+    }));
+
     const meta = {
         range: range,
         totalCommits,
         commitsByDeveloper: topUsers,
         commitsByCase: topCases,
+        commitsByKind,
     };
 
     return meta;

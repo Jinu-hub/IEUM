@@ -26,8 +26,8 @@ import {
     createTopicsSection,
 } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
+import { createChatroomHighlightMetaJson, createGithubHighlightMetaJson, generatePeriodKey } from "./lib/utils";
 import { convertToHTML, convertToHTMLOnlyKpi, createFinalContents, divideContents } from "./reporting-data";
-import { createChatroomHighlightMetaJson, createGithubHighlightMetaJson, generatePeriodKey } from "./utils";
 
 /**
  * 토큰 수 추정 함수
@@ -116,7 +116,7 @@ export async function analyzeData(
 
     // 2-1. github data를 기반으로 kpi snapshot을 생성
     const kpiInfo = await repoKpiExtractor(input.githubResult || {});
-    const metaJson = createGithubHighlightMetaJson(kpiInfo, input.range);
+    const metaJson = createGithubHighlightMetaJson(kpiInfo, input.range, language);
     await saveHighlight(adminClient, {
         workspaceId: input.workspaceId,
         targetId: input.targetId,

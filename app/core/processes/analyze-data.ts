@@ -38,7 +38,7 @@ import {
     prepareHighlightsWithMessages,
     prepareMemberDataWithMessages,
     smallBonuses
-} from "./utils";
+} from "./lib/utils";
 
 /**
  * github data를 기반으로 kpi snapshot을 생성
