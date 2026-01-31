@@ -52,11 +52,15 @@ export default function Footer() {
   const legalItems = [
     { label: t("footer.links.legal.items.privacyPolicy"), href: "/legal/privacy-policy" },
     { label: t("footer.links.legal.items.termsOfService"), href: "/legal/terms-of-service" },
-    { label: t("pricing.faq.refundPolicyLink"), href: "/legal/refund-policy" },
   ];
 
   // Add Commercial Disclosure link for non-Korean languages
-  if (i18n.language !== "ko") {
+  if (i18n.language == "ko") {
+    legalItems.push({
+      label: t("pricing.faq.refundPolicyLink"),
+      href: "/legal/refund-policy"
+    });
+  } else {
     const commercialDisclosureLabel = i18n.language === "ja" 
       ? "特定商取引法に基づく表記" 
       : "Commercial Disclosure";
