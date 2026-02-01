@@ -273,6 +273,15 @@ export type GithubHighlightMetaJson = {
   commitsByKind: { kind: string; commits: number }[];
 };
 
+/** One top-user entry: name + the single metric (nums) that defines that badge */
+export type TopUserActivityItem = {
+  name: string;
+  nums: number;
+};
+
+/** Array of single-key objects: { TopContributor?: item }, { TopDeveloper?: item }, ... */
+export type TopUserActivity = Array<Partial<Record<string, TopUserActivityItem>>>;
+
 export type ChatroomActivityMetaJson = {
   range: string;
   activities: {
@@ -281,6 +290,7 @@ export type ChatroomActivityMetaJson = {
     reactionCount: number;
     topicCount: number;
   }[];
+  topUserActivity?: TopUserActivity;
 };
 
 export type ChatroomHighlightMetaJson = {
