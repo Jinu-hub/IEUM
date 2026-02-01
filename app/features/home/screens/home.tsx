@@ -40,6 +40,7 @@ import {
 
 import {
   NexBadge,
+  type NexBadgeProps,
   NexButton,
   NexCard,
   NexCardContent,
@@ -48,6 +49,8 @@ import {
   NexHero
 } from "~/core/components/nex";
 import i18next from "~/core/lib/i18next.server";
+import type { TopUserActivity } from "~/core/lib/types";
+import { CONTRIBUTION_KINDS, CONTRIBUTION_KIND_MAP } from "~/core/processes/lib/constants";
 import {
   homeAnalyticsFeatures,
   homeCaseData,
@@ -111,6 +114,30 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const commitTrendData = homeCommitTrendData;
   const developerData = homeDeveloperData;
   const caseData = homeCaseData;
+
+  // topUserActivity format: [{ TopDeveloper: { name, nums } }, { BugHunter: { name, nums } }, ...]
+  const topUserActivity: TopUserActivity = [
+    { TopDeveloper: { name: "Alex Kim", nums: 28 } },
+    { BugHunter: { name: "Jenny Park", nums: 11 } },
+    { ChatChamp: { name: "Sarah Lee", nums: 156 } },
+    { ReactionChamp: { name: "Mike Tanaka", nums: 45 } },
+  ];
+  const individualActivityItems = useMemo(
+    () =>
+      CONTRIBUTION_KINDS.map((kind, i) => {
+        const entry = topUserActivity[i] as Record<string, { name: string; nums: number }>;
+        const item = entry?.[kind] ?? { name: "", nums: 0 };
+        return { kind, name: item.name, nums: item.nums };
+      }),
+    [topUserActivity]
+  );
+  const getInitials = (name: string) =>
+    name
+      .split(/\s+/)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "—";
 
   // Feature highlights with icon mapping
   const featureHighlights = useMemo(() => 
@@ -597,149 +624,43 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {/* Member 1 */}
-          <NexCard variant="outlined" hoverable className="overflow-hidden">
-            <div className="h-2 bg-gradient-to-r from-blue-500 to-cyan-400" />
-            <NexCardContent className="p-4 md:p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm md:text-base">
-                  AK
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm md:text-base truncate">Alex Kim</p>
-                  <p className="text-xs text-muted-foreground">Frontend Lead</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.commits")}</span>
-                  <span className="text-sm font-semibold">28</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.prReviews")}</span>
-                  <span className="text-sm font-semibold">15</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.messages")}</span>
-                  <span className="text-sm font-semibold">142</span>
-                </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.contribution")}</span>
-                  <NexBadge variant="success" size="sm">Top Contributor</NexBadge>
-                </div>
-              </div>
-            </NexCardContent>
-          </NexCard>
-
-          {/* Member 2 */}
-          <NexCard variant="outlined" hoverable className="overflow-hidden">
-            <div className="h-2 bg-gradient-to-r from-purple-500 to-pink-400" />
-            <NexCardContent className="p-4 md:p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center text-white font-bold text-sm md:text-base">
-                  SL
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm md:text-base truncate">Sarah Lee</p>
-                  <p className="text-xs text-muted-foreground">Backend Developer</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.commits")}</span>
-                  <span className="text-sm font-semibold">21</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.prReviews")}</span>
-                  <span className="text-sm font-semibold">23</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.messages")}</span>
-                  <span className="text-sm font-semibold">98</span>
-                </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.contribution")}</span>
-                  <NexBadge variant="info" size="sm">Active Reviewer</NexBadge>
-                </div>
-              </div>
-            </NexCardContent>
-          </NexCard>
-
-          {/* Member 3 */}
-          <NexCard variant="outlined" hoverable className="overflow-hidden">
-            <div className="h-2 bg-gradient-to-r from-green-500 to-emerald-400" />
-            <NexCardContent className="p-4 md:p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center text-white font-bold text-sm md:text-base">
-                  MT
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm md:text-base truncate">Mike Tanaka</p>
-                  <p className="text-xs text-muted-foreground">DevOps Engineer</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.commits")}</span>
-                  <span className="text-sm font-semibold">15</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.prReviews")}</span>
-                  <span className="text-sm font-semibold">8</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.messages")}</span>
-                  <span className="text-sm font-semibold">67</span>
-                </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.contribution")}</span>
-                  <NexBadge variant="warning" size="sm">Deploy Master</NexBadge>
-                </div>
-              </div>
-            </NexCardContent>
-          </NexCard>
-
-          {/* Member 4 */}
-          <NexCard variant="outlined" hoverable className="overflow-hidden">
-            <div className="h-2 bg-gradient-to-r from-orange-500 to-amber-400" />
-            <NexCardContent className="p-4 md:p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center text-white font-bold text-sm md:text-base">
-                  JP
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm md:text-base truncate">Jenny Park</p>
-                  <p className="text-xs text-muted-foreground">QA Engineer</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.commits")}</span>
-                  <span className="text-sm font-semibold">12</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.prReviews")}</span>
-                  <span className="text-sm font-semibold">31</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.messages")}</span>
-                  <span className="text-sm font-semibold">156</span>
-                </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">{t("home.individualActivity.contribution")}</span>
-                  <NexBadge variant="secondary" size="sm">Bug Hunter</NexBadge>
-                </div>
-              </div>
-            </NexCardContent>
-          </NexCard>
+          {individualActivityItems.map(({ kind, name, nums }) => {
+            const meta = CONTRIBUTION_KIND_MAP[kind];
+            const metricLabelKey =
+              kind === "TopDeveloper"
+                ? "home.individualActivity.commits"
+                : kind === "ChatChamp"
+                  ? "home.individualActivity.messages"
+                  : kind === "BugHunter"
+                    ? "home.individualActivity.metricCases"
+                    : "home.individualActivity.metricReactions";
+            return (
+              <NexCard key={kind} variant="outlined" hoverable className="overflow-hidden">
+                <div className={`h-2 bg-gradient-to-r ${meta.gradient}`} />
+                <NexCardContent className="p-4 md:p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div
+                      className={`w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center text-white font-bold text-sm md:text-base`}
+                    >
+                      {getInitials(name)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm md:text-base truncate">{name || "—"}</p>
+                      <NexBadge variant="outline" size="sm" className={meta.badgeClassName}>
+                        {meta.label}
+                      </NexBadge>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-muted-foreground">{t(metricLabelKey)}</span>
+                      <span className="text-sm font-semibold">{nums}</span>
+                    </div>
+                  </div>
+                </NexCardContent>
+              </NexCard>
+            );
+          })}
         </div>
       </section>
 

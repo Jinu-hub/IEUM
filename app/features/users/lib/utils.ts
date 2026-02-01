@@ -474,32 +474,32 @@ export function createGithubCommitRaw(perPeriod: GithubSummaryPeriod[], weeks: n
 }
 
 /**
- * Create the GitHub case commit data.
+ * Create the GitHub case or kind commit data.
  * @param perPeriod - The per period data.
  * @param weeks - The number of weeks to aggregate (default: 1).
- * @returns The GitHub case commit data.
+ * @param metric - 'commitsByCase' (case id) or 'commitsByKind' (kind: Incident, Release, etc.).
+ * @returns The GitHub case or kind commit data.
  */
 export function createGithubCaseCommitData(
   perPeriod: GithubSummaryPeriod[],
   weeks: number = 1,
+  metric: 'commitsByCase' | 'commitsByKind' = 'commitsByCase',
 ) {
   if (perPeriod.length === 0) {
     return [] as Array<{ name: string; value: number }>;
   }
 
-  // 여러 주간의 데이터를 합산
   const periodsToAggregate = perPeriod.slice(0, weeks);
-  const caseMap = new Map<string, number>();
+  const map = new Map<string, number>();
 
   for (const period of periodsToAggregate) {
-    const cases = Array.isArray(period?.meta?.commitsByCase)
-      ? (period.meta?.commitsByCase as GithubCaseEntry[])
-      : [];
+    const meta = period?.meta as Record<string, unknown> | undefined;
+    const list = Array.isArray(meta?.[metric]) ? (meta[metric] as Array<{ case?: string; kind?: string; commits?: number; count?: number }>) : [];
 
-    for (const entry of cases) {
-      const rawName = typeof entry.case === 'string' && entry.case
-        ? entry.case
-        : 'Unknown';
+    for (const entry of list) {
+      const rawName = (metric === 'commitsByKind'
+        ? (typeof entry.kind === 'string' && entry.kind ? entry.kind : 'Unknown')
+        : (typeof entry.case === 'string' && entry.case ? entry.case : 'Unknown'));
       const rawCommits = entry.commits ?? entry.count;
       const commits = typeof rawCommits === 'number'
         ? rawCommits
@@ -507,15 +507,14 @@ export function createGithubCaseCommitData(
           ? Number(rawCommits)
           : 0;
 
-      if (Number.isFinite(commits) && commits > 0) {
-        const currentCount = caseMap.get(rawName) ?? 0;
-        caseMap.set(rawName, currentCount + commits);
+      if (Number.isFinite(commits) && commits >= 0) {
+        const currentCount = map.get(rawName) ?? 0;
+        map.set(rawName, currentCount + commits);
       }
     }
   }
 
-  // Map을 배열로 변환하고 정렬
-  const mapped = Array.from(caseMap.entries()).map(([name, commits]) => ({
+  const mapped = Array.from(map.entries()).map(([name, commits]) => ({
     name,
     value: commits,
   }));

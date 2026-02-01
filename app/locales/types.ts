@@ -155,6 +155,8 @@ export type Translation = {
       commits: string;
       prReviews: string;
       messages: string;
+      metricCases: string;
+      metricReactions: string;
       contribution: string;
       viewAllTeamActivity: string;
       dashboardNote: string;
@@ -609,6 +611,14 @@ export type Translation = {
     thisWeekDeveloperCommitStatus: string;
     caseDevelopmentStatus: string;
     thisWeekCaseDevelopmentStatus: string;
+    commitKind: {
+      Incident: string;
+      Release: string;
+      Bugfix: string;
+      Security: string;
+      Refactor: string;
+      Feature: string;
+    };
     slackCommunicationStatus: string;
     messageAndReactionActivity: string;
     recent8WeeksMessageAndReactionCountTrend: string;

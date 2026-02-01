@@ -79,7 +79,8 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
       new Intl.NumberFormat(getCurrencyLocale(currency), {
         style: "currency",
         currency,
-        maximumFractionDigits: 0
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
       }),
     [currency]
   );
@@ -91,7 +92,7 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
         description: t("pricing.plans.free.description"),
         price: {
           monthly: calculatePrice("free", "monthly", currency),
-          annual: Math.round(calculatePrice("free", "yearly", currency) / 12),
+          annual: calculatePrice("free", "yearly", currency) / 12,
         },
         seats: t("pricing.plans.free.seats"),
         bestFor: t("pricing.plans.free.bestFor"),
@@ -103,7 +104,7 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
         description: t("pricing.plans.starter.description"),
         price: {
           monthly: calculatePrice("starter", "monthly", currency),
-          annual: Math.round(calculatePrice("starter", "yearly", currency) / 12),
+          annual: calculatePrice("starter", "yearly", currency) / 12,
         },
         seats: t("pricing.plans.starter.seats"),
         bestFor: t("pricing.plans.starter.bestFor"),
@@ -117,7 +118,7 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
         description: t("pricing.plans.pro.description"),
         price: {
           monthly: calculatePrice("pro", "monthly", currency),
-          annual: Math.round(calculatePrice("pro", "yearly", currency) / 12),
+          annual: calculatePrice("pro", "yearly", currency) / 12,
         },
         seats: t("pricing.plans.pro.seats"),
         bestFor: t("pricing.plans.pro.bestFor"),

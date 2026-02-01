@@ -438,7 +438,8 @@ export const NexPieChartLabelList = ({ data = sampleChartData.pie, className = "
         <LabelList dataKey="name" position="outside" className="fill-current text-gray-600 dark:text-gray-300" />
       </Pie>
       <Tooltip content={<ChartTooltip dataName={barName} />} />
-      <Legend />
+      {/* 왼쪽 아래 범례 제거 (오른쪽 리스트로 충분). 필요시 주석 해제 */}
+      {/* <Legend /> */}
     </PieChart>
   </ChartContainer>
 );

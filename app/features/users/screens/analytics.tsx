@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '~/core/components/ui/select';
 import makeServerClient from '~/core/lib/supa-client.server';
+import { KIND_OF_COMMITS } from '~/core/processes/lib/constants';
 import {
   getHighlightsCount,
   getHighlightsMetadata,
@@ -136,9 +137,16 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
     ? createGithubDeveloperCommitData(githubSummary.perPeriod, 5, 1)
     : [];
   const githubCaseData = Array.isArray(githubSummary.perPeriod)
-    ? createGithubCaseCommitData(githubSummary.perPeriod)
+    ? createGithubCaseCommitData(githubSummary.perPeriod, 1, 'commitsByKind')
     : [];
   const githubCaseDataWithColor = addColorToGithubCaseData(githubCaseData);
+  const commitKindSet = new Set(KIND_OF_COMMITS);
+  const githubCaseDataWithColorTranslated = githubCaseDataWithColor.map((item) => ({
+    ...item,
+    name: commitKindSet.has(item.name as typeof KIND_OF_COMMITS[number])
+      ? t(`commitKind.${item.name}`)
+      : item.name,
+  }));
 
   // Slack 데이터 준비 (안전한 기본값)
   const slackActivityData = Array.isArray(slackSummary.perPeriod)
@@ -353,15 +361,15 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
               </p>
             </NexCardHeader>
             <NexCardContent className="mt-6">
-              {githubCaseDataWithColor.length > 0 ? (
+              {githubCaseDataWithColorTranslated.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <NexPieChartLabelList 
-                    data={githubCaseDataWithColor}
+                    data={githubCaseDataWithColorTranslated}
                     className="h-64"
                     barName={commonT("commits")}
                   />
                   <div className="space-y-4">
-                    {githubCaseDataWithColor.map((item, index) => (
+                    {githubCaseDataWithColorTranslated.map((item, index) => (
                       <div key={index} className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div

@@ -29,7 +29,8 @@ export function getLocalMap(): Record<string, string> {
 }
 
 /**
- * Helper function to calculate price in a specific currency
+ * Helper function to calculate price in a specific currency.
+ * Preserves decimals for accurate display (e.g. USD $38.4).
  */
 export function calculatePrice(
   plan: keyof typeof PLAN_PRICES,
@@ -37,7 +38,7 @@ export function calculatePrice(
   currency: Currency = "USD"
 ): number {
   const basePrice = PLAN_PRICES[plan][interval];
-  return Math.round(basePrice * EXCHANGE_RATES[currency]);
+  return basePrice * EXCHANGE_RATES[currency];
 }
 
 /**
