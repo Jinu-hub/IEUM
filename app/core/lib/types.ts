@@ -221,8 +221,15 @@ export type UserRepoKpi = {
   commits: number;
   prsMerged: number;
   issuesOpened: number;
-  issuesClosed: number; 
-  cases: string[]; // cases list
+  issuesClosed: number;
+  /** cases from commits only */
+  commitCases?: string[];
+  /** cases from closed PRs only */
+  prMergedCases?: string[];
+  /** cases from opened issues only */
+  issueOpenedCases?: string[];
+  /** cases from closed issues only */
+  issueClosedCases?: string[];
 };
 
 export type CaseKpi = {

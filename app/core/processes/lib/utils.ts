@@ -227,7 +227,7 @@ export function computeTopUserActivity(
     for (const u of perUser) {
         const name = u.user ?? "";
         let count = 0;
-        for (const caseText of u.cases ?? []) {
+        for (const caseText of u.commitCases ?? []) {
             const kind = classifyCaseToKind(caseText, language);
             if (kind === "Bugfix" || kind === "Incident") count += 1;
         }
@@ -289,7 +289,7 @@ function textMatchesKeywordString(text: string, keywordStr: string): boolean {
 }
 
 /**
- * perUser.cases의 1건을 kind 로 분류
+ * perUser.commitCases (or other case text) 1건을 kind 로 분류
  * Incident → Release → Bugfix → Security → Refactor, 모두 해당하지 않으면 Feature
  * @param caseText 
  * @param language 
@@ -349,8 +349,8 @@ export function createGithubHighlightMetaJson(kpiData: KpiSnapshot, range: strin
         });
     }
 
-    // perUser 의 cases 를 kind 별로 집계 (사용자별이 아닌 전체에서 카운트)
-    const allCases = (kpiData?.perUser ?? []).flatMap((u) => u.cases ?? []);
+    // perUser 의 commitCases 만 사용해 kind 별 집계 (commits 건수와 일치)
+    const allCases = (kpiData?.perUser ?? []).flatMap((u) => u.commitCases ?? []);
     const countsByKind: Record<KindOfCommit, number> = {
         Incident: 0,
         Release: 0,

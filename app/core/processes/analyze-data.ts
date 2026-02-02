@@ -69,9 +69,8 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
             const existingUser = userMap.get(user);
             if (existingUser) {
                 existingUser.commits += 1;
-                if (!existingUser.cases.includes(caseName)) {
-                    existingUser.cases.push(caseName);
-                }
+                const arr = existingUser.commitCases ?? (existingUser.commitCases = []);
+                arr.push(caseName);
             } else {
                 userMap.set(user, {
                     user: user,
@@ -80,7 +79,7 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
                     prsMerged: 0,
                     issuesOpened: 0,
                     issuesClosed: 0,
-                    cases: [caseName],
+                    commitCases: [caseName],
                 });
             }
 
@@ -103,9 +102,8 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
             const existingUser = userMap.get(user);
             if (existingUser) {
                 existingUser.prsMerged += 1;
-                if (!existingUser.cases.includes(caseName)) {
-                    existingUser.cases.push(caseName);
-                }
+                const arr = existingUser.prMergedCases ?? (existingUser.prMergedCases = []);
+                arr.push(caseName);
             } else {
                 userMap.set(user, {
                     user: user,
@@ -114,7 +112,7 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
                     prsMerged: 1,
                     issuesOpened: 0,
                     issuesClosed: 0,
-                    cases: [caseName],
+                    prMergedCases: [caseName],
                 });
             }
         }
@@ -124,9 +122,8 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
             const existingUser = userMap.get(user);
             if (existingUser) {
                 existingUser.issuesOpened += 1;
-                if (!existingUser.cases.includes(caseName)) {
-                    existingUser.cases.push(caseName);
-                }
+                const arr = existingUser.issueOpenedCases ?? (existingUser.issueOpenedCases = []);
+                arr.push(caseName);
             } else {
                 userMap.set(user, {
                     user: user,
@@ -135,7 +132,7 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
                     prsMerged: 0,
                     issuesOpened: 1,
                     issuesClosed: 0,
-                    cases: [caseName],
+                    issueOpenedCases: [caseName],
                 });
             }
         }
@@ -145,9 +142,8 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
             const existingUser = userMap.get(user);
             if (existingUser) {
                 existingUser.issuesClosed += 1;
-                if (!existingUser.cases.includes(caseName)) {
-                    existingUser.cases.push(caseName);
-                }
+                const arr = existingUser.issueClosedCases ?? (existingUser.issueClosedCases = []);
+                arr.push(caseName);
             } else {
                 userMap.set(user, {
                     user: user,
@@ -156,7 +152,7 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
                     prsMerged: 0,
                     issuesOpened: 0,
                     issuesClosed: 1,
-                    cases: [caseName],
+                    issueClosedCases: [caseName],
                 });
             }
         }
