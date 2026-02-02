@@ -1,9 +1,9 @@
 export const GREETINGS_KO = "'hi', 'good morning', 'hello', 'thank you', 'thanks', 'goodbye', 'bye', 'see you', '안녕', '좋은 아침', '안녕하세요', '감사합니다', '고마워', '안녕히 가세요', '잘가', '또 봐'";
-export const RELEASE_VERSION_CUES_KO = "'v[0-9.]+', 'Release vX.Y.Z', 'module created', 'deploy', 'release', '릴리스 vX.Y.Z', '모듈 생성', '배포', '릴리스'";
-export const INCIDENT_CUES_KO = "'Sev-1', 'Exception', 'incident', 'outage', 'system error', 'failure', 'error','Sev-2','Redmine', '최우선', '예외', '인시던트', '장애', '시스템 오류', '실패', '에러', '이상'";
-export const BUGFIX_CUES_KO = "'hotfix', 'fix', 'bug', 'patch', 'correction', '핫픽스', '수정', '버그', '패치', '정정'";
+export const RELEASE_VERSION_CUES_KO = "'Release vX.Y.Z', 'module created', 'deploy', 'release', '릴리스 vX.Y.Z', '모듈 생성', '배포', '릴리스', '릴리스 노트', '릴리스 후보', '정식 출시', '본번 배포', '출시', '런칭', '버전 릴리스', '프로덕션 배포'";
+export const INCIDENT_CUES_KO = "'Sev-1', 'Sev-2', 'P0', 'P1', 'P2', 'Exception', 'incident', 'outage', 'system error', 'failure', 'error', 'Redmine', '최우선', '예외', '인시던트', '장애', '장애 대응', '본번 장애', '시스템 오류', '실패', '에러', '이상', '긴급', '긴급 대응', '다운', '복구', '크리티컬', '중대 장애'";
+export const BUGFIX_CUES_KO = "'hotfix', 'fix', 'bug', 'patch', 'correction', '핫픽스', '수정', '버그', '패치', '정정', '버그 수정', '불구합', '불구합 수정', '수정 요청', '디버깅', '회귀 수정', '오타 수정', '현상', 'fixed', 'fixes'";
 export const DECISION_CUES_KO = "'decision', 'agreement', 'approval', '결정', '합의', '승인'";
-export const SECURITY_CUES_KO = "'password', 'security', 'permission', '비밀번호', '보안', '권한', '취약점'";
+export const SECURITY_CUES_KO = "'password', 'security', 'permission', 'vulnerability', '비밀번호', '보안', '권한', '취약점', '인증', '권한 부여', 'CVE', 'XSS', 'CSRF', 'SQL 인젝션', '암호화', '토큰', 'OAuth', 'SSO', '감사', '접근 제어', '시크릿', '자격 증명', '보안 대응', '보안 패치', 'CWE'";
 export const REFACOR_CUES_KO = "'refactor', 'optimization', 'query', '리팩토링', '최적화', '쿼리'";
 export const Q_A_CUES_KO = "'can we', 'please confirm', 'question', '할 수 있나요', '확인 부탁드립니다', '질문'";
 export const ANNOUNCEMENT_CUES_KO = "'<!channel>', 'announcement', 'notice', '공지', '알림', '안내'";

@@ -1,9 +1,9 @@
 export const GREETINGS_JA = "'hi', 'good morning', 'hello', 'thank you', 'thanks', 'goodbye', 'bye', 'see you', 'やあ', 'おはよう', 'こんにちは', 'ありがとう', 'ありがと', 'さようなら', 'バイバイ', 'またね'";
-export const RELEASE_VERSION_CUES_JA = "'v[0-9.]+', 'Release vX.Y.Z', 'module created', 'deploy', 'release', 'リリース vX.Y.Z', 'モジュール作成', 'デプロイ', 'リリース'";
-export const INCIDENT_CUES_JA = "'Sev-1', 'Exception', 'incident', 'outage', 'system error', 'failure', 'error','Sev-2','Redmine', '最優先', '例外', 'インシデント', '障害', 'システムエラー', '失敗', 'エラー', '異常'";
-export const BUGFIX_CUES_JA = "'hotfix', 'fix', 'bug', 'patch', 'correction', 'ホットフィックス', '修正', 'バグ', 'パッチ', '訂正'";
+export const RELEASE_VERSION_CUES_JA = "'Release vX.Y.Z', 'module created', 'deploy', 'release', 'リリース vX.Y.Z', 'モジュール作成', 'デプロイ', 'リリース', 'リリースノート', 'リリース候補', '本番リリース', '本番投入', 'リリース予定', '出荷', 'ローンチ', '一般提供', 'バージョンリリース'";
+export const INCIDENT_CUES_JA = "'Sev-1', 'Sev-2', 'P0', 'P1', 'P2', 'Exception', 'incident', 'outage', 'system error', 'failure', 'error', 'Redmine', '最優先', '例外', 'インシデント', '障害', '障害対応', '本番障害', 'システムエラー', '失敗', 'エラー', '異常', '緊急', '緊急対応', 'ダウン', '復旧', '重大障害'";
+export const BUGFIX_CUES_JA = "'hotfix', 'fix', 'bug', 'patch', 'correction', 'ホットフィックス', '修正', 'バグ', 'パッチ', '訂正', 'バグ修正', '不具合', '不具合修正', '修正依頼', 'デバッグ', '回帰修正', '誤字修正', '事象', 'fixed', 'fixes'";
 export const DECISION_CUES_JA = "'decision', 'agreement', 'approval', '決定', '合意', '承認'";
-export const SECURITY_CUES_JA = "'password', 'security', 'permission', 'パスワード', 'セキュリティ', '権限', '脆弱性'";
+export const SECURITY_CUES_JA = "'password', 'security', 'permission', 'vulnerability', 'パスワード', 'セキュリティ', '権限', '脆弱性', '認証', '認可', 'CVE', 'XSS', 'CSRF', 'SQLインジェクション', '暗号化', 'トークン', 'OAuth', 'SSO', '監査', 'アクセス制御', 'シークレット', '認証情報', 'セキュリティ対応', 'セキュリティパッチ', 'CWE'";
 export const REFACOR_CUES_JA = "'refactor', 'optimization', 'query', 'リファクタリング', '最適化', 'クエリ'";
 export const Q_A_CUES_JA = "'can we', 'please confirm', 'question', 'できますか', '確認お願いします', '質問'";
 export const ANNOUNCEMENT_CUES_JA = "'<!channel>', 'announcement', 'notice', 'アナウンス', '通知', 'お知らせ'";

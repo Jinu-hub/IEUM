@@ -229,6 +229,8 @@ export type CaseKpi = {
   case: string;
   repo: string;
   commits: number;
+  /** コミットメッセージ先頭行（kind 分類用、1件目を保持） */
+  sampleCaseText?: string;
 };
 
 export type KpiSnapshot = {

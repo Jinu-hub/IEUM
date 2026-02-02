@@ -1,9 +1,9 @@
 export const GREETINGS = "'hi', 'good morning', 'hello', 'thank you', 'thanks', 'goodbye', 'bye', 'see you'";
-export const RELEASE_VERSION_CUES = "'v[0-9.]+', 'Release vX.Y.Z', 'module created', 'deploy', 'release'";
-export const INCIDENT_CUES = "'Sev-1', 'Exception', 'incident', 'outage', 'system error', 'failure', 'error','Sev-2','Redmine'";
-export const BUGFIX_CUES = "'hotfix', 'fix', 'bug', 'patch', 'correction'";
+export const RELEASE_VERSION_CUES = "'Release vX.Y.Z', 'module created', 'deploy', 'release', 'release note', 'release notes', 'release candidate', 'go live', 'shipped', 'shipping', 'launch', 'rollout', 'cut release', 'version release', 'production release', 'staged release'";
+export const INCIDENT_CUES = "'Sev-1', 'Sev-2', 'P0', 'P1', 'P2', 'Exception', 'incident', 'outage', 'system error', 'failure', 'error', 'critical', 'urgent', 'production down', 'service down', 'emergency', 'recovery', 'hotfix for prod', 'Redmine'";
+export const BUGFIX_CUES = "'hotfix', 'fix', 'bug', 'patch', 'correction', 'bugfix', 'fix bug', 'defect', 'issue fix', 'resolve', 'workaround', 'regression fix', 'typo fix', 'debug', 'fixed', 'fixes'";
 export const DECISION_CUES = "'decision', 'agreement', 'approval'";
-export const SECURITY_CUES = "'password', 'security', 'permission', 'vulnerability'";
+export const SECURITY_CUES = "'password', 'security', 'permission', 'vulnerability', 'authentication', 'authorization', 'CVE', 'XSS', 'CSRF', 'SQL injection', 'encryption', 'token', 'OAuth', 'SSO', 'audit', 'access control', 'secret', 'credential', 'security patch', 'CWE'";
 export const REFACOR_CUES = "'refactor', 'optimization', 'query'";
 export const Q_A_CUES = "'can we', 'please confirm', 'question'";
 export const ANNOUNCEMENT_CUES = "'<!channel>', 'announcement', 'notice'";

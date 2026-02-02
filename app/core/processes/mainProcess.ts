@@ -26,7 +26,7 @@ import {
     createTopicsSection,
 } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
-import { createChatroomHighlightMetaJson, createGithubHighlightMetaJson, generatePeriodKey } from "./lib/utils";
+import { computeTopUserActivity, createChatroomHighlightMetaJson, createGithubHighlightMetaJson, generatePeriodKey } from "./lib/utils";
 import { convertToHTML, convertToHTMLOnlyKpi, createFinalContents, divideContents } from "./reporting-data";
 
 /**
@@ -140,6 +140,16 @@ export async function analyzeData(
 
     // 2-2. slack data를 기반으로 topic clustering을 생성
     const topicsTemp = await topicClustering(linkedData, language, input.source, input.range);
+    const topUserActivity = computeTopUserActivity(kpiInfo, linkedData, messageIndexById, language);
+    if (topicsTemp.activityMeta.length > 0) {
+        topicsTemp.activityMeta[0].topUserActivity = topUserActivity;
+    } else {
+        topicsTemp.activityMeta.push({
+            range: input.range ?? "",
+            activities: [],
+            topUserActivity,
+        });
+    }
     await saveHighlight(adminClient, {
         workspaceId: input.workspaceId,
         targetId: input.targetId,

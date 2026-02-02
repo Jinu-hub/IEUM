@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CFG_RANKER, IMPACT_MAP, type ImpactKey } from "../../lib/constants";
-import type { ChatroomHighlightMetaJson, GithubHighlightMetaJson, KpiSnapshot, LinkedActivityDoc, LinkedItem, RankedHighlight } from "../../lib/types";
+import type { ChatroomHighlightMetaJson, GithubHighlightMetaJson, KpiSnapshot, LinkedActivityDoc, LinkedItem, RankedHighlight, TopUserActivity, TopUserActivityItem } from "../../lib/types";
 import { Cluster } from "../../openai/models";
 import { KIND_OF_COMMITS, KIND_OF_COMMITS_MAP, type KindOfCommit } from "./constants";
 
@@ -207,6 +207,66 @@ export function getFunCornerLeaderboardData(linkedData: LinkedActivityDoc, kpiDa
     return { topCommitUserEntry, topReactionGiverEntry, topReactionsReceivedEntry, mostMessagesUser };
 }
 
+const DEFAULT_TOP_USER_ITEM: TopUserActivityItem = { name: "", nums: 0 };
+
+/**
+ * Compute top user per contribution kind (no mapping: GitHub = TopDeveloper/BugHunter, Slack = ChatChamp/ReactionChamp).
+ * Each entry is { name, nums } where nums is the single metric for that badge.
+ */
+export function computeTopUserActivity(
+    kpiInfo: KpiSnapshot,
+    linkedData: LinkedActivityDoc,
+    messageIndexById: Record<string, LinkedItem> | undefined,
+    language: "en" | "ko" | "ja",
+): TopUserActivity {
+    const toItem = (name: string, nums: number): TopUserActivityItem => ({ name, nums });
+
+    // GitHub: TopDeveloper (most commits), BugHunter (most Bugfix+Incident)
+    const perUser = kpiInfo?.perUser ?? [];
+    const bugfixIncidentByUser = new Map<string, number>();
+    for (const u of perUser) {
+        const name = u.user ?? "";
+        let count = 0;
+        for (const caseText of u.cases ?? []) {
+            const kind = classifyCaseToKind(caseText, language);
+            if (kind === "Bugfix" || kind === "Incident") count += 1;
+        }
+        bugfixIncidentByUser.set(name, count);
+    }
+    const topDeveloper = perUser.length
+        ? perUser.reduce((a, b) => ((a.commits ?? 0) >= (b.commits ?? 0) ? a : b))
+        : null;
+    const topBugHunter = perUser.length
+        ? perUser.reduce((a, b) => {
+            const aN = bugfixIncidentByUser.get(a.user ?? "") ?? 0;
+            const bN = bugfixIncidentByUser.get(b.user ?? "") ?? 0;
+            return aN >= bN ? a : b;
+        })
+        : null;
+
+    // Slack: ChatChamp (most messages), ReactionChamp (most reactions given)
+    const memberDataWithMessages = prepareMemberDataWithMessages(linkedData, messageIndexById);
+    const slackEntries = Object.entries(memberDataWithMessages).map(([memberId, data]: [string, any]) => ({
+        name: data.displayName ?? "",
+        messages: (data.messages as unknown[] | undefined)?.length ?? 0,
+        reactions: data.reactionsGiven ?? 0,
+    }));
+    const topChatChamp = slackEntries.length
+        ? slackEntries.reduce((a, b) => (a.messages >= b.messages ? a : b))
+        : null;
+    const topReactionChamp = slackEntries.length
+        ? slackEntries.reduce((a, b) => (a.reactions >= b.reactions ? a : b))
+        : null;
+
+    const result: TopUserActivity = [
+        { TopDeveloper: topDeveloper ? toItem(topDeveloper.user ?? "", topDeveloper.commits ?? 0) : DEFAULT_TOP_USER_ITEM },
+        { BugHunter: topBugHunter ? toItem(topBugHunter.user ?? "", bugfixIncidentByUser.get(topBugHunter.user ?? "") ?? 0) : DEFAULT_TOP_USER_ITEM },
+        { ChatChamp: topChatChamp ? toItem(topChatChamp.name, topChatChamp.messages) : DEFAULT_TOP_USER_ITEM },
+        { ReactionChamp: topReactionChamp ? toItem(topReactionChamp.name, topReactionChamp.reactions) : DEFAULT_TOP_USER_ITEM },
+    ];
+    return result;
+}
+
 /** キーワード文字列からシングルクォートで囲まれたパターンを取り出す */
 function parseKeywordPatterns(keywordStr: string): string[] {
     if (!keywordStr?.trim()) return [];
@@ -229,8 +289,8 @@ function textMatchesKeywordString(text: string, keywordStr: string): boolean {
 }
 
 /**
- * perUser.cases の1件を kind に分類（
- * Incident → Release → Bugfix → Security → Refactor、どれにも当たらなければ Feature）
+ * perUser.cases의 1건을 kind 로 분류
+ * Incident → Release → Bugfix → Security → Refactor, 모두 해당하지 않으면 Feature
  * @param caseText 
  * @param language 
  * @returns 
@@ -289,7 +349,7 @@ export function createGithubHighlightMetaJson(kpiData: KpiSnapshot, range: strin
         });
     }
 
-    // perUser の全 cases を kind 別に集計（ユーザ別ではなく全体でカウント）
+    // perUser 의 cases 를 kind 별로 집계 (사용자별이 아닌 전체에서 카운트)
     const allCases = (kpiData?.perUser ?? []).flatMap((u) => u.cases ?? []);
     const countsByKind: Record<KindOfCommit, number> = {
         Incident: 0,

@@ -84,7 +84,7 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
                 });
             }
 
-            // 케이스별 집계
+            // 케이스별 집계 (kind 분류용으로 첫 메시지 한 건 보관)
             const existingCase = caseMap.get(caseNo);
             if (existingCase) {
                 existingCase.commits += 1;
@@ -93,6 +93,7 @@ export async function repoKpiExtractor(githubData: Record<string, FetchedRepoDat
                     case: caseNo,
                     commits: 1,
                     repo: repoName,
+                    sampleCaseText: caseName,
                 });
             }
         }
