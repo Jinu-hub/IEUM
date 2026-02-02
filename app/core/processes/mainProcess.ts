@@ -351,17 +351,19 @@ export async function generateFinalContents(input: CreateContentsInput, mergedCo
 export async function generateContents(input: CreateContentsInput) {
 
     if (input.runStepId) {
-        await updateNewsletterRunStep(adminClient, { 
+        await updateNewsletterRunStep(adminClient, {
             runStepId: input.runStepId,
             step: 'summarize_data',
         });
     }
 
+    const summarizeDataStart = Date.now();
     // 1. 데이터 정규화 & 중복 제거(Normalize & Deduplicate)
     let { linkedData, messageIndexById } = await normalizeData(input);
 
     // 2. 데이터 분석 & 개선 & 요약(Analyze & Improve & Summarize)
     let { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData, messageIndexById);
+    const summarizeDataMs = Date.now() - summarizeDataStart;
  /*
     await saveContentToFile(linkedData, 'output-test/first', '1_linked_', 'json');
     await saveContentToFile(topics, 'output-test/first', '2_topics_', 'json');
@@ -371,13 +373,19 @@ export async function generateContents(input: CreateContentsInput) {
 */
 
     if (input.runStepId) {
-        await updateNewsletterRunStep(adminClient, { 
+        const processTimeJson: Record<string, number> = { summarize_data_ms: summarizeDataMs };
+        if (input.runStartedAt != null) {
+            processTimeJson.collect_data_ms = Date.now() - input.runStartedAt;
+        }
+        await updateNewsletterRunStep(adminClient, {
             runStepId: input.runStepId,
             step: 'assemble_data',
+            processTimeJson,
         });
     }
+    const assembleDataStart = Date.now();
     // 3. 각 섹션 초안 생성(Drafting Sections)
-    let { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } = 
+    let { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } =
         await draftingData(input, linkedData, kpiInfo, highlights, topics, ongoing, userActivity, messageIndexById);
   /*  
     await saveContentToFile(kpiSection, 'output-test/second', '1_kpi_section_', 'md');
@@ -387,7 +395,7 @@ export async function generateContents(input: CreateContentsInput) {
     await saveContentToFile(ongoingSection, 'output-test/second', '5_ongoing_section_', 'md');
     await saveContentToFile(closingSection, 'output-test/second', '6_closing_section_', 'md');
 */
-    
+
     // 메모리 절약: 불필요해진 변수 초기화
     linkedData = null as any;
     kpiInfo = null as any;
@@ -408,19 +416,31 @@ export async function generateContents(input: CreateContentsInput) {
     ongoingSection = null as any;
     closingSection = null as any;
 
+    const assembleDataMs = Date.now() - assembleDataStart;
     if (input.runStepId) {
-        await updateNewsletterRunStep(adminClient, { 
+        await updateNewsletterRunStep(adminClient, {
             runStepId: input.runStepId,
             step: 'finalize_data',
+            processTimeJson: { assemble_data_ms: assembleDataMs },
         });
     }
     // 5. 콘텐츠 생성(Generate Contents)
+    const finalizeDataStart = Date.now();
     const finalContents = await generateFinalContents(input, mergedContents);
+    const finalizeDataMs = Date.now() - finalizeDataStart;
+    // finalize_data の所要時間を process_time_json に登録（target-processing の success 更新前に完了）
+    if (input.runStepId) {
+        await updateNewsletterRunStep(adminClient, {
+            runStepId: input.runStepId,
+            step: 'finalize_data',
+            processTimeJson: { finalize_data_ms: finalizeDataMs },
+        });
+    }
     //await saveContentToFile(finalContents, 'output-test/fourth', '1_final_contents_html_', 'html');
-    
+
     // 메모리 절약: 병합된 컨텐츠 초기화
     mergedContents = null as any;
-    
+
     return finalContents;
 
 }

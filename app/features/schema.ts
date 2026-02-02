@@ -463,6 +463,7 @@ import {
       cancelReason: text("cancel_reason"),
       canaryPercent: integer("canary_percent"),
       resumeOfRunId: uuid("resume_of_run_id"),
+      accuratedTokens: integer("accurated_tokens").notNull().default(0),
       isArchived: boolean("is_archived").notNull().default(false),
       archivedAt: timestamp("archived_at", { withTimezone: true })
     },
@@ -495,7 +496,6 @@ import {
       tryCount: integer("try_count").notNull().default(0),
       idempotencyKey: text("idempotency_key"),
       errorSummary: text("error_summary"),
-      accuratedTokens: integer("accurated_tokens").notNull().default(0),
       processTimeJson: jsonb("process_time_json").notNull().default(sql`'{}'::jsonb`),
       logRef: uuid("log_ref").references(() => runLogs.runLogId, { onDelete: "set null" }),
     },

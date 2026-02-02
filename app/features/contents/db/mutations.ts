@@ -150,15 +150,33 @@ export const updateNewsletterRunError = async (client: SupabaseClient<Database>,
     }
 }
 
-export const updateNewsletterRunStep = async (client: SupabaseClient<Database>, 
-    { runStepId, step }: 
-    { runStepId: string, step: string }) => {
+export const updateNewsletterRunStep = async (client: SupabaseClient<Database>,
+    { runStepId, step, processTimeJson }: {
+        runStepId: string;
+        step: string;
+        /** Optional: merge these keys (e.g. { summarize_data_ms: 1234 }) into process_time_json */
+        processTimeJson?: Record<string, number>;
+    }) => {
     try {
+        const updatePayload: { step: Database["public"]["Enums"]["step_name"]; process_time_json?: Database["public"]["Tables"]["newsletter_run_steps"]["Row"]["process_time_json"] } = {
+            step: step as Database["public"]["Enums"]["step_name"],
+        };
+        if (processTimeJson != null && Object.keys(processTimeJson).length > 0) {
+            const { data: current, error: selectError } = await client
+                .from('newsletter_run_steps')
+                .select('process_time_json')
+                .eq('run_step_id', runStepId)
+                .single();
+            if (selectError) {
+                console.error('updateNewsletterRunStep select error', selectError);
+                throw selectError;
+            }
+            const existing = (current?.process_time_json as Record<string, number> | null) ?? {};
+            updatePayload.process_time_json = { ...existing, ...processTimeJson } as Database["public"]["Tables"]["newsletter_run_steps"]["Row"]["process_time_json"];
+        }
         const { data: runSteps, error } = await client
             .from('newsletter_run_steps')
-            .update({
-                step: step as Database["public"]["Enums"]["step_name"],
-            })
+            .update(updatePayload)
             .eq('run_step_id', runStepId)
             .select().single();
         if (error) {
@@ -326,7 +344,7 @@ export const initializeUsageCounterForEmail = async (
                     period_end: periodEnd.toISOString(),
                     process_count: 1,
                     email_sent_count: 0,
-                    estimated_tokens: 0,
+                    accurated_token_count: 0,
                 })
                 .select()
                 .single();

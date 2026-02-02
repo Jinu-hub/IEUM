@@ -28,6 +28,8 @@ export type CreateContentsInput = {
   timezone?: string;
   enableCreateContents?: EnableCreateContents;
   accuratedTokens?: number;
+  /** run を running にした時刻 (Date.now())。collect_data_ms 算出用 */
+  runStartedAt?: number;
 };
 
 /** 파이프라인 공용 루트 문서 */

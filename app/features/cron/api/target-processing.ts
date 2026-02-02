@@ -7,12 +7,12 @@ import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import type { CreateContentsInput } from "~/core/lib/types";
 import { incrementUsageCounter, updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
+import { createContents } from "~/features/cron/api/create-contents";
+import { sendMails } from "~/features/cron/api/send-mails";
 import { getIntegrationsInfo, getTargetSources, getUserSubscriptionPlanType } from "~/features/settings/db/queries";
 import { getWorkspaceOwnerUserId } from "~/features/users/queries";
-import { createContents } from "./create-contents";
 import { fetchIntegrationData } from "./integration-fetching";
 import { checkEmailLimit } from "./limit-checking";
-import { sendMails } from "./send-mails";
 import { matchSourcesToIntegrations } from "./source-matching";
 import type { FetchedData, Target } from "./types";
 
@@ -35,7 +35,8 @@ export function createContentsInput(
   target: Target,
   runMapping: { runId: string; runStepId: string },
   fetchedData: FetchedData,
-  dateRange: { startDate: Date; endDate: Date; range: string }
+  dateRange: { startDate: Date; endDate: Date; range: string },
+  runStartedAt?: number
 ): CreateContentsInput {
   return {
     githubResult: fetchedData.githubResult || null,
@@ -53,7 +54,8 @@ export function createContentsInput(
     language: target.language,
     source: "slack",
     timezone: target.timezone,
-    enableCreateContents: fetchedData.enableCreateContents
+    enableCreateContents: fetchedData.enableCreateContents,
+    runStartedAt,
   };
 }
 
@@ -96,12 +98,13 @@ export async function processTarget(
       return;
     }
 
-    await updateNewsletterRun(adminClient, { 
-      runId: runMapping.runId, 
+    const runStartedAt = Date.now();
+    await updateNewsletterRun(adminClient, {
+      runId: runMapping.runId,
       runStepId: runMapping.runStepId,
-      status: 'running', 
-      step: 'collect_data', 
-      metricsJson: {} 
+      status: 'running',
+      step: 'collect_data',
+      metricsJson: {}
     });
     // 통합 정보 조회
     const integrationsInfo = await getIntegrationsInfo(adminClient, { workspaceId: target.workspace_id });
@@ -148,12 +151,13 @@ export async function processTarget(
 
     // 데이터 페칭
     const fetchedData = await fetchIntegrationData(integrationsInfo, matchedSources);
+   // await saveContentToFile(fetchedData, 'output-test', 'fetched_data_', 'json');
 
     // 날짜 범위 생성
     const dateRange = createDateRange();
 
-    // CreateContentsInput 생성
-    const input = createContentsInput(target, runMapping, fetchedData, dateRange);
+    // CreateContentsInput 생성 (running 시점 전달 → mainProcess에서 collect_data_ms 등록)
+    const input = createContentsInput(target, runMapping, fetchedData, dateRange, runStartedAt);
 
     // 컨텐츠 생성
     const content = await createContents(input);

@@ -621,7 +621,6 @@ export type Database = {
       }
       newsletter_run_steps: {
         Row: {
-          accurated_tokens: number
           error_summary: string | null
           finished_at: string | null
           idempotency_key: string | null
@@ -636,7 +635,6 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
-          accurated_tokens?: number
           error_summary?: string | null
           finished_at?: string | null
           idempotency_key?: string | null
@@ -651,7 +649,6 @@ export type Database = {
           workspace_id: string
         }
         Update: {
-          accurated_tokens?: number
           error_summary?: string | null
           finished_at?: string | null
           idempotency_key?: string | null
@@ -691,6 +688,7 @@ export type Database = {
       }
       newsletter_runs: {
         Row: {
+          accurated_tokens: number
           archived_at: string | null
           canary_percent: number | null
           cancel_reason: string | null
@@ -707,6 +705,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          accurated_tokens?: number
           archived_at?: string | null
           canary_percent?: number | null
           cancel_reason?: string | null
@@ -723,6 +722,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          accurated_tokens?: number
           archived_at?: string | null
           canary_percent?: number | null
           cancel_reason?: string | null
