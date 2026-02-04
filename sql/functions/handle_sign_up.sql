@@ -103,11 +103,11 @@ BEGIN
     VALUES (
         new.id,
         'trial',
-        'active',
+        'trialing',
         'experiment',
         NOW(),
         NULL,
-        NULL,
+        (NOW() + INTERVAL '1 month'),
         NULL,
         NOW(),
         NOW()

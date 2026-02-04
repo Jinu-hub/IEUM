@@ -32,6 +32,10 @@ import { Label } from "~/core/components/ui/label";
 import makeServerClient from "~/core/lib/supa-client.server";
 
 import { useTranslation } from "react-i18next";
+import {
+  ensurePaymentTestState,
+  PAYMENT_TEST_EMAIL,
+} from "~/features/payments/lib/ensure-payment-test-state.server";
 import { getWorkspace } from "~/features/settings/db/queries";
 import FormErrors from "../../../core/components/form-error";
 import { SignInButtons } from "../components/auth-login-buttons";
@@ -104,6 +108,10 @@ export async function action({ request }: Route.ActionArgs) {
   // Return error if authentication fails
   if (signInError) {
     return data({ error: signInError.message }, { status: 400 });
+  }
+
+  if (validData.email === PAYMENT_TEST_EMAIL) {
+    await ensurePaymentTestState(signInData.user.id);
   }
 
   const workspaceData = await getWorkspace(client, { userId: signInData.user.id });

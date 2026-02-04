@@ -91,8 +91,9 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
   const billingCurrency = (subscription?.billing_currency ?? null) as Currency | null;
   const paidAmount = subscription?.payments?.total_amount ?? null;
 
-  const isTrialing = status === "trialing";
   const isPaidPlan = mode === "paid";
+  const isTrialing = status === "trialing";
+  const isFreePlan = mode === "free";
   const isActive = status === "active";
   const isExpired = status === "expired";
   const isCanceled = status === "canceled";
@@ -208,12 +209,14 @@ export default function PlanSection({ subscription }: PlanSectionProps) {
             {t("comparePlans")}
           </NexButton>
         </Link>
-        <Link to="/dashboard/payments" className="flex-1">
-          <NexButton variant="secondary" size="md" className="w-full cursor-pointer">
-            {t("managePayments")}
-          </NexButton>
-        </Link>
-        {isActive && (
+        {!isTrialing && !isFreePlan && (
+          <Link to="/dashboard/payments" className="flex-1">
+            <NexButton variant="secondary" size="md" className="w-full cursor-pointer">
+              {t("managePayments")}
+            </NexButton>
+          </Link>
+        )}
+        {isActive && isPaidPlan && (
           <div className="flex-1">
             <NexButton
               variant="secondary"

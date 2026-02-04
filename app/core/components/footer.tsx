@@ -43,7 +43,7 @@ export default function Footer() {
   // Company information - language dependent
   const companyInfo = i18n.language === "ko"
     ? [
-        "링크버스(LinkVerse) | 사업자번호 844-64-00886 | 통신판매업 제2025-부산수영-0058호 | 대표: 송진우",
+        "링크버스(LinkVerse) | 사업자번호 844-64-00886 | 통신판매업 제2026-부산수영-0064호 | 대표: 송진우",
         "부산 수영구 남천바다로21번길 69-5 | 문의: jinu30dev@gmail.com (010-6454-8896)"
       ]
     : undefined;

@@ -113,14 +113,14 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Format price based on currency
+  // Format price based on currency (USD: 2 decimals, others: integer)
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat(
       getCurrencyLocale(loaderData.currency),
       {
         style: "currency",
         currency: loaderData.currency,
-        maximumFractionDigits: 0,
+        maximumFractionDigits: loaderData.currency === "USD" ? 2 : 0,
       }
     ).format(amount);
   };
@@ -137,7 +137,8 @@ export default function CheckoutBillingToss({ loaderData }: Route.ComponentProps
   // Calculate monthly price for yearly plans (for display)
   const monthlyEquivalent = useMemo(() => {
     if (loaderData.interval === "yearly") {
-      return formatPrice(Math.round(loaderData.yearlyPrice / 12));
+      const monthly = loaderData.yearlyPrice / 12;
+      return formatPrice(loaderData.currency === "USD" ? monthly : Math.round(monthly));
     }
     return null;
   }, [loaderData.yearlyPrice, loaderData.interval, loaderData.currency]);
