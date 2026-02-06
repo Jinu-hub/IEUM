@@ -7,9 +7,12 @@ export const SCOPES = [
   "channels:join","users:read.email","chat:write"
 ].join(",");
 
-export const USER_SCOPES = [
-  "identity.basic","identity.email","identity.team"
-].join(",");
+/**
+ * Slack 권고: identity.* 레거시 스코프 대신 OpenID 스코프 사용
+ * @see https://api.slack.com/authentication/sign-in-with-slack#migrate
+ * - identity.basic → openid (연결 화면 복귀용으로 최소만 사용)
+ */
+export const USER_SCOPES = ["openid"].join(",");
 
 // 서버 사이드에서만 사용되는 환경변수들
 export const SLACK_CLIENT_ID = typeof process !== 'undefined' ? process.env.SLACK_CLIENT_ID! : '';
