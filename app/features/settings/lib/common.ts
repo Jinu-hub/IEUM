@@ -27,7 +27,7 @@ export function transformSlackChannelsToSources(channels: SlackChannel[]): Sourc
     .map(channel => ({
       id: channel.id,
       name: `#${channel.name}`,
-      description: channel.topic?.value || channel.purpose?.value || (channel.is_private ? '비공개 채널' : '공개 채널'),
+      description: channel.topic?.value || channel.purpose?.value || (channel.is_private ? 'Private' : 'Public'),
       variant: 'success' as const,
     }));
 }

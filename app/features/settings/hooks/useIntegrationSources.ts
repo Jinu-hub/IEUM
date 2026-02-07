@@ -37,7 +37,7 @@ export function useIntegrationSources(integrations: any[]) {
         .map((ch: any) => ({
           id: ch.id,
           name: `#${ch.name}`,
-          description: ch.is_private ? '비공개 채널' : '공개 채널',
+          description: ch.is_private ? 'Private' : 'Public',
           variant: 'success' as const,
         }));
     }
