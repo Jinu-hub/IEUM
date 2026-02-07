@@ -83,6 +83,7 @@ export default {
       // to ensure correct language and authentication state for each user
       "/pricing", // Pricing page
       "/about", // About page
+      "/how-it-works", // Slack app landing (How it works)
       "/faq", // FAQ page
       "/contact", // Contact page
 

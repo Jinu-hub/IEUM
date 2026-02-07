@@ -111,6 +111,11 @@ export async function loader() {
       priority: 0.7,
     },
     {
+      loc: "/how-it-works",
+      changefreq: "monthly",
+      priority: 0.8,
+    },
+    {
       loc: "/faq",
       changefreq: "monthly",
       priority: 0.6,

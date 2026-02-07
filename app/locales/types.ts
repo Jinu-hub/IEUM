@@ -1523,6 +1523,62 @@ export type Translation = {
       description: string;
     };
   };
+  howItWorks: {
+    meta: { title: string; description: string };
+    hero: {
+      title: string;
+      subtitle: string;
+      description: string;
+      primaryButton: string;
+      secondaryButton: string;
+    };
+    steps: {
+      badge: string;
+      title: string;
+      description: string;
+      items: {
+        connect: { step: string; title: string; description: string; detail: string };
+        configure: { step: string; title: string; description: string; detail: string };
+        generate: { step: string; title: string; description: string; detail: string };
+        share: { step: string; title: string; description: string; detail: string };
+      };
+    };
+    integrations: {
+      badge: string;
+      title: string;
+      description: string;
+      slack: { title: string; description: string; features: string[] };
+      github: { title: string; description: string; features: string[] };
+    };
+    slackSetup: {
+      badge: string;
+      title: string;
+      description: string;
+      features: {
+        workspace: { title: string; description: string };
+        channels: { title: string; description: string };
+        readonly: { title: string; description: string };
+      };
+      connectionTitle: string;
+      connectionDescription: string;
+      steps: string[];
+      note: string;
+    };
+    legal: {
+      badge: string;
+      title: string;
+      support: { title: string; description: string; contact: string };
+      privacy: { title: string; description: string; link: string };
+    };
+    cta: {
+      badge: string;
+      title: string;
+      description: string;
+      startButton: string;
+      aboutButton: string;
+      samplesButton: string;
+    };
+  };
   footer: {
     brand: {
       description: string;
@@ -1532,6 +1588,7 @@ export type Translation = {
         title: string;
         items: {
           samples: string;
+          howItWorks: string;
           pricing: string;
           sitemap: string;
           sitemapTooltip: string;

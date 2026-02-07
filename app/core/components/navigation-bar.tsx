@@ -274,6 +274,13 @@ export function NavigationBar({
           */}
           {/* reloadDocument ensures proper locale and auth state for prerendered pages */}
           <Link
+            to="/how-it-works"
+            reloadDocument
+            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+          >
+            {t("footer.links.product.items.howItWorks")}
+          </Link>
+          <Link
             to="/about"
             reloadDocument
             className="text-muted-foreground hover:text-foreground text-sm transition-colors"

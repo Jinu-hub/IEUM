@@ -1566,6 +1566,127 @@ const ko: Translation = {
       description: "NexLetter 설정이 완료되었습니다. 첫 번째 뉴스레터가 성공적으로 발송되었습니다.  <br />다음 메일은 {{schedule}} 에 자동으로 발송됩니다.",
     },
   },
+  howItWorks: {
+    meta: {
+      title: "이용 방법 | NexLetter",
+      description: "NexLetter 이용 방법: 인테그레이션 연결, 타겟 설정, 뉴스레터 생성, 팀과 공유.",
+    },
+    hero: {
+      title: "NexLetter 이용 방법",
+      subtitle: "연결 → 설정 → 생성 → 공유",
+      description: "NexLetter는 Slack, GitHub 등 연결된 도구에서 활동 데이터를 수집하여 주간 뉴스레터를 자동 생성·발송합니다. 4가지 간단한 단계로 시작하세요.",
+      primaryButton: "시작하기",
+      secondaryButton: "샘플 보기",
+    },
+    steps: {
+      badge: "4단계",
+      title: "4단계로 NexLetter 사용하기",
+      description: "연결 → 설정 → 생성 → 공유. 한 번 설정하면 모든 것이 자동화됩니다.",
+      items: {
+        connect: {
+          step: "01",
+          title: "연결",
+          description: "Slack 워크스페이스와 GitHub 리포지토리를 NexLetter에 연결합니다. 활동 데이터 수집이 자동으로 시작됩니다.",
+          detail: "NexLetter는 OAuth를 사용하여 안전한 읽기 전용 접근을 합니다. 승인한 데이터만 수집됩니다.",
+        },
+        configure: {
+          step: "02",
+          title: "설정",
+          description: "대상 채널과 리포지토리를 선택하고, 메일링 리스트를 설정하고, 발송 일정을 구성합니다.",
+          detail: "특정 데이터 소스로 타겟을 세밀하게 조정하고, 뉴스레터 발송 시점을 선택할 수 있습니다.",
+        },
+        generate: {
+          step: "03",
+          title: "생성",
+          description: "AI가 수집한 메시지, 커밋, 활동을 분석하여 하이라이트, KPI, 읽기 쉬운 다이제스트를 만듭니다.",
+          detail: "NexLetter AI 엔진이 토픽을 클러스터링하고 핵심 순간을 추출하여 팀의 주간 스토리를 구축합니다.",
+        },
+        share: {
+          step: "04",
+          title: "공유",
+          description: "아름답게 포맷된 뉴스레터가 이메일로 구독자에게 자동 발송됩니다.",
+          detail: "한 번 설정하면 일정에 따라 뉴스레터가 발송됩니다. 수동 작업이 필요 없습니다.",
+        },
+      },
+    },
+    integrations: {
+      badge: "인테그레이션",
+      title: "지원 인테그레이션",
+      description: "NexLetter는 연결된 도구에서 활동 데이터를 수집합니다. 현재 Slack과 GitHub을 지원합니다.",
+      slack: {
+        title: "Slack",
+        description: "Slack 워크스페이스에서 팀 대화, 토론, 활동을 수집·분석합니다.",
+        features: [
+          "OAuth를 통한 Slack 워크스페이스 연결",
+          "분석 대상 특정 채널 선택",
+          "메시지 기록에 대한 읽기 전용 접근",
+          "스레드 및 리액션 분석",
+          "팀 커뮤니케이션 패턴 파악",
+        ],
+      },
+      github: {
+        title: "GitHub",
+        description: "리포지토리에서 커밋, 풀 리퀘스트, 이슈 등 개발 활동을 추적합니다.",
+        features: [
+          "GitHub App 설치로 연결",
+          "모니터링할 리포지토리 선택",
+          "커밋 및 PR 활동 추적",
+          "이슈 상태 변경 추적",
+          "개발자 기여 분석",
+        ],
+      },
+    },
+    slackSetup: {
+      badge: "Slack 데이터 소스",
+      title: "Slack 데이터 소스 사용 방법",
+      description: "NexLetter는 선택한 채널에서 활동을 수집하기 위해 Slack 워크스페이스에 연결합니다.",
+      features: {
+        workspace: {
+          title: "워크스페이스 연결",
+          description: "최소한의 OAuth 권한으로 NexLetter가 Slack 워크스페이스에 접근할 수 있도록 승인합니다.",
+        },
+        channels: {
+          title: "분석 채널 선택",
+          description: "뉴스레터에 포함할 채널을 선택합니다. 선택된 채널만 모니터링됩니다.",
+        },
+        readonly: {
+          title: "읽기 전용 접근",
+          description: "NexLetter는 승인된 채널의 메시지만 읽습니다. 게시, 수정, 삭제는 일절 하지 않습니다.",
+        },
+      },
+      connectionTitle: "Slack 연결 방법",
+      connectionDescription: "Slack 설치는 로그인 후 이용 가능합니다. 다음 단계를 따라 연결하세요.",
+      steps: [
+        "NexLetter에 로그인",
+        "설정 → 인테그레이션으로 이동",
+        "\"Slack 연결\" 클릭",
+        "Slack 워크스페이스에서 앱 승인",
+      ],
+      note: "Slack 설치는 NexLetter에 로그인한 후 이용 가능합니다.",
+    },
+    legal: {
+      badge: "지원·개인정보",
+      title: "지원 및 개인정보",
+      support: {
+        title: "지원",
+        description: "문의사항이 있으시면 지원팀으로 연락해 주세요. 영업일 기준 2일 이내에 답변드립니다.",
+        contact: "문의하기",
+      },
+      privacy: {
+        title: "개인정보 처리방침",
+        description: "뉴스레터 운영에 필요한 범위(예: 승인한 채널의 메시지)만 수집합니다. 보존 기간, 접근, 삭제 방법은 개인정보 처리방침에 안내합니다.",
+        link: "개인정보 처리방침",
+      },
+    },
+    cta: {
+      badge: "시작하기",
+      title: "팀 뉴스레터를 자동화할 준비가 되셨나요?",
+      description: "지금 바로 NexLetter를 체험하세요. NexLetter가 존재하는 이유와 철학에 대해 더 알아보려면 About Us를 방문하세요.",
+      startButton: "시작하기",
+      aboutButton: "About Us",
+      samplesButton: "샘플 보기",
+    },
+  },
   footer: {
     brand: {
       description: "팀 작업을 위한 스마트한 뉴스레터 시스템. Slack채널, GitHub레포지토리를 통합하여 팀의 주간 활동을 자동으로 정리하고 공유합니다.",
@@ -1575,6 +1696,7 @@ const ko: Translation = {
         title: "제품",
         items: {
           samples: "샘플",
+          howItWorks: "이용 방법",
           pricing: "가격",
           sitemap: "사이트맵",
           sitemapTooltip: "추후공개예정",

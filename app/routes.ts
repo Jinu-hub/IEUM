@@ -82,6 +82,7 @@ export default [
     route("/pricing", "features/home/screens/pricing.tsx"),
     route("/faq", "features/home/screens/faq.tsx"),
     route("/about", "features/home/screens/about.tsx"),
+    route("/how-it-works", "features/home/screens/how-it-works.tsx"),
     layout("core/layouts/public.layout.tsx", [
       // Routes that should only be visible to unauthenticated users.
       route("/login", "features/auth/screens/login.tsx"),

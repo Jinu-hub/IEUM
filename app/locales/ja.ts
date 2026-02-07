@@ -1568,6 +1568,127 @@ const ja: Translation = {
       description: "NexLetterのセットアップが完了しました。最初のニュースレターが正常に送信されました。 <br />次回のメールは{{schedule}}に自動送信されます。",
     },
   },
+  howItWorks: {
+    meta: {
+      title: "使い方 | NexLetter",
+      description: "NexLetterの使い方：インテグレーション接続、ターゲット設定、ニュースレター生成、チームへの共有。",
+    },
+    hero: {
+      title: "NexLetterの使い方",
+      subtitle: "接続 → 設定 → 生成 → 共有",
+      description: "NexLetterはSlackやGitHubなどの連携ツールからアクティビティデータを収集し、週次ニュースレターを自動生成・配信します。4つのシンプルなステップで始められます。",
+      primaryButton: "はじめる",
+      secondaryButton: "サンプルを見る",
+    },
+    steps: {
+      badge: "4つのステップ",
+      title: "4ステップでNexLetterを使う",
+      description: "接続 → 設定 → 生成 → 共有。一度セットアップすれば、すべて自動化されます。",
+      items: {
+        connect: {
+          step: "01",
+          title: "接続",
+          description: "SlackワークスペースとGitHubリポジトリをNexLetterに接続します。アクティビティデータの収集が自動的に始まります。",
+          detail: "NexLetterはOAuthを使用して安全な読み取り専用アクセスを行います。承認したデータのみ収集されます。",
+        },
+        configure: {
+          step: "02",
+          title: "設定",
+          description: "対象チャンネルやリポジトリを選択し、メーリングリストを設定し、配信スケジュールを構成します。",
+          detail: "特定のデータソースでターゲットを微調整し、ニュースレターの送信タイミングを選択できます。",
+        },
+        generate: {
+          step: "03",
+          title: "生成",
+          description: "AIが収集したメッセージ、コミット、アクティビティを分析し、ハイライト、KPI、読みやすいダイジェストを作成します。",
+          detail: "NexLetter AIエンジンがトピックをクラスタリングし、重要な瞬間を抽出して、チームの週次ストーリーを構築します。",
+        },
+        share: {
+          step: "04",
+          title: "共有",
+          description: "美しくフォーマットされたニュースレターがメールで購読者に自動配信されます。",
+          detail: "一度設定すれば、スケジュール通りにニュースレターが送信されます。手動作業は不要です。",
+        },
+      },
+    },
+    integrations: {
+      badge: "インテグレーション",
+      title: "対応インテグレーション",
+      description: "NexLetterは連携ツールからアクティビティデータを収集します。現在、SlackとGitHubに対応しています。",
+      slack: {
+        title: "Slack",
+        description: "Slackワークスペースからチームの会話、ディスカッション、アクティビティを収集・分析します。",
+        features: [
+          "OAuth経由でSlackワークスペースを接続",
+          "分析対象の特定チャンネルを選択",
+          "メッセージ履歴への読み取り専用アクセス",
+          "スレッドとリアクションの分析",
+          "チームのコミュニケーションパターンの把握",
+        ],
+      },
+      github: {
+        title: "GitHub",
+        description: "リポジトリからコミット、プルリクエスト、イシューなどの開発アクティビティを追跡します。",
+        features: [
+          "GitHub Appインストールで接続",
+          "監視対象のリポジトリを選択",
+          "コミットとPRアクティビティの追跡",
+          "イシューステータス変更の追跡",
+          "開発者コントリビューションの分析",
+        ],
+      },
+    },
+    slackSetup: {
+      badge: "Slackデータソース",
+      title: "Slackデータソースの使い方",
+      description: "NexLetterは選択したチャンネルから活動を収集するため、Slackワークスペースに接続します。",
+      features: {
+        workspace: {
+          title: "ワークスペースを接続",
+          description: "最小限のOAuth権限でNexLetterがSlackワークスペースにアクセスすることを許可します。",
+        },
+        channels: {
+          title: "分析チャンネルを選択",
+          description: "ニュースレターに含めるチャンネルを選択します。選択されたチャンネルのみ監視されます。",
+        },
+        readonly: {
+          title: "読み取り専用アクセス",
+          description: "NexLetterは承認されたチャンネルのメッセージのみ読み取ります。投稿、変更、削除は一切行いません。",
+        },
+      },
+      connectionTitle: "Slackの接続方法",
+      connectionDescription: "Slackのインストールはサインイン後に利用可能です。以下の手順で接続してください。",
+      steps: [
+        "NexLetterにサインイン",
+        "設定 → インテグレーションに移動",
+        "「Slack接続」をクリック",
+        "Slackワークスペースでアプリを承認",
+      ],
+      note: "SlackのインストールはNexLetterにサインインした後に利用可能です。",
+    },
+    legal: {
+      badge: "サポート・プライバシー",
+      title: "サポートとプライバシー",
+      support: {
+        title: "サポート",
+        description: "ご不明点はサポートまでお問い合わせください。営業日2日以内を目安にご返答します。",
+        contact: "お問い合わせ",
+      },
+      privacy: {
+        title: "プライバシーポリシー",
+        description: "ニュースレターの配信に必要な範囲（例：承認したチャンネルのメッセージ）のみ収集します。保持期間・アクセス・削除はプライバシーポリシーに記載しています。",
+        link: "プライバシーポリシー",
+      },
+    },
+    cta: {
+      badge: "はじめる",
+      title: "チームニュースレターを自動化する準備はできましたか？",
+      description: "今すぐNexLetterを体験してください。NexLetterの存在理由や理念については「About Us」をご覧ください。",
+      startButton: "はじめる",
+      aboutButton: "About Us",
+      samplesButton: "サンプルを見る",
+    },
+  },
   footer: {
     brand: {
       description: "チーム連携のためのスマートなニュースレターシステム。SlackチャンネルとGitHubリポジトリを統合し、チームの週次活動を自動的に整理して共有します。",
@@ -1577,6 +1698,7 @@ const ja: Translation = {
         title: "製品",
         items: {
           samples: "サンプル",
+          howItWorks: "使い方",
           pricing: "価格",
           sitemap: "サイトマップ",
           sitemapTooltip: "近日公開",

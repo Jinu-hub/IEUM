@@ -87,6 +87,8 @@ We may automatically collect:
 - Feature refinement and debugging  
 - Improving AI summarization accuracy  
 
+AI-generated outputs are intended to assist understanding and may contain inaccuracies.
+
 ### 3.4. For Security & Compliance
 - Preventing unauthorized access  
 - Maintaining logs and audit trails  
@@ -105,11 +107,22 @@ Collected data is processed for:
 - Topic classification and highlight extraction  
 - Generating dashboards and reports  
 
-Some processing may be performed through external AI providers (e.g., OpenAI), which must meet strong security and privacy standards.
+NexLetter uses automated systems, including large language models (LLMs),
+to generate summaries, highlights, and analytical insights based on collected activity data.
+
+AI-generated content is provided for informational purposes only and may contain inaccuracies.
+Users are encouraged to review outputs before making decisions based on the content.
+
+Slack, GitHub, and other integration data are **not used to train AI models**.
 
 ### 4.2. Data Storage
 Data is securely stored using encrypted databases (e.g., Supabase).  
 Secrets and credentials are managed using secure vault systems.
+
+When external AI providers are used for processing, data is handled in accordance
+with strict confidentiality and security agreements.
+AI providers process data only to generate outputs for NexLetter
+and do not retain or reuse the data beyond the scope of the request.
 
 ### 4.3. Data Retention
 We retain information only for as long as necessary for:
@@ -117,6 +130,7 @@ We retain information only for as long as necessary for:
 - Legal compliance  
 - Improving product functionality  
 
+This applies equally to data processed by AI systems.
 Users may request deletion at any time.
 
 ---
@@ -128,6 +142,9 @@ We may share information only under the following cases:
 ### 5.1. With Connected Integrations
 - Slack bot replies  
 - GitHub App automated comments or statuses  
+
+NexLetter does not automatically join channels, post messages,
+or access private conversations unless explicitly configured by the user.
 
 ### 5.2. With Workspace Members
 Reports, insights, and activity data may be shared with authorized workspace members according to permission settings.

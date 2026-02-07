@@ -1567,6 +1567,127 @@ const en: Translation = {
       description: "Your NexLetter setup is complete. And your first newsletter has been sent successfully. <br />Next mail will be sent automatically at {{schedule}}.",
     },
   },
+  howItWorks: {
+    meta: {
+      title: "How it Works | NexLetter",
+      description: "Learn how NexLetter works: Connect integrations, configure targets, generate newsletters, and share with your team.",
+    },
+    hero: {
+      title: "How to Use NexLetter",
+      subtitle: "Connect → Configure → Generate → Share",
+      description: "NexLetter collects activity data from your connected tools like Slack and GitHub, then automatically generates and delivers a weekly newsletter. Follow 4 simple steps to get started.",
+      primaryButton: "Get Started",
+      secondaryButton: "View Samples",
+    },
+    steps: {
+      badge: "4 Simple Steps",
+      title: "Using NexLetter in 4 Steps",
+      description: "Connect → Configure → Generate → Share. Everything is automated once set up.",
+      items: {
+        connect: {
+          step: "01",
+          title: "Connect",
+          description: "Connect your Slack workspace and GitHub repositories to NexLetter. Activity data collection begins automatically.",
+          detail: "NexLetter uses OAuth for secure, read-only access. Only the data you approve is collected.",
+        },
+        configure: {
+          step: "02",
+          title: "Configure",
+          description: "Select the channels and repositories to include, set up mailing lists, and configure delivery schedules.",
+          detail: "Fine-tune your targets with specific data sources and choose when newsletters are sent.",
+        },
+        generate: {
+          step: "03",
+          title: "Generate",
+          description: "AI analyzes collected messages, commits, and activities to create highlights, KPIs, and a readable digest.",
+          detail: "The NexLetter AI engine clusters topics, extracts key moments, and builds your team's weekly story.",
+        },
+        share: {
+          step: "04",
+          title: "Share",
+          description: "A beautifully formatted newsletter is automatically delivered to your subscribers via email.",
+          detail: "Once configured, newsletters are sent on schedule. No manual work required.",
+        },
+      },
+    },
+    integrations: {
+      badge: "Integrations",
+      title: "Supported Integrations",
+      description: "NexLetter collects activity data from connected tools. Currently supported integrations include Slack and GitHub.",
+      slack: {
+        title: "Slack",
+        description: "Collect and analyze team conversations, discussions, and activities from your Slack workspace.",
+        features: [
+          "Connect your Slack workspace via OAuth",
+          "Select specific channels to analyze",
+          "Read-only access to message history",
+          "Thread and reaction analysis",
+          "Team communication pattern insights",
+        ],
+      },
+      github: {
+        title: "GitHub",
+        description: "Track development activity including commits, pull requests, and issues from your repositories.",
+        features: [
+          "Connect via GitHub App installation",
+          "Select repositories to monitor",
+          "Commit and PR activity tracking",
+          "Issue status change tracking",
+          "Developer contribution analysis",
+        ],
+      },
+    },
+    slackSetup: {
+      badge: "Slack as a Data Source",
+      title: "How NexLetter Uses Slack Data",
+      description: "NexLetter connects to your Slack workspace to collect activity from the channels you choose.",
+      features: {
+        workspace: {
+          title: "Connect your workspace",
+          description: "Authorize NexLetter to access your Slack workspace with minimal OAuth permissions.",
+        },
+        channels: {
+          title: "Select channels to analyze",
+          description: "Choose which channels to include in your newsletter. Only selected channels are monitored.",
+        },
+        readonly: {
+          title: "Read-only access",
+          description: "NexLetter only reads messages from approved channels. It never posts, modifies, or deletes any content.",
+        },
+      },
+      connectionTitle: "How to Connect Slack",
+      connectionDescription: "Slack installation is available after signing in. Follow these steps to connect.",
+      steps: [
+        "Sign in to NexLetter",
+        "Go to Settings → Integrations",
+        "Click \"Connect Slack\"",
+        "Authorize the app in your Slack workspace",
+      ],
+      note: "Slack installation is available after signing in to NexLetter.",
+    },
+    legal: {
+      badge: "Support & Privacy",
+      title: "Support and privacy",
+      support: {
+        title: "Get help",
+        description: "Need help or have questions? Contact our support team. We aim to respond within 2 business days.",
+        contact: "Contact support",
+      },
+      privacy: {
+        title: "Privacy policy",
+        description: "We collect only what's needed to run the newsletter (e.g. channel messages you approve). Data retention, access, and deletion are described in our privacy policy.",
+        link: "Privacy policy",
+      },
+    },
+    cta: {
+      badge: "Get Started",
+      title: "Ready to automate your team newsletter?",
+      description: "Experience NexLetter now. To learn more about why NexLetter exists and our philosophy, visit About Us.",
+      startButton: "Get Started",
+      aboutButton: "About Us",
+      samplesButton: "View Samples",
+    },
+  },
   footer: {
     brand: {
       description: "Smart newsletter system for team collaboration. Integrates Slack channels and GitHub repositories to automatically organize and share your team's weekly activities.",
@@ -1576,6 +1697,7 @@ const en: Translation = {
         title: "Product",
         items: {
           samples: "Samples",
+          howItWorks: "How it Works",
           pricing: "Pricing",
           sitemap: "Sitemap",
           sitemapTooltip: "Coming soon",

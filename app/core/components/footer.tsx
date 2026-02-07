@@ -75,9 +75,9 @@ export default function Footer() {
     {
       title: t("footer.links.product.title"),
       items: [
+        { label: t("footer.links.product.items.howItWorks"), href: "/how-it-works" },
         { label: t("footer.links.product.items.samples"), href: "/samples" },
         { label: t("footer.links.product.items.pricing"), href: "/pricing" },
-        { label: t("footer.links.product.items.sitemap"), href: "/site-map", disabled: true, tooltip: t("footer.links.product.items.sitemapTooltip") },
       ]
     },
     {
@@ -85,6 +85,7 @@ export default function Footer() {
       items: [
         { label: t("footer.links.info.items.about"), href: "/about" },
         { label: t("footer.links.info.items.blog"), href: "/blog", disabled: true, tooltip: t("footer.links.product.items.sitemapTooltip") },
+        { label: t("footer.links.product.items.sitemap"), href: "/site-map", disabled: true, tooltip: t("footer.links.product.items.sitemapTooltip") },
         //{ label: "채용", href: "/careers" },
         //{ label: "연락처", href: "/contact" },
         //{ label: "뉴스", href: "/news" }
