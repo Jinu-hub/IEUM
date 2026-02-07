@@ -174,22 +174,25 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Onboarding Banner */}
+      <div className="max-w-4xl mx-auto">
+        {/* Onboarding Banner - sticky */}
         {isOnboardingActive && currentStep === 'setup_mailing_list' && (
-          <OnboardingModeBanner
-            currentStep={currentStep}
-            workspaceId={workspaceId}
-            subProgress={
-              <MailingListSubProgress 
-                currentSubStep={currentMailingListSubStep} 
-              />
-            }
-            subProgressLabel={onboardingT('mailingListSubSteps.progressLabel', 'メールリスト設定進行状況')}
-            subProgressColor="green"
-          />
+          <div className="sticky top-0 z-10 -mx-6 px-6 pt-0 pb-4 bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E]">
+            <OnboardingModeBanner
+              currentStep={currentStep}
+              workspaceId={workspaceId}
+              subProgress={
+                <MailingListSubProgress 
+                  currentSubStep={currentMailingListSubStep} 
+                />
+              }
+              subProgressLabel={onboardingT('mailingListSubSteps.progressLabel', 'メールリスト設定進行状況')}
+              subProgressColor="green"
+            />
+          </div>
         )}
-        
+
+        <div className="space-y-8">
         {/* 헤더 섹션 */}
         <div className="flex items-start justify-between">
           <div className="space-y-2">
@@ -380,6 +383,7 @@ export default function MailListScreen( { loaderData }: Route.ComponentProps ) {
               </NexCard>
             ))
           )}
+        </div>
         </div>
       </div>
 

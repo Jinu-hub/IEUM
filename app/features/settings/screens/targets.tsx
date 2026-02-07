@@ -377,22 +377,25 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Onboarding Banner for setup_targets step */}
+      <div className="max-w-4xl mx-auto">
+        {/* Onboarding Banner - sticky */}
         {isOnboardingActive && currentStep === 'setup_targets' && (
-          <OnboardingModeBanner
-            currentStep={currentStep}
-            workspaceId={workspaceId}
-            subProgress={
-              <TargetsSubProgress 
-                currentSubStep={currentTargetsSubStep} 
-              />
-            }
-            subProgressLabel={onboardingT('targetsSubSteps.progressLabel', '타겟 설정 진행 상황')}
-            subProgressColor="purple"
-          />
+          <div className="sticky top-0 z-10 -mx-6 px-6 pt-0 pb-4 bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E]">
+            <OnboardingModeBanner
+              currentStep={currentStep}
+              workspaceId={workspaceId}
+              subProgress={
+                <TargetsSubProgress 
+                  currentSubStep={currentTargetsSubStep} 
+                />
+              }
+              subProgressLabel={onboardingT('targetsSubSteps.progressLabel', '타겟 설정 진행 상황')}
+              subProgressColor="purple"
+            />
+          </div>
         )}
-        
+
+        <div className="space-y-8">
         {/* First Mail Confirmation for first_mail_sending step */}
         {showFirstMailConfirmation && (
           <FirstMailConfirmation
@@ -690,6 +693,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
               </NexCard>
             ))
           )}
+        </div>
         </div>
       </div>
 

@@ -429,20 +429,23 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Onboarding Banner for setup_integrations step */}
+      <div className="max-w-4xl mx-auto">
+        {/* Onboarding Banner - sticky */}
         {isOnboardingActive && currentStep === 'setup_integrations' && !shouldShowStepSelection && (
-          <OnboardingModeBanner
-            currentStep={currentStep}
-            workspaceId={workspaceId}
-            subProgress={
-              <IntegrationsSubProgress currentSubStep={currentIntegrationsSubStep} />
-            }
-            subProgressLabel={onboardingT('integrationsSubSteps.progressLabel', '연동 진행 상황')}
-            subProgressColor="blue"
-          />
+          <div className="sticky top-0 z-10 -mx-6 px-6 pt-0 pb-4 bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E]">
+            <OnboardingModeBanner
+              currentStep={currentStep}
+              workspaceId={workspaceId}
+              subProgress={
+                <IntegrationsSubProgress currentSubStep={currentIntegrationsSubStep} />
+              }
+              subProgressLabel={onboardingT('integrationsSubSteps.progressLabel', '연동 진행 상황')}
+              subProgressColor="blue"
+            />
+          </div>
         )}
-        
+
+        <div className="space-y-8">
         {/* Step Selection when sub-step is 'end' */}
         {shouldShowStepSelection && (
           <IntegrationsCompleteCard
@@ -852,6 +855,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
             </div>
           </NexCardContent>
         </NexCard>
+        </div>
       </div>
     </div>
   );

@@ -485,22 +485,25 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E] p-6">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Onboarding Banner */}
+      <div className="max-w-6xl mx-auto">
+        {/* Onboarding Banner - sticky */}
         {isOnboardingActive && currentStep === 'setup_mailing_list' && (
-          <OnboardingModeBanner
-            currentStep={currentStep}
-            workspaceId={workspaceId}
-            subProgress={
-              <MailingListSubProgress 
-                currentSubStep={currentMailingListSubStep} 
-              />
-            }
-            subProgressLabel={onboardingT('mailingListSubSteps.progressLabel', 'メールリスト設定進行状況')}
-            subProgressColor="green"
-          />
+          <div className="sticky top-0 z-10 -mx-6 px-6 pt-0 pb-4 bg-gradient-to-br from-[#F8F9FA] to-[#F1F2F4] dark:from-[#0D0E10] dark:to-[#1A1B1E]">
+            <OnboardingModeBanner
+              currentStep={currentStep}
+              workspaceId={workspaceId}
+              subProgress={
+                <MailingListSubProgress 
+                  currentSubStep={currentMailingListSubStep} 
+                />
+              }
+              subProgressLabel={onboardingT('mailingListSubSteps.progressLabel', 'メールリスト設定進行状況')}
+              subProgressColor="green"
+            />
+          </div>
         )}
-        
+
+        <div className="space-y-8">
         {/* Onboarding: Go to Targets link after adding members */}
         {isOnboardingActive && currentStep === 'setup_mailing_list' && !isNew && members.length > 0 && currentMailingListSubStep === 'end' && (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-200 dark:border-green-700 rounded-lg p-4">
@@ -995,6 +998,7 @@ export default function MailListMembersScreen( { loaderData }: Route.ComponentPr
               ))}
             </>
           )}
+        </div>
         </div>
       </div>
     </div>
