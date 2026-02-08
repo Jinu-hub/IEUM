@@ -176,7 +176,7 @@ const ja: Translation = {
     kr: "韓国語",
     ja: "日本語",
     links: {
-      about: "概要",
+      about: "紹介",
       blog: "ブログ",
       faq: "FAQ",
       pricing: "価格",
@@ -1719,7 +1719,7 @@ const ja: Translation = {
       title: "チームニュースレターを自動化する準備はできましたか？",
       description: "今すぐNexLetterを体験してください。NexLetterの存在理由や理念については「About Us」をご覧ください。",
       startButton: "はじめる",
-      aboutButton: "概要",
+      aboutButton: "紹介",
       samplesButton: "セットアップフローを見る",
     },
   },
@@ -1741,7 +1741,7 @@ const ja: Translation = {
       info: {
         title: "情報",
         items: {
-          about: "概要",
+          about: "紹介",
           blog: "ブログ",
         },
       },

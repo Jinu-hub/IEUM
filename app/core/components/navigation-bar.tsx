@@ -351,6 +351,9 @@ export function NavigationBar({
           <SheetHeader>
             {/* reloadDocument ensures proper locale and auth state for prerendered pages */}
             <SheetClose asChild>
+              <Link to="/how-it-works" reloadDocument>{t("footer.links.product.items.howItWorks")}</Link>
+            </SheetClose>
+            <SheetClose asChild>
               <Link to="/about" reloadDocument>{t("navigation.links.about")}</Link>
             </SheetClose>
             <SheetClose asChild>
