@@ -1577,8 +1577,8 @@ const ja: Translation = {
       title: "NexLetterの使い方",
       subtitle: "接続 → 設定 → 生成 → 共有",
       description: "NexLetterはSlackやGitHubなどの連携ツールからアクティビティデータを収集し、週次ニュースレターを自動生成・配信します。4つのシンプルなステップで始められます。",
-      primaryButton: "はじめる",
-      secondaryButton: "サンプルを見る",
+      primaryButton: "セットアップフローを見る",
+      secondaryButton: "はじめる",
     },
     steps: {
       badge: "4つのステップ",
@@ -1680,13 +1680,47 @@ const ja: Translation = {
         link: "プライバシーポリシー",
       },
     },
+    preview: {
+      title: "セットアップフロー プレビュー",
+      description: "NexLetterのセットアップ手順をステップごとにご覧ください。",
+      slides: {
+        "1_login": {
+          title: "サインイン & ダッシュボード",
+          description: "サインイン後、オンボーディングガイドで[設定へ移動]をクリックしてセットアップを開始します。",
+        },
+        "2_connect": {
+          title: "ステップ 1. インテグレーション接続",
+          description: "設定 → インテグレーションからGitHubもしくはSlackアカウントを接続します。",
+        },
+        "3_configure": {
+          title: "ステップ 2. ターゲット設定",
+          description: "チャンネル、リポジトリ、メーリングリストを選択し、配信スケジュールを設定します。",
+        },
+        "4_finish": {
+          title: "セットアップ完了",
+          description: "最初のニュースレターの手動送信が可能です。以後は設定されたスケジュールに従って自動的に送信されます。",
+        },
+        "5_generate": {
+          title: "ステップ 3. ニュースレター生成",
+          description: "AIが収集データを分析し、チームの週次ニュースレターを自動生成します。",
+        },
+        "6_after_mail": {
+          title: "ステップ 4. ニュースレター配信",
+          description: "送信されたニュースレターは設定されたメールアドレスもしくは[コンテンツ - 送信済みメール]から確認できます。",
+        },
+        "7_analytics": {
+          title: "分析ダッシュボード",
+          description: "メール送信後に統計情報を確認できます。",
+        },
+      },
+    },
     cta: {
       badge: "はじめる",
       title: "チームニュースレターを自動化する準備はできましたか？",
       description: "今すぐNexLetterを体験してください。NexLetterの存在理由や理念については「About Us」をご覧ください。",
       startButton: "はじめる",
-      aboutButton: "About Us",
-      samplesButton: "サンプルを見る",
+      aboutButton: "概要",
+      samplesButton: "セットアップフローを見る",
     },
   },
   footer: {

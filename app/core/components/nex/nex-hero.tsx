@@ -38,6 +38,10 @@ export interface NexHeroProps extends React.HTMLAttributes<HTMLElement> {
     src: string;
     alt?: string;
     placeholder?: string;
+    /** Display size (max). Image fills this box with object-fit. */
+    width?: number;
+    height?: number;
+    objectFit?: 'cover' | 'contain';
   };
   features?: {
     icon: React.ReactNode;
@@ -266,11 +270,32 @@ export const NexHero: React.FC<NexHeroProps> = ({
             {media && (
               <div className="relative">
                 {media.type === 'image' ? (
-                  <img
-                    src={media.src}
-                    alt={media.alt || ''}
-                    className="w-full h-auto rounded-2xl shadow-2xl"
-                  />
+                  media.width != null && media.height != null ? (
+                    <div
+                      className="w-full overflow-hidden rounded-2xl shadow-2xl"
+                      style={{
+                        maxWidth: media.width,
+                        aspectRatio: media.width / media.height,
+                      }}
+                    >
+                      <img
+                        src={media.src}
+                        alt={media.alt || ''}
+                        className={cn(
+                          'h-full w-full',
+                          media.objectFit === 'contain'
+                            ? 'object-contain'
+                            : 'object-cover'
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    <img
+                      src={media.src}
+                      alt={media.alt || ''}
+                      className="w-full h-auto rounded-2xl shadow-2xl"
+                    />
+                  )
                 ) : (
                   <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl">
                     <video

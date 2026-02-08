@@ -1576,8 +1576,8 @@ const en: Translation = {
       title: "How to Use NexLetter",
       subtitle: "Connect → Configure → Generate → Share",
       description: "NexLetter collects activity data from your connected tools like Slack and GitHub, then automatically generates and delivers a weekly newsletter. Follow 4 simple steps to get started.",
-      primaryButton: "Get Started",
-      secondaryButton: "View Samples",
+      primaryButton: "Preview setup flow",
+      secondaryButton: "Get Started",
     },
     steps: {
       badge: "4 Simple Steps",
@@ -1679,13 +1679,47 @@ const en: Translation = {
         link: "Privacy policy",
       },
     },
+    preview: {
+      title: "Setup Flow Preview",
+      description: "See how NexLetter setup works step by step.",
+      slides: {
+        "1_login": {
+          title: "Sign in & Dashboard",
+          description: "After signing in, click [Go to Settings] in the onboarding guide to start setup.",
+        },
+        "2_connect": {
+          title: "Step 1. Connect Integrations",
+          description: "Connect your GitHub or Slack accounts from Settings → Integrations.",
+        },
+        "3_configure": {
+          title: "Step 2. Configure Targets",
+          description: "Select channels, repositories, mailing lists, and set delivery schedules.",
+        },
+        "4_finish": {
+          title: "Complete Setup",
+          description: "You can manually send your first newsletter. After that, it will be sent automatically on the scheduled time.",
+        },
+        "5_generate": {
+          title: "Step 3. Generate Newsletter",
+          description: "AI analyzes collected data and automatically generates your team's weekly newsletter.",
+        },
+        "6_after_mail": {
+          title: "Step 4. Send Newsletter",
+          description: "The newsletter is sent to the email addresses you configured. You can check it in [Content - Sent Mail].",
+        },
+        "7_analytics": {
+          title: "Analytics Dashboard",
+          description: "You can check the statistics after the newsletter is sent.",
+        },
+      },
+    },
     cta: {
       badge: "Get Started",
       title: "Ready to automate your team newsletter?",
       description: "Experience NexLetter now. To learn more about why NexLetter exists and our philosophy, visit About Us.",
       startButton: "Get Started",
       aboutButton: "About Us",
-      samplesButton: "View Samples",
+      samplesButton: "Preview setup flow",
     },
   },
   footer: {

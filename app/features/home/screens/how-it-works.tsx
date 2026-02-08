@@ -26,7 +26,7 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
@@ -38,8 +38,18 @@ import {
   NexCardDescription,
   NexCardHeader,
   NexCardTitle,
+  NexCarousel,
+  NexCarouselItem,
   NexHero,
+  NexImageCard,
 } from "~/core/components/nex";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "~/core/components/ui/dialog";
 import i18next from "~/core/lib/i18next.server";
 
 type IconCard = {
@@ -88,9 +98,44 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 type LoaderData = Awaited<ReturnType<typeof loader>>;
 
+type PreviewSlide = {
+  key: string;
+  title: string;
+  description: string;
+};
+
+const ONBOARDING_IMAGE_KEYS = [
+  "1_login",
+  "2_connect",
+  "3_configure",
+  "4_finish",
+  "5_generate",
+  "6_after_mail",
+  "7_analytics",
+] as const;
+
+function getLocaleSuffix(lang: string): string {
+  if (lang.startsWith("ja")) return "ja";
+  if (lang.startsWith("ko")) return "ko";
+  return "en";
+}
+
 export default function HowItWorks({ loaderData }: Route.ComponentProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const localeSuffix = getLocaleSuffix(i18n.language);
+
+  const PREVIEW_SLIDES: PreviewSlide[] = useMemo(
+    () =>
+      ONBOARDING_IMAGE_KEYS.map((key) => ({
+        key,
+        title: t(`howItWorks.preview.slides.${key}.title`),
+        description: t(`howItWorks.preview.slides.${key}.description`),
+      })),
+    [t]
+  );
 
   const STEPS: StepCard[] = useMemo(
     () => [
@@ -187,20 +232,23 @@ export default function HowItWorks({ loaderData }: Route.ComponentProps) {
           primary: {
             label: t("howItWorks.hero.primaryButton"),
             variant: "primary",
-            href: "/join",
+            onClick: () => setPreviewOpen(true),
           },
           secondary: {
             label: t("howItWorks.hero.secondaryButton"),
             variant: "secondary",
-            href: "/samples",
+            href: "/join",
           },
         }}
         media={{
           type: "image",
-          src: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=900&fit=crop",
+          //src: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=900&fit=crop",
+          src: "/hero/how_it_works.png",
+          width: 1200,
+          height: 900,
+          objectFit: "cover",
         }}
       />
-
       {/* 4ステップ概要: Connect → Configure → Generate → Share */}
       <section className="space-y-10">
         <div className="space-y-3 text-center">
@@ -442,30 +490,91 @@ export default function HowItWorks({ loaderData }: Route.ComponentProps) {
                 variant="primary"
                 className="cursor-pointer"
                 size="lg"
-                onClick={() => navigate("/join")}
-              >
-                {t("howItWorks.cta.startButton")}
-              </NexButton>
-              <NexButton
-                variant="secondary"
-                className="cursor-pointer"
-                size="lg"
                 onClick={() => navigate("/about")}
               >
                 {t("howItWorks.cta.aboutButton")}
               </NexButton>
               <NexButton
+                variant="secondary"
+                className="cursor-pointer"
+                size="lg"
+                onClick={() => setPreviewOpen(true)}
+              >
+                {t("howItWorks.cta.samplesButton")}
+              </NexButton>
+              <NexButton
                 variant="gradient"
                 className="cursor-pointer"
                 size="lg"
-                onClick={() => navigate("/samples")}
+                onClick={() => navigate("/join")}
               >
-                {t("howItWorks.cta.samplesButton")}
+                {t("howItWorks.cta.startButton")}
               </NexButton>
             </div>
           </NexCardContent>
         </NexCard>
       </section>
+
+      {/* Setup Flow Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="sm:max-w-4xl w-[92vw] p-0 gap-0 max-h-[95vh] flex flex-col">
+          <DialogHeader className="px-6 pt-5 pb-3 border-b border-border/30 shrink-0">
+            <DialogTitle className="text-lg">
+              {t("howItWorks.preview.title")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("howItWorks.preview.description")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-4 py-4 overflow-y-auto min-h-0 flex-1">
+            <NexCarousel
+              showDots
+              showArrows
+              spaceBetween={0}
+              infinite={false}
+              className="w-full"
+            >
+              {PREVIEW_SLIDES.map((slide, index) => (
+                <NexCarouselItem key={slide.key}>
+                  <div className="space-y-3 px-6">
+                    {/* eslint-disable-next-line jsx-a11y/alt-text 
+                    <div className="overflow-hidden rounded-xl border border-border/40 shadow-sm mx-auto max-w-[960px] bg-muted/20">
+                      <img
+                        src={`/onboarding/${slide.key}_${localeSuffix}.png`}
+                        alt={slide.title}
+                        className="w-full h-auto object-contain"
+                        draggable={false}
+                        loading={index === 0 ? "eager" : "lazy"}
+                      />
+                    </div>
+                    <div className="text-center px-4 pb-1">
+                      <p className="text-xs font-medium text-primary mb-1">
+                        {index + 1} / {PREVIEW_SLIDES.length}
+                      </p>
+                      <p className="text-base font-semibold">{slide.title}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {slide.description}
+                      </p>
+                    </div>
+                    */}
+                  <NexImageCard
+                    image={{
+                      src: `/onboarding/${slide.key}_${localeSuffix}.png`,
+                      alt: slide.title,
+                      aspectRatio: "video"
+                    }}
+                    title={slide.title}
+                    description={slide.description}
+                    badge={{ text: `${index + 1} / ${PREVIEW_SLIDES.length}`, variant: "secondary" }}
+                    //hoverable
+                  />
+                  </div>
+                </NexCarouselItem>
+              ))}
+            </NexCarousel>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

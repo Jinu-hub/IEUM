@@ -1570,6 +1570,19 @@ export type Translation = {
       support: { title: string; description: string; contact: string };
       privacy: { title: string; description: string; link: string };
     };
+    preview: {
+      title: string;
+      description: string;
+      slides: {
+        "1_login": { title: string; description: string };
+        "2_connect": { title: string; description: string };
+        "3_configure": { title: string; description: string };
+        "4_finish": { title: string; description: string };
+        "5_generate": { title: string; description: string };
+        "6_after_mail": { title: string; description: string };
+        "7_analytics": { title: string; description: string };
+      };
+    };
     cta: {
       badge: string;
       title: string;
