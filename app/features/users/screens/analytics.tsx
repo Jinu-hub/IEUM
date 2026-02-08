@@ -381,7 +381,7 @@ export default function AnalyticsScreen( { loaderData }: Route.ComponentProps ) 
                           </span>
                         </div>
                         <NexBadge variant="outline" size="sm">
-                          {item.value}건
+                          {item.value} {commonT("count")}
                         </NexBadge>
                       </div>
                     ))}
