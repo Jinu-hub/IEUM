@@ -26,7 +26,7 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
@@ -486,21 +486,21 @@ export default function HowItWorks({ loaderData }: Route.ComponentProps) {
               </p>
             </div>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <NexButton
+            <NexButton
                 variant="primary"
-                className="cursor-pointer"
-                size="lg"
-                onClick={() => navigate("/about")}
-              >
-                {t("howItWorks.cta.aboutButton")}
-              </NexButton>
-              <NexButton
-                variant="secondary"
                 className="cursor-pointer"
                 size="lg"
                 onClick={() => setPreviewOpen(true)}
               >
                 {t("howItWorks.cta.samplesButton")}
+              </NexButton>
+              <NexButton
+                variant="secondary"
+                className="cursor-pointer"
+                size="lg"
+                onClick={() => navigate("/about")}
+              >
+                {t("howItWorks.cta.aboutButton")}
               </NexButton>
               <NexButton
                 variant="gradient"
@@ -564,7 +564,16 @@ export default function HowItWorks({ loaderData }: Route.ComponentProps) {
                       aspectRatio: "video"
                     }}
                     title={slide.title}
-                    description={slide.description}
+                    description={
+                      slide.description
+                        .split(/<br\s*\/?>/i)
+                        .map((part, i, arr) => (
+                          <React.Fragment key={i}>
+                            {part}
+                            {i < arr.length - 1 && <br />}
+                          </React.Fragment>
+                        ))
+                    }
                     badge={{ text: `${index + 1} / ${PREVIEW_SLIDES.length}`, variant: "secondary" }}
                     //hoverable
                   />

@@ -163,7 +163,7 @@ export const NexCarousel: React.FC<NexCarouselProps> = ({
               "hover:bg-white dark:hover:bg-[#1A1B1E]",
               "hover:shadow-lg hover:scale-105",
               "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
-              "backdrop-blur-sm"
+              "backdrop-blur-sm cursor-pointer"
             )}
           >
             <ChevronLeft className="w-5 h-5 text-[#0D0E10] dark:text-[#FFFFFF]" />
@@ -181,7 +181,7 @@ export const NexCarousel: React.FC<NexCarouselProps> = ({
               "hover:bg-white dark:hover:bg-[#1A1B1E]",
               "hover:shadow-lg hover:scale-105",
               "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
-              "backdrop-blur-sm"
+              "backdrop-blur-sm cursor-pointer"
             )}
           >
             <ChevronRight className="w-5 h-5 text-[#0D0E10] dark:text-[#FFFFFF]" />

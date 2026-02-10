@@ -1685,7 +1685,7 @@ const en: Translation = {
       slides: {
         "1_login": {
           title: "Sign in & Dashboard",
-          description: "After signing in, click [Go to Settings] in the onboarding guide to start setup.",
+          description: "After signing in, click [Go to Settings] in the onboarding guide to start setup. <br />Setup is expected to take 10 minutes or less.",
         },
         "2_connect": {
           title: "Step 1. Connect Integrations",

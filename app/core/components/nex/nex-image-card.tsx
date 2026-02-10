@@ -18,7 +18,7 @@ export interface NexImageCardProps extends Omit<NexCardProps, 'children'> {
     objectFit?: 'cover' | 'contain' | 'fill';
   };
   title?: string;
-  description?: string;
+  description?: string | React.ReactNode;
   badge?: {
     text: string;
     variant?: 'default' | 'success' | 'warning' | 'error' | 'info' | 'secondary';
