@@ -566,6 +566,9 @@ export type Translation = {
     mailList: string;
     contents: string;
     sentMail: string;
+    admin: string;
+    testApi: string;
+    monitoring: string;
     user: {
       upgrade: string;
       upgradeToStarter: string;

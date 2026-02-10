@@ -567,6 +567,9 @@ const ko: Translation = {
     mailList: "메일 리스트",
     contents: "컨텐츠",
     sentMail: "발송된 메일",
+    admin: "관리자",
+    testApi: "API 테스트",
+    monitoring: "모니터링",
     user: {
       upgrade: "업그레이드",
       upgradeToStarter: "Starter로 업그레이드",

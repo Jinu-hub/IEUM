@@ -568,6 +568,9 @@ const en: Translation = {
     mailList: "Mail List",
     contents: "Contents",
     sentMail: "Sent Mail",
+    admin: "Admin",
+    testApi: "Test API",
+    monitoring: "Monitoring",
     user: {
       upgrade: "Upgrade",
       upgradeToStarter: "Upgrade to Starter",

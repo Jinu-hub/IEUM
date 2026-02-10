@@ -994,6 +994,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          is_admin: boolean
           is_completed_onboarding: boolean
           marketing_consent: boolean
           name: string
@@ -1004,6 +1005,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          is_admin?: boolean
           is_completed_onboarding?: boolean
           marketing_consent?: boolean
           name: string
@@ -1014,6 +1016,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          is_admin?: boolean
           is_completed_onboarding?: boolean
           marketing_consent?: boolean
           name?: string

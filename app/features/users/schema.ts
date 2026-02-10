@@ -37,6 +37,7 @@ export const profiles = pgTable(
     marketing_consent: boolean("marketing_consent").notNull().default(false),
     user_type: userType("user_type").notNull().default("normal"),
     is_completed_onboarding: boolean("is_completed_onboarding").notNull().default(true),
+    is_admin: boolean("is_admin").notNull().default(false),
     // Adds created_at and updated_at timestamp columns
     ...timestamps,
   },

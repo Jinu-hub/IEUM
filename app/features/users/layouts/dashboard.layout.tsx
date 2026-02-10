@@ -10,22 +10,26 @@ import {
 import makeServerClient from "~/core/lib/supa-client.server";
 
 import DashboardSidebar from "../components/dashboard-sidebar";
-import { getUserSubscription } from "../queries";
+import { getUserProfile, getUserSubscription } from "../queries";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const [client] = makeServerClient(request);
   const {
     data: { user },
   } = await client.auth.getUser();
-  const subscription = await getUserSubscription(client, { userId: user?.id ?? null });
+  const [subscription, profile] = await Promise.all([
+    getUserSubscription(client, { userId: user?.id ?? null }),
+    getUserProfile(client, { userId: user?.id ?? null }),
+  ]);
   return {
     user,
     subscription,
+    isAdmin: profile?.is_admin ?? false,
   };
 }
 
 export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
-  const { user, subscription } = loaderData;
+  const { user, subscription, isAdmin } = loaderData;
   return (
     <SidebarProvider>
       <DashboardSidebar
@@ -35,6 +39,7 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
           email: user?.email ?? "",
         }}
         subscription={subscription}
+        isAdmin={isAdmin}
       />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">

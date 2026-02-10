@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { data } from 'react-router';
+import { data, redirect } from 'react-router';
 import {
   NexBadge,
   NexCard,
@@ -14,7 +14,9 @@ import {
   NexCardTitle,
 } from '~/core/components/nex';
 import adminClient from '~/core/lib/supa-admin-client.server';
+import makeServerClient from '~/core/lib/supa-client.server';
 import { cn } from '~/core/lib/utils';
+import { getUserProfile } from '~/features/users/queries';
 import { getNewsletterRunsWithSteps } from '../db/queries';
 import type { Route } from "./+types/monitoring";
 
@@ -23,6 +25,12 @@ export const meta: Route.MetaFunction = () => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  const profile = await getUserProfile(client, { userId: user?.id ?? null });
+  if (!profile?.is_admin) {
+    throw redirect('/dashboard');
+  }
   const runs = await getNewsletterRunsWithSteps(adminClient, { limit: 50 });
   return data({ runs });
 };

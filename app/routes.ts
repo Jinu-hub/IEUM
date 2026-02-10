@@ -29,11 +29,6 @@ export default [
       ])
     : []),
 
-  // Admin routes - for internal monitoring
-  ...prefix("/admin", [
-    route("/monitoring", "features/admin/screens/monitoring.tsx"),
-  ]),
-  
   // API Routes. Routes that export actions and loaders but no UI.
   ...prefix("/api", [
     ...prefix("/settings", [
@@ -141,7 +136,6 @@ export default [
         index("features/users/screens/dashboard.tsx"),
         route("/analytics", "features/users/screens/analytics.tsx"),
         route("/payments", "features/payments/screens/payments.tsx"),
-        route("/test-klkl12", "features/users/screens/test1.tsx"),
       ]),
       ...prefix("/contents", [
         route("/sent-mail", "features/contents/screens/sent-mail.tsx"),  
@@ -162,6 +156,11 @@ export default [
         route("/mail-list/:mailListId", "features/settings/screens/mail-list-members.tsx"),
       ]),
       route("/account/edit", "features/users/screens/account.tsx"),
+      // Admin routes - for internal monitoring (is_admin only)
+      ...prefix("/admin", [
+        route("/test-api", "features/admin/screens/test-api.tsx"),
+        route("/monitoring", "features/admin/screens/monitoring.tsx"),
+      ]),
     ]),
   ]),
 

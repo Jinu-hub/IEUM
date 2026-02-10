@@ -5,6 +5,7 @@ import {
   LineChartIcon,
   MegaphoneIcon,
   Settings2Icon,
+  ShieldCheckIcon,
   Target
 } from "lucide-react";
 
@@ -29,7 +30,8 @@ import SidebarUser from "./sidebar-user";
 
 const getSidebarData = (
   t: (key: string) => string,
-  commonT: (key: string) => string
+  commonT: (key: string) => string,
+  isAdmin: boolean
 ) => ({
   teams: [
     {
@@ -150,6 +152,20 @@ const getSidebarData = (
         */
       ],
     },
+    ...(isAdmin
+      ? [
+          {
+            title: t("admin"),
+            url: "#",
+            icon: ShieldCheckIcon,
+            isActive: false,
+            items: [
+              { title: t("testApi"), url: "/admin/test-api" },
+              { title: t("monitoring"), url: "/admin/monitoring" },
+            ],
+          },
+        ]
+      : []),
   ],
   projects: [
     {
@@ -174,6 +190,7 @@ const getSidebarData = (
 export default function DashboardSidebar({
   user,
   subscription,
+  isAdmin = false,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   user: {
@@ -182,10 +199,11 @@ export default function DashboardSidebar({
     avatarUrl: string;
   };
   subscription: SubscriptionInfo;
+  isAdmin?: boolean;
 }) {
   const { t } = useTranslation("common", { keyPrefix: "sidebar" });
   const { t: commonT } = useTranslation("common");
-  const data = getSidebarData(t, commonT);
+  const data = getSidebarData(t, commonT, isAdmin);
   
   // Check if on review page to disable all menu items
   const location = useLocation();

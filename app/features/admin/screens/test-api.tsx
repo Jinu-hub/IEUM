@@ -1,6 +1,20 @@
 import { useState } from 'react';
+import { redirect } from 'react-router';
 import { toast } from 'sonner';
 import { NexButton } from '~/core/components/nex';
+import makeServerClient from '~/core/lib/supa-client.server';
+import { getUserProfile } from '~/features/users/queries';
+import type { Route } from './+types/test-api';
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const [client] = makeServerClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  const profile = await getUserProfile(client, { userId: user?.id ?? null });
+  if (!profile?.is_admin) {
+    throw redirect('/dashboard');
+  }
+  return null;
+}
 
 export default function TestScreen() {
   const [isLoading, setIsLoading] = useState(false);

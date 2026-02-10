@@ -569,6 +569,9 @@ const ja: Translation = {
     mailList: "メールリスト",
     contents: "コンテンツ",
     sentMail: "送信済みメール",
+    admin: "管理",
+    testApi: "APIテスト",
+    monitoring: "モニター",
     user: {
       upgrade: "アップグレード",
       upgradeToStarter: "Starterにアップグレード",
