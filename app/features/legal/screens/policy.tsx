@@ -91,7 +91,12 @@ export const meta: Route.MetaFunction = ({ data }) => {
  * These values will replace placeholders in the MDX files
  */
 const PLACEHOLDERS: Record<string, string> = {
-  'YYYY-MM-DD': '2026-01-22',
+  // Last updated dates per document (short ID style)
+  tos_last_updated: '2026-01-22',
+  privacy_last_updated: '2026-01-22',
+  refund_last_updated: '2026-01-22',
+  security_last_updated: '2026-01-22',
+  commercial_last_updated: '2026-01-22',
   'support email': import.meta.env.VITE_SUPPORT_EMAIL || 'jinu30dev@gmail.com',
   'company name': 'NexLetter',
   'company address': 'Seoul, South Korea',
