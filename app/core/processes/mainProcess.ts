@@ -26,7 +26,7 @@ import {
     createTopicsSection,
 } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
-import { computeTopUserActivity, createChatroomHighlightMetaJson, createGithubHighlightMetaJson, generatePeriodKey } from "./lib/utils";
+import { computeTopUserActivity, createChatroomHighlightMetaJson, createGithubHighlightMetaJson, delayByAccurateTokenCount, generatePeriodKey } from "./lib/utils";
 import { convertToHTML, convertToHTMLOnlyKpi, createFinalContents, divideContents } from "./reporting-data";
 
 /**
@@ -93,7 +93,7 @@ export async function normalizeData(input: CreateContentsInput) {
     input.accuratedTokens = accurateTokenCount;
 
     logger.info('📝 Normalizing and reducing data completed');
-    return { linkedData: linkedDataCleaned, messageIndexById };
+    return { linkedData: linkedDataCleaned, messageIndexById, accurateTokenCount };
 }
 
 /**
@@ -193,7 +193,7 @@ export async function analyzeData(
     const topics = topicsTemp.clusters.filter((topic) => !highlightsTemp.some((highlight) => highlight.clusterId === topic.id));
     
     // 2-4, 2-5, 2-6을 병렬로 실행
-    const [highlights, ongoing, userActivity] = await Promise.all([
+    const [highlights, ongoing, userActivityTemp] = await Promise.all([
         // 2-4. highlights summary을 생성
         createHighlightsSummary(linkedData, highlightsTemp, language, messageIndexById).then(result => {
             logger.info('📝 Highlights summary created');
@@ -212,6 +212,7 @@ export async function analyzeData(
     ]);
 
     logger.info('📝 Analyzing data completed');
+    const userActivity = { topUserActivity, ...userActivityTemp };
     return { kpiInfo, highlights, topics, ongoing , userActivity };
 
 }
@@ -369,7 +370,10 @@ export async function generateContents(input: CreateContentsInput) {
 
     const summarizeDataStart = Date.now();
     // 1. 데이터 정규화 & 중복 제거(Normalize & Deduplicate)
-    let { linkedData, messageIndexById } = await normalizeData(input);
+    let { linkedData, messageIndexById, accurateTokenCount } = await normalizeData(input);
+
+    // 토큰 수에 따른 레이트 제한 대응 딜레이
+    await delayByAccurateTokenCount(accurateTokenCount);
 
     // 2. 데이터 분석 & 개선 & 요약(Analyze & Improve & Summarize)
     let { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData, messageIndexById);
@@ -393,6 +397,10 @@ export async function generateContents(input: CreateContentsInput) {
             processTimeJson,
         });
     }
+
+    // 토큰 수에 따른 레이트 제한 대응 딜레이
+    await delayByAccurateTokenCount(accurateTokenCount);
+
     const assembleDataStart = Date.now();
     // 3. 각 섹션 초안 생성(Drafting Sections)
     let { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } =

@@ -1,11 +1,43 @@
 import { z } from "zod";
 import { CFG_RANKER, IMPACT_MAP, type ImpactKey } from "../../lib/constants";
+import { logger } from "../../lib/logger";
 import type { ChatroomHighlightMetaJson, GithubHighlightMetaJson, KpiSnapshot, LinkedActivityDoc, LinkedItem, RankedHighlight, TopUserActivity, TopUserActivityItem } from "../../lib/types";
 import { Cluster } from "../../openai/models";
-import { KIND_OF_COMMITS, KIND_OF_COMMITS_MAP, type KindOfCommit } from "./constants";
+import { ACCURATE_TOKEN_DELAY_MS, KIND_OF_COMMITS, KIND_OF_COMMITS_MAP, type KindOfCommit } from "./constants";
 
 export const CLAMP01 = (x?: number | null) => Math.max(0, Math.min(1, x ?? 0));
 export const TO_IMPACT = (i: typeof Cluster.shape.impact) => IMPACT_MAP[(i as unknown as ImpactKey) ?? "low"] ?? 0.3;
+
+/**
+ * accurateTokenCount에 따라 레이트 제한 대응용 지연을 수행한다.
+ * constants의 ACCURATE_TOKEN_DELAY_MS 기준으로 구간별 딜레이 후 다음 단계로 진행한다.
+ */
+export async function delayByAccurateTokenCount(accurateTokenCount: number | null | undefined): Promise<void> {
+    const {
+        TIER_HIGH_THRESHOLD,
+        TIER_HIGH_DELAY_MS,
+        TIER_MID_THRESHOLD,
+        TIER_MID_DELAY_MS,
+        TIER_LOW_THRESHOLD,
+        TIER_LOW_DELAY_MS,
+    } = ACCURATE_TOKEN_DELAY_MS;
+    if (accurateTokenCount == null || accurateTokenCount <= TIER_LOW_THRESHOLD) return;
+
+    let delayMs = 0;
+    if (accurateTokenCount >= TIER_HIGH_THRESHOLD) {
+        delayMs = TIER_HIGH_DELAY_MS;
+    } else if (accurateTokenCount >= TIER_MID_THRESHOLD) {
+        delayMs = TIER_MID_DELAY_MS;
+    } else {
+        delayMs = TIER_LOW_DELAY_MS;
+    }
+    logger.info('📝 토큰 수가 많아 다음 단계 전 대기 중', {
+        accurateTokenCount,
+        delayMs,
+        delaySec: delayMs / 1000,
+    });
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+}
 
 
 /** "#12345" 같은 케이스 아이디를 signals.keywordHits/summary에서 추출 */
@@ -210,7 +242,7 @@ export function getFunCornerLeaderboardData(linkedData: LinkedActivityDoc, kpiDa
 const DEFAULT_TOP_USER_ITEM: TopUserActivityItem = { name: "", nums: 0 };
 
 /**
- * Compute top user per contribution kind (no mapping: GitHub = TopDeveloper/BugHunter, Slack = ChatChamp/ReactionChamp).
+ * Compute top user per contribution kind (no mapping: GitHub = TopDeveloper/BugHunter, Slack = ChatChamp/ReactionPro).
  * Each entry is { name, nums } where nums is the single metric for that badge.
  */
 export function computeTopUserActivity(
@@ -244,7 +276,7 @@ export function computeTopUserActivity(
         })
         : null;
 
-    // Slack: ChatChamp (most messages), ReactionChamp (most reactions given)
+    // Slack: ChatChamp (most messages), ReactionPro (most reactions given)
     const memberDataWithMessages = prepareMemberDataWithMessages(linkedData, messageIndexById);
     const slackEntries = Object.entries(memberDataWithMessages).map(([memberId, data]: [string, any]) => ({
         name: data.displayName ?? "",
@@ -254,7 +286,7 @@ export function computeTopUserActivity(
     const topChatChamp = slackEntries.length
         ? slackEntries.reduce((a, b) => (a.messages >= b.messages ? a : b))
         : null;
-    const topReactionChamp = slackEntries.length
+    const topReactionPro = slackEntries.length
         ? slackEntries.reduce((a, b) => (a.reactions >= b.reactions ? a : b))
         : null;
 
@@ -262,7 +294,7 @@ export function computeTopUserActivity(
         { TopDeveloper: topDeveloper ? toItem(topDeveloper.user ?? "", topDeveloper.commits ?? 0) : DEFAULT_TOP_USER_ITEM },
         { BugHunter: topBugHunter ? toItem(topBugHunter.user ?? "", bugfixIncidentByUser.get(topBugHunter.user ?? "") ?? 0) : DEFAULT_TOP_USER_ITEM },
         { ChatChamp: topChatChamp ? toItem(topChatChamp.name, topChatChamp.messages) : DEFAULT_TOP_USER_ITEM },
-        { ReactionChamp: topReactionChamp ? toItem(topReactionChamp.name, topReactionChamp.reactions) : DEFAULT_TOP_USER_ITEM },
+        { ReactionPro: topReactionPro ? toItem(topReactionPro.name, topReactionPro.reactions) : DEFAULT_TOP_USER_ITEM },
     ];
     return result;
 }
@@ -290,14 +322,14 @@ function textMatchesKeywordString(text: string, keywordStr: string): boolean {
 
 /**
  * perUser.commitCases (or other case text) 1건을 kind 로 분류
- * Incident → Release → Bugfix → Security → Refactor, 모두 해당하지 않으면 Feature
+ * Incident → Release → Security → Refactor → Bugfix, 모두 해당하지 않으면 Feature
  * @param caseText 
  * @param language 
  * @returns 
  */
 function classifyCaseToKind(caseText: string, language: "en" | "ko" | "ja"): KindOfCommit {
     const langKey = language === "ja" ? "keywords_ja" : language === "ko" ? "keywords_ko" : "keywords";
-    const kindsToTry: KindOfCommit[] = ["Incident", "Release", "Bugfix", "Security", "Refactor"];
+    const kindsToTry: KindOfCommit[] = ["Incident", "Release", "Security", "Refactor", "Bugfix"];
     for (const kind of kindsToTry) {
         const keywordStr = KIND_OF_COMMITS_MAP[kind][langKey];
         if (keywordStr && textMatchesKeywordString(caseText, keywordStr)) return kind;

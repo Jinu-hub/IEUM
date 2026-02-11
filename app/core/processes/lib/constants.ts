@@ -27,7 +27,7 @@ export const CONTRIBUTION_KINDS = [
     "TopDeveloper",
     "BugHunter",
     "ChatChamp",
-    "ReactionChamp",
+    "ReactionPro",
     //"DeployMaster",
     //"RefactorPro",
     //"IncidentResponder",
@@ -43,7 +43,7 @@ export const CONTRIBUTION_KIND_IDS: Record<ContributionKind, number> = {
     TopDeveloper: 1,
     BugHunter: 2,
     ChatChamp: 3,
-    ReactionChamp: 4,
+    ReactionPro: 4,
     // DeployMaster: 3,
     // BugHunter: 4,
     // SecurityChampion: 5,
@@ -81,7 +81,7 @@ const CONTRIBUTION_THEMES = {
         badgeClassName:
             "!font-semibold !bg-purple-500/25 !text-purple-600 !border-2 !border-purple-500/40 dark:!bg-purple-500/30 dark:!text-pink-300 dark:!border-pink-400/50 shadow-sm",
     },
-    ReactionChamp: {
+    ReactionPro: {
         gradient: "from-green-500 to-emerald-400",
         badgeClassName:
             "!font-semibold !bg-green-500/25 !text-green-600 !border-2 !border-green-500/40 dark:!bg-green-500/30 dark:!text-emerald-300 dark:!border-emerald-400/50 shadow-sm",
@@ -102,10 +102,23 @@ export const CONTRIBUTION_KIND_MAP: Record<
     TopDeveloper: { label: "Top Developer", labelKey: "home.contribution.topDeveloper", variant: "info", ...CONTRIBUTION_THEMES.TopDeveloper },
     BugHunter: { label: "Bug Hunter", labelKey: "home.contribution.bugHunter", variant: "secondary", ...CONTRIBUTION_THEMES.BugHunter },
     ChatChamp: { label: "Chat Champ", labelKey: "home.contribution.chatChamp", variant: "warning", ...CONTRIBUTION_THEMES.ChatChamp },
-    ReactionChamp: { label: "Reaction Champ", labelKey: "home.contribution.reactionChamp", variant: "default", ...CONTRIBUTION_THEMES.ReactionChamp },
+    ReactionPro: { label: "Reaction Pro", labelKey: "home.contribution.reactionPro", variant: "default", ...CONTRIBUTION_THEMES.ReactionPro },
     // SecurityChampion: { label: "Security Champion", labelKey: "home.contribution.securityChampion", variant: "primary" },
     // RefactorPro: { label: "Refactor Pro", labelKey: "home.contribution.refactorPro", variant: "secondary" },
     // IncidentResponder: { label: "Incident Responder", labelKey: "home.contribution.incidentResponder", variant: "warning" },
     // ActiveReviewer: { label: "Active Reviewer", labelKey: "home.contribution.activeReviewer", variant: "info" },
     // FeatureLead: { label: "Feature Lead", labelKey: "home.contribution.featureLead", variant: "success" },
+} as const;
+
+/** 토큰 수에 따른 지연: 기준값(이상) → 지연 밀리초. 높은 구간부터 매칭되어 해당 구간만큼 지연한다 */
+export const ACCURATE_TOKEN_DELAY_MS = {
+    /** 200,000 토큰 이상 → 10초 */
+    TIER_HIGH_THRESHOLD: 200_000,
+    TIER_HIGH_DELAY_MS: 10_000,
+    /** 150,000 토큰 이상 → 5초 */
+    TIER_MID_THRESHOLD: 150_000,
+    TIER_MID_DELAY_MS: 5_000,
+    /** 100,000 토큰 이상 → 2초 */
+    TIER_LOW_THRESHOLD: 100_000,
+    TIER_LOW_DELAY_MS: 2_000,
 } as const;

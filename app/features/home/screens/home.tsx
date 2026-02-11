@@ -40,7 +40,6 @@ import {
 
 import {
   NexBadge,
-  type NexBadgeProps,
   NexButton,
   NexCard,
   NexCardContent,
@@ -120,7 +119,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     { TopDeveloper: { name: "Alex Kim", nums: 28 } },
     { BugHunter: { name: "Jenny Park", nums: 11 } },
     { ChatChamp: { name: "Sarah Lee", nums: 156 } },
-    { ReactionChamp: { name: "Mike Tanaka", nums: 45 } },
+    { ReactionPro: { name: "Mike Tanaka", nums: 45 } },
   ];
   const individualActivityItems = useMemo(
     () =>
