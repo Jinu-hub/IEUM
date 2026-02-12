@@ -105,11 +105,14 @@ export async function action({ request }: ActionFunctionArgs) {
       updated_at: new Date().toISOString(),
     };
 
-    // 비동기로 처리 시작 (응답은 즉시 반환)
-    processTarget(targetForProcessing, { runId, runStepId })
-      .catch(error => {
-        logger.error('Send now processing error', { error: error.message, targetId, runId });
-      });
+    // TODO: Railway job queue 로 이전하면 다시 비동기(fire-and-forget) 처리로 변경
+    // 현재는 Vercel 서버리스에서 처리가 끊기지 않도록 동기 처리( await )로 실행
+    try {
+      await processTarget(targetForProcessing, { runId, runStepId });
+    } catch (error: any) {
+      logger.error('Send now processing error', { error: error.message, targetId, runId });
+      throw error;
+    }
 
     return data({ 
       status: 'success', 

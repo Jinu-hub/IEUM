@@ -70,20 +70,20 @@ export async function processTarget(
   logger.info(`--- target: ${target.display_name} ---`);
   logger.info('--------------------------------');
 
-  const ownerUserId = await getWorkspaceOwnerUserId(adminClient, { workspaceId: target.workspace_id });
-  const planType = await getUserSubscriptionPlanType(adminClient, { userId: ownerUserId as string });
-
-  if (!planType) {
-    logger.warn('Skipping target processing: No valid subscription found', {
-      targetId: target.target_id,
-      targetName: target.display_name,
-      workspaceId: target.workspace_id,
-      ownerUserId
-    });
-    return;
-  }
-
   try {
+
+    const ownerUserId = await getWorkspaceOwnerUserId(adminClient, { workspaceId: target.workspace_id });
+    const planType = await getUserSubscriptionPlanType(adminClient, { userId: ownerUserId as string });
+  
+    if (!planType) {
+      logger.warn('Skipping target processing: No valid subscription found', {
+        targetId: target.target_id,
+        targetName: target.display_name,
+        workspaceId: target.workspace_id,
+        ownerUserId
+      });
+      return;
+    }
 
     // 이메일 제한 확인
     const limitCheck = await checkEmailLimit(target.workspace_id, ownerUserId as string
