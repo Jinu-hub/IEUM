@@ -1545,6 +1545,10 @@ const ja: Translation = {
     completedBadge: "完了",
     retryMessage: "ステータス確認に失敗しました（再試行中... {{current}}/{{max}}）",
     steps: {
+      queued: {
+        label: "キュー待ち",
+        description: "ニュースレター実行がキューに登録されました。まもなく開始します。",
+      },
       collect_data: {
         label: "データ収集",
         description: "GitHubとSlackからチーム活動データを取得しています。",

@@ -1544,6 +1544,10 @@ const en: Translation = {
     completedBadge: "Complete",
     retryMessage: "Status check failed (retrying... {{current}}/{{max}})",
     steps: {
+      queued: {
+        label: "Queued",
+        description: "Your newsletter run is in the queue and will start shortly.",
+      },
       collect_data: {
         label: "Collecting Data",
         description: "Fetching team activity data from GitHub and Slack.",

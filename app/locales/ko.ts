@@ -1543,6 +1543,10 @@ const ko: Translation = {
     completedBadge: "완료",
     retryMessage: "상태 조회 실패 (재시도 중... {{current}}/{{max}})",
     steps: {
+      queued: {
+        label: "대기 중",
+        description: "뉴스레터 실행이 대기열에 등록되었습니다. 곧 시작됩니다.",
+      },
       collect_data: {
         label: "데이터 수집",
         description: "GitHub와 Slack에서 팀 활동 데이터를 가져오는 중입니다.",

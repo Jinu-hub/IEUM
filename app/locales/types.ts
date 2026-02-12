@@ -1500,6 +1500,10 @@ export type Translation = {
     completedBadge: string;
     retryMessage: string;
     steps: {
+      queued: {
+        label: string;
+        description: string;
+      };
       collect_data: {
         label: string;
         description: string;

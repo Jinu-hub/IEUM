@@ -9,7 +9,9 @@ import { useTranslation } from 'react-i18next';
 import { NexBadge, NexCard, NexCardContent } from '~/core/components/nex';
 import { cn } from '~/core/lib/utils';
 
-type StepStatus = 'collect_data' | 'summarize_data' | 'assemble_data' | 'finalize_data' | 'send_email' | 'error' | 'completed';
+/** DB newsletter_run_steps.step (enum step_name) 과 매칭. /api/cron/run-status → getNewsletterRunStep() */
+type StepStatus = 'queued' | 'collect_data' | 'summarize_data' | 'assemble_data' | 'finalize_data' | 'send_email' | 'error' | 'completed';
+/** DB newsletter_run_steps.status (enum step_status) 를 UI 상태로 사용 */
 type ProcessingStatus = 'running' | 'success' | 'error' | 'completed';
 
 interface ProcessingStatusBarProps {
@@ -20,10 +22,11 @@ interface ProcessingStatusBarProps {
   nextSchedule?: string; // 다음 스케줄 정보
 }
 
-const stepOrder: StepStatus[] = ['collect_data', 'summarize_data', 'assemble_data', 'finalize_data', 'send_email'];
+const stepOrder: StepStatus[] = ['queued', 'collect_data', 'summarize_data', 'assemble_data', 'finalize_data', 'send_email'];
 
 // 각 단계별 아이콘
 const stepIcons: Record<string, string> = {
+  queued: '⏳',
   collect_data: '📊',
   summarize_data: '🤖',
   assemble_data: '🔧',
@@ -33,7 +36,7 @@ const stepIcons: Record<string, string> = {
 
 export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboarding = false, nextSchedule }: ProcessingStatusBarProps) {
   const { t } = useTranslation("common", { keyPrefix: "processingStatus" });
-  const [currentStep, setCurrentStep] = useState<StepStatus>('collect_data');
+  const [currentStep, setCurrentStep] = useState<StepStatus>('queued');
   const [status, setStatus] = useState<ProcessingStatus>('running');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -60,8 +63,9 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
           errorCount = 0;
           setErrorMessage(null);
           const { step, status: stepStatus, errorSummary, finishedAt } = result.data;
-          
-          setCurrentStep(step as StepStatus);
+          // step이 queued이거나 없으면 queued 표시 (DB newsletter_run_steps.step 반영)
+          const displayStep: StepStatus = (step === 'queued' || step == null) ? 'queued' : (step as StepStatus);
+          setCurrentStep(displayStep);
           
           if (errorSummary) {
             setStatus('error');
@@ -71,7 +75,7 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
           }
 
           // 완료 체크: send_email 스텝이 성공했거나 finished_at이 있으면 완료
-          if ((stepStatus === 'success' && step === 'send_email') || finishedAt) {
+          if ((stepStatus === 'success' && displayStep === 'send_email') || finishedAt) {
             setStatus('completed');
             setTimeout(() => {
               if (isMounted) {
@@ -86,7 +90,8 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
             pollTimeout = setTimeout(pollStatus, POLL_INTERVAL);
           }
         } else {
-          // 에러 발생 시 카운트 증가
+          // 데이터 없음 또는 API 에러 시 queued로 표시 후 재시도
+          setCurrentStep('queued');
           errorCount++;
           
           // rate limit 오류인 경우 더 긴 대기 시간
@@ -107,7 +112,7 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
         }
       } catch (error: any) {
         if (!isMounted) return;
-        
+        setCurrentStep('queued');
         errorCount++;
         const isRateLimit = error.message?.includes('rate') || error.message?.includes('429');
         const retryDelay = isRateLimit ? POLL_INTERVAL * 3 : POLL_INTERVAL;
@@ -219,7 +224,7 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
                       <div 
                         key={step} 
                         className="flex flex-col items-center"
-                        style={{ width: '20%' }}
+                        style={{ width: `${100 / stepOrder.length}%` }}
                       >
                         {/* Step circle */}
                         <div
