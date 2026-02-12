@@ -338,11 +338,10 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
         setShowFirstMailConfirmation(false);
         setProcessingRunStepId(runStepId);
 
-        // Phase2: processTarget 실행 (현재는 Vercel API 호출. Railway 전환 시 이 블록 제거)
-        // - 현재: 클라이언트가 /api/cron/send-now/run 호출 → Vercel 에서 동기 실행
-        // - Railway 전환 시: Phase1(send-now) 에서 job_queue 에만 enqueue 하고 여기서는 Phase2 호출하지 않음.
-        //   Railway worker 가 job_queue 폴링 후 processTarget 실행. 스테이터스바 폴링은 그대로 run-status 로 동작.
-        const res2 = await fetch('/api/cron/send-now/run', {
+        // Phase2: processTarget 실행 (fire-and-forget — await 하지 않음)
+        // 클라이언트가 블로킹되지 않아 스테이터스바 run-status 폴링이 바로 동작하고, DB 변경을 실시간으로 반영함.
+        // Railway 전환 시: 이 호출 제거하고 Phase1 에서 job_queue enqueue 만 함.
+        fetch('/api/cron/send-now/run', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -351,12 +350,18 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
             targetId: activeTarget.targetId,
             workspaceId: workspaceId,
           }),
-        });
-        const result2 = await res2.json();
-        if (result2.status !== 'success') {
-          toast.error(result2.error || result2.message || 'processing failed');
-          setIsProcessing(false);
-        }
+        })
+          .then((res) => res.json())
+          .then((result2) => {
+            if (result2.status !== 'success') {
+              toast.error(result2.error || result2.message || 'processing failed');
+              setIsProcessing(false);
+            }
+          })
+          .catch((err: any) => {
+            toast.error(err?.message || 'processing request failed');
+            setIsProcessing(false);
+          });
       } catch (error: any) {
         toast.error(error.message || 'execution failed');
         setIsProcessing(false);
