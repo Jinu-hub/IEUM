@@ -10,6 +10,7 @@ import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import makeServerClient from "~/core/lib/supa-client.server";
 import { createNewsletterRun } from "~/features/contents/db/mutations";
+import { updateFirstMailSend } from "~/features/settings/db/mutations";
 import { getTargets } from "~/features/settings/db/queries";
 import { processTarget } from "./target-processing";
 import type { Target } from "./types";
@@ -83,6 +84,11 @@ export async function action({ request }: ActionFunctionArgs) {
       workspaceId,
       trigger: 'manual',
       logRef: null,
+    });
+
+    // 온보딩: first_mail_send 를 yes 로 갱신 (first_mail_run_id 도 설정)
+    await updateFirstMailSend(adminClient, { workspaceId, runId, firstMailSend: 'yes' }).catch((err) => {
+      logger.warn('updateFirstMailSend failed (non-blocking)', { error: err?.message, workspaceId });
     });
 
     // 타겟을 processTarget에 맞는 형식으로 변환

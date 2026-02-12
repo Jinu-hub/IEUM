@@ -693,6 +693,31 @@ export const updateSlackConnectedState = async (
     return data;
 };
 
+/**
+ * onboarding_states.first_mail_send を 'yes' に更新（即時送信選択時）。first_mail_run_id も任意で設定。
+ */
+export const updateFirstMailSend = async (
+    client: SupabaseClient<Database>,
+    { workspaceId, runId, firstMailSend }: { workspaceId: string; runId: string; firstMailSend: Database["public"]["Enums"]["first_mail_send"] }
+) => {
+    const { data, error } = await client
+        .from('onboarding_states')
+        .update({
+            first_mail_send: firstMailSend,
+            first_mail_run_id: runId,
+            updated_at: new Date().toISOString(),
+        })
+        .eq('workspace_id', workspaceId)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('updateFirstMailSend error', error);
+        throw error;
+    }
+    return data;
+};
+
 export const updateSlackChannelMembership = async (
     client: SupabaseClient<Database>,
     {
