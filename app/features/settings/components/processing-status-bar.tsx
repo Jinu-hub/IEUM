@@ -53,7 +53,10 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
       if (!isMounted) return;
 
       try {
-        const response = await fetch(`/api/cron/run-status?runStepId=${runStepId}`);
+        const response = await fetch(
+          `/api/cron/run-status?runStepId=${runStepId}&_t=${Date.now()}`,
+          { cache: 'no-store', headers: { Pragma: 'no-cache' } }
+        );
         const result = await response.json();
 
         if (!isMounted) return;
@@ -74,8 +77,8 @@ export function ProcessingStatusBar({ runStepId, onComplete, onError, isOnboardi
             return;
           }
 
-          // 완료 체크: send_email 스텝이 성공했거나 finished_at이 있으면 완료
-          if ((stepStatus === 'success' && displayStep === 'send_email') || finishedAt) {
+          // 완료 체크: step_status 가 success 이거나 finished_at 이 있으면 완료 (step 값에 의존하지 않음)
+          if (stepStatus === 'success' || finishedAt) {
             setStatus('completed');
             setTimeout(() => {
               if (isMounted) {

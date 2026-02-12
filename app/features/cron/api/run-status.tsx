@@ -27,7 +27,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
   try {
     // adminClient 사용 - RLS 정책 우회 및 rate limit 방지
     const stepStatus = await getNewsletterRunStep(adminClient, { runStepId });
-    return data({ status: 'success', data: stepStatus }, { status: 200 });
+    return data(
+      { status: 'success', data: stepStatus },
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      }
+    );
   } catch (error: any) {
     return data({ status: 'error', error: error.message }, { status: 500 });
   }

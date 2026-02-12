@@ -100,6 +100,7 @@ export const updateNewsletterRun = async (client: SupabaseClient<Database>,
             const { data: runSteps, error: runStepsError } = await client
                 .from('newsletter_run_steps')
                 .update({
+                    step: step as Database["public"]["Enums"]["step_name"],
                     status: status as Database["public"]["Enums"]["step_status"],
                     finished_at: now,
                 })
