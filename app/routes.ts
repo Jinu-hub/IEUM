@@ -61,6 +61,7 @@ export default [
       route("/actions", "features/cron/api/actions.tsx"),
       route("/test", "features/cron/api/test-api.tsx"),
       route("/send-now", "features/cron/api/send-now.tsx"),
+      route("/send-now/run", "features/cron/api/send-now-run.tsx"),
       route("/run-status", "features/cron/api/run-status.tsx"),
     ]),
     ...prefix("/blog", [route("/og", "features/blog/api/og.tsx")]),

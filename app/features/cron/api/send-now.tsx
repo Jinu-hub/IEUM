@@ -12,8 +12,16 @@ import makeServerClient from "~/core/lib/supa-client.server";
 import { createNewsletterRun } from "~/features/contents/db/mutations";
 import { updateFirstMailSend } from "~/features/settings/db/mutations";
 import { getTargets } from "~/features/settings/db/queries";
-import { processTarget } from "./target-processing";
-import type { Target } from "./types";
+
+/**
+ * Phase1: run 생성만 하고 runId/runStepId 반환.
+ * 실제 처리(processTarget)는 클라이언트가 POST /api/cron/send-now/run 으로 Phase2 호출.
+ *
+ * Railway worker 전환 시:
+ * - 이 API 에서 run 생성 후 job_queue 에 job enqueue (runId, runStepId, targetId, workspaceId 등).
+ * - 클라이언트는 그대로 runStepId 받아 스테이터스바·run-status 폴링 유지.
+ * - Phase2 API 호출은 클라이언트에서 제거. Railway worker 가 job_queue 폴링 후 processTarget 실행.
+ */
 
 export async function action({ request }: ActionFunctionArgs) {
   const [client] = makeServerClient(request);
@@ -90,29 +98,6 @@ export async function action({ request }: ActionFunctionArgs) {
     await updateFirstMailSend(adminClient, { workspaceId, runId, firstMailSend: 'yes' }).catch((err) => {
       logger.warn('updateFirstMailSend failed (non-blocking)', { error: err?.message, workspaceId });
     });
-
-    // 타겟을 processTarget에 맞는 형식으로 변환
-    const targetForProcessing: Target = {
-      target_id: target.targetId,
-      workspace_id: workspaceId,
-      display_name: target.displayName,
-      mailing_list_id: target.mailingListId || null,
-      timezone: target.timezone || 'Asia/Tokyo',
-      schedule_cron: target.scheduleCron || null,
-      is_active: target.isActive,
-      language: target.language || 'en',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    // TODO: Railway job queue 로 이전하면 다시 비동기(fire-and-forget) 처리로 변경
-    // 현재는 Vercel 서버리스에서 처리가 끊기지 않도록 동기 처리( await )로 실행
-    try {
-      await processTarget(targetForProcessing, { runId, runStepId });
-    } catch (error: any) {
-      logger.error('Send now processing error', { error: error.message, targetId, runId });
-      throw error;
-    }
 
     return data({ 
       status: 'success', 

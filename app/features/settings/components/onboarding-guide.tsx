@@ -458,6 +458,7 @@ interface FirstMailConfirmationProps {
   workspaceId: string;
   nextSchedule?: string;
   onConfirm: (sendNow: boolean) => void;
+  isProcessing?: boolean;
   className?: string;
 }
 
@@ -465,6 +466,7 @@ export function FirstMailConfirmation({
   workspaceId, 
   nextSchedule,
   onConfirm, 
+  isProcessing = false,
   className 
 }: FirstMailConfirmationProps) {
   const { t } = useTranslation("common", { keyPrefix: "onboarding" });
@@ -490,12 +492,15 @@ export function FirstMailConfirmation({
               variant="primary"
               onClick={() => onConfirm(true)}
               className="bg-green-600 hover:bg-green-700"
+              loading={isProcessing}
+              disabled={isProcessing}
             >
               {t('firstMail.sendNow', 'Yes, Send Now')}
             </NexButton>
             <NexButton
               variant="secondary"
               onClick={() => onConfirm(false)}
+              disabled={isProcessing}
             >
               {t('firstMail.waitSchedule', 'No, Wait for Schedule')}
             </NexButton>

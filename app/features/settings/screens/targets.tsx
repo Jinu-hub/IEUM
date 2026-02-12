@@ -319,8 +319,8 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
 
       setIsProcessing(true);
       try {
-        // 즉시 실행 API 호출
-        const response = await fetch('/api/cron/send-now', {
+        // Phase1: run 생성만 → runStepId 즉시 수신 → 스테이터스바 표시 및 폴링 시작
+        const res1 = await fetch('/api/cron/send-now', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -328,13 +328,33 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
             workspaceId: workspaceId,
           }),
         });
+        const result1 = await res1.json();
+        if (result1.status !== 'success') {
+          toast.error(result1.message || 'execution failed');
+          setIsProcessing(false);
+          return;
+        }
+        const { runId, runStepId } = result1;
+        setShowFirstMailConfirmation(false);
+        setProcessingRunStepId(runStepId);
 
-        const result = await response.json();
-        
-        if (result.status === 'success') {
-          setProcessingRunStepId(result.runStepId);
-        } else {
-          toast.error(result.message || 'execution failed');
+        // Phase2: processTarget 실행 (현재는 Vercel API 호출. Railway 전환 시 이 블록 제거)
+        // - 현재: 클라이언트가 /api/cron/send-now/run 호출 → Vercel 에서 동기 실행
+        // - Railway 전환 시: Phase1(send-now) 에서 job_queue 에만 enqueue 하고 여기서는 Phase2 호출하지 않음.
+        //   Railway worker 가 job_queue 폴링 후 processTarget 실행. 스테이터스바 폴링은 그대로 run-status 로 동작.
+        const res2 = await fetch('/api/cron/send-now/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            runId,
+            runStepId,
+            targetId: activeTarget.targetId,
+            workspaceId: workspaceId,
+          }),
+        });
+        const result2 = await res2.json();
+        if (result2.status !== 'success') {
+          toast.error(result2.error || result2.message || 'processing failed');
           setIsProcessing(false);
         }
       } catch (error: any) {
@@ -345,8 +365,8 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
       // NO: Wait for schedule and complete onboarding
       setShowCompleteCard(true);
       updateStep('completed');
+      setShowFirstMailConfirmation(false);
     }
-    setShowFirstMailConfirmation(false);
   };
   
   // 카드가 표시된 후 5초 후에 사라지도록
@@ -402,6 +422,7 @@ export default function TargetsScreen( { loaderData }: Route.ComponentProps ) {
             workspaceId={workspaceId}
             nextSchedule={getNextScheduleInfo()}
             onConfirm={handleFirstMailConfirm}
+            isProcessing={isProcessing}
           />
         )}
         
