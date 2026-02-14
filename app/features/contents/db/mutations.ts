@@ -406,3 +406,30 @@ export const incrementUsageCounter = async (client: SupabaseClient<Database>,
         return null;
     }
 }
+
+export const saveRunLogEvent = async (client: SupabaseClient<Database>, 
+    { workspaceId, runId, level, stepName, message, meta }: 
+    { workspaceId: string, runId: string, level: string, stepName: string, message: string, meta?: any }) => {
+    try {
+        const { data: runLogEvent, error } = await client
+            .from('run_log_events')
+            .insert({
+                workspace_id: workspaceId,
+                run_id: runId,
+                level: level,
+                step_name: stepName,
+                message: message,
+                meta: meta ?? {},
+            })
+            .select()
+            .single();
+        if (error) {
+            console.error('saveRunLogEvent error', error);
+            throw error
+        }
+        return runLogEvent;
+    } catch (error) {
+        console.error('saveRunLogEvent error', error);
+        throw error
+    }
+}

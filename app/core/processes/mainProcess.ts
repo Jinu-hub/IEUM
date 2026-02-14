@@ -1,7 +1,7 @@
 import { encoding_for_model } from "tiktoken";
 import { z } from "zod";
 import type { CreateContentsInput, EnableCreateContents } from "~/core/lib/types";
-import { saveHighlight, updateNewsletterRunStep } from "~/features/contents/db/mutations";
+import { saveHighlight, saveRunLogEvent, updateNewsletterRunStep } from "~/features/contents/db/mutations";
 import { getUniquePeriodKey } from "~/features/contents/db/queries";
 import { logger } from "../lib/logger";
 import adminClient from "../lib/supa-admin-client.server";
@@ -92,6 +92,24 @@ export async function normalizeData(input: CreateContentsInput) {
     });
     input.accuratedTokens = accurateTokenCount;
 
+    // if (accurateTokenCount > ACCURATE_TOKEN_LIMIT) {
+    //    // 토큰 수가 많을 경우 데이터를 축소
+    // }
+
+    await saveRunLogEvent(adminClient, {
+        workspaceId: input.workspaceId, runId: input.runId, level: 'info',
+        stepName: 'normalizing_data_completed', message: `Normalizing and reducing data completed`,
+        meta: {
+            accurateTokenCount: accurateTokenCount,
+            itemCounts: {
+                commits: linkedDataCleaned.items.commit?.length ?? 0,
+                prs: linkedDataCleaned.items.pr?.length ?? 0,
+                issues: linkedDataCleaned.items.issue?.length ?? 0,
+                slackChannels: Object.keys(linkedDataCleaned.items.slack ?? {}).length,
+                members: Object.keys(linkedDataCleaned.items.member ?? {}).length
+            }
+        }
+    });
     logger.info('📝 Normalizing and reducing data completed');
     return { linkedData: linkedDataCleaned, messageIndexById, accurateTokenCount };
 }
@@ -213,6 +231,24 @@ export async function analyzeData(
 
     logger.info('📝 Analyzing data completed');
     const userActivity = { topUserActivity, ...userActivityTemp };
+    await saveRunLogEvent(adminClient, {
+        workspaceId: input.workspaceId, runId: input.runId, level: 'info',
+        stepName: 'analyzing_data_completed', message: `Analyzing data completed`,
+        meta: {
+            counts: {
+                kpiInfo: Object.keys(kpiInfo).length ?? 0,
+                highlights: highlights.highlightsSummary?.highlights?.length ?? 0,
+                ongoing: (ongoing.ongoing?.length ?? 0) + (ongoing.roadmap?.length ?? 0),
+                topics: topics.length,
+                memberActivity: Array.isArray((userActivity as unknown as { members?: unknown[] }).members)
+                    ? (userActivity as unknown as { members: unknown[] }).members.length
+                    : 0,
+                topUserActivity: Array.isArray((userActivity as unknown as { topUserActivity?: unknown[] }).topUserActivity)
+                    ? (userActivity as unknown as { topUserActivity: unknown[] }).topUserActivity.length
+                    : 0,
+            },
+        },
+    });
     return { kpiInfo, highlights, topics, ongoing , userActivity };
 
 }
@@ -289,6 +325,20 @@ export async function draftingData(
     ]);
 
     logger.info('📝 Drafting data completed');
+    await saveRunLogEvent(adminClient, {
+        workspaceId: input.workspaceId, runId: input.runId, level: 'info',
+        stepName: 'drafting_data_completed', message: `Drafting data completed`,
+        meta: {
+            counts: {
+                kpiSection: kpiSection.length,
+                highlightsSection: highlightsSection.length,
+                topicsSection: topicsSection.length,
+                memberSection: memberSection.length,
+                ongoingSection: ongoingSection.length,
+                closingSection: closingSection.length,
+            },
+        },
+    });
     return { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection };
 }
 
@@ -344,6 +394,13 @@ export async function mergeContents(input: CreateContentsInput,
 export async function generateFinalContents(input: CreateContentsInput, mergedContents: string) {
     logger.info('📝 Generating final contents started');
     const finalContents = await createFinalContents(input, mergedContents);
+    await saveRunLogEvent(adminClient, {
+        workspaceId: input.workspaceId, runId: input.runId, level: 'info',
+        stepName: 'generating_final_contents_completed', message: `Generating final contents completed`,
+        meta: {
+            finalContents: finalContents?.length || 0
+        }
+    });
     const isOnlyKpi = input.enableCreateContents?.github && !input.enableCreateContents?.slack;
     const isNoKpi = !input.enableCreateContents?.github && input.enableCreateContents?.slack;
     if (isOnlyKpi) {

@@ -6,7 +6,7 @@ import type { Database } from "database.types";
 import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import type { CreateContentsInput } from "~/core/lib/types";
-import { incrementUsageCounter, updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
+import { incrementUsageCounter, saveRunLogEvent, updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
 import { createContents } from "~/features/cron/api/create-contents";
 import { sendMails } from "~/features/cron/api/send-mails";
 import { getIntegrationsInfo, getTargetSources, getUserSubscriptionPlanType } from "~/features/settings/db/queries";
@@ -69,6 +69,10 @@ export async function processTarget(
   logger.info('--------------------------------');
   logger.info(`--- target: ${target.display_name} ---`);
   logger.info('--------------------------------');
+  await saveRunLogEvent(adminClient, {
+    workspaceId: target.workspace_id, runId: runMapping.runId, level: 'info',
+    stepName: 'target_processing_started', message: `Target processing started for target: ${target.display_name}`,
+  });
 
   try {
 
@@ -82,6 +86,10 @@ export async function processTarget(
         workspaceId: target.workspace_id,
         ownerUserId
       });
+      await saveRunLogEvent(adminClient, {
+        workspaceId: target.workspace_id, runId: runMapping.runId, level: 'warn',
+        stepName: 'target_processing_skipped', message: `Target processing skipped: No valid subscription found`,
+      });
       return;
     }
 
@@ -90,10 +98,14 @@ export async function processTarget(
       , planType as Database["public"]["Enums"]["plan_type"]);
     
     if (!limitCheck.allowed) {
-      logger.info('Email limit exceeded, skipping target', {
+      logger.warn('Email limit exceeded, skipping target', {
         target_id: target.target_id,
         email_sent_count: limitCheck.usageCounter?.email_sent_count,
         max_weekly_emails_per_month: limitCheck.planLimit?.max_weekly_emails_per_month
+      });
+      await saveRunLogEvent(adminClient, {
+        workspaceId: target.workspace_id, runId: runMapping.runId, level: 'warn',
+        stepName: 'target_processing_skipped', message: `Target processing skipped: Email limit exceeded`,
       });
       return;
     }
@@ -116,7 +128,11 @@ export async function processTarget(
     });
 
     if (sources.length === 0) {
-      logger.info('No sources found for target', { targetId: target.target_id });
+      logger.warn('No sources found for target', { targetId: target.target_id });
+      await saveRunLogEvent(adminClient, {
+        workspaceId: target.workspace_id, runId: runMapping.runId, level: 'warn',
+        stepName: 'target_processing_skipped', message: `Target processing skipped: No sources found for target: ${target.display_name}`,
+      });
       return;
     }
 
@@ -140,7 +156,10 @@ export async function processTarget(
           integrationType: s.integrationType
         }))
       });
-      
+      await saveRunLogEvent(adminClient, {
+        workspaceId: target.workspace_id, runId: runMapping.runId, level: 'warn',
+        stepName: 'target_processing_skipped', message: `Target processing skipped: No matched sources found for target: ${target.display_name}`,
+      });
       await updateNewsletterRunError(adminClient, { 
         runId: runMapping.runId, 
         runStepId: runMapping.runStepId, 
@@ -164,6 +183,10 @@ export async function processTarget(
     logger.info('Contents generation completed', { 
       targetId: target.target_id,
       result: content.status
+    });
+    await saveRunLogEvent(adminClient, {
+      workspaceId: target.workspace_id, runId: runMapping.runId, level: 'info',
+      stepName: 'contents_generation_completed', message: `Contents generation completed for target: ${target.display_name}`,
     });
 
     await updateNewsletterRun(adminClient, { 
@@ -200,6 +223,10 @@ export async function processTarget(
 
   } catch (error: any) {
     logger.error('Cron actions target running error', { error: error.message });
+    await saveRunLogEvent(adminClient, {
+      workspaceId: target.workspace_id, runId: runMapping.runId, level: 'error',
+      stepName: 'target_processing_error', message: `Target processing error: ${error.message}`,
+    });
     await updateNewsletterRunError(adminClient, { 
       runId: runMapping.runId, 
       runStepId: runMapping.runStepId, 

@@ -519,7 +519,7 @@ import {
       editionId: uuid("edition_id").defaultRandom().primaryKey(),
       workspaceId: uuid("workspace_id").notNull().references(() => workspace.workspaceId, { onDelete: "cascade" }),
       runId: uuid("run_id").references(() => newsletterRuns.runId, { onDelete: "set null" }),
-      targetId: uuid("target_id").notNull().references(() => targets.targetId, { onDelete: "cascade" }),
+      targetId: uuid("target_id").notNull().references(() => targets.targetId, { onDelete: "set null" }),
       sentAt: timestamp("sent_at", { withTimezone: true }),
       status: mailStatus("status").notNull().default("sending"),
       subject: text("subject"),
@@ -792,6 +792,34 @@ export const externalEvents = pgTable(
     pgPolicy("ee_delete", { for: "delete", to: serviceRole, using: sql`true` }),
   ]
 );
+
+
+/* =========================================================
+   3.23 run_log_events
+   ========================================================= */
+export const runLogEvents = pgTable(
+  "run_log_events",
+  {
+    runLogEventId: uuid("run_log_event_id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspace.workspaceId, { onDelete: "cascade" }),
+    runId: uuid("run_id").notNull().references(() => newsletterRuns.runId, { onDelete: "cascade" }),
+    level: text("level").notNull(),
+    stepName: text("step_name").notNull(),
+    message: text("message").notNull(),
+    meta: jsonb("meta").notNull().default(sql`'{}'::jsonb`),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    // run 単位の取得・level/step 絞り込みに効く複合インデックス（左端で runId 単体クエリもカバー）
+    index("idx_run_log_events_run_id_level").on(table.runId, table.level),
+    index("idx_run_log_events_run_id_step_name").on(table.runId, table.stepName),
+    pgPolicy("rle_select", { for: "select", to: authenticatedRole, using: isMember(table.workspaceId) }),
+    pgPolicy("rle_insert", { for: "insert", to: serviceRole, withCheck: sql`true` }),
+    pgPolicy("rle_update", { for: "update", to: serviceRole, using: sql`true`, withCheck: sql`true` }),
+    pgPolicy("rle_delete", { for: "delete", to: serviceRole, using: sql`true` }),
+  ]
+);
+
 
   /* =========================================================
      Notes & Migration Guide

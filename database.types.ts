@@ -1180,6 +1180,54 @@ export type Database = {
           },
         ]
       }
+      run_log_events: {
+        Row: {
+          created_at: string
+          level: string
+          message: string
+          meta: Json
+          run_id: string
+          run_log_event_id: string
+          step_name: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          level: string
+          message: string
+          meta?: Json
+          run_id: string
+          run_log_event_id?: string
+          step_name: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          level?: string
+          message?: string
+          meta?: Json
+          run_id?: string
+          run_log_event_id?: string
+          step_name?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_log_events_run_id_newsletter_runs_run_id_fk"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_runs"
+            referencedColumns: ["run_id"]
+          },
+          {
+            foreignKeyName: "run_log_events_workspace_id_workspace_workspace_id_fk"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
       run_logs: {
         Row: {
           bytes: number | null
