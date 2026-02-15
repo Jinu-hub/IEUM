@@ -569,6 +569,7 @@ export type Translation = {
     admin: string;
     testApi: string;
     monitoring: string;
+    runLogs: string;
     user: {
       upgrade: string;
       upgradeToStarter: string;

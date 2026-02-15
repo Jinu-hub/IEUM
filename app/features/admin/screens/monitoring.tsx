@@ -5,9 +5,10 @@
  */
 
 import { useState } from 'react';
-import { data, redirect } from 'react-router';
+import { Link, data, redirect } from 'react-router';
 import {
   NexBadge,
+  NexButton,
   NexCard,
   NexCardContent,
   NexCardHeader,
@@ -98,8 +99,15 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Newsletter Runs Monitoring</h1>
-        
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-bold">Newsletter Runs Monitoring</h1>
+          <Link to="/admin/logs">
+            <NexButton variant="secondary" size="sm">
+              Run Logs →
+            </NexButton>
+          </Link>
+        </div>
+
         <div className="mb-4 text-sm text-muted-foreground">
           Total: {runs.length} runs
         </div>
@@ -143,10 +151,23 @@ export default function AdminMonitoring({ loaderData }: Route.ComponentProps) {
               {expandedRunIds.has(run.run_id) && (
                 <NexCardContent>
                   <div className="mb-4 p-3 bg-muted/30 rounded-lg">
+                    <div className="mb-3 flex items-center justify-between">
+                      <Link
+                        to={`/admin/logs?runId=${run.run_id}`}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        View Logs for this Run →
+                      </Link>
+                    </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
                         <span className="text-muted-foreground">Run ID:</span>
-                        <span className="ml-2 font-mono">{run.run_id}</span>
+                        <Link
+                          to={`/admin/logs?runId=${run.run_id}`}
+                          className="ml-2 font-mono text-primary hover:underline"
+                        >
+                          {run.run_id}
+                        </Link>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Workspace ID:</span>

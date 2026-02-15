@@ -107,3 +107,45 @@ export const getNewsletterRunsWithSteps = async (
 
   return data;
 };
+
+/**
+ * run_log_events を取得（最新順、オプションで run_id / level / step_name でフィルタ）
+ */
+export const getRunLogEvents = async (
+  client: SupabaseClient<Database>,
+  { limit = 200, runId, level, stepName }: { limit?: number; runId?: string; level?: string; stepName?: string } = {}
+) => {
+  let q = client
+    .from('run_log_events')
+    .select(`
+      run_log_event_id,
+      workspace_id,
+      run_id,
+      level,
+      step_name,
+      message,
+      meta,
+      created_at,
+      newsletter_runs (
+        trigger,
+        status,
+        started_at,
+        finished_at
+      )
+    `)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (runId) q = q.eq('run_id', runId);
+  if (level) q = q.eq('level', level);
+  if (stepName) q = q.eq('step_name', stepName);
+
+  const { data, error } = await q;
+
+  if (error) {
+    console.error('getRunLogEvents error:', error);
+    throw error;
+  }
+
+  return data;
+};

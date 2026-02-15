@@ -572,6 +572,7 @@ const ja: Translation = {
     admin: "管理",
     testApi: "APIテスト",
     monitoring: "モニター",
+    runLogs: "実行ログ",
     user: {
       upgrade: "アップグレード",
       upgradeToStarter: "Starterにアップグレード",

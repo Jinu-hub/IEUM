@@ -571,6 +571,7 @@ const en: Translation = {
     admin: "Admin",
     testApi: "Test API",
     monitoring: "Monitoring",
+    runLogs: "Run Logs",
     user: {
       upgrade: "Upgrade",
       upgradeToStarter: "Upgrade to Starter",

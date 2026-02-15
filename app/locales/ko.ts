@@ -570,6 +570,7 @@ const ko: Translation = {
     admin: "관리자",
     testApi: "API 테스트",
     monitoring: "모니터링",
+    runLogs: "실행 로그",
     user: {
       upgrade: "업그레이드",
       upgradeToStarter: "Starter로 업그레이드",

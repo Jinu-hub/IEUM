@@ -162,6 +162,7 @@ const getSidebarData = (
             items: [
               { title: t("testApi"), url: "/admin/test-api" },
               { title: t("monitoring"), url: "/admin/monitoring" },
+              { title: t("runLogs"), url: "/admin/logs" },
             ],
           },
         ]
