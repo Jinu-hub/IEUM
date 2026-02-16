@@ -125,3 +125,6 @@ export const ACCURATE_TOKEN_DELAY_MS = {
 
 // 토큰 리밋
 export const ACCURATE_TOKEN_LIMIT = 200000;
+
+/** Placeholder in member section prompt; replaced with actual top-user table markdown. */
+export const PLACEHOLDER_TOP_USER_ACTIVITY_TABLE = '{{TOP_USER_ACTIVITY_TABLE}}';

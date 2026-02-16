@@ -49,8 +49,12 @@ Recognize team members' contributions in a concise, scannable format that shows 
 - **Do not** mix languages
 
 ## 🗂 Output Format (exact)
+- **Placeholder (mandatory):** Right after the section heading, output exactly this line on its own line (do not translate or modify it), then a blank line, then the member list:
+  \`{{TOP_USER_ACTIVITY_TABLE}}\`
+
 \`\`\`
 ## 👥 Team Activity
+{{TOP_USER_ACTIVITY_TABLE}}
 
 **[Emoji] [Member Name]**
 [1-2 sentences about their key activities and achievements]
@@ -111,6 +115,7 @@ Clarified audio playback specifications and supported data quality checks by sha
 \`\`\`
 
 **Remember:** 
+- Output \`{{TOP_USER_ACTIVITY_TABLE}}\` verbatim after the section heading (one line, then a blank line). Do not replace, translate, or remove it.
 - Keep each member entry very brief (20-30 words)
 - Focus on achievements and collaboration
 - Select most active/impactful members only

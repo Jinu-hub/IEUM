@@ -26,7 +26,16 @@ import {
     createTopicsSection,
 } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
-import { computeTopUserActivityGithub, computeTopUserActivitySlack, createChatroomHighlightMetaJson, createGithubHighlightMetaJson, delayByAccurateTokenCount, generatePeriodKey } from "./lib/utils";
+import { PLACEHOLDER_TOP_USER_ACTIVITY_TABLE } from "./lib/constants";
+import {
+    computeTopUserActivityGithub,
+    computeTopUserActivitySlack,
+    createChatroomHighlightMetaJson,
+    createGithubHighlightMetaJson,
+    delayByAccurateTokenCount,
+    formatTopUserActivityTable,
+    generatePeriodKey,
+} from "./lib/utils";
 import { convertToHTML, convertToHTMLOnlyKpi, createFinalContents, divideContents } from "./reporting-data";
 
 /**
@@ -237,12 +246,12 @@ export async function analyzeData(
     ]);
 
     logger.info('📝 Analyzing data completed');
-    /*
     const topUserActivity = [
         ...(metaJson.topUserActivity ?? []),
         ...(topicsTemp.activityMeta[0]?.topUserActivity ?? []),
     ];
-    */
+    const topUserActivityTable = formatTopUserActivityTable(topUserActivity);
+    
     await saveRunLogEvent(adminClient, {
         workspaceId: input.workspaceId, runId: input.runId, level: 'info',
         stepName: 'analyzing_data_completed', message: `Analyzing data completed`,
@@ -261,7 +270,7 @@ export async function analyzeData(
             },
         },
     });
-    return { kpiInfo, highlights, topics, ongoing , userActivity };
+    return { kpiInfo, highlights, topics, ongoing , userActivity, topUserActivityTable };
 
 }
 
@@ -274,6 +283,7 @@ export async function analyzeData(
  * @param topics topics
  * @param ongoing ongoing
  * @param userActivity user activity
+ * @param topUserActivityTable top user activity table
  * @param messageIndexById 
  * @returns 
  */
@@ -285,6 +295,7 @@ export async function draftingData(
     topics: z.infer<typeof TopicOutput>,
     ongoing: z.infer<typeof OngoingProgressOutput>,
     userActivity: z.infer<typeof ActivityOutput>,
+    topUserActivityTable: string,
     messageIndexById: Record<string, LinkedItem> | undefined) {
     logger.info('📝 Drafting data started');
 
@@ -336,6 +347,10 @@ export async function draftingData(
         })
     ]);
 
+    const finalMemberSection = topUserActivityTable.trim()
+        ? memberSection.replace(PLACEHOLDER_TOP_USER_ACTIVITY_TABLE, topUserActivityTable)
+        : memberSection.replace(PLACEHOLDER_TOP_USER_ACTIVITY_TABLE, '');
+
     logger.info('📝 Drafting data completed');
     await saveRunLogEvent(adminClient, {
         workspaceId: input.workspaceId, runId: input.runId, level: 'info',
@@ -345,13 +360,14 @@ export async function draftingData(
                 kpiSection: kpiSection.length,
                 highlightsSection: highlightsSection.length,
                 topicsSection: topicsSection.length,
-                memberSection: memberSection.length,
+                memberSection: finalMemberSection.length,
                 ongoingSection: ongoingSection.length,
                 closingSection: closingSection.length,
             },
         },
     });
-    return { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection };
+    
+    return { kpiSection, highlightsSection, topicsSection, memberSection: finalMemberSection, ongoingSection, closingSection };
 }
 
 /**
@@ -445,7 +461,8 @@ export async function generateContents(input: CreateContentsInput) {
     await delayByAccurateTokenCount(accurateTokenCount);
 
     // 2. 데이터 분석 & 개선 & 요약(Analyze & Improve & Summarize)
-    let { kpiInfo, highlights, topics, ongoing, userActivity }  = await analyzeData(input, linkedData, messageIndexById);
+    let { kpiInfo, highlights, topics, ongoing, userActivity, topUserActivityTable }  
+        = await analyzeData(input, linkedData, messageIndexById);
     const summarizeDataMs = Date.now() - summarizeDataStart;
  /*
     await saveContentToFile(linkedData, 'output-test/first', '1_linked_', 'json');
@@ -473,7 +490,7 @@ export async function generateContents(input: CreateContentsInput) {
     const assembleDataStart = Date.now();
     // 3. 각 섹션 초안 생성(Drafting Sections)
     let { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } =
-        await draftingData(input, linkedData, kpiInfo, highlights, topics, ongoing, userActivity, messageIndexById);
+        await draftingData(input, linkedData, kpiInfo, highlights, topics, ongoing, userActivity, topUserActivityTable, messageIndexById);
   /*  
     await saveContentToFile(kpiSection, 'output-test/second', '1_kpi_section_', 'md');
     await saveContentToFile(highlightsSection, 'output-test/second', '2_highlights_section_', 'md');

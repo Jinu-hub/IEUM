@@ -3,7 +3,7 @@ import { CFG_RANKER, IMPACT_MAP, type ImpactKey } from "../../lib/constants";
 import { logger } from "../../lib/logger";
 import type { ChatroomHighlightMetaJson, GithubHighlightMetaJson, KpiSnapshot, LinkedActivityDoc, LinkedItem, RankedHighlight, TopUserActivity, TopUserActivityItem } from "../../lib/types";
 import { Cluster } from "../../openai/models";
-import { ACCURATE_TOKEN_DELAY_MS, KIND_OF_COMMITS, KIND_OF_COMMITS_MAP, type KindOfCommit } from "./constants";
+import { ACCURATE_TOKEN_DELAY_MS, CONTRIBUTION_KIND_MAP, KIND_OF_COMMITS, KIND_OF_COMMITS_MAP, type ContributionKind, type KindOfCommit } from "./constants";
 
 export const CLAMP01 = (x?: number | null) => Math.max(0, Math.min(1, x ?? 0));
 export const TO_IMPACT = (i: typeof Cluster.shape.impact) => IMPACT_MAP[(i as unknown as ImpactKey) ?? "low"] ?? 0.3;
@@ -278,7 +278,7 @@ export function computeTopUserActivityGithub(
         { BugHunter: topBugHunter ? toItem(topBugHunter.user ?? "", bugfixIncidentByUser.get(topBugHunter.user ?? "") ?? 0) : DEFAULT_TOP_USER_ITEM },
     ];
     return result;
-    
+
 }
 
 /**
@@ -311,6 +311,30 @@ export function computeTopUserActivitySlack(
         { ReactionPro: topReactionPro ? toItem(topReactionPro.name, topReactionPro.reactions) : DEFAULT_TOP_USER_ITEM },
     ];
     return result;
+}
+
+/**
+ * Build a markdown table string from topUserActivity (Metrics | Name | Count).
+ * Skips entries with no meaningful data (empty name). Table is always in English.
+ * Uses CONTRIBUTION_KIND_MAP for metric labels (Top Developer, Bug Hunter, etc.).
+ */
+export function formatTopUserActivityTable(topUserActivity: TopUserActivity | null | undefined): string {
+    const rows: string[] = [];
+    const list = topUserActivity ?? [];
+    for (const item of list) {
+        const key = Object.keys(item)[0];
+        if (!key) continue;
+        const value = item[key] as TopUserActivityItem | undefined;
+        const name = value?.name?.trim() ?? "";
+        const nums = value?.nums ?? 0;
+        if (name === "" && nums <= 0) continue;
+        const label = CONTRIBUTION_KIND_MAP[key as ContributionKind]?.label ?? key;
+        rows.push(`| ${label} | ${name} | ${nums} |`);
+    }
+    if (rows.length === 0) return "";
+    const header = "| Metrics | Name | Count |";
+    const separator = "|--------|--------|-------|";
+    return [header, separator, ...rows].join("\n");
 }
 
 /** キーワード文字列からシングルクォートで囲まれたパターンを取り出す */

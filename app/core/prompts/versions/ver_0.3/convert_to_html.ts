@@ -464,24 +464,15 @@ Use the markdown content from the input \`sections\` object to generate the foll
                 <!-- Use sections.memberActivity → Convert to: 
                      <div class="section">
                        <h2 class="section-title">[Title]</h2>
-                       [If markdown contains leaderboard table with Top Developer/Bug Hunter/Chat Champ/Reaction Pro:]
-                       <table class="kpi-table">
-                         <thead><tr><th></th><th>[名前|이름|Name]</th><th>[件数|건수|Count]</th></tr></thead>
-                         <tbody>
-                           <tr><td>Top Developer</td><td>[Name]</td><td>[Count]</td></tr>
-                           <tr><td>Bug Hunter</td><td>[Name]</td><td>[Count]</td></tr>
-                           <tr><td>Chat Champ</td><td>[Name]</td><td>[Count]</td></tr>
-                           <tr><td>Reaction Pro</td><td>[Name]</td><td>[Count]</td></tr>
-                         </tbody>
-                       </table>
                        <div class="member-item">
-                         <div class="member-left"><div class="member-emoji">[Emoji]</div></div>
+                         <div class="member-left">
+                           <div class="member-emoji">[Emoji]</div>
+                         </div>
                          <div class="member-right">
                            <p class="member-name">[Name]</p>
                            <p class="member-desc">[Activity]</p>
                          </div>
                        </div>
-                       <!-- More member-items... -->
                      </div>
                 -->
                 
@@ -535,7 +526,6 @@ Use the markdown content from the input \`sections\` object to generate the foll
 
 **Tables:**
 - Markdown tables → HTML \`<table>\` with proper class (\`kpi-table\` or \`roadmap-table\`)
-- **Member activity leaderboard**: If memberActivity contains a table with Top Developer / Bug Hunter / Chat Champ / Reaction Pro rows, convert to \`<table class="kpi-table">\`. First column header: empty \`<th></th>\`. 2nd/3rd columns: JA=名前|件数, KO=이름|건수, EN=Name|Count. Place the table before member-item blocks.
 
 **Blockquotes/Conversations:**
 - \`> text\` → \`<div class="quote-box">\` or \`<div class="closing-quote">\`
