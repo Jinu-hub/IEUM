@@ -26,7 +26,7 @@ import {
     createTopicsSection,
 } from "./drafting-data";
 import { githubIngestor, slackIngestor } from "./ingestors";
-import { computeTopUserActivity, createChatroomHighlightMetaJson, createGithubHighlightMetaJson, delayByAccurateTokenCount, generatePeriodKey } from "./lib/utils";
+import { computeTopUserActivityGithub, computeTopUserActivitySlack, createChatroomHighlightMetaJson, createGithubHighlightMetaJson, delayByAccurateTokenCount, generatePeriodKey } from "./lib/utils";
 import { convertToHTML, convertToHTMLOnlyKpi, createFinalContents, divideContents } from "./reporting-data";
 
 /**
@@ -135,6 +135,11 @@ export async function analyzeData(
     // 2-1. github data를 기반으로 kpi snapshot을 생성
     const kpiInfo = await repoKpiExtractor(input.githubResult || {});
     const metaJson = createGithubHighlightMetaJson(kpiInfo, input.range, language);
+    if (input.enableCreateContents?.github) {
+        const topUserActivityGithub = computeTopUserActivityGithub(kpiInfo, language);
+        metaJson.topUserActivity = topUserActivityGithub;
+    }
+
     await saveHighlight(adminClient, {
         workspaceId: input.workspaceId,
         targetId: input.targetId,
@@ -158,15 +163,17 @@ export async function analyzeData(
 
     // 2-2. slack data를 기반으로 topic clustering을 생성
     const topicsTemp = await topicClustering(linkedData, language, input.source, input.range);
-    const topUserActivity = computeTopUserActivity(kpiInfo, linkedData, messageIndexById, language);
-    if (topicsTemp.activityMeta.length > 0) {
-        topicsTemp.activityMeta[0].topUserActivity = topUserActivity;
-    } else {
-        topicsTemp.activityMeta.push({
-            range: input.range ?? "",
-            activities: [],
-            topUserActivity,
-        });
+    if (input.enableCreateContents?.slack) {
+        const topUserActivitySlack = computeTopUserActivitySlack(linkedData, messageIndexById, language);
+        if (topicsTemp.activityMeta.length > 0) {
+            topicsTemp.activityMeta[0].topUserActivity = topUserActivitySlack;
+        } else {
+            topicsTemp.activityMeta.push({
+                range: input.range ?? "",
+                activities: [],
+                topUserActivity: topUserActivitySlack,
+            });
+        }
     }
     await saveHighlight(adminClient, {
         workspaceId: input.workspaceId,
@@ -211,7 +218,7 @@ export async function analyzeData(
     const topics = topicsTemp.clusters.filter((topic) => !highlightsTemp.some((highlight) => highlight.clusterId === topic.id));
     
     // 2-4, 2-5, 2-6을 병렬로 실행
-    const [highlights, ongoing, userActivityTemp] = await Promise.all([
+    const [highlights, ongoing, userActivity] = await Promise.all([
         // 2-4. highlights summary을 생성
         createHighlightsSummary(linkedData, highlightsTemp, language, messageIndexById).then(result => {
             logger.info('📝 Highlights summary created');
@@ -230,7 +237,12 @@ export async function analyzeData(
     ]);
 
     logger.info('📝 Analyzing data completed');
-    const userActivity = { topUserActivity, ...userActivityTemp };
+    /*
+    const topUserActivity = [
+        ...(metaJson.topUserActivity ?? []),
+        ...(topicsTemp.activityMeta[0]?.topUserActivity ?? []),
+    ];
+    */
     await saveRunLogEvent(adminClient, {
         workspaceId: input.workspaceId, runId: input.runId, level: 'info',
         stepName: 'analyzing_data_completed', message: `Analyzing data completed`,

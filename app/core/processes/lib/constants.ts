@@ -122,3 +122,6 @@ export const ACCURATE_TOKEN_DELAY_MS = {
     TIER_LOW_THRESHOLD: 100_000,
     TIER_LOW_DELAY_MS: 2_000,
 } as const;
+
+// 토큰 리밋
+export const ACCURATE_TOKEN_LIMIT = 200000;

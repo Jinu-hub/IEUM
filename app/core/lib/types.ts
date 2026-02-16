@@ -282,6 +282,7 @@ export type GithubHighlightMetaJson = {
   commitsByDeveloper: { developer: string; commits: number }[];
   commitsByCase: { case: string; commits: number }[];
   commitsByKind: { kind: string; commits: number }[];
+  topUserActivity?: TopUserActivity;
 };
 
 /** One top-user entry: name + the single metric (nums) that defines that badge */

@@ -242,13 +242,11 @@ export function getFunCornerLeaderboardData(linkedData: LinkedActivityDoc, kpiDa
 const DEFAULT_TOP_USER_ITEM: TopUserActivityItem = { name: "", nums: 0 };
 
 /**
- * Compute top user per contribution kind (no mapping: GitHub = TopDeveloper/BugHunter, Slack = ChatChamp/ReactionPro).
+ * Compute top user per contribution kind TopDeveloper/BugHunter.
  * Each entry is { name, nums } where nums is the single metric for that badge.
  */
-export function computeTopUserActivity(
+export function computeTopUserActivityGithub(
     kpiInfo: KpiSnapshot,
-    linkedData: LinkedActivityDoc,
-    messageIndexById: Record<string, LinkedItem> | undefined,
     language: "en" | "ko" | "ja",
 ): TopUserActivity {
     const toItem = (name: string, nums: number): TopUserActivityItem => ({ name, nums });
@@ -275,6 +273,24 @@ export function computeTopUserActivity(
             return aN >= bN ? a : b;
         })
         : null;
+    const result: TopUserActivity = [
+        { TopDeveloper: topDeveloper ? toItem(topDeveloper.user ?? "", topDeveloper.commits ?? 0) : DEFAULT_TOP_USER_ITEM },
+        { BugHunter: topBugHunter ? toItem(topBugHunter.user ?? "", bugfixIncidentByUser.get(topBugHunter.user ?? "") ?? 0) : DEFAULT_TOP_USER_ITEM },
+    ];
+    return result;
+    
+}
+
+/**
+ * Compute top user per contribution kind ChatChamp/ReactionPro
+ * Each entry is { name, nums } where nums is the single metric for that badge.
+ */
+export function computeTopUserActivitySlack(
+    linkedData: LinkedActivityDoc,
+    messageIndexById: Record<string, LinkedItem> | undefined,
+    language: "en" | "ko" | "ja",
+): TopUserActivity {
+    const toItem = (name: string, nums: number): TopUserActivityItem => ({ name, nums });
 
     // Slack: ChatChamp (most messages), ReactionPro (most reactions given)
     const memberDataWithMessages = prepareMemberDataWithMessages(linkedData, messageIndexById);
@@ -291,8 +307,6 @@ export function computeTopUserActivity(
         : null;
 
     const result: TopUserActivity = [
-        { TopDeveloper: topDeveloper ? toItem(topDeveloper.user ?? "", topDeveloper.commits ?? 0) : DEFAULT_TOP_USER_ITEM },
-        { BugHunter: topBugHunter ? toItem(topBugHunter.user ?? "", bugfixIncidentByUser.get(topBugHunter.user ?? "") ?? 0) : DEFAULT_TOP_USER_ITEM },
         { ChatChamp: topChatChamp ? toItem(topChatChamp.name, topChatChamp.messages) : DEFAULT_TOP_USER_ITEM },
         { ReactionPro: topReactionPro ? toItem(topReactionPro.name, topReactionPro.reactions) : DEFAULT_TOP_USER_ITEM },
     ];
