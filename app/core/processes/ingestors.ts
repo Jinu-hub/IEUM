@@ -97,6 +97,39 @@ export async function githubIngestor(
  *  Slack Ingestor
  * ----------------------------- */
 
+const SLACK_MESSAGE_MAX_LENGTH = 500;
+const SLACK_CODE_BLOCK_MAX_LENGTH = 300;
+
+/** 이모지/기호만 있는 단독 메시지 감지 */
+function isEmojiOnlyText(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  // Slack 스타일 이모지 코드(:smile: :thumbsup: ...)만으로 구성된 경우
+  if (/^(:[^:\s]+:\s*)+$/.test(trimmed)) return true;
+  // 공백 제거 후, 한글/영문/숫자/일본어/한자 등 "문자"가 전혀 없으면 이모지/기호만 있다고 간주
+  const noSpaces = trimmed.replace(/\s+/g, "");
+  if (/[A-Za-z0-9가-힣一-龯ぁ-んァ-ン]/.test(noSpaces)) return false;
+  return true;
+}
+
+/** 코드 블록(```...```)을 찾아 각 블록 내용을 maxLen 글자로 truncate */
+function truncateCodeBlocksInText(text: string, maxLen: number): string {
+  return text.replace(/```[\s\S]*?```/g, (block) => {
+    const match = block.match(/^```(\w*)\n?([\s\S]*?)```$/);
+    if (!match) return block;
+    const [, lang, body] = match;
+    const truncated = body.length <= maxLen ? body : body.slice(0, maxLen) + "\n…";
+    const prefix = lang ? `\`\`\`${lang}\n` : "```\n";
+    return prefix + truncated + "```";
+  });
+}
+
+/** 메시지 본문을 최대 길이로 truncate(생략 부호 포함) */
+function truncateMessageText(text: string, maxLen: number): string {
+  if (text.length <= maxLen) return text;
+  return text.slice(0, maxLen) + "…";
+}
+
 function normalizeText(s?: string): string | undefined {
   if (typeof s !== "string") return undefined;
   const t = s.trim();
@@ -145,7 +178,12 @@ function normalizeFiles(input?: FetchedMessage["files"]): FetchedMessage["files"
 
 function sanitizeMessage(m: FetchedMessage): FetchedMessage {
   const ts = String(m.ts ?? "").trim();
-  const text = normalizeText(m.text);
+  let text = normalizeText(m.text);
+  // 코드 블록 300자 제한 → 메시지 전체 500자 truncate
+  if (text) {
+    text = truncateCodeBlocksInText(text, SLACK_CODE_BLOCK_MAX_LENGTH);
+    text = truncateMessageText(text, SLACK_MESSAGE_MAX_LENGTH);
+  }
   const permalink = normalizeText(m.permalink);
   const reactions = normalizeReactions(m.reactions);
   const files = normalizeFiles(m.files);
@@ -171,7 +209,7 @@ function sanitizeMessage(m: FetchedMessage): FetchedMessage {
     reactions,
     files,
     thread,
-    // スレッドメタ情報を保持（threadがなくても）
+    // 스레드 메타 정보 유지(thread 없어도)
     thread_ts: m.thread_ts,
     reply_count: m.reply_count,
     latest_reply: m.latest_reply,
@@ -228,6 +266,14 @@ export async function slackIngestor(
     for (const raw of messages) {
       if (!raw || !raw.ts) continue; // 필수 누락 → 스킵
       const clean = sanitizeMessage(raw);
+      const isStandalone = !clean.thread && !clean.thread_ts;
+      if (isStandalone && clean.text) {
+        // ① 이모지 단독 메시지 제거
+        // ② 10자 이하 단독 메시지 제거
+        if (isEmojiOnlyText(clean.text) || clean.text.length <= 10) {
+          continue;
+        }
+      }
       const prev = byTs.get(clean.ts);
       byTs.set(clean.ts, prev ? mergeMessages(prev, clean) : clean);
     }
