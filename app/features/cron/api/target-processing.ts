@@ -13,6 +13,7 @@ import { getIntegrationsInfo, getTargetSources, getUserSubscriptionPlanType } fr
 import { getWorkspaceOwnerUserId } from "~/features/users/queries";
 import { fetchIntegrationData } from "./integration-fetching";
 import { checkEmailLimit } from "./limit-checking";
+import { sendSlackNotification } from "./send_notifications";
 import { matchSourcesToIntegrations } from "./source-matching";
 import type { FetchedData, Target } from "./types";
 
@@ -197,6 +198,14 @@ export async function processTarget(
       metricsJson: {},
       accuratedTokens: input.accuratedTokens || 0
     });
+
+    // slack 통지 메시지 전송 (이미 보유한 integrationsInfo·matchedChannels 전달하여 중복 조회 방지)
+    await sendSlackNotification(
+      input,
+      target.display_name,
+      content.data as { finalContents: string; htmlContents: string },
+      { integrationsInfo, matchedChannels: matchedSources.matchedChannels }
+    );
 
     // 이메일 전송
     await sendMails(
