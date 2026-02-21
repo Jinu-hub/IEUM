@@ -1,6 +1,6 @@
 import { run } from "@openai/agents";
 import { z } from "zod";
-import type { KpiSnapshot, LinkedActivityDoc, LinkedItem } from "../lib/types";
+import type { KpiSnapshot } from "../lib/types";
 import {
     createClosingSectionAgent,
     createHighlightsSectionAgent,
@@ -10,8 +10,6 @@ import {
     createTopicsSectionAgent,
 } from "../openai/agents/drafting-agents";
 import { ActivityOutput, CommonInput, HighlightsOutput, OngoingProgressOutput, TopicOutput } from "../openai/models";
-import { getFunCornerLeaderboardData } from "./lib/utils";
-
 export async function createKpiSection(
     kpiData: KpiSnapshot,
     language: 'en' | 'ko' | 'ja' = 'en'
@@ -82,26 +80,21 @@ export async function createOngoingSection(
 
 /**
  * slack data를 기반으로 closing section을 생성
- * @param linkedData 
- * @param kpiData 
  * @param ongoingData 
- * @param language 
- * @param messageIndexById 
+ * @param topUserActivityTable top user activity markdown table (Metrics | Name | Count)
+ * @param language language
  * @returns 
  */
 export async function createClosingSection(
-    linkedData: LinkedActivityDoc,
-    kpiData: KpiSnapshot,
     ongoingData: z.infer<typeof OngoingProgressOutput>,
-    language: 'en' | 'ko' | 'ja' = 'en',
-    messageIndexById: Record<string, LinkedItem> | undefined
+    topUserActivityTable: string,
+    language: 'en' | 'ko' | 'ja' = 'en'
 ): Promise<any> {
 
-    const leaderboardData = getFunCornerLeaderboardData(linkedData, kpiData, messageIndexById);
     const trimmed = {
         ongoingProgress: ongoingData,
         leaderboard: {
-            ...leaderboardData,
+            topUserActivityTable,
         },
     };
     

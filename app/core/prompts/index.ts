@@ -9,7 +9,7 @@ import { ACTIVITY_SUMMARY_INSTRUCTIONS } from './analyze/user_activity_ins';
 import { CONVERT_TO_HTML_INSTRUCTIONS } from './convert_to_html';
 import { CONVERT_TO_HTML_KPI_INSTRUCTIONS } from './convert_to_html_kpi';
 import { CONVERT_TO_HTML_INSTRUCTIONS_NO_KPI } from './convert_to_html_no_kpi';
-import { FUN_CORNER_SECTION_INSTRUCTIONS } from './drafting/fun_corner_sec_ins';
+import { CLOSING_SECTION_INSTRUCTIONS } from './drafting/closing_sec_ins';
 import { HIGHLIGHTS_SECTION_INSTRUCTIONS } from './drafting/highlights_sec_ins';
 import { KPI_SECTION_INSTRUCTIONS } from './drafting/kpi_sec_ins';
 import { MEMBER_ACTIVITY_SECTION_INSTRUCTIONS } from './drafting/member_act_sec_ins';
@@ -21,14 +21,14 @@ import { FINAL_RESULT_INSTRUCTIONS_NO_KPI } from './final_res_ins_no_kpi';
 import type { PromptType } from './types';
 // セクション別HTML変換プロンプト（並列処理用）
 import {
-    HEADER_TO_HTML_INSTRUCTIONS,
-    SUMMARY_TO_HTML_INSTRUCTIONS,
-    KPI_TO_HTML_INSTRUCTIONS,
-    HIGHLIGHTS_TO_HTML_INSTRUCTIONS,
-    TOPICS_TO_HTML_INSTRUCTIONS,
-    ONGOING_TO_HTML_INSTRUCTIONS,
-    MEMBER_ACTIVITY_TO_HTML_INSTRUCTIONS,
-    CLOSING_TO_HTML_INSTRUCTIONS,
+  CLOSING_TO_HTML_INSTRUCTIONS,
+  HEADER_TO_HTML_INSTRUCTIONS,
+  HIGHLIGHTS_TO_HTML_INSTRUCTIONS,
+  KPI_TO_HTML_INSTRUCTIONS,
+  MEMBER_ACTIVITY_TO_HTML_INSTRUCTIONS,
+  ONGOING_TO_HTML_INSTRUCTIONS,
+  SUMMARY_TO_HTML_INSTRUCTIONS,
+  TOPICS_TO_HTML_INSTRUCTIONS,
 } from './toHtml';
 
 export { buildPrompt } from './prompt-builder';
@@ -56,7 +56,7 @@ export function getPrompt(
     case 'looking_ahead_section':
       return 'TODO: Looking Ahead Section Instructions';
     case 'closing_section':
-      return FUN_CORNER_SECTION_INSTRUCTIONS;
+      return CLOSING_SECTION_INSTRUCTIONS;
     case 'create_final_contents':
       return FINAL_RESULT_INSTRUCTIONS;
     case 'create_final_kpi':

@@ -1,7 +1,7 @@
 // app/core/agents/templates/fun_corner_ins.ts
 // Paste-ready instructions constant. Replace {{LANGUAGE}} ("ja" | "ko" | "en", etc.) in your runtime before sending.
 
-export const FUN_CORNER_SECTION_INSTRUCTIONS = String.raw`
+export const CLOSING_SECTION_INSTRUCTIONS = String.raw`
 You are creating the **Closing Section** of an internal engineering newsletter.
 
 ## 🎯 Purpose
@@ -9,20 +9,21 @@ You are creating the **Closing Section** of an internal engineering newsletter.
 - Deliver a short paragraph that **synthesizes** inputs (does not read them back verbatim).
 - Color the section using **exactly ONE** progress/roadmap detail plus a simple leaderboard.
 
-## 🧠 Inputs You’ll Get
+## 🧠 Inputs You'll Get
 - progressRoadmap: ongoing items, roadmap windows (with dates), upcoming events, governance notes.
-- leaderboard:
-  - topCommitUser: user with the **most commits**
-  - mostReactedUser: user who **received the most reactions**
-  - topReactorUser: user who **gave the most reactions**
-  - mostMessagesUser: user who **posted the most messages**
+- leaderboard.topUserActivityTable: markdown table of this week's top contributors (Metrics | Name | Count). May include:
+  - Top Developer (most commits)
+  - Bug Hunter (most Bugfix+Incident commits)
+  - Chat Champ (most messages)
+  - Reaction Pro (most reactions given)
+  If empty or absent, omit any leaderboard mention.
 
-## ✍️ Transform, Don’t Transcribe
+## ✍️ Transform, Don't Transcribe
 **Do not** echo input sentences or keys. Instead:
 - **Paraphrase** names/roles lightly and **combine** related signals into flowing lines.
-- Use connective phrases (e.g., “その流れで / in the same vein / 한편”) so it reads like a human note, not a list.
+- Use connective phrases (e.g., "その流れで / in the same vein / 한편") so it reads like a human note, not a list.
 - Keep **dates exact** (YYYY-MM-DD) but wrap them in fresh wording.
-- Mention at **most two proper names**; summarize the rest collectively (e.g., “チームのみんなが…”, “the crew”, “팀 모두”).
+- Mention at **most two proper names**; summarize the rest collectively (e.g., "チームのみんなが…", "the crew", "팀 모두").
 
 ## 🪄 What to Do
 1) **Pick exactly ONE** concrete element from \`progressRoadmap\`:
@@ -30,12 +31,7 @@ You are creating the **Closing Section** of an internal engineering newsletter.
    - Otherwise choose one **upcoming** item; if absent, pick one **ongoing** item.
    - Refer to it in **one concise line**, no ticket lists or deep details.
 
-2) Weave in the leaderboard with **clean, non-mechanical phrasing**:
-   - topCommitUser → “posted the most commits” (or natural equivalent in {{LANGUAGE}})
-   - mostReactedUser → “received the most reactions”
-   - topReactorUser → “gave the most reactions”
-   - mostMessagesUser → “posted the most messages”
-   - If any entry is missing, **omit it** (don’t invent).
+2) If \`leaderboard.topUserActivityTable\` is present and non-empty, weave in **1–2 top contributors** with clean, non-mechanical phrasing (e.g. "posted the most commits", "most active in discussions"). Do not echo the table verbatim. If absent or empty, omit leaderboard mentions.
 
 3) Write **one short paragraph (4–6 lines)** with **gentle line breaks**:
    - Vary sentence openings; avoid a name at the start of every line.
@@ -59,9 +55,9 @@ You are creating the **Closing Section** of an internal engineering newsletter.
 
 ## 🗂 Output Format (exact)
 \`\`\`
-## 🎉 Fun Corner
+## 🎉 Closing Section
 
-🍵 This week’s vibe:
+🍵 This week's vibe:
 [Line 1: one-sentence nod to exactly ONE progress/roadmap item — include exact dates if provided]
 [Line 2–4: smoothly weave 2–4 leaderboard highlights in paraphrased, non-listy sentences; at most two names, others summarized]
 [Line 5–6: optional warm closing with 1+ light emoji]

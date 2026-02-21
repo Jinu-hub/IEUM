@@ -295,8 +295,7 @@ export async function draftingData(
     topics: z.infer<typeof TopicOutput>,
     ongoing: z.infer<typeof OngoingProgressOutput>,
     userActivity: z.infer<typeof ActivityOutput>,
-    topUserActivityTable: string,
-    messageIndexById: Record<string, LinkedItem> | undefined) {
+    topUserActivityTable: string) {
     logger.info('📝 Drafting data started');
 
     const language = input.language;
@@ -341,7 +340,7 @@ export async function draftingData(
             return result;
         }),
         // 3-6. Closing Section을 생성
-        createClosingSection(linkedData, kpiInfo, ongoing, language, messageIndexById).then(result => {
+        createClosingSection(ongoing, topUserActivityTable, language).then(result => {
             logger.info('📝 Closing section created');
             return result;
         })
@@ -463,6 +462,7 @@ export async function generateContents(input: CreateContentsInput) {
     // 2. 데이터 분석 & 개선 & 요약(Analyze & Improve & Summarize)
     let { kpiInfo, highlights, topics, ongoing, userActivity, topUserActivityTable }  
         = await analyzeData(input, linkedData, messageIndexById);
+    messageIndexById = undefined as any; // 메모리 해제 (이후 미사용)
     const summarizeDataMs = Date.now() - summarizeDataStart;
  /*
     await saveContentToFile(linkedData, 'output-test/first', '1_linked_', 'json');
@@ -490,7 +490,7 @@ export async function generateContents(input: CreateContentsInput) {
     const assembleDataStart = Date.now();
     // 3. 각 섹션 초안 생성(Drafting Sections)
     let { kpiSection, highlightsSection, topicsSection, memberSection, ongoingSection, closingSection } =
-        await draftingData(input, linkedData, kpiInfo, highlights, topics, ongoing, userActivity, topUserActivityTable, messageIndexById);
+        await draftingData(input, linkedData, kpiInfo, highlights, topics, ongoing, userActivity, topUserActivityTable);
   /*  
     await saveContentToFile(kpiSection, 'output-test/second', '1_kpi_section_', 'md');
     await saveContentToFile(highlightsSection, 'output-test/second', '2_highlights_section_', 'md');

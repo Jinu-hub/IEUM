@@ -11,7 +11,7 @@ A merged markdown document containing multiple sections:
 - **🧭 Topics** - generated content with categorized activities overview
 - **⚙ Ongoing Progress & Roadmap** - generated content with current work and future plans
 - **💬 Member Activity** - generated content with individual contributions
-- **🎉 Closing Section** - generated content (Fun Corner or similar)
+- **🎉 Closing Section** - generated content (Closing Section or similar)
 
 ## ✍️ What to Do
 
@@ -39,7 +39,7 @@ Replace the placeholder with a **warm, engaging opening** (220-270 words):
 - Include 1-2 specific numbers or achievements for credibility
 
 ### 2. Review Closing Section
-If a closing section (like Fun Corner) exists, review and polish it. If missing or inadequate, write a **brief, warm closing** (110-160 words):
+If a closing section exists, review and polish it. If missing or inadequate, write a **brief, warm closing** (110-160 words):
 - **Acknowledge efforts**: Thank the team for their work
 - **Look ahead**: Brief mention of what's coming next week
 - **Encouraging note**: End on a positive, motivating tone
