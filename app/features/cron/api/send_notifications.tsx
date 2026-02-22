@@ -28,6 +28,11 @@ export async function sendSlackNotification(
   _contents: { finalContents: string; htmlContents: string },
   options?: SendSlackNotificationOptions
 ): Promise<void> {
+
+  if (!input.enableCreateContents?.slack || options?.matchedChannels.length === 0) {
+    return;
+  }
+
   try {
     let integrationsInfo = options?.integrationsInfo;
     let matchedChannels = options?.matchedChannels;

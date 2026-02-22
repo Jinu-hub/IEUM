@@ -25,7 +25,7 @@ export const AGENT_MODELS = {
     // ============================================
     // 3. draftingData（セクション初稿生成）
     // ============================================
-    kpi_section: 'gpt-4.1-mini',           // KPIセクション
+    kpi_section: 'gpt-5-mini-2025-08-07',           // KPIセクション
     highlights_section: 'gpt-4.1-mini',    // ハイライトセクション
     topics_section: 'gpt-4.1-mini',        // トピックセクション
     member_activity_section: 'gpt-4.1-mini', // メンバー活動セクション
@@ -40,13 +40,13 @@ export const AGENT_MODELS = {
     // ============================================
     // 5. generateFinalContents（最終コンテンツ生成）
     // ============================================
-    final_contents: 'gpt-4.1-mini',        // 最終コンテンツ生成
+    final_contents: 'gpt-4o',        // 最終コンテンツ生成
     
     // ============================================
     // 6. convertToHTML（HTML変換）※オプション
     // ============================================
-    convert_to_html: 'gpt-5-mini-2025-08-07', // HTML変換
-    section_html: 'gpt-4.1-mini',          // セクション別HTML変換
+    convert_to_html: 'gpt-5-mini-2025-08-07',   // HTML変換
+    section_html: 'gpt-5.2-codex',      // セクション別HTML変換
 } as const;
 
 export type AgentModelKey = keyof typeof AGENT_MODELS;
