@@ -49,14 +49,16 @@ export async function createFinalContents(input: CreateContentsInput, mergedCont
  *   en: ## 👋 Weekly Summary / ## 📊 KPI Summary / ## ✨ Highlights  / ## 🧭 Topics     / ## ⚙ Ongoing Tasks & Roadmap        / ## 💬 Member Activity / ## 🎉 ...
  *  kpi: ## 👋 Opening Summary / ## 📊 KPI Summary / ## 🌟 Contributor Highlights / ## 🔍 Case Activity / ## 📝 Closing
  */
+// BMP 외 이모지(🎉, 📝, 🌟, 🧭 등)는 character class [...]에서
+// 서로게이트 페어로 분해되어 정상 매칭 불가 → alternation (?:...|...)으로 처리
 const SECTION_PATTERNS: Record<keyof Omit<DividedContents, 'header'>, RegExp> = {
     summary:        /##\s+(?:👋\s*)?(?:週次サマリー|Weekly\s+Summary|주간\s*요약|Opening\s+Summary)/i,
     kpi:            /##\s+(?:📊\s*)?(?:KPI|指標|지표)/i,
-    highlights:     /##\s+(?:[✨🌟]\s*)?(?:ハイライト|Highlight|하이라이트|Contributor)/i,
-    topics:         /##\s+(?:[🧭🔍]\s*)?(?:トピック|Topic|토픽|Case\s+Activity)/i,
+    highlights:     /##\s+(?:(?:✨|🌟)\s*)?(?:ハイライト|Highlight|하이라이트|Contributor)/i,
+    topics:         /##\s+(?:(?:🧭|🔍)\s*)?(?:トピック|Topic|토픽|Case\s+Activity)/i,
     ongoing:        /##\s+(?:⚙\s*)?(?:進行中|Ongoing|진행\s*중)/i,
     memberActivity: /##\s+(?:💬\s*)?(?:メンバー活動|Member\s+Activity|멤버\s*활동)/i,
-    closing:        /##\s+(?:[🎉📝]\s*)?(?:おわり|終わり|Closing|Conclusion|마무리|한\s*주)/i,
+    closing:        /##\s+(?:(?:🎉|📝)\s*)?(?:おわり|終わり|Closing|Conclusion|마무리|한\s*주)/i,
 };
 
 /**
