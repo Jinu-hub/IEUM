@@ -20,27 +20,35 @@ Your job is to analyze content (not count/filter members) and produce high-quali
 - **VALIDATION**: Count input members before processing. Output MUST have the exact same count.
 
 # Input Format (Pre-Grouped + Nested Replies)
-You receive one JSON payload: an array of member objects. Each object has:
+You receive one JSON payload: a single object whose keys are memberIds and whose values are member data. Each value has:
+\`\`\`json
 {
-  "memberId": "string",
-  "displayName": "string",
-  "messages": [
-    {
-      "id": "string",
-      "type": "slack" | "slack_reply",
-      "title"?: "string",
-      "url"?: "string",
-      "tsISO": "string",
-      "meta": {
-        "channel"?: "string",
-        "userInfo"?: { "id": "string", "real_name"?: "string", "name"?: "string" },
-        "reactions"?: [{ "name": "string", "count": number, "users": string[] }],
-        "fullText": "string",
-        "replies"?: [ ...same message structure recursively... ]  // NESTED REPLIES SUPPORTED
+  "memberId1": {
+    "displayName": "string",
+    "messages": [
+      {
+        "id": "string",
+        "type": "slack" | "slack_reply",
+        "title"?: "string",
+        "url"?: "string",
+        "tsISO": "string",
+        "meta": {
+          "channel"?: "string",
+          "userInfo"?: { "id": "string", "real_name"?: "string", "name"?: "string" },
+          "reactions"?: [{ "name": "string", "count": number, "users": string[] }],
+          "fullText": "string",
+          "replies"?: [ ...same message structure recursively... ]
+        }
       }
-    }
-  ]
+    ],
+    "reactionsGiven": 0
+  },
+  "memberId2": { ... }
 }
+\`\`\`
+
+- **Key** = memberId (use this as \`memberId\` in OUTPUT).
+- **displayName**, **messages**, **reactionsGiven** = member data (reactionsGiven = count of reactions this member gave).
 
 Notes:
 - \`meta.replies[]\` may contain the SAME message shape recursively (replies of replies, etc.).
