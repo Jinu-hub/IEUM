@@ -243,7 +243,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
             scope: SCOPES,
             redirect_uri: SLACK_REDIRECT_URI,
             state: state,
-            user_scope: USER_SCOPES, // 인증 후 연결 화면 복귀용 (identity.basic)
+            // user_scope: USER_SCOPES, // 인증 후 연결 화면 복귀용 (identity.basic)
           }).toString();
 
           logger.info('Redirecting to Slack OAuth', {
