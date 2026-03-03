@@ -16,7 +16,7 @@ export type PromptType =
     | 'convert_to_html'
     | 'convert_to_html_kpi'
     | 'convert_to_html_no_kpi'
-    // セクション別HTML変換（並列処理用）
+    // 섹션별 HTML 변환 (병렬 처리용)
     | 'toHtml_header'
     | 'toHtml_summary'
     | 'toHtml_kpi'
@@ -25,6 +25,15 @@ export type PromptType =
     | 'toHtml_ongoing'
     | 'toHtml_memberActivity'
     | 'toHtml_closing'
+    // KPI Newsletter용 섹션별 HTML 변환 (병렬 처리용)
+    | 'toHtml_kpi_header'
+    | 'toHtml_kpi_summary'
+    | 'toHtml_kpi_kpi'
+    | 'toHtml_kpi_highlights'
+    | 'toHtml_kpi_topics'
+    | 'toHtml_kpi_ongoing'
+    | 'toHtml_kpi_memberActivity'
+    | 'toHtml_kpi_closing'
 
 // =========================================================
 // Shared domain types (re-export)

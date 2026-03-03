@@ -19,7 +19,7 @@ import { FINAL_KPI_INSTRUCTIONS_V1 } from './final_kpi_ins_v1';
 import { FINAL_RESULT_INSTRUCTIONS } from './final_res_ins';
 import { FINAL_RESULT_INSTRUCTIONS_NO_KPI } from './final_res_ins_no_kpi';
 import type { PromptType } from './types';
-// セクション別HTML変換プロンプト（並列処理用）
+// 섹션별 HTML 변환 프롬프트 (병렬 처리용)
 import {
   CLOSING_TO_HTML_INSTRUCTIONS,
   HEADER_TO_HTML_INSTRUCTIONS,
@@ -30,6 +30,17 @@ import {
   SUMMARY_TO_HTML_INSTRUCTIONS,
   TOPICS_TO_HTML_INSTRUCTIONS,
 } from './toHtml';
+// KPI Newsletter용 섹션별 HTML 변환 프롬프트 (병렬 처리용)
+import {
+  KPI_CLOSING_TO_HTML_INSTRUCTIONS,
+  KPI_HEADER_TO_HTML_INSTRUCTIONS,
+  KPI_HIGHLIGHTS_TO_HTML_INSTRUCTIONS,
+  KPI_KPI_TO_HTML_INSTRUCTIONS,
+  KPI_MEMBER_ACTIVITY_TO_HTML_INSTRUCTIONS,
+  KPI_ONGOING_TO_HTML_INSTRUCTIONS,
+  KPI_SUMMARY_TO_HTML_INSTRUCTIONS,
+  KPI_TOPICS_TO_HTML_INSTRUCTIONS,
+} from './toHtml_kpi';
 
 export { buildPrompt } from './prompt-builder';
 
@@ -69,7 +80,7 @@ export function getPrompt(
       return FINAL_RESULT_INSTRUCTIONS_NO_KPI;
     case 'convert_to_html_no_kpi':
       return CONVERT_TO_HTML_INSTRUCTIONS_NO_KPI;
-    // セクション別HTML変換（並列処理用）
+    // 섹션별 HTML 변환 (병렬 처리용)
     case 'toHtml_header':
       return HEADER_TO_HTML_INSTRUCTIONS;
     case 'toHtml_summary':
@@ -86,6 +97,23 @@ export function getPrompt(
       return MEMBER_ACTIVITY_TO_HTML_INSTRUCTIONS;
     case 'toHtml_closing':
       return CLOSING_TO_HTML_INSTRUCTIONS;
+    // KPI Newsletter용 섹션별 HTML 변환 (병렬 처리용)
+    case 'toHtml_kpi_header':
+      return KPI_HEADER_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_kpi_summary':
+      return KPI_SUMMARY_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_kpi_kpi':
+      return KPI_KPI_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_kpi_highlights':
+      return KPI_HIGHLIGHTS_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_kpi_topics':
+      return KPI_TOPICS_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_kpi_ongoing':
+      return KPI_ONGOING_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_kpi_memberActivity':
+      return KPI_MEMBER_ACTIVITY_TO_HTML_INSTRUCTIONS;
+    case 'toHtml_kpi_closing':
+      return KPI_CLOSING_TO_HTML_INSTRUCTIONS;
   }
   return '';
 }

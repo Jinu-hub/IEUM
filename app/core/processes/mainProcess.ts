@@ -431,7 +431,8 @@ export async function generateFinalContents(input: CreateContentsInput, mergedCo
     const isOnlyKpi = input.enableCreateContents?.github && !input.enableCreateContents?.slack;
     const isNoKpi = !input.enableCreateContents?.github && input.enableCreateContents?.slack;
     if (isOnlyKpi) {
-        const htmlContents = await convertToHTMLOnlyKpi(input.language, finalContents as string, 
+        const sections = divideContents(false, finalContents as string);
+        const htmlContents = await convertToHTMLOnlyKpi(input.language, sections, 
             input.enableCreateContents as EnableCreateContents);
         logger.info('📝 Generating final contents completed');
         return { finalContents, htmlContents };
