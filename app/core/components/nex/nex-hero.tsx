@@ -16,7 +16,7 @@ export interface NexHeroProps extends React.HTMLAttributes<HTMLElement> {
   };
   title: string;
   subtitle?: string;
-  description?: string;
+  description?: React.ReactNode;
   actions?: {
     primary?: {
       label: string;

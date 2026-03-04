@@ -238,13 +238,16 @@ export function NavigationBar({
   email,
   avatarUrl,
   loading,
+  homeHref = "/",
+  minimal = false,
 }: {
   name?: string;
   email?: string;
   avatarUrl?: string | null;
   loading: boolean;
+  homeHref?: string;
+  minimal?: boolean;
 }) {
-  // Get translation function for internationalization
   const { t } = useTranslation();
   
   return (
@@ -254,89 +257,83 @@ export function NavigationBar({
       }
     >
       <div className="mx-auto flex h-full w-full max-w-screen-2xl items-center justify-between py-3">
-        {/* Application logo/title with link to home */}
-        {/* reloadDocument forces a full page reload to ensure proper locale and auth state */}
-        <Link to="/" reloadDocument>
+        <Link to={homeHref} reloadDocument>
           <h1 className="text-lg font-extrabold">{t("home.title")}</h1>
         </Link>
         
         {/* Desktop navigation menu (hidden on mobile) */}
         <div className="hidden h-full items-center gap-5 md:flex">
-          {/* Main navigation links */}
-          {/*
-          <Link
-            to="/components"
-            viewTransition
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-          >
-            Components
-          </Link>
-          */}
-          {/* reloadDocument ensures proper locale and auth state for prerendered pages */}
-          <Link
-            to="/how-it-works"
-            reloadDocument
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-          >
-            {t("footer.links.product.items.howItWorks")}
-          </Link>
-          <Link
-            to="/about"
-            reloadDocument
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-          >
-            {t("navigation.links.about")}
-          </Link>
-          <Link
-            to="/blog"
-            reloadDocument
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors pointer-events-none opacity-50 cursor-not-allowed"
-            aria-disabled="true"
-            onClick={(e) => e.preventDefault()}
-          >
-            {t("navigation.links.blog")}
-          </Link>
-          <Link
-            to="/faq"
-            reloadDocument
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-          >
-            {t("navigation.links.faq")}
-          </Link>
-          <Link
-            to="/pricing"
-            reloadDocument
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-          >
-            {t("navigation.links.pricing")}
-          </Link>
-          <Link
-            to="/contact"
-            reloadDocument
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-          >
-            {t("navigation.links.contact")}
-          </Link>
+          {minimal ? (
+            <Link
+              to="/"
+              reloadDocument
+              className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+            >
+              Go to NexLetter main site →
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/how-it-works"
+                reloadDocument
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
+                {t("footer.links.product.items.howItWorks")}
+              </Link>
+              <Link
+                to="/about"
+                reloadDocument
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
+                {t("navigation.links.about")}
+              </Link>
+              <Link
+                to="/blog"
+                reloadDocument
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors pointer-events-none opacity-50 cursor-not-allowed"
+                aria-disabled="true"
+                onClick={(e) => e.preventDefault()}
+              >
+                {t("navigation.links.blog")}
+              </Link>
+              <Link
+                to="/faq"
+                reloadDocument
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
+                {t("navigation.links.faq")}
+              </Link>
+              <Link
+                to="/pricing"
+                reloadDocument
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
+                {t("navigation.links.pricing")}
+              </Link>
+              <Link
+                to="/contact"
+                reloadDocument
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
+                {t("navigation.links.contact")}
+              </Link>
+            </>
+          )}
           <Separator orientation="vertical" />
           
-          {/* Settings, theme switcher, and language switcher */}
           <Actions />
           
           <Separator orientation="vertical" />
           
-          {/* Conditional rendering based on authentication state */}
           {loading ? (
-            // Loading state with skeleton placeholder
             <div className="flex items-center">
               <div className="bg-muted-foreground/20 size-8 animate-pulse rounded-lg" />
             </div>
           ) : (
             <>
               {name ? (
-                // Authenticated state with user menu
                 <UserMenu name={name} email={email} avatarUrl={avatarUrl} />
               ) : (
-                // Unauthenticated state with auth buttons
                 <AuthButtons />
               )}
             </>
@@ -349,33 +346,40 @@ export function NavigationBar({
         </SheetTrigger>
         <SheetContent>
           <SheetHeader>
-            {/* reloadDocument ensures proper locale and auth state for prerendered pages */}
-            <SheetClose asChild>
-              <Link to="/how-it-works" reloadDocument>{t("footer.links.product.items.howItWorks")}</Link>
-            </SheetClose>
-            <SheetClose asChild>
-              <Link to="/about" reloadDocument>{t("navigation.links.about")}</Link>
-            </SheetClose>
-            <SheetClose asChild>
-              <Link 
-                to="/blog" 
-                reloadDocument
-                className="pointer-events-none opacity-50 cursor-not-allowed"
-                aria-disabled="true"
-                onClick={(e) => e.preventDefault()}
-              >
-                {t("navigation.links.blog")}
-              </Link>
-            </SheetClose>
-            <SheetClose asChild>
-              <Link to="/faq" reloadDocument>{t("navigation.links.faq")}</Link>
-            </SheetClose>
-            <SheetClose asChild>
-              <Link to="/pricing" reloadDocument>{t("navigation.links.pricing")}</Link>
-            </SheetClose>
-            <SheetClose asChild>
-              <Link to="/contact" reloadDocument>{t("navigation.links.contact")}</Link>
-            </SheetClose>
+            {minimal ? (
+              <SheetClose asChild>
+                <Link to="/" reloadDocument>Go to NexLetter main site →</Link>
+              </SheetClose>
+            ) : (
+              <>
+                <SheetClose asChild>
+                  <Link to="/how-it-works" reloadDocument>{t("footer.links.product.items.howItWorks")}</Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link to="/about" reloadDocument>{t("navigation.links.about")}</Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link 
+                    to="/blog" 
+                    reloadDocument
+                    className="pointer-events-none opacity-50 cursor-not-allowed"
+                    aria-disabled="true"
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    {t("navigation.links.blog")}
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link to="/faq" reloadDocument>{t("navigation.links.faq")}</Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link to="/pricing" reloadDocument>{t("navigation.links.pricing")}</Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link to="/contact" reloadDocument>{t("navigation.links.contact")}</Link>
+                </SheetClose>
+              </>
+            )}
           </SheetHeader>
           {loading ? (
             <div className="flex items-center">

@@ -221,7 +221,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
       case 'connect': {
         try {
-          const { SLACK_CLIENT_ID, SLACK_REDIRECT_URI, SCOPES, USER_SCOPES } = await import("~/core/integrations/slack/client");
+          const { SLACK_CLIENT_ID, SLACK_REDIRECT_URI, SCOPES } = await import("~/core/integrations/slack/client");
           
           if (!SLACK_CLIENT_ID || !SLACK_REDIRECT_URI) {
             logger.error('Missing Slack OAuth credentials');

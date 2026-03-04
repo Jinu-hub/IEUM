@@ -70,6 +70,10 @@ export default [
     ]),
   ]),
 
+  layout("core/layouts/slack-navigation.layout.tsx", [
+    route("/slack", "features/home/screens/slack-home.tsx"),
+  ]),
+
   layout("core/layouts/navigation.layout.tsx", [
     route("/auth/confirm", "features/auth/screens/confirm.tsx"),
     index("features/home/screens/home.tsx"),

@@ -99,21 +99,30 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Check for language parameter in URL (e.g., ?lang=ja)
   const url = new URL(request.url);
   const langParam = url.searchParams.get("lang");
+  const pathname = url.pathname;
 
   // Concurrently load theme and locale preferences for better performance
-  const [{ getTheme }, locale] = await Promise.all([
+  const [{ getTheme }, detectedLocale] = await Promise.all([
     themeSessionResolver(request),
     i18next.getLocale(request),
   ]);
 
-  // If lang parameter is present and valid, update the locale cookie
-  // This ensures the language preference persists across page navigations
+  // Decide final locale:
+  // 1. If ?lang param is valid, use it
+  // 2. Else if path is /slack (or under it), force English ("en")
+  // 3. Else use detected locale
+  let locale = detectedLocale;
   const headers: HeadersInit = {};
+
   if (
     langParam &&
     (i18n.supportedLngs as readonly string[]).includes(langParam)
   ) {
-    headers["Set-Cookie"] = await localeCookie.serialize(langParam);
+    locale = langParam;
+    headers["Set-Cookie"] = await localeCookie.serialize(locale);
+  } else if (pathname.startsWith("/slack")) {
+    locale = "en";
+    headers["Set-Cookie"] = await localeCookie.serialize(locale);
   }
 
   return data(
