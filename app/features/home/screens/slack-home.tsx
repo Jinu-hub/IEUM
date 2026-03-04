@@ -307,8 +307,8 @@ export default function SlackHome() {
             {
               step: "3",
               icon: Zap,
-              title: 'Click "Add to Slack"',
-              description: "Authorize NexLetter to post to your workspace.",
+              title: 'Click "Connect" to Slack',
+              description: "Authorize NexLetter to post to your Slack workspace and install the Slack app.",
             },
             {
               step: "4",
@@ -371,11 +371,15 @@ export default function SlackHome() {
               <ul className="space-y-3 text-sm text-muted-foreground">
                 <li className="flex items-start gap-3">
                   <Zap className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-                  A scheduled weekly newsletter is successfully generated
+                  A scheduled weekly newsletter run starts at the configured time
                 </li>
                 <li className="flex items-start gap-3">
                   <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-                  A manual newsletter preview is created (if enabled)
+                  Sends the newsletter via email and Slack notification
+                </li>
+                <li className="flex items-start gap-3">
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                  After a newsletter is generated and sent, when you open its preview in NexLetter 
                 </li>
               </ul>
             </NexCardContent>
@@ -395,10 +399,10 @@ export default function SlackHome() {
             </NexCardHeader>
             <NexCardContent>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                <li>• Does not respond to user messages</li>
-                <li>• Does not use slash commands</li>
-                <li>• Does not monitor channel activity</li>
-                <li>• Does not read or search message history</li>
+                <li>• Does not respond to user messages or threads</li>
+                <li>• Does not provide slash commands or interactive bots</li>
+                <li>• Does not continuously monitor channels in real time</li>
+                <li>• Does not search across your entire workspace history</li>
               </ul>
             </NexCardContent>
           </NexCard>
@@ -454,7 +458,7 @@ export default function SlackHome() {
                 {
                   icon: Slack,
                   title: "Slack App",
-                  description: "Notification channel — posts a message when a newsletter is ready",
+                  description: "Notification and data source — collects channel activity for each newsletter period and posts a message when the digest is ready",
                   gradient: "from-[#4A154B] to-[#611f69]",
                 },
                 {
@@ -541,10 +545,10 @@ export default function SlackHome() {
             <NexCardContent>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {[
-                  "Read message history",
-                  "Search Slack content",
-                  "Monitor channel activity",
-                  "Respond to user messages",
+                "Use your Slack or GitHub data to train AI models",
+                "Allow external AI providers to reuse your data beyond each request",
+                "Store integration data longer than necessary for service and legal compliance",
+                "Process messages outside the defined analysis window for each report",
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
