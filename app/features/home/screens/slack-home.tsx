@@ -511,15 +511,17 @@ export default function SlackHome() {
               <div>
                 <NexCardTitle>What We Request</NexCardTitle>
                 <NexCardDescription>
-                  Minimum scopes for notification delivery
+                  Minimum scopes for generating and delivering newsletters and notifications
                 </NexCardDescription>
               </div>
             </NexCardHeader>
             <NexCardContent>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {[
-                  "Post a notification message to a selected channel",
-                  "Identify the installing workspace",
+                  "Access data only from the workspace and channels you explicitly connect to NexLetter (no access to other private workspaces or channels)",
+                  "Read recent activity from the channels and repositories you explicitly connect, only for report generation",
+                  "Send newsletters and notifications via email and to the Slack channel you select",
+                  "Store integration data securely and only for as long as needed to provide the service and comply with legal requirements",
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
