@@ -59,6 +59,7 @@ export default [
     ...prefix("/cron", [
       route("/mailer", "features/cron/api/mailer.tsx"),
       route("/actions", "features/cron/api/actions.tsx"),
+      route("/expire-subscriptions", "features/cron/api/expire-subscriptions.tsx"),
       route("/test", "features/cron/api/test-api.tsx"),
       route("/send-now", "features/cron/api/send-now.tsx"),
       route("/send-now/run", "features/cron/api/send-now-run.tsx"),
