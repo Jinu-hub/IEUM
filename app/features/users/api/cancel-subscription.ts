@@ -122,9 +122,33 @@ export async function action({ request }: Route.ActionArgs) {
   const isYearly = subscription.billing_interval === "yearly";
   const hasRefund = refundAmount && refundAmount > 0;
   const payment = subscription.payments;
-  
+
   // Determine payment provider (Stripe or Toss)
   const isStripe = !!subscription.stripe_subscription_id || payment?.pg_provider === "stripe";
+
+  // Update DB first (before Stripe API) so webhooks don't overwrite.
+  // Yearly: set ends_at from used months; monthly: do not change ends_at.
+  const newEndsAt =
+    isYearly && subscription.started_at
+      ? calculateNewEndsAtISO(subscription.started_at)
+      : undefined;
+
+  const { error: updateError } = await adminClient
+    .from("subscriptions")
+    .update({
+      status: "canceled",
+      ...(newEndsAt && { ends_at: newEndsAt }),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("subscription_id", subscriptionId);
+
+  if (updateError) {
+    console.error("Subscription update error:", updateError);
+    return data(
+      { error: "Failed to cancel subscription" },
+      { status: 500 }
+    );
+  }
 
   // ========================================
   // STRIPE: Cancel subscription and process refund
@@ -245,29 +269,6 @@ export async function action({ request }: Route.ActionArgs) {
         { status: 500 }
       );
     }
-  }
-
-  // Calculate new ends_at based on used months for yearly subscriptions
-  const newEndsAt = isYearly && subscription.started_at
-    ? calculateNewEndsAtISO(subscription.started_at)
-    : undefined;
-
-  // Update subscription status to canceled (and ends_at for yearly plans)
-  const { error: updateError } = await adminClient
-    .from("subscriptions")
-    .update({
-      status: "canceled",
-      ...(newEndsAt && { ends_at: newEndsAt }),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("subscription_id", subscriptionId);
-
-  if (updateError) {
-    console.error("Subscription update error:", updateError);
-    return data(
-      { error: "Failed to cancel subscription" },
-      { status: 500 }
-    );
   }
 
   // Optionally revoke the payment method

@@ -143,6 +143,28 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     return;
   }
 
+  // User-initiated cancel from NexLetter: cancel-subscription.ts sets this before calling
+  // stripe.subscriptions.cancel(). Skipping here avoids overwriting DB (monthly: ends_at
+  // must not change; yearly: ends_at is set by cancel-subscription.ts).
+  if (subscription.metadata?.cancel_immediately === "false") {
+    console.log(`Subscription ${subscription.id} - skipping update (user cancel, handled by cancel-subscription.ts)`);
+    return;
+  }
+
+  // Guard against delayed webhook events (e.g. customer.subscription.created arriving
+  // after the user already canceled). Don't revert a canceled subscription.
+  const { data: dbSub } = await adminClient
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", userId)
+    .eq("stripe_subscription_id", subscription.id)
+    .single();
+
+  if (dbSub?.status === "canceled") {
+    console.log(`Subscription ${subscription.id} - skipping update (already canceled in DB)`);
+    return;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const subAny = subscription as any;
   const status = mapSubscriptionStatus(subscription.status) as "active" | "canceled" | "trialing" | "paused" | "expired";
@@ -309,6 +331,19 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   if (payError) {
     console.error("Failed to record payment:", payError);
     throw payError;
+  }
+
+  // Don't reactivate a subscription that was already canceled
+  const { data: dbSub } = await adminClient
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", userId)
+    .eq("stripe_subscription_id", subscription)
+    .single();
+
+  if (dbSub?.status === "canceled") {
+    console.log(`Invoice ${invoice.id} paid but subscription already canceled, skipping status update`);
+    return;
   }
 
   // Update subscription end date
