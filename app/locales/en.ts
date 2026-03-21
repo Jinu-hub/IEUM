@@ -838,14 +838,14 @@ const en: Translation = {
     title: "Frequently Asked Questions",
     subtitle: "Quickly resolve questions about adoption, security, and billing.",
     description: "Check the most frequently asked questions before adoption in one place.",
-    heroDescription: "We've categorized information to help you quickly find what you need based on team size, security policies, and billing methods. If you still can't find an answer, we'll respond within 2 hours.",
+    heroDescription: "We've categorized information to help you quickly find what you need based on team size, security policies, and billing methods. If you still can't find an answer, we'll respond within 48 hours.",
     contactButton: "Contact Us",
     startTrialButton: "Start Free Trial",
     quickStats: {
       fastResponse: {
         value: "Fast Response",
         label: "All inquiries are checked by humans",
-        description: "Average response target: within 2 hours",
+        description: "Average response target: within 48 hours",
       },
       realQuestions: {
         value: "Real Question-Based FAQ",

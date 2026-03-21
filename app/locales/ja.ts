@@ -839,14 +839,14 @@ const ja: Translation = {
     title: "よくある質問",
     subtitle: "導入・セキュリティ・請求に関する疑問を素早く解決してください。",
     description: "導入前に最もよく聞かれる質問を一箇所で確認できます。",
-    heroDescription: "チーム規模、セキュリティポリシー、請求方法に応じて必要な情報を素早く見つけられるよう分類しました。それでも答えが見つからない場合は、2時間以内に回答いたします。",
+    heroDescription: "チーム規模、セキュリティポリシー、請求方法に応じて必要な情報を素早く見つけられるよう分類しました。それでも答えが見つからない場合は、48時間以内に回答いたします。",
     contactButton: "お問い合わせ",
     startTrialButton: "無料トライアルを開始",
     quickStats: {
       fastResponse: {
         value: "迅速な対応",
         label: "すべてのお問い合わせは人が直接確認します",
-        description: "平均応答目標: 2時間以内",
+        description: "平均応答目標: 48時間以内",
       },
       realQuestions: {
         value: "実際の質問ベースのFAQ",

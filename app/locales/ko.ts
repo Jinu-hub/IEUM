@@ -837,14 +837,14 @@ const ko: Translation = {
     title: "자주 묻는 질문",
     subtitle: "도입·보안·청구 관련 궁금증을 빠르게 해결하세요.",
     description: "도입 전에 가장 자주 묻는 질문들을 한 곳에서 확인하세요.",
-    heroDescription: "팀 규모, 보안 정책, 청구 방식에 따라 필요한 정보를 빠르게 찾을 수 있도록 분류했습니다. 그래도 답을 못 찾았다면 2시간 이내에 답변해 드릴게요.",
+    heroDescription: "팀 규모, 보안 정책, 청구 방식에 따라 필요한 정보를 빠르게 찾을 수 있도록 분류했습니다. 그래도 답을 못 찾았다면 48시간 이내에 답변해 드릴게요.",
     contactButton: "문의하기",
     startTrialButton: "무료 체험 시작하기",
     quickStats: {
       fastResponse: {
         value: "빠른 응답",
         label: "모든 문의는 사람이 직접 확인합니다",
-        description: "평균 응답 목표: 2시간 이내",
+        description: "평균 응답 목표: 48시간 이내",
       },
       realQuestions: {
         value: "실제 질문 기반 FAQ",
