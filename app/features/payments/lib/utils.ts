@@ -38,7 +38,14 @@ export function calculatePrice(
   currency: Currency = "USD"
 ): number {
   const basePrice = PLAN_PRICES[plan][interval];
-  return basePrice * EXCHANGE_RATES[currency];
+  const convertedPrice = basePrice * EXCHANGE_RATES[currency];
+
+  // KRW/JPY are shown in rounded-down tens place (e.g. 3455 -> 3450, 345 -> 340)
+  if (currency === "KRW" || currency === "JPY") {
+    return Math.floor(convertedPrice / 10) * 10;
+  }
+
+  return convertedPrice;
 }
 
 /**

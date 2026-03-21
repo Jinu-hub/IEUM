@@ -280,7 +280,7 @@ export type PaymentMethodStatus = typeof PAYMENT_METHOD_STATUS[number];
  */
 export const PLAN_PRICES = {
   free: { monthly: 0, yearly: 0 },
-  starter: { monthly: 4, yearly: 38.4 },  // $3.2/mo x 12 = $38.4/year (20% discount)
+  starter: { monthly: 3, yearly: 28.8 },  // $2.4/mo x 12 = $28.8/year (20% discount)
   pro: { monthly: 10, yearly: 96 },       // $8/mo x 12 = $96/year (20% discount)
   enterprise: { monthly: 0, yearly: 0 },  // Custom pricing
 } as const;
@@ -290,6 +290,6 @@ export const PLAN_PRICES = {
  */
 export const EXCHANGE_RATES = {
   USD: 1,
-  KRW: 1400,
-  JPY: 150,
+  KRW: 1500,
+  JPY: 160,
 } as const;
