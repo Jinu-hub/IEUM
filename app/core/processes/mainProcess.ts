@@ -144,6 +144,7 @@ export async function analyzeData(
     // 2-1. github data를 기반으로 kpi snapshot을 생성
     const kpiInfo = await repoKpiExtractor(input.githubResult || {});
     const metaJson = createGithubHighlightMetaJson(kpiInfo, input.range, language);
+    kpiInfo.commitsByKind = metaJson.commitsByKind;
     if (input.enableCreateContents?.github) {
         const topUserActivityGithub = computeTopUserActivityGithub(kpiInfo, language);
         metaJson.topUserActivity = topUserActivityGithub;

@@ -251,6 +251,7 @@ export type KpiSnapshot = {
   perRepo: RepoKpi[];
   perUser: UserRepoKpi[];
   perCase: CaseKpi[];
+  commitsByKind?: { kind: string; commits: number }[];
 };
 
 export type RankedHighlight = {

@@ -10,6 +10,7 @@ Provide a quick, visual snapshot of the week's development activity with key met
 - overall: Total commits, closed PRs, issues opened/closed
 - perUser: Individual contributor stats with cases
 - perCase: Case-based commit counts
+- commitsByKind: Commit counts grouped by type (Feature, Bugfix, Incident, Release, Refactor, Security)
 
 ## ✍️ What to Do
 
@@ -18,7 +19,7 @@ Provide a quick, visual snapshot of the week's development activity with key met
    - Total closed PRs
    - Total closed issues
    - Active contributors
-   - Most active case (if significant)
+   - Most active type — pick the kind with the highest commits from \`commitsByKind\` and show its localized name with count. Examples: \`Feature(15)\`, \`機能開発(15件)\`, \`기능개발(15건)\`. If no commitsByKind data or all zeros, omit this row.
    
 2) **Highlight top 2-3 contributors** in one flowing sentence:
    - Mention names with their commit counts
