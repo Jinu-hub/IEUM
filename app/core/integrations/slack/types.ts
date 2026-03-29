@@ -13,6 +13,8 @@ export type UserInfo = {
 
 export type FetchedMessage = {
   ts: string;
+  /** Slack username / bot 표시명 등 (history 응답의 username·bot_profile.name) */
+  author?: string;
   user?: string;
   userInfo?: UserInfo;
   text?: string;

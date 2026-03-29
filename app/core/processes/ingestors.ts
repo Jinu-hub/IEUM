@@ -3,6 +3,7 @@
 // - 기간 필터링은 상위 수집 단계에서 이미 수행된다는 전제
 // - 본 구현은 평탄화/병합/중복제거/경량 정리 중심 (idempotent)
 
+import { logger } from "~/core/lib/logger";
 import type { UnifiedActivityDoc } from "~/core/lib/types";
 import type { FetchedRepoData } from "../integrations/github/types";
 import type { FetchedMessage } from "../integrations/slack/types";
@@ -99,6 +100,15 @@ export async function githubIngestor(
 
 const SLACK_MESSAGE_MAX_LENGTH = 500;
 const SLACK_CODE_BLOCK_MAX_LENGTH = 300;
+
+/** Slack `author`만 보고 제외 (userInfo·봇 일괄 제외 없음). */
+const NEXLETTER_AUTHOR_SLUG = "nexletter";
+
+/** `author`를 소문자로 맞춘 뒤 `nexletter`와 같으면 true — NEXLETTER / NexLetter / nexletter 동일 처리 */
+function isExcludedNexLetterByAuthor(m: FetchedMessage): boolean {
+  if (typeof m.author !== "string") return false;
+  return m.author.trim().toLowerCase() === NEXLETTER_AUTHOR_SLUG;
+}
 
 /** 이모지/기호만 있는 단독 메시지 감지 */
 function isEmojiOnlyText(text: string): boolean {
@@ -242,6 +252,7 @@ function mergeMessages(a: FetchedMessage, b: FetchedMessage): FetchedMessage {
   return {
     ...a,
     // 가장 최신/유효한 값 우선
+    author: pick(a.author, b.author),
     user: pick(a.user, b.user),
     userInfo: pick(a.userInfo, b.userInfo),
     text: pick(a.text, b.text),
@@ -265,17 +276,28 @@ export async function slackIngestor(
     const byTs = new Map<string, FetchedMessage>();
     for (const raw of messages) {
       if (!raw || !raw.ts) continue; // 필수 누락 → 스킵
-      const clean = sanitizeMessage(raw);
-      const isStandalone = !clean.thread && !clean.thread_ts;
-      if (isStandalone && clean.text) {
+      const msg = sanitizeMessage(raw);
+
+      // 채널 히스토리 루트 메시지만: author=nexletter 이면 제외 (스레드 답글은 건드리지 않음)
+      if (isExcludedNexLetterByAuthor(msg)) {
+        logger.info("slackIngestor: excluded Slack message (author=nexletter)", {
+          channelId,
+          ts: msg.ts,
+          author: msg.author,
+        });
+        continue;
+      }
+
+      const isStandalone = !msg.thread && !msg.thread_ts;
+      if (isStandalone && msg.text) {
         // ① 이모지 단독 메시지 제거
         // ② 10자 이하 단독 메시지 제거
-        if (isEmojiOnlyText(clean.text) || clean.text.length <= 10) {
+        if (isEmojiOnlyText(msg.text) || msg.text.length <= 10) {
           continue;
         }
       }
-      const prev = byTs.get(clean.ts);
-      byTs.set(clean.ts, prev ? mergeMessages(prev, clean) : clean);
+      const prev = byTs.get(msg.ts);
+      byTs.set(msg.ts, prev ? mergeMessages(prev, msg) : msg);
     }
     
     processedByChannel[channelId] = Array.from(byTs.values());

@@ -28,6 +28,14 @@ const userLimit = pLimit(SLACK_FETCH_CONFIG.concurrency.user);
 const messageLimit = pLimit(SLACK_FETCH_CONFIG.concurrency.message);
 const replyLimit = pLimit(SLACK_FETCH_CONFIG.concurrency.reply);
 
+/** conversations.history / replies 의 봇·앱 표시명 → ingest의 author */
+function slackMessageAuthor(m: { username?: string; bot_profile?: { name?: string } }): string | undefined {
+  if (typeof m.username === "string" && m.username.trim()) return m.username.trim();
+  const bn = m.bot_profile?.name;
+  if (typeof bn === "string" && bn.trim()) return bn.trim();
+  return undefined;
+}
+
 export async function fetchUserInfo(slack: WebClient, userId: string): Promise<UserInfo | null> {
   if (userCache.has(userId)) return userCache.get(userId)!;
   if (pendingUser.has(userId)) return pendingUser.get(userId)!;
@@ -147,6 +155,7 @@ export async function fetchReplies(
           const userInfo = userId ? await fetchUserInfo(slack, userId) : null;
           const built: FetchedMessage = {
             ts: m.ts!,
+            author: slackMessageAuthor(m),
             user: userId,
             userInfo: userInfo || undefined,
             text: m.text,
@@ -202,6 +211,7 @@ export async function fetchChannelMessages(
             const userInfo = userId ? await fetchUserInfo(slack, userId) : null;
             const base: FetchedMessage = {
               ts: m.ts!,
+              author: slackMessageAuthor(m),
               user: userId,
               userInfo: userInfo || undefined,
               text: m.text,
