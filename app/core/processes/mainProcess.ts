@@ -226,25 +226,35 @@ export async function analyzeData(
     logger.info('📝 Rank highlights created');
     // highlights에 존재하지 않는 topics을 id 기반으로 추출
     const topics = topicsTemp.clusters.filter((topic) => !highlightsTemp.some((highlight) => highlight.clusterId === topic.id));
-    
-    // 2-4, 2-5, 2-6을 병렬로 실행
-    const [highlights, ongoing, userActivity] = await Promise.all([
-        // 2-4. highlights summary을 생성
-        createHighlightsSummary(linkedData, highlightsTemp, language, messageIndexById).then(result => {
-            logger.info('📝 Highlights summary created');
-            return result;
-        }),
-        // 2-5. slack data를 기반으로 ongoing progress roadmap을 생성
-        ongoingProgressRoadmapExtracte(linkedData, language).then(result => {
-            logger.info('📝 Ongoing progress roadmap created');
-            return result;
-        }),
-        // 2-6. slack data를 기반으로 member activity summary을 생성
-        summarizeMemberActivity(linkedData, language, messageIndexById).then(result => {
-            logger.info('📝 Member activity summary created');
-            return result;
-        })
-    ]);
+
+    await delayByAccurateTokenCount(input.accuratedTokens);
+
+    // 2-4, 2-5, 2-6 직렬 실행 (TPM 완화). 병렬로 되돌리려면 아래 블록을 제거하고 주석 처리된 Promise.all을 복구.
+    const highlights = await createHighlightsSummary(linkedData, highlightsTemp, language, messageIndexById);
+    logger.info('📝 Highlights summary created');
+    const ongoing = await ongoingProgressRoadmapExtracte(linkedData, language);
+    logger.info('📝 Ongoing progress roadmap created');
+    const userActivity = await summarizeMemberActivity(linkedData, language, messageIndexById);
+    logger.info('📝 Member activity summary created');
+
+    // // 2-4, 2-5, 2-6을 병렬로 실행
+    // const [highlights, ongoing, userActivity] = await Promise.all([
+    //     // 2-4. highlights summary을 생성
+    //     createHighlightsSummary(linkedData, highlightsTemp, language, messageIndexById).then(result => {
+    //         logger.info('📝 Highlights summary created');
+    //         return result;
+    //     }),
+    //     // 2-5. slack data를 기반으로 ongoing progress roadmap을 생성
+    //     ongoingProgressRoadmapExtracte(linkedData, language).then(result => {
+    //         logger.info('📝 Ongoing progress roadmap created');
+    //         return result;
+    //     }),
+    //     // 2-6. slack data를 기반으로 member activity summary을 생성
+    //     summarizeMemberActivity(linkedData, language, messageIndexById).then(result => {
+    //         logger.info('📝 Member activity summary created');
+    //         return result;
+    //     })
+    // ]);
 
     logger.info('📝 Analyzing data completed');
     const topUserActivity = [
@@ -311,6 +321,8 @@ export async function draftingData(
     if (!input.enableCreateContents?.slack) {
         return { kpiSection, highlightsSection: '', topicsSection: '', memberSection: '', ongoingSection: '', closingSection: '' };
     }
+
+    await delayByAccurateTokenCount(input.accuratedTokens);
 
     // 모든 섹션을 병렬로 생성
     const [

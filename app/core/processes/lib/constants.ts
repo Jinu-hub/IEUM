@@ -112,9 +112,9 @@ export const CONTRIBUTION_KIND_MAP: Record<
 
 /** 토큰 수에 따른 지연: 기준값(이상) → 지연 밀리초. 높은 구간부터 매칭되어 해당 구간만큼 지연한다 */
 export const ACCURATE_TOKEN_DELAY_MS = {
-    /** 200,000 토큰 이상 → 10초 */
+    /** 200,000 토큰 이상 → 20초 */
     TIER_HIGH_THRESHOLD: 200_000,
-    TIER_HIGH_DELAY_MS: 10_000,
+    TIER_HIGH_DELAY_MS: 20_000,
     /** 150,000 토큰 이상 → 5초 */
     TIER_MID_THRESHOLD: 150_000,
     TIER_MID_DELAY_MS: 5_000,
