@@ -27,6 +27,7 @@ import {
   TypographyOrderedList,
   TypographyP,
 } from "~/core/components/mdx-typography";
+import CounterExample from "~/features/blog/components/counter-example";
 import { Badge } from "~/core/components/ui/badge";
 
 interface PostFrontmatter {
@@ -198,6 +199,7 @@ export default function Post({
           ul: TypographyList,
           ol: TypographyOrderedList,
           code: TypographyInlineCode,
+          CounterExample,
         }}
       />
     </div>
