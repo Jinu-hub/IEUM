@@ -129,6 +129,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     {
       theme: getTheme(),
       locale,
+      supabasePublic: {
+        url: process.env.SUPABASE_URL,
+        anonKey: process.env.SUPABASE_ANON_KEY,
+      },
     },
     { headers }
   );

@@ -22,22 +22,11 @@ import {
   TrendingUp,
   Zap
 } from "lucide-react";
-import { useMemo } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis
-} from "recharts";
 
+import { ClientOnly } from "~/core/components/client-only";
 import {
   NexBadge,
   NexButton,
@@ -52,12 +41,19 @@ import type { TopUserActivity } from "~/core/lib/types";
 import { CONTRIBUTION_KINDS, CONTRIBUTION_KIND_MAP } from "~/core/processes/lib/constants";
 import {
   homeAnalyticsFeatures,
-  homeCaseData,
-  homeCommitTrendData,
-  homeDeveloperData,
   homeFeatureHighlights,
   homeIntegrations
 } from "~/features/settings/lib/mockdata";
+
+import {
+  HomeAnalyticsChartsSkeleton,
+} from "./home-analytics-charts";
+
+const HomeAnalyticsCharts = lazy(() =>
+  import("./home-analytics-charts").then((m) => ({
+    default: m.HomeAnalyticsCharts,
+  })),
+);
 
 /**
  * Meta function for setting page metadata
@@ -108,11 +104,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     GitCommit,
     BarChart3
   }), []);
-
-  // Use data from mockdata
-  const commitTrendData = homeCommitTrendData;
-  const developerData = homeDeveloperData;
-  const caseData = homeCaseData;
 
   // topUserActivity format: [{ TopDeveloper: { name, nums } }, { BugHunter: { name, nums } }, ...]
   const topUserActivity: TopUserActivity = [
@@ -188,9 +179,13 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             href: "/samples"
           }
         }}
-        media={{ 
-          type: "image", 
-          src: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=600&h=400&fit=crop&crop=center"
+        media={{
+          type: "image",
+          src: "/images/home-hero.jpg",
+          alt: t("home.subtitle"),
+          width: 600,
+          height: 400,
+          fetchPriority: "high",
         }}
       />
 
@@ -330,78 +325,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               })}
             </div>
 
-            {/* Mini Charts Preview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Commit Trend Preview */}
-              <div className="rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700/50 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium">{t("home.analytics.commitTrend")}</p>
-                  <NexBadge variant="success" size="sm">+18%</NexBadge>
-                </div>
-                <div className="h-24">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={commitTrendData}>
-                      <defs>
-                        <linearGradient id="colorCommit" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8B96F5" stopOpacity={0.5}/>
-                          <stop offset="95%" stopColor="#8B96F5" stopOpacity={0.08}/>
-                        </linearGradient>
-                      </defs>
-                      <Area 
-                        type="monotone" 
-                        dataKey="value" 
-                        stroke="#8B96F5" 
-                        fill="url(#colorCommit)"
-                        strokeWidth={2}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Developer Activity Preview */}
-              <div className="rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700/50 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium">{t("home.analytics.developerActivity")}</p>
-                  <NexBadge variant="info" size="sm">4{t("common.people")}</NexBadge>
-                </div>
-                <div className="h-24">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={developerData} layout="vertical">
-                      <XAxis type="number" hide />
-                      <YAxis type="category" dataKey="name" hide />
-                      <Bar dataKey="commits" fill="#8B96F5" radius={[0, 4, 4, 0]} opacity={0.85} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Case Status Preview */}
-              <div className="rounded-xl bg-slate-100 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700/50 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium">{t("home.analytics.caseStatus")}</p>
-                  <NexBadge variant="warning" size="sm">34{t("common.count")}</NexBadge>
-                </div>
-                <div className="h-24 flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={caseData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={25}
-                        outerRadius={40}
-                        dataKey="value"
-                      >
-                        {caseData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
+            <ClientOnly fallback={<HomeAnalyticsChartsSkeleton />}>
+              <Suspense fallback={<HomeAnalyticsChartsSkeleton />}>
+                <HomeAnalyticsCharts />
+              </Suspense>
+            </ClientOnly>
           </NexCardContent>
         {/* Staged Release Notice */}
         <p className="text-center text-xs text-muted-foreground">

@@ -42,6 +42,7 @@ export interface NexHeroProps extends React.HTMLAttributes<HTMLElement> {
     width?: number;
     height?: number;
     objectFit?: 'cover' | 'contain';
+    fetchPriority?: 'high' | 'low' | 'auto';
   };
   features?: {
     icon: React.ReactNode;
@@ -281,6 +282,10 @@ export const NexHero: React.FC<NexHeroProps> = ({
                       <img
                         src={media.src}
                         alt={media.alt || ''}
+                        width={media.width}
+                        height={media.height}
+                        fetchPriority={media.fetchPriority}
+                        decoding="async"
                         className={cn(
                           'h-full w-full',
                           media.objectFit === 'contain'
