@@ -298,7 +298,11 @@ export default function About({ loaderData }: AboutProps) {
         }}
         media={{
           type: "image",
-          src: "https://images.unsplash.com/photo-1527169402691-feff5539e52c?w=1200&h=900&fit=crop"
+          src: "/images/about-hero.jpg",
+          alt: t("about.subtitle"),
+          width: 600,
+          height: 400,
+          fetchPriority: "high",
         }}
       />
 

@@ -38,7 +38,7 @@ import {
 } from "~/core/components/nex";
 import i18next from "~/core/lib/i18next.server";
 import type { TopUserActivity } from "~/core/lib/types";
-import { CONTRIBUTION_KINDS, CONTRIBUTION_KIND_MAP } from "~/core/processes/lib/constants";
+import { CONTRIBUTION_KIND_MAP, CONTRIBUTION_KINDS } from "~/core/processes/lib/constants";
 import {
   homeAnalyticsFeatures,
   homeFeatureHighlights,
@@ -181,7 +181,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         }}
         media={{
           type: "image",
-          src: "/images/home-hero.jpg",
+          src: "/images/home-hero.png",
           alt: t("home.subtitle"),
           width: 600,
           height: 400,

@@ -242,11 +242,12 @@ export default function HowItWorks({ loaderData }: Route.ComponentProps) {
         }}
         media={{
           type: "image",
-          //src: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&h=900&fit=crop",
-          src: "/hero/how_it_works.png",
-          width: 1200,
-          height: 900,
+          src: "/images/how-it-works-hero.jpg",
+          alt: t("howItWorks.hero.subtitle"),
+          width: 600,
+          height: 400,
           objectFit: "cover",
+          fetchPriority: "high",
         }}
       />
       {/* 4ステップ概要: Connect → Configure → Generate → Share */}

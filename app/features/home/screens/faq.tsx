@@ -320,7 +320,11 @@ export default function FAQ({ loaderData }: Route.ComponentProps) {
         }}
         media={{
           type: "image",
-          src: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=800&h=600&fit=crop&auto=format"
+          src: "/images/faq-hero.jpg",
+          alt: t("faq.subtitle"),
+          width: 600,
+          height: 400,
+          fetchPriority: "high",
         }}
       />
 

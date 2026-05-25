@@ -30,10 +30,18 @@ import { ServerRouter } from "react-router";
 
 // Import i18n configuration and translation resources
 import i18next from "./core/lib/i18next.server"; // Server-side i18n instance
-import i18n from "./i18n"; // Shared i18n configuration
+import i18n, { supportedLngs } from "./i18n"; // Shared i18n configuration
 import en from "./locales/en"; // English translations
 import ja from "./locales/ja"; // Japanese translations
 import ko from "./locales/ko"; // Korean translations
+
+const localeBundles = { en, ja, ko } as const;
+
+function resolveLocale(lng: string): keyof typeof localeBundles {
+  return (supportedLngs as readonly string[]).includes(lng)
+    ? (lng as keyof typeof localeBundles)
+    : "en";
+}
 
 /**
  * Maximum time in milliseconds to wait for streaming content
@@ -72,21 +80,16 @@ export default async function handleRequest(
     const i18nextInstance = createInstance();
 
     const lng = await i18next.getLocale(request);
+    const resolvedLng = resolveLocale(lng);
     const ns = i18next.getRouteNamespaces(routerContext);
 
     await i18nextInstance.use(initReactI18next).init({
       ...i18n,
-      lng,
+      lng: resolvedLng,
       ns,
       resources: {
-        en: {
-          common: en,
-        },
-        ja: {
-          common: ja,
-        },
-        ko: {
-          common: ko,
+        [resolvedLng]: {
+          common: localeBundles[resolvedLng],
         },
       },
     });

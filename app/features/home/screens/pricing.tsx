@@ -254,7 +254,11 @@ export default function Pricing({ loaderData }: Route.ComponentProps) {
         }}
         media={{
           type: "image",
-          src: "https://images.unsplash.com/photo-1517430816045-df4b7de11d1d?w=800&h=600&fit=crop&auto=format"
+          src: "/images/pricing-hero.jpg",
+          alt: t("pricing.hero.subtitle"),
+          width: 600,
+          height: 400,
+          fetchPriority: "high",
         }}
       />
 
