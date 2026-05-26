@@ -298,6 +298,10 @@ export const NexHero: React.FC<NexHeroProps> = ({
                     <img
                       src={media.src}
                       alt={media.alt || ''}
+                      width={media.width}
+                      height={media.height}
+                      fetchPriority={media.fetchPriority}
+                      decoding="async"
                       className="w-full h-auto rounded-2xl shadow-2xl"
                     />
                   )

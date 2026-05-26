@@ -16,7 +16,7 @@ import {
 } from "@react-router/dev/routes";
 
 export default [
-  route("/robots.txt", "core/screens/robots.ts"),
+  // /robots.txt is served from public/robots.txt (static CDN, no serverless)
   route("/sitemap.xml", "core/screens/sitemap.ts"),
   route("/samples", "features/home/screens/samples.tsx"),
   
@@ -38,6 +38,7 @@ export default [
       route("/github-callback", "features/settings/api/github-callback.tsx"),
       route("/github-webhook", "features/settings/api/github-webhook.tsx"),
       route("/slack-integration/:credentialRef", "features/settings/api/slack-integration.tsx"), 
+      //route("/slack-integration/:credentialRef", "features/settings/api/token/slack-integration.tsx"),
       route("/slack-callback", "features/settings/api/slack-callback.tsx"),
       route("/slack-channel-members", "features/settings/api/slack-channel-members.tsx"),
       route("/update-review-step", "features/settings/api/update-review-step.tsx"),

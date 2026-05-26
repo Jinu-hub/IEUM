@@ -1,0 +1,16 @@
+# robots.txt for https://nexone.ink
+# Served as a static asset (CDN) — avoids serverless cold start on crawlers.
+
+User-agent: *
+Disallow: /dashboard
+Disallow: /account
+Disallow: /settings
+Disallow: /contents
+Disallow: /payments
+Disallow: /auth
+Disallow: /api
+Allow: /
+
+Crawl-delay: 1
+
+Sitemap: https://nexone.ink/sitemap.xml

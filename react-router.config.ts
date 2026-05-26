@@ -96,9 +96,8 @@ export default {
       // dynamically based on user's cookie/preferences
       // ...legalUrls,
 
-      // SEO files
+      // SEO files (/robots.txt is static in public/)
       "/sitemap.xml",
-      "/robots.txt",
     ];
   },
 
