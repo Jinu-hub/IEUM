@@ -8,7 +8,7 @@
  */
 import { AlertCircle, Loader2Icon } from "lucide-react";
 import { useRef } from "react";
-import { Form, Link, data, redirect, useFetcher } from "react-router";
+import { data, Form, Link, redirect, useFetcher } from "react-router";
 import { z } from "zod";
 import { updateReviewStep } from "~/features/settings/db/mutations";
 import type { Route } from "./+types/login";
@@ -142,6 +142,7 @@ export async function action({ request }: Route.ActionArgs) {
  */
 export default function Login({ actionData }: Route.ComponentProps) {
   const { t } = useTranslation("common", { keyPrefix: "login" });
+  const { t: tJoin } = useTranslation("common", { keyPrefix: "join" });
   // Reference to the form element for accessing form data
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -177,6 +178,11 @@ export default function Login({ actionData }: Route.ComponentProps) {
           <CardDescription className="text-base">
             {t("description")}
           </CardDescription>
+          <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 mt-4">
+              <AlertDescription className="text-amber-900 dark:text-amber-200 text-sm leading-relaxed whitespace-normal break-words">
+                {tJoin("noticeMessage")}
+              </AlertDescription>
+            </Alert>
         </CardHeader>
         <CardContent className="grid gap-4">
           <Form

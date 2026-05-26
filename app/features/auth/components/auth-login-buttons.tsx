@@ -108,11 +108,13 @@ function _SignInButtons() {
         logo={<LockIcon className="size-4 scale-110 dark:text-white" />}
         label="OTP"
         href="/auth/otp/start"
+        disabled={true}
       />
       <AuthLoginButton
         logo={<MailIcon className="size-4 scale-110 dark:text-white" />}
         label="Magic Link"
         href="/auth/magic-link"
+        disabled={true}
       />
     </>
   );
