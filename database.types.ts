@@ -64,6 +64,508 @@ export type Database = {
           },
         ]
       }
+      daily_core_data: {
+        Row: {
+          core_date: string
+          created_at: string
+          current_generation_no: number | null
+          daily_core_id: string
+          language: Database["public"]["Enums"]["language"]
+          last_attempt_at: string | null
+          last_error_code: string | null
+          last_error_message: string | null
+          last_generated_at: string | null
+          last_generation_no: number
+          last_job_id: string | null
+          quality_status: Database["public"]["Enums"]["daily_core_quality_status"]
+          target_category: Database["public"]["Enums"]["category_type"]
+          target_display_name: string
+          target_id: string
+          timezone: string
+          updated_at: string
+          window_end_at: string
+          window_start_at: string
+          workspace_id: string
+        }
+        Insert: {
+          core_date: string
+          created_at?: string
+          current_generation_no?: number | null
+          daily_core_id?: string
+          language: Database["public"]["Enums"]["language"]
+          last_attempt_at?: string | null
+          last_error_code?: string | null
+          last_error_message?: string | null
+          last_generated_at?: string | null
+          last_generation_no?: number
+          last_job_id?: string | null
+          quality_status?: Database["public"]["Enums"]["daily_core_quality_status"]
+          target_category: Database["public"]["Enums"]["category_type"]
+          target_display_name: string
+          target_id: string
+          timezone: string
+          updated_at?: string
+          window_end_at: string
+          window_start_at: string
+          workspace_id: string
+        }
+        Update: {
+          core_date?: string
+          created_at?: string
+          current_generation_no?: number | null
+          daily_core_id?: string
+          language?: Database["public"]["Enums"]["language"]
+          last_attempt_at?: string | null
+          last_error_code?: string | null
+          last_error_message?: string | null
+          last_generated_at?: string | null
+          last_generation_no?: number
+          last_job_id?: string | null
+          quality_status?: Database["public"]["Enums"]["daily_core_quality_status"]
+          target_category?: Database["public"]["Enums"]["category_type"]
+          target_display_name?: string
+          target_id?: string
+          timezone?: string
+          updated_at?: string
+          window_end_at?: string
+          window_start_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_core_data_last_job_id_job_queue_id_fk"
+            columns: ["last_job_id"]
+            isOneToOne: false
+            referencedRelation: "job_queue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_core_data_target_id_targets_target_id_fk"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["target_id"]
+          },
+          {
+            foreignKeyName: "daily_core_data_workspace_id_workspace_workspace_id_fk"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
+      daily_core_generations: {
+        Row: {
+          content_hash: string | null
+          core_json: Json | null
+          created_at: string
+          daily_core_id: string
+          error_code: string | null
+          error_message: string | null
+          finished_at: string | null
+          generation_id: string
+          generation_no: number
+          generation_status: Database["public"]["Enums"]["daily_core_generation_status"]
+          input_hash: string | null
+          input_stats_json: Json
+          job_id: string | null
+          model_config_json: Json
+          model_name: string
+          model_provider: string
+          pipeline_version: string
+          processing_metrics_json: Json
+          prompt_version: string
+          quality_status:
+            | Database["public"]["Enums"]["daily_core_quality_status"]
+            | null
+          schema_version: string
+          started_at: string
+          target_id: string
+          taxonomy_version: string
+          token_usage_json: Json
+          trigger: Database["public"]["Enums"]["daily_core_generation_trigger"]
+          validation_json: Json
+          workspace_id: string
+        }
+        Insert: {
+          content_hash?: string | null
+          core_json?: Json | null
+          created_at?: string
+          daily_core_id: string
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          generation_id?: string
+          generation_no: number
+          generation_status?: Database["public"]["Enums"]["daily_core_generation_status"]
+          input_hash?: string | null
+          input_stats_json?: Json
+          job_id?: string | null
+          model_config_json?: Json
+          model_name: string
+          model_provider: string
+          pipeline_version: string
+          processing_metrics_json?: Json
+          prompt_version: string
+          quality_status?:
+            | Database["public"]["Enums"]["daily_core_quality_status"]
+            | null
+          schema_version: string
+          started_at: string
+          target_id: string
+          taxonomy_version: string
+          token_usage_json?: Json
+          trigger: Database["public"]["Enums"]["daily_core_generation_trigger"]
+          validation_json?: Json
+          workspace_id: string
+        }
+        Update: {
+          content_hash?: string | null
+          core_json?: Json | null
+          created_at?: string
+          daily_core_id?: string
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          generation_id?: string
+          generation_no?: number
+          generation_status?: Database["public"]["Enums"]["daily_core_generation_status"]
+          input_hash?: string | null
+          input_stats_json?: Json
+          job_id?: string | null
+          model_config_json?: Json
+          model_name?: string
+          model_provider?: string
+          pipeline_version?: string
+          processing_metrics_json?: Json
+          prompt_version?: string
+          quality_status?:
+            | Database["public"]["Enums"]["daily_core_quality_status"]
+            | null
+          schema_version?: string
+          started_at?: string
+          target_id?: string
+          taxonomy_version?: string
+          token_usage_json?: Json
+          trigger?: Database["public"]["Enums"]["daily_core_generation_trigger"]
+          validation_json?: Json
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_core_generations_daily_core_id_daily_core_data_daily_core"
+            columns: ["daily_core_id"]
+            isOneToOne: false
+            referencedRelation: "daily_core_data"
+            referencedColumns: ["daily_core_id"]
+          },
+          {
+            foreignKeyName: "daily_core_generations_job_id_job_queue_id_fk"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "job_queue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_core_generations_target_id_targets_target_id_fk"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["target_id"]
+          },
+          {
+            foreignKeyName: "daily_core_generations_workspace_id_workspace_workspace_id_fk"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
+      daily_core_items: {
+        Row: {
+          classifications_json: Json
+          confidence: number | null
+          core_date: string
+          created_at: string
+          entities_json: Json
+          evidence_json: Json
+          generation_id: string
+          importance: number | null
+          item_id: string
+          item_key: string
+          item_type: Database["public"]["Enums"]["daily_core_item_type"]
+          payload_json: Json
+          semantic_text: string
+          status: string | null
+          summary: string
+          tags: string[]
+          target_id: string
+          title: string | null
+          workspace_id: string
+        }
+        Insert: {
+          classifications_json?: Json
+          confidence?: number | null
+          core_date: string
+          created_at?: string
+          entities_json?: Json
+          evidence_json?: Json
+          generation_id: string
+          importance?: number | null
+          item_id?: string
+          item_key: string
+          item_type: Database["public"]["Enums"]["daily_core_item_type"]
+          payload_json?: Json
+          semantic_text: string
+          status?: string | null
+          summary: string
+          tags?: string[]
+          target_id: string
+          title?: string | null
+          workspace_id: string
+        }
+        Update: {
+          classifications_json?: Json
+          confidence?: number | null
+          core_date?: string
+          created_at?: string
+          entities_json?: Json
+          evidence_json?: Json
+          generation_id?: string
+          importance?: number | null
+          item_id?: string
+          item_key?: string
+          item_type?: Database["public"]["Enums"]["daily_core_item_type"]
+          payload_json?: Json
+          semantic_text?: string
+          status?: string | null
+          summary?: string
+          tags?: string[]
+          target_id?: string
+          title?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_core_items_generation_id_daily_core_generations_generatio"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "daily_core_generations"
+            referencedColumns: ["generation_id"]
+          },
+          {
+            foreignKeyName: "daily_core_items_target_id_targets_target_id_fk"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["target_id"]
+          },
+          {
+            foreignKeyName: "daily_core_items_workspace_id_workspace_workspace_id_fk"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
+      daily_core_metrics: {
+        Row: {
+          core_date: string
+          created_at: string
+          dimension_hash: string
+          dimensions_json: Json
+          evidence_json: Json
+          generation_id: string
+          metric_id: string
+          metric_key: string
+          metric_value: number
+          origin: Database["public"]["Enums"]["daily_core_metric_origin"]
+          rollup_hint: Database["public"]["Enums"]["daily_core_rollup_hint"]
+          target_id: string
+          unit: string
+          workspace_id: string
+        }
+        Insert: {
+          core_date: string
+          created_at?: string
+          dimension_hash: string
+          dimensions_json?: Json
+          evidence_json?: Json
+          generation_id: string
+          metric_id?: string
+          metric_key: string
+          metric_value: number
+          origin: Database["public"]["Enums"]["daily_core_metric_origin"]
+          rollup_hint: Database["public"]["Enums"]["daily_core_rollup_hint"]
+          target_id: string
+          unit: string
+          workspace_id: string
+        }
+        Update: {
+          core_date?: string
+          created_at?: string
+          dimension_hash?: string
+          dimensions_json?: Json
+          evidence_json?: Json
+          generation_id?: string
+          metric_id?: string
+          metric_key?: string
+          metric_value?: number
+          origin?: Database["public"]["Enums"]["daily_core_metric_origin"]
+          rollup_hint?: Database["public"]["Enums"]["daily_core_rollup_hint"]
+          target_id?: string
+          unit?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_core_metrics_generation_id_daily_core_generations_generat"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "daily_core_generations"
+            referencedColumns: ["generation_id"]
+          },
+          {
+            foreignKeyName: "daily_core_metrics_target_id_targets_target_id_fk"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["target_id"]
+          },
+          {
+            foreignKeyName: "daily_core_metrics_workspace_id_workspace_workspace_id_fk"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
+      daily_core_source_snapshots: {
+        Row: {
+          collected_at: string
+          collection_status: Database["public"]["Enums"]["daily_core_collection_status"]
+          config_snapshot_json: Json
+          error_code: string | null
+          error_message: string | null
+          estimated_tokens: number | null
+          generation_id: string
+          integration_id: string | null
+          item_count: number
+          raw_bytes: number | null
+          raw_snapshot_ref: string | null
+          source_ident: string
+          source_input_hash: string | null
+          source_snapshot_id: string
+          source_type: string
+          stats_json: Json
+          target_id: string
+          target_source_id: string | null
+          window_end_at: string
+          window_start_at: string
+          workspace_id: string
+        }
+        Insert: {
+          collected_at: string
+          collection_status: Database["public"]["Enums"]["daily_core_collection_status"]
+          config_snapshot_json?: Json
+          error_code?: string | null
+          error_message?: string | null
+          estimated_tokens?: number | null
+          generation_id: string
+          integration_id?: string | null
+          item_count?: number
+          raw_bytes?: number | null
+          raw_snapshot_ref?: string | null
+          source_ident: string
+          source_input_hash?: string | null
+          source_snapshot_id?: string
+          source_type: string
+          stats_json?: Json
+          target_id: string
+          target_source_id?: string | null
+          window_end_at: string
+          window_start_at: string
+          workspace_id: string
+        }
+        Update: {
+          collected_at?: string
+          collection_status?: Database["public"]["Enums"]["daily_core_collection_status"]
+          config_snapshot_json?: Json
+          error_code?: string | null
+          error_message?: string | null
+          estimated_tokens?: number | null
+          generation_id?: string
+          integration_id?: string | null
+          item_count?: number
+          raw_bytes?: number | null
+          raw_snapshot_ref?: string | null
+          source_ident?: string
+          source_input_hash?: string | null
+          source_snapshot_id?: string
+          source_type?: string
+          stats_json?: Json
+          target_id?: string
+          target_source_id?: string | null
+          window_end_at?: string
+          window_start_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_core_source_snapshots_generation_id_daily_core_generation"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "daily_core_generations"
+            referencedColumns: ["generation_id"]
+          },
+          {
+            foreignKeyName: "daily_core_source_snapshots_integration_id_integrations_integra"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["integration_id"]
+          },
+          {
+            foreignKeyName: "daily_core_source_snapshots_integration_id_integrations_integra"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "v_integration_info"
+            referencedColumns: ["integration_id"]
+          },
+          {
+            foreignKeyName: "daily_core_source_snapshots_integration_id_integrations_integra"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "v_integration_is_connected"
+            referencedColumns: ["integration_id"]
+          },
+          {
+            foreignKeyName: "daily_core_source_snapshots_target_id_targets_target_id_fk"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["target_id"]
+          },
+          {
+            foreignKeyName: "daily_core_source_snapshots_target_source_id_target_sources_tar"
+            columns: ["target_source_id"]
+            isOneToOne: false
+            referencedRelation: "target_sources"
+            referencedColumns: ["target_source_id"]
+          },
+          {
+            foreignKeyName: "daily_core_source_snapshots_workspace_id_workspace_workspace_id"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
       delivery_events_email: {
         Row: {
           edition_id: string
@@ -1746,6 +2248,25 @@ export type Database = {
         | "error"
         | "never"
         | "disconnected"
+      daily_core_collection_status: "success" | "empty" | "failed"
+      daily_core_generation_status:
+        | "queued"
+        | "processing"
+        | "succeeded"
+        | "failed"
+      daily_core_generation_trigger:
+        | "scheduled"
+        | "manual"
+        | "backfill"
+        | "regenerate"
+      daily_core_item_type:
+        | "highlight"
+        | "topic"
+        | "progress_roadmap"
+        | "member_activity"
+      daily_core_metric_origin: "computed" | "ai"
+      daily_core_quality_status: "missing" | "ready" | "partial" | "empty"
+      daily_core_rollup_hint: "sum" | "avg" | "max" | "min" | "last" | "none"
       delivery_event_type_email:
         | "delivered"
         | "opened"
@@ -1997,6 +2518,28 @@ export const Constants = {
         "never",
         "disconnected",
       ],
+      daily_core_collection_status: ["success", "empty", "failed"],
+      daily_core_generation_status: [
+        "queued",
+        "processing",
+        "succeeded",
+        "failed",
+      ],
+      daily_core_generation_trigger: [
+        "scheduled",
+        "manual",
+        "backfill",
+        "regenerate",
+      ],
+      daily_core_item_type: [
+        "highlight",
+        "topic",
+        "progress_roadmap",
+        "member_activity",
+      ],
+      daily_core_metric_origin: ["computed", "ai"],
+      daily_core_quality_status: ["missing", "ready", "partial", "empty"],
+      daily_core_rollup_hint: ["sum", "avg", "max", "min", "last", "none"],
       delivery_event_type_email: [
         "delivered",
         "opened",
