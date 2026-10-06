@@ -176,7 +176,7 @@ export async function processTarget(
     // 날짜 범위 생성
     const dateRange = createDateRange();
 
-    // CreateContentsInput 생성 (running 시점 전달 → mainProcess에서 collect_data_ms 등록)
+    // CreateContentsInput 생성
     const input = createContentsInput(target, runMapping, fetchedData, dateRange, runStartedAt);
 
     // 컨텐츠 생성
