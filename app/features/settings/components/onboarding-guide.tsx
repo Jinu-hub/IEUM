@@ -38,7 +38,7 @@ interface OnboardingGuideTooltipProps {
  */
 const DEFAULT_GUIDE_MESSAGES: Record<OnboardingStep, { title: string; description: string; icon: string }> = {
   'welcome': {
-    title: 'Welcome to NexLetter',
+    title: 'Welcome to IEUM',
     description: 'Let\'s set up your newsletter. Click the button to go to settings.',
     icon: '👋'
   },
@@ -78,7 +78,7 @@ const DEFAULT_GUIDE_MESSAGES: Record<OnboardingStep, { title: string; descriptio
   },
   'completed': {
     title: 'Setup Complete!',
-    description: 'Congratulations! Your NexLetter setup is complete.',
+    description: 'Congratulations! Your IEUM setup is complete.',
     icon: '✅'
   }
 };

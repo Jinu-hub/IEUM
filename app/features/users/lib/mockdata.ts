@@ -11,10 +11,10 @@ export const gitHubCommitsByDeveloper = [
   
   // GitHub 레포별 커밋 데이터
   export const gitHubCommitsByRepo = [
-    { name: 'nexletter-frontend', value: 156, color: '#5E6AD2' },
-    { name: 'nexletter-backend', value: 98, color: '#7C89F9' },
-    { name: 'nexletter-admin', value: 67, color: '#9BA7FF' },
-    { name: 'nexletter-mobile', value: 34, color: '#B8C1FF' }
+    { name: 'ieum-frontend', value: 156, color: '#5E6AD2' },
+    { name: 'ieum-backend', value: 98, color: '#7C89F9' },
+    { name: 'ieum-admin', value: 67, color: '#9BA7FF' },
+    { name: 'ieum-mobile', value: 34, color: '#B8C1FF' }
   ];
   
   // GitHub 라벨별 이슈 데이터

@@ -389,7 +389,7 @@ export async function action({ request }: ActionFunctionArgs) {
             notificationMessage += `\n\n💡 *Key Points:*\n${formattedKeyPoints}`;
           }
           
-          notificationMessage += `\n\n🔗 *Full details are available in the NexLetter dashboard.*`;
+          notificationMessage += `\n\n🔗 *Full details are available in the IEUM dashboard.*`;
 
           const postResult = await slack.chat.postMessage({
             channel: channelId,

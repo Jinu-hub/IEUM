@@ -2,7 +2,7 @@ import type { Translation } from "./types";
 
 const en: Translation = {
   home: {
-    title: "NexLetter",
+    title: "IEUM",
     subtitle: "For Team Newsletters",
     hero: {
       description: "Automatically analyze Slack conversations, GitHub activities, and project progress to create a weekly newsletter that summarizes your team's week. No more manual weekly reports.",
@@ -382,7 +382,7 @@ const en: Translation = {
     searchSentMailList: "Search by target or subject...",
   },
   join: {
-    heroTitle: "NexLetter",
+    heroTitle: "IEUM",
     heroSubtitle: "Start your smarter team newsletter",
     heroDescription: "Automatically analyze Slack conversations, GitHub activities, and project progress to create a weekly newsletter for your team. No more manual weekly reports.",
     title: "Create an account",
@@ -723,7 +723,7 @@ const en: Translation = {
       slackConnectionDescription1: "After completion, a Slack bot will be created in the workspace.",
       slackConnectionDescription2: "Private channels require manually inviting the bot to collect data.",
       slackConnectionDescription3: "Bot invitation method: Users belonging to the channel move to the channel in Slack",
-      slackConnectionDescription4: "Input [/invite @NexLetter] and press Enter.",
+      slackConnectionDescription4: "Input [/invite @IEUM] and press Enter.",
     },
   },
   targets: {
@@ -891,11 +891,11 @@ const en: Translation = {
     categories: {
       onboarding: {
         name: "Getting Started & Onboarding",
-        description: "Guidance on adopting NexLetter and setting up the initial environment.",
+        description: "Guidance on adopting IEUM and setting up the initial environment.",
         questions: {
           service: {
-            question: "What does NexLetter do?",
-            answer: "NexLetter is an AI-based internal and external newsletter automation platform that automatically collects and organizes team activity data from GitHub, Slack, etc.,<br />and automatically generates weekly engineering reports, highlights, and KPI summaries.<br />Administrators only need minimal setup, and after that, the system and AI agents operate automatically.",
+            question: "What does IEUM do?",
+            answer: "IEUM is an AI-based internal and external newsletter automation platform that automatically collects and organizes team activity data from GitHub, Slack, etc.,<br />and automatically generates weekly engineering reports, highlights, and KPI summaries.<br />Administrators only need minimal setup, and after that, the system and AI agents operate automatically.",
           },
           trial: {
             question: "What is the free trial period?",
@@ -925,7 +925,7 @@ const en: Translation = {
           },
           sensitiveData: {
             question: "Is sensitive code or private documents stored?",
-            answer: "No. NexLetter does not store the entire original code and only collects summary metadata provided by GitHub, Slack, etc.<br />Sensitive text is automatically filtered and processed.",
+            answer: "No. IEUM does not store the entire original code and only collects summary metadata provided by GitHub, Slack, etc.<br />Sensitive text is automatically filtered and processed.",
           },
         },
       },
@@ -935,7 +935,7 @@ const en: Translation = {
         questions: {
           summary: {
             question: "How does AI generate summaries?",
-            answer: "Collected data goes through a pipeline of deduplication → document linking → topic clustering → highlight extraction → KPI calculation → team-specific content generation.<br />All processes are automatically handled by NexLetter's dedicated OpenAI Agent.<br /><br />As a result, it turns a team's week of activities into a story that's easy for humans to read.",
+            answer: "Collected data goes through a pipeline of deduplication → document linking → topic clustering → highlight extraction → KPI calculation → team-specific content generation.<br />All processes are automatically handled by IEUM's dedicated OpenAI Agent.<br /><br />As a result, it turns a team's week of activities into a story that's easy for humans to read.",
           },
           delivery: {
             question: "How are newsletters delivered?",
@@ -949,10 +949,10 @@ const en: Translation = {
       },
       security: {
         name: "Security & Privacy",
-        description: "Guidance on NexLetter's data protection policies and security structure.",
+        description: "Guidance on IEUM's data protection policies and security structure.",
         questions: {
           protection: {
-            question: "How does NexLetter protect data?",
+            question: "How does IEUM protect data?",
             answer: "We protect data through Supabase Row Level Security, JWT-based access control, data encryption, and Vault-based API Key storage.<br />We have adopted a strong isolation structure by Workspace.",
           },
           externalTransfer: {
@@ -985,13 +985,13 @@ const en: Translation = {
           },
           filtering: {
             question: "Can I create reports for specific teams or projects only?",
-            answer: "Yes. We support detailed filter settings such as specific GitHub Repositories and Slack Channels per target.<br />At this point, you can set 1 GitHub Repository and 3 Slack Channels per target.<br />(Example) target1 ==> gitrepo: nexletter-dev, slackchannel: (@nexletter-dev, @nexletter-test, @nexletter-prod)<br />We plan to support more diverse filtering conditions in the future.",
+            answer: "Yes. We support detailed filter settings such as specific GitHub Repositories and Slack Channels per target.<br />At this point, you can set 1 GitHub Repository and 3 Slack Channels per target.<br />(Example) target1 ==> gitrepo: ieum-dev, slackchannel: (@ieum-dev, @ieum-test, @ieum-prod)<br />We plan to support more diverse filtering conditions in the future.",
           },
         },
       },
       support: {
         name: "Customer Support & Technical Support",
-        description: "Support guidance provided when you need help while using NexLetter.",
+        description: "Support guidance provided when you need help while using IEUM.",
         questions: {
           help: {
             question: "Can I get help if initial setup is difficult?",
@@ -1020,11 +1020,11 @@ const en: Translation = {
     },
   },
   pricing: {
-    title: "NexLetter - Pricing",
+    title: "IEUM - Pricing",
     subtitle: "Pricing plans for AI-based internal newsletter automation",
-    description: "Flexible NexLetter pricing plans that scale with your team size",
+    description: "Flexible IEUM pricing plans that scale with your team size",
     hero: {
-      title: "Transparent and Scalable NexLetter Pricing",
+      title: "Transparent and Scalable IEUM Pricing",
       subtitle: "Start AI newsletter automation now and continue based on your team size and workflow.",
       description: "All plans include Slack · GitHub integration, KPI widgets, and multilingual newsletters by default. After the Free trial, you can continue using the same automation with the Starter plan.",
       primaryButton: "Start Free Trial",
@@ -1044,7 +1044,7 @@ const en: Translation = {
     plans: {
       free: {
         name: "Free",
-        description: "Lightly experience NexLetter",
+        description: "Lightly experience IEUM",
         seats: "Newsletter delivery for up to 3 people",
         bestFor: "Individual users · Trial purposes",
         features: [
@@ -1055,7 +1055,7 @@ const en: Translation = {
       },
       starter: {
         name: "Starter",
-        description: "The fastest way for small teams to start NexLetter",
+        description: "The fastest way for small teams to start IEUM",
         seats: "Newsletter delivery for up to 10 people",
         bestFor: "Individual developers · Early startups",
         badge: "Most popular",
@@ -1151,7 +1151,7 @@ const en: Translation = {
     },
     enterprise: {
       title: "Enterprise Plan",
-      description: "Customized NexLetter for organizations with 100+ people",
+      description: "Customized IEUM for organizations with 100+ people",
       features: [
         "SAML / SSO, audit logs",
         "Data residency & security options",
@@ -1195,7 +1195,7 @@ const en: Translation = {
     subtitle: "A new way to record your team's flow",
     description: "A new way to record your team's flow",
     hero: {
-      description: "The moments your team moves. We make sure that flow doesn't disappear. NexLetter discovers meaning among the countless movements left in daily activities, weaves scattered records into a single story, and automatically preserves your team's culture and achievements.",
+      description: "The moments your team moves. We make sure that flow doesn't disappear. IEUM discovers meaning among the countless movements left in daily activities, weaves scattered records into a single story, and automatically preserves your team's culture and achievements.",
       primaryButton: "Get Started",
       secondaryButton: "View Samples",
     },
@@ -1242,9 +1242,9 @@ const en: Translation = {
     },
     solution: {
       badge: "💡 Our solution",
-      title: "When your team works, NexLetter turns it into a story.",
+      title: "When your team works, IEUM turns it into a story.",
       description: "An AI-based newsletter platform that automatically connects scattered data, creates meaning, and records your team's story.",
-      intro: "NexLetter was born to fill the 'space between'.",
+      intro: "IEUM was born to fill the 'space between'.",
       points: [
         "Detects team activities in real-time",
         "Reconstructs them into meaningful flows",
@@ -1262,7 +1262,7 @@ const en: Translation = {
         },
         meaning: {
           title: "Find meaning",
-          description: "The NexLetter AI engine organizes, categorizes, and clusters activities to establish context.",
+          description: "The IEUM AI engine organizes, categorizes, and clusters activities to establish context.",
         },
         summarize: {
           title: "Summarize the essentials",
@@ -1275,7 +1275,7 @@ const en: Translation = {
       },
     },
     value: {
-      badge: "🎯 The value NexLetter provides",
+      badge: "🎯 The value IEUM provides",
       title: "What we create is not documents, but clear narratives",
       description: "Five promises that make your team's flow accessible to everyone.",
       items: {
@@ -1328,7 +1328,7 @@ const en: Translation = {
           step: "04",
           title: "Share",
           description: "Immediately delivered to your preferred channels such as email, Slack, and web.",
-          detail: "Once set up, NexLetter automatically deploys without missing the flow.",
+          detail: "Once set up, IEUM automatically deploys without missing the flow.",
         },
       },
     },
@@ -1369,12 +1369,12 @@ const en: Translation = {
         "We believe good teams are teams that record well.",
         "When AI takes over repetitive tasks, people can handle more important decisions.",
       ],
-      conclusion: "NexLetter changes the 'most annoying part of how we work' first.",
+      conclusion: "IEUM changes the 'most annoying part of how we work' first.",
     },
     team: {
-      title: "NexLetter Team",
+      title: "IEUM Team",
       description: "We hated the moment developers had their time taken away by document writing.",
-      intro: "So we started creating our own solution, and that result is today's NexLetter.",
+      intro: "So we started creating our own solution, and that result is today's IEUM.",
       points: [
         "A team that digs deep into problems, even if small",
         "A team that tries to solve real problems to the end",
@@ -1395,7 +1395,7 @@ const en: Translation = {
     cta: {
       badge: "🚀 Get started",
       title: "Every moment your team works, as a clear story.",
-      description: "Experience NexLetter now and discover a new way to record flow.",
+      description: "Experience IEUM now and discover a new way to record flow.",
       startButton: "Get Started",
       loginButton: "Login",
       samplesButton: "View Samples",
@@ -1406,7 +1406,7 @@ const en: Translation = {
     skip: "Skip this step",
     steps: {
       welcome: {
-        title: "Start NexLetter Setup",
+        title: "Start IEUM Setup",
         description: "Let's set up your newsletter. Click the button to go to settings.",
       },
       setup_integrations: {
@@ -1427,7 +1427,7 @@ const en: Translation = {
       },
       completed: {
         title: "Setup Complete!",
-        description: "Congratulations! Your NexLetter setup is complete.",
+        description: "Congratulations! Your IEUM setup is complete.",
       },
     },
     progressSteps: {
@@ -1519,7 +1519,7 @@ const en: Translation = {
       completed: "Complete",
     },
     dashboard: {
-      welcomeBanner: "Welcome to NexLetter! Let's get started with setup.",
+      welcomeBanner: "Welcome to IEUM! Let's get started with setup.",
       goToSettings: "Go to Settings",
     },
     integrations: {
@@ -1573,31 +1573,31 @@ const en: Translation = {
     },
     onboardingComplete: {
       title: "Setup Complete!",
-      description: "Your NexLetter setup is complete. And your first newsletter has been sent successfully. <br />Next mail will be sent automatically at {{schedule}}.",
+      description: "Your IEUM setup is complete. And your first newsletter has been sent successfully. <br />Next mail will be sent automatically at {{schedule}}.",
     },
   },
   howItWorks: {
     meta: {
-      title: "How it Works | NexLetter",
-      description: "Learn how NexLetter works: Connect integrations, configure targets, generate newsletters, and share with your team.",
+      title: "How it Works | IEUM",
+      description: "Learn how IEUM works: Connect integrations, configure targets, generate newsletters, and share with your team.",
     },
     hero: {
-      title: "How to Use NexLetter",
+      title: "How to Use IEUM",
       subtitle: "Connect → Configure → Generate → Share",
-      description: "NexLetter collects activity data from your connected tools like Slack and GitHub, then automatically generates and delivers a weekly newsletter. Follow 4 simple steps to get started.",
+      description: "IEUM collects activity data from your connected tools like Slack and GitHub, then automatically generates and delivers a weekly newsletter. Follow 4 simple steps to get started.",
       primaryButton: "Preview setup flow",
       secondaryButton: "Get Started",
     },
     steps: {
       badge: "4 Simple Steps",
-      title: "Using NexLetter in 4 Steps",
+      title: "Using IEUM in 4 Steps",
       description: "Connect → Configure → Generate → Share. Everything is automated once set up.",
       items: {
         connect: {
           step: "01",
           title: "Connect",
-          description: "Connect your Slack workspace and GitHub repositories to NexLetter. Activity data collection begins automatically.",
-          detail: "NexLetter uses OAuth for secure, read-only access. Only the data you approve is collected.",
+          description: "Connect your Slack workspace and GitHub repositories to IEUM. Activity data collection begins automatically.",
+          detail: "IEUM uses OAuth for secure, read-only access. Only the data you approve is collected.",
         },
         configure: {
           step: "02",
@@ -1609,7 +1609,7 @@ const en: Translation = {
           step: "03",
           title: "Generate",
           description: "AI analyzes collected messages, commits, and activities to create highlights, KPIs, and a readable digest.",
-          detail: "The NexLetter AI engine clusters topics, extracts key moments, and builds your team's weekly story.",
+          detail: "The IEUM AI engine clusters topics, extracts key moments, and builds your team's weekly story.",
         },
         share: {
           step: "04",
@@ -1622,7 +1622,7 @@ const en: Translation = {
     integrations: {
       badge: "Integrations",
       title: "Supported Integrations",
-      description: "NexLetter collects activity data from connected tools. Currently supported integrations include Slack and GitHub.",
+      description: "IEUM collects activity data from connected tools. Currently supported integrations include Slack and GitHub.",
       slack: {
         title: "Slack",
         description: "Collect and analyze team conversations, discussions, and activities from your Slack workspace.",
@@ -1648,12 +1648,12 @@ const en: Translation = {
     },
     slackSetup: {
       badge: "Slack as a Data Source",
-      title: "How NexLetter Uses Slack Data",
-      description: "NexLetter connects to your Slack workspace to collect activity from the channels you choose.",
+      title: "How IEUM Uses Slack Data",
+      description: "IEUM connects to your Slack workspace to collect activity from the channels you choose.",
       features: {
         workspace: {
           title: "Connect your workspace",
-          description: "Authorize NexLetter to access your Slack workspace with minimal OAuth permissions.",
+          description: "Authorize IEUM to access your Slack workspace with minimal OAuth permissions.",
         },
         channels: {
           title: "Select channels to analyze",
@@ -1661,18 +1661,18 @@ const en: Translation = {
         },
         readonly: {
           title: "Read-only access",
-          description: "NexLetter only reads messages from approved channels. It never posts, modifies, or deletes any content.",
+          description: "IEUM only reads messages from approved channels. It never posts, modifies, or deletes any content.",
         },
       },
       connectionTitle: "How to Connect Slack",
       connectionDescription: "Slack installation is available after signing in. Follow these steps to connect.",
       steps: [
-        "Sign in to NexLetter",
+        "Sign in to IEUM",
         "Go to Settings → Integrations",
         "Click \"Connect Slack\"",
         "Authorize the app in your Slack workspace",
       ],
-      note: "Slack installation is available after signing in to NexLetter.",
+      note: "Slack installation is available after signing in to IEUM.",
     },
     legal: {
       badge: "Support & Privacy",
@@ -1690,7 +1690,7 @@ const en: Translation = {
     },
     preview: {
       title: "Setup Flow Preview",
-      description: "See how NexLetter setup works step by step.",
+      description: "See how IEUM setup works step by step.",
       slides: {
         "1_login": {
           title: "Sign in & Dashboard",
@@ -1725,7 +1725,7 @@ const en: Translation = {
     cta: {
       badge: "Get Started",
       title: "Ready to automate your team newsletter?",
-      description: "Experience NexLetter now. To learn more about why NexLetter exists and our philosophy, visit About Us.",
+      description: "Experience IEUM now. To learn more about why IEUM exists and our philosophy, visit About Us.",
       startButton: "Get Started",
       aboutButton: "About Us",
       samplesButton: "Preview setup flow",

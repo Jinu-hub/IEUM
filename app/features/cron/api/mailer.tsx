@@ -130,14 +130,14 @@ export async function action({ request }: Route.LoaderArgs) {
       
       // Determine subject based on locale
       const subjectByLocale = {
-        ko: "NexLetter에 오신 것을 환영합니다!",
-        en: "Welcome to NexLetter!",
-        ja: "NexLetterへようこそ！",
+        ko: "IEUM에 오신 것을 환영합니다!",
+        en: "Welcome to IEUM!",
+        ja: "IEUMへようこそ！",
       };
       
       const { error } = await resendClient.emails.send({
         // Make sure this domain is the Resend domain.
-        from: "NexLetter <hello@mail.nexone.ink>",
+        from: "IEUM <hello@mail.nexone.ink>",
         to: [to],
         subject: subjectByLocale[validLocale],
         react: WelcomeEmail({

@@ -33,11 +33,11 @@ export type WelcomeMessage = {
 export const welcomeMessages: Record<Locale, WelcomeMessage> = {
   ko: {
     preview: (username) =>
-      `${username}님, NexLetter에 오신 걸 환영합니다!`,
+      `${username}님, IEUM에 오신 걸 환영합니다!`,
     heading: (username) =>
-      `🎉 ${username}님, NexLetter에 오신 걸 환영합니다!`,
+      `🎉 ${username}님, IEUM에 오신 걸 환영합니다!`,
     greeting: (username) =>
-      `안녕하세요 ${username}님 😊 NexLetter와 함께하게 되어 정말 반갑습니다.`,
+      `안녕하세요 ${username}님 😊 IEUM과 함께하게 되어 정말 반갑습니다.`,
     experience:
       "팀에서 이런 상황, 한 번쯤 겪어보셨을 거예요.",
     quote:
@@ -45,7 +45,7 @@ export const welcomeMessages: Record<Locale, WelcomeMessage> = {
       "“중요한 논의가 Slack 어디에 있었더라?”<br />" +
       "“결국 요약은 내가 해야 하네…”",
     introduction:
-      "NexLetter는 이런 고민에서 출발했습니다.<br />" +
+      "IEUM은 이런 고민에서 출발했습니다.<br />" +
       "Slack, GitHub 등 팀의 활동 데이터를 자동으로 수집하고<br />" +
       "주간 리포트, 하이라이트, 뉴스레터로 정리해드립니다.",
     description:
@@ -53,18 +53,18 @@ export const welcomeMessages: Record<Locale, WelcomeMessage> = {
       "한 번만 연결해 두면 이후는 시스템과 AI가 자동으로 처리합니다.<br />" +
       "팀은 일에만 집중하세요.",
     button:
-      "👉 NexLetter 시작하기",
+      "👉 IEUM 시작하기",
     footer:
-      "감사합니다.<br />– NexLetter 팀 드림",
+      "감사합니다.<br />– IEUM 팀 드림",
   },
 
   en: {
     preview: (username) =>
-      `Welcome to NexLetter, ${username}!`,
+      `Welcome to IEUM, ${username}!`,
     heading: (username) =>
-      `🎉 Welcome to NexLetter, ${username}!`,
+      `🎉 Welcome to IEUM, ${username}!`,
     greeting: (username) =>
-      `Hello ${username} 😊 We're excited to have you with NexLetter.`,
+      `Hello ${username} 😊 We're excited to have you with IEUM.`,
     experience:
       "You've probably experienced situations like this in your team.",
     quote:
@@ -72,7 +72,7 @@ export const welcomeMessages: Record<Locale, WelcomeMessage> = {
       "“Where was that important discussion in Slack?”<br />" +
       "“Do I really have to summarize everything myself?”",
     introduction:
-      "NexLetter was built to solve these problems.<br />" +
+      "IEUM was built to solve these problems.<br />" +
       "We automatically collect your team's activity data from Slack, GitHub, and more,\n" +
       "and organize it into weekly reports, highlights, and newsletters.",
     description:
@@ -80,18 +80,18 @@ export const welcomeMessages: Record<Locale, WelcomeMessage> = {
       "Just connect once, and our system and AI take care of the rest.<br />" +
       "Your team can stay focused on what matters.",
     button:
-      "👉 Start NexLetter",
+      "👉 Start IEUM",
     footer:
-      "Thank you.<br />– The NexLetter Team",
+      "Thank you.<br />– The IEUM Team",
   },
 
   ja: {
     preview: (username) =>
-      `${username}さん、NexLetterへようこそ！`,
+      `${username}さん、IEUMへようこそ！`,
     heading: (username) =>
-      `🎉 ${username}さん、NexLetterへようこそ！`,
+      `🎉 ${username}さん、IEUMへようこそ！`,
     greeting: (username) =>
-      `こんにちは、${username}さん 😊 NexLetterをご利用いただきありがとうございます。`,
+      `こんにちは、${username}さん 😊 IEUMをご利用いただきありがとうございます。`,
     experience:
       "チームで、このような状況を一度は経験されたことがあるのではないでしょうか。",
     quote:
@@ -99,7 +99,7 @@ export const welcomeMessages: Record<Locale, WelcomeMessage> = {
       "「重要な議論がSlackのどこにあったのか思い出せない」<br />" +
       "「結局、要約は自分がやるしかない…」",
     introduction:
-      "NexLetterは、こうした課題を解決するために生まれました。<br />" +
+      "IEUMは、こうした課題を解決するために生まれました。<br />" +
       "SlackやGitHubなどのチーム活動データを自動で収集し、<br />" +
       "週次レポート、ハイライト、ニュースレターとして整理します。",
     description:
@@ -107,9 +107,9 @@ export const welcomeMessages: Record<Locale, WelcomeMessage> = {
       "一度連携すれば、あとはシステムとAIが自動で処理します。<br />" +
       "チームは業務に集中してください。",
     button:
-      "👉 NexLetterを始める",
+      "👉 IEUMを始める",
     footer:
-      "ありがとうございます。<br />– NexLetterチームより",
+      "ありがとうございます。<br />– IEUMチームより",
   },
 };
 

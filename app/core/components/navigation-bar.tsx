@@ -269,7 +269,7 @@ export function NavigationBar({
               reloadDocument
               className="text-muted-foreground hover:text-foreground text-sm transition-colors"
             >
-              Go to NexLetter main site →
+              Go to IEUM main site →
             </Link>
           ) : (
             <>
@@ -348,7 +348,7 @@ export function NavigationBar({
           <SheetHeader>
             {minimal ? (
               <SheetClose asChild>
-                <Link to="/" reloadDocument>Go to NexLetter main site →</Link>
+                <Link to="/" reloadDocument>Go to IEUM main site →</Link>
               </SheetClose>
             ) : (
               <>

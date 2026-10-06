@@ -135,7 +135,7 @@ export async function action({ request }: Route.ActionArgs) {
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId;
 
-  // TODO(jinwoo): Stripe에서 NexLetter 유저와 매핑되지 않은 테스트/샘플 구독 이벤트는
+  // TODO(jinwoo): Stripe에서 IEUM 유저와 매핑되지 않은 테스트/샘플 구독 이벤트는
   // userId가 없으므로 여기서 조용히 무시한다. 나중에 livemode, 추가 metadata 등을 함께 보고
   // 처리/무시 기준을 더 엄격하게 가져갈지 검토할 것.
   if (!userId) {
@@ -143,7 +143,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     return;
   }
 
-  // User-initiated cancel from NexLetter: cancel-subscription.ts sets this before calling
+  // User-initiated cancel from IEUM: cancel-subscription.ts sets this before calling
   // stripe.subscriptions.cancel(). Skipping here avoids overwriting DB (monthly: ends_at
   // must not change; yearly: ends_at is set by cancel-subscription.ts).
   if (subscription.metadata?.cancel_immediately === "false") {
@@ -196,7 +196,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
  * Handle subscription canceled event
  * 
  * Two scenarios:
- * 1. User cancels via NexLetter (cancel-subscription.ts):
+ * 1. User cancels via IEUM (cancel-subscription.ts):
  *    - metadata.cancel_immediately = "false"
  *    - Skip processing (already handled by cancel-subscription.ts)
  * 
@@ -207,7 +207,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
 async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId;
 
-  // TODO(jinwoo): userId가 없는 구독 이벤트는 NexLetter와 연결되지 않은 것으로 보고
+  // TODO(jinwoo): userId가 없는 구독 이벤트는 IEUM과 연결되지 않은 것으로 보고
   // DB를 수정하지 않고 무시한다. 필요 시 livemode, metadata 기반으로 알림/추가 처리 검토.
   if (!userId) {
     console.error("No userId in subscription metadata:", subscription.id);
@@ -219,7 +219,7 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
   const cancelImmediately = subscription.metadata?.cancel_immediately !== "false";
 
   if (!cancelImmediately) {
-    // User cancel from NexLetter → Skip (already handled by cancel-subscription.ts)
+    // User cancel from IEUM → Skip (already handled by cancel-subscription.ts)
     console.log(`Subscription ${subscription.id} - skipping webhook update (user cancel, already handled by cancel-subscription.ts)`);
     return;
   }
@@ -384,7 +384,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const userId = stripeSubAny.metadata?.userId;
 
   // TODO(jinwoo): invoice.payment_failed인데 userId가 없으면 단순 결제 실패가 아니라
-  // Stripe/NexLetter 연동 이상으로 본다. 현재는 DB를 건드리지 않고 무시만 하며,
+  // Stripe/IEUM 연동 이상으로 본다. 현재는 DB를 건드리지 않고 무시만 하며,
   // 나중에 stripe_subscription_id로 user를 역추적하거나 알림을 보내는 로직을 검토할 것.
   if (!userId) {
     console.error("No userId in subscription metadata for failed invoice:", invoice.id);

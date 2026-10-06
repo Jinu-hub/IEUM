@@ -164,7 +164,7 @@ export async function action({ request }: Route.ActionArgs) {
 
       // 2. Cancel Stripe subscription immediately
       // Both monthly and yearly plans: cancel immediately on Stripe side
-      // NexLetter side maintains the ends_at (validity period) separately
+      // IEUM side maintains the ends_at (validity period) separately
       await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
       console.log(`Stripe subscription ${subscription.stripe_subscription_id} canceled`);
 

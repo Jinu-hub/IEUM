@@ -98,7 +98,7 @@ const PLACEHOLDERS: Record<string, string> = {
   security_last_updated: '2026-01-22',
   commercial_last_updated: '2026-01-22',
   'support email': import.meta.env.VITE_SUPPORT_EMAIL || 'jinu30dev@gmail.com',
-  'company name': 'NexLetter',
+  'company name': 'IEUM',
   'company address': 'Seoul, South Korea',
   'service URL': import.meta.env.VITE_SERVICE_URL || 'https://nexone.ink',
   'company or service provider': 'LinkVerse',

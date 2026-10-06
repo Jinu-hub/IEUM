@@ -132,7 +132,7 @@ export async function sendMails(
     const subject = `${targetDisplayName} Weekly Newsletter`;
     //to: "jinu35@ymail.ne.jp",
     const sendResult = await resendClient.emails.send({
-      from: "NexLetter <info@mail.nexone.ink>",
+      from: "IEUM <info@mail.nexone.ink>",
       to: "takefree.withu@gmail.com",
       bcc: 'son@digitalsheep.co.jp',
       subject: subject,
@@ -188,7 +188,7 @@ export async function sendMails(
 
 export async function sendWarmingUpEmail(toEmail: string, bccEmails: string[], subject: string, html: string) {
   const sendResult = await resendClient.emails.send({
-    from: "NexLetter <info@mail.nexone.ink>",
+    from: "IEUM <info@mail.nexone.ink>",
     to: toEmail,
     bcc: bccEmails,
     subject: subject,

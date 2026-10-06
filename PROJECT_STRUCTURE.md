@@ -1,7 +1,7 @@
-# NexLetter Project Structure
+# IEUM Project Structure
 
 ```
-/Users/jinwoosmacair/developments/Nexletter/
+/Users/jinwoosmacair/developments/IEUM/
 ├── app/                                    # Main application directory
 │   ├── app.css                            # Global styles
 │   ├── entry.client.tsx                    # Client entry point

@@ -1,7 +1,7 @@
 /**
  * Newsletter System Footer Component
  *
- * A comprehensive footer for the NexLetter internal newsletter system.
+ * A comprehensive footer for the IEUM internal newsletter system.
  * This component provides navigation links, company information, social links,
  * and newsletter subscription functionality.
  *
@@ -139,14 +139,14 @@ export default function Footer() {
     <NexFooter
       variant="default"
       brand={{
-        name: "NexLetter",
+        name: "IEUM",
         description: t("footer.brand.description"),
         logo: <Mail className="h-8 w-8" />
       }}
       links={footerLinks}
       social={socialLinks}
       legal={{
-        copyright: "© 2026 LinkVerse. All rights reserved.\nNexLetter is a service operated by LinkVerse.",
+        copyright: "© 2026 LinkVerse. All rights reserved.\nIEUM is a service operated by LinkVerse.",
         companyInfo: companyInfo,
       }}
       actions={<Actions />}

@@ -1,4 +1,4 @@
-// schema.ts — NexLetter v0.1
+// schema.ts — IEUM v0.1
 // Drizzle ORM for PostgreSQL + inline pgPolicy helpers (Supabase-compatible)
 // Assumptions:
 // - You have helper utilities: pgPolicy(), authenticatedRole, serviceRole (role names)

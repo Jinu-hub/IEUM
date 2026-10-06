@@ -67,11 +67,11 @@ function getLocaleSuffix(lang: string): string {
 
 export const meta: Route.MetaFunction = () => {
   return [
-    { title: "NexLetter for Slack" },
+    { title: "IEUM for Slack" },
     {
       name: "description",
       content:
-        "Get notified in Slack whenever your newsletter is generated. NexLetter posts weekly digest notifications directly to your Slack channel.",
+        "Get notified in Slack whenever your newsletter is generated. IEUM posts weekly digest notifications directly to your Slack channel.",
     },
   ];
 };
@@ -87,15 +87,15 @@ export default function SlackHome() {
     () => [
       {
         key: "1_login",
-        title: "1. Log in to NexLetter",
+        title: "1. Log in to IEUM",
         description:
-          "Sign in to NexLetter (or create an account) to start setting up your weekly digest.",
+          "Sign in to IEUM (or create an account) to start setting up your weekly digest.",
       },
       {
         key: "2_connect",
         title: "2. Connect Slack App",
         description:
-          "From Settings → Integrations, connect Slack for NexLetter Slack App so NexLetter can read activity metadata.",
+          "From Settings → Integrations, connect Slack for IEUM Slack App so IEUM can read activity metadata.",
       },
       {
         key: "3_configure",
@@ -111,9 +111,9 @@ export default function SlackHome() {
       },
       {
         key: "5_generate",
-        title: "5. NexLetter generates your digest",
+        title: "5. IEUM generates your digest",
         description:
-          "On each cycle, NexLetter collects commits, PRs, conversations, and activity for the selected period.",
+          "On each cycle, IEUM collects commits, PRs, conversations, and activity for the selected period.",
       },
       {
         key: "6_after_mail",
@@ -142,13 +142,13 @@ export default function SlackHome() {
       {/* ─── 1. Hero ─── */}
       <NexHero
         variant="split"
-        title="NexLetter for Slack"
+        title="IEUM for Slack"
         subtitle="Get notified in Slack whenever your newsletter is generated."
         description={
           <>
             <span className="flex items-start gap-2">
               <span className="mt-1 text-base leading-none text-primary">•</span>
-              <span>Log in to NexLetter and connect Slack.</span>
+              <span>Log in to IEUM and connect Slack.</span>
             </span>
             <span className="flex items-start gap-2">
               <span className="mt-1 text-base leading-none text-primary">•</span>
@@ -160,7 +160,7 @@ export default function SlackHome() {
             </span>
             <span className="flex items-start gap-2">
               <span className="mt-1 text-base leading-none text-primary">•</span>
-              <span>NexLetter posts when newsletter is ready.</span>
+              <span>IEUM posts when newsletter is ready.</span>
             </span>
           </>
         }
@@ -185,13 +185,13 @@ export default function SlackHome() {
         }}
       />
 
-      {/* ─── 2. How NexLetter Appears in Slack ─── */}
+      {/* ─── 2. How IEUM Appears in Slack ─── */}
       <section className="space-y-10">
         <div className="space-y-3 text-center">
           <NexBadge variant="info">How It Works</NexBadge>
-          <h2 className="text-3xl font-bold">How NexLetter Appears in Slack</h2>
+          <h2 className="text-3xl font-bold">How IEUM Appears in Slack</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            NexLetter posts a simple notification message in Slack when a
+            IEUM posts a simple notification message in Slack when a
             newsletter is successfully generated.
           </p>
         </div>
@@ -220,7 +220,7 @@ export default function SlackHome() {
               icon: Info,
               title: "Guides you to the full version",
               description:
-                "The message lets you know that the full newsletter is available on the NexLetter dashboard or via email.",
+                "The message lets you know that the full newsletter is available on the IEUM dashboard or via email.",
             },
           ].map((item) => {
             const Icon = item.icon;
@@ -249,7 +249,7 @@ export default function SlackHome() {
                   </div>
                   <div className="space-y-2 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm">NexLetter</span>
+                      <span className="font-bold text-sm">IEUM</span>
                       <NexBadge variant="info" size="sm">APP</NexBadge>
                       <span className="text-xs text-muted-foreground">10:00 AM</span>
                     </div>
@@ -266,7 +266,7 @@ export default function SlackHome() {
                       </p>
                       <p className="mt-1 flex items-center gap-1 text-xs text-primary font-medium">
                         <ExternalLink className="h-3 w-3" />
-                        Check the NexLetter dashboard or email for details.
+                        Check the IEUM dashboard or email for details.
                       </p>
                     </div>
                   </div>
@@ -286,7 +286,7 @@ export default function SlackHome() {
           <NexBadge variant="success">Setup</NexBadge>
           <h2 className="text-3xl font-bold">How to Install</h2>
           <p className="text-muted-foreground">
-            Connect NexLetter to your Slack workspace in minutes.
+            Connect IEUM to your Slack workspace in minutes.
           </p>
         </div>
 
@@ -295,8 +295,8 @@ export default function SlackHome() {
             {
               step: "1",
               icon: LogIn,
-              title: "Log in to NexLetter",
-              description: "Sign in to your NexLetter account or create one for free.",
+              title: "Log in to IEUM",
+              description: "Sign in to your IEUM account or create one for free.",
             },
             {
               step: "2",
@@ -308,7 +308,7 @@ export default function SlackHome() {
               step: "3",
               icon: Zap,
               title: 'Click "Connect" to Slack',
-              description: "Authorize NexLetter to post to your Slack workspace and install the Slack app.",
+              description: "Authorize IEUM to post to your Slack workspace and install the Slack app.",
             },
             {
               step: "4",
@@ -344,13 +344,13 @@ export default function SlackHome() {
         </p>
       </section>
 
-      {/* ─── 4. When Does NexLetter Post to Slack? ─── */}
+      {/* ─── 4. When Does IEUM Post to Slack? ─── */}
       <section className="space-y-10">
         <div className="space-y-3 text-center">
           <NexBadge variant="warning">Triggers</NexBadge>
-          <h2 className="text-3xl font-bold">When Does NexLetter Post to Slack?</h2>
+          <h2 className="text-3xl font-bold">When Does IEUM Post to Slack?</h2>
           <p className="text-muted-foreground">
-            NexLetter only posts when a newsletter event occurs — nothing more.
+            IEUM only posts when a newsletter event occurs — nothing more.
           </p>
         </div>
 
@@ -379,7 +379,7 @@ export default function SlackHome() {
                 </li>
                 <li className="flex items-start gap-3">
                   <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-                  After a newsletter is generated and sent, when you open its preview in NexLetter 
+                  After a newsletter is generated and sent, when you open its preview in IEUM 
                 </li>
               </ul>
             </NexCardContent>
@@ -393,7 +393,7 @@ export default function SlackHome() {
               <div>
                 <NexCardTitle>Important Notice</NexCardTitle>
                 <NexCardDescription>
-                  NexLetter is a notification-only integration.
+                  IEUM is a notification-only integration.
                 </NexCardDescription>
               </div>
             </NexCardHeader>
@@ -409,11 +409,11 @@ export default function SlackHome() {
         </div>
       </section>
 
-      {/* ─── 5. About NexLetter ─── */}
+      {/* ─── 5. About IEUM ─── */}
       <section className="space-y-10">
         <div className="space-y-3 text-center">
           <NexBadge variant="secondary">About</NexBadge>
-          <h2 className="text-3xl font-bold">About NexLetter</h2>
+          <h2 className="text-3xl font-bold">About IEUM</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             AI-powered newsletter generator that summarizes team activity into a weekly digest.
           </p>
@@ -422,14 +422,14 @@ export default function SlackHome() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <NexCard variant="elevated">
             <NexCardHeader>
-              <NexCardTitle>What NexLetter does</NexCardTitle>
+              <NexCardTitle>What IEUM does</NexCardTitle>
               <NexCardDescription>
-                High-level overview of how NexLetter fits into your workflow.
+                High-level overview of how IEUM fits into your workflow.
               </NexCardDescription>
             </NexCardHeader>
             <NexCardContent className="space-y-3 text-sm text-muted-foreground">
               <p>
-                NexLetter is an AI-powered newsletter generator that summarizes
+                IEUM is an AI-powered newsletter generator that summarizes
                 team activity from Slack and GitHub into a weekly digest.
               </p>
               <p>
@@ -450,7 +450,7 @@ export default function SlackHome() {
             <NexCardHeader>
               <NexCardTitle>Architecture</NexCardTitle>
               <NexCardDescription>
-                How the Slack app fits into NexLetter.
+                How the Slack app fits into IEUM.
               </NexCardDescription>
             </NexCardHeader>
             <NexCardContent className="space-y-4">
@@ -463,7 +463,7 @@ export default function SlackHome() {
                 },
                 {
                   icon: Mail,
-                  title: "NexLetter SaaS",
+                  title: "IEUM SaaS",
                   description: "Core platform — collects data, generates newsletters with AI",
                   gradient: "from-primary to-primary/70",
                 },
@@ -498,7 +498,7 @@ export default function SlackHome() {
           <NexBadge variant="warning">Permissions</NexBadge>
           <h2 className="text-3xl font-bold">Permissions & Data Usage</h2>
           <p className="text-muted-foreground">
-            NexLetter requests only the minimum permissions required.
+            IEUM requests only the minimum permissions required.
           </p>
         </div>
 
@@ -518,7 +518,7 @@ export default function SlackHome() {
             <NexCardContent>
               <ul className="space-y-3 text-sm text-muted-foreground">
                 {[
-                  "Access data only from the workspace and channels you explicitly connect to NexLetter (no access to other private workspaces or channels)",
+                  "Access data only from the workspace and channels you explicitly connect to IEUM (no access to other private workspaces or channels)",
                   "Read recent activity from the channels and repositories you explicitly connect, only for report generation",
                   "Send newsletters and notifications via email and to the Slack channel you select",
                   "Store integration data securely and only for as long as needed to provide the service and comply with legal requirements",
@@ -677,7 +677,7 @@ export default function SlackHome() {
                 </div>
               </div>
               <h3 className="text-3xl font-bold">
-                Ready to connect NexLetter to Slack?
+                Ready to connect IEUM to Slack?
               </h3>
               <p className="text-muted-foreground">
                 Log in and enable the Slack integration to start receiving
@@ -719,10 +719,10 @@ export default function SlackHome() {
         <DialogContent className="sm:max-w-3xl w-[92vw] p-0 gap-0 max-h-[95vh] flex flex-col">
           <DialogHeader className="px-6 pt-5 pb-3 border-b border-border/30 shrink-0">
             <DialogTitle className="text-lg">
-              NexLetter setup flow
+              IEUM setup flow
             </DialogTitle>
             <DialogDescription>
-              See the end-to-end onboarding flow for NexLetter, including Slack connection and weekly digest delivery.
+              See the end-to-end onboarding flow for IEUM, including Slack connection and weekly digest delivery.
             </DialogDescription>
           </DialogHeader>
           <div className="px-4 py-4 overflow-y-auto min-h-0 flex-1">

@@ -2,7 +2,7 @@ import type { Translation } from "./types";
 
 const ja: Translation = {
   home: {
-    title: "NexLetter",
+    title: "IEUM",
     subtitle: "スマートなチーム向けニュースレター",
     hero: {
       description: "Slackの会話、GitHubの活動、プロジェクトの進捗を自動的に分析し、チームの1週間をまとめたニュースレターを生成します。手動での週次報告はもう必要ありません。",
@@ -382,7 +382,7 @@ const ja: Translation = {
     searchSentMailList: "送信対象またはタイトルで検索...",
   },
   join: {
-    heroTitle: "NexLetter",
+    heroTitle: "IEUM",
     heroSubtitle: "スマートなチーム向けニュースレターを始めてみませんか",
     heroDescription: "Slack メッセージ, GitHub 活動, プロジェクト進捗を自動分析して、チームの週次ニュースレターを作成/送信します。もう手動での週次レポートは不要です。",
     title: "アカウント作成",
@@ -724,7 +724,7 @@ const ja: Translation = {
       slackConnectionDescription1: "接続完了後、Slackボットがワークスペースに作成されます。",
       slackConnectionDescription2: "プライベートチャンネルは、手動でボットを招待する必要があります。",
       slackConnectionDescription3: "ボット招待方法: チャンネルに所属するユーザーがSlackで該当チャンネルに移動",
-      slackConnectionDescription4: "[/invite @NexLetter] を入力してEnterキーを押します。",
+      slackConnectionDescription4: "[/invite @IEUM] を入力してEnterキーを押します。",
     },
   },
   targets: {
@@ -892,11 +892,11 @@ const ja: Translation = {
     categories: {
       onboarding: {
         name: "はじめに & オンボーディング",
-        description: "NexLetterを導入し、初期環境を構築するプロセスに関するガイドです。",
+        description: "IEUMを導入し、初期環境を構築するプロセスに関するガイドです。",
         questions: {
           service: {
-            question: "NexLetterはどのようなサービスですか？",
-            answer: "NexLetterは、GitHub・Slackなどのチームの活動データを自動的に収集・整理し、<br />週次エンジニアリングレポート、ハイライト、KPIサマリーを自動生成するAIベースの内外ニュースレター自動化プラットフォームです。<br />管理者は最小限の設定のみで、その後はシステムとAIエージェントが自動的に運営します。",
+            question: "IEUMはどのようなサービスですか？",
+            answer: "IEUMは、GitHub・Slackなどのチームの活動データを自動的に収集・整理し、<br />週次エンジニアリングレポート、ハイライト、KPIサマリーを自動生成するAIベースの内外ニュースレター自動化プラットフォームです。<br />管理者は最小限の設定のみで、その後はシステムとAIエージェントが自動的に運営します。",
           },
           trial: {
             question: "無料トライアル期間はどのようになっていますか？",
@@ -926,7 +926,7 @@ const ja: Translation = {
           },
           sensitiveData: {
             question: "機密コードや非公開文書が保存されますか？",
-            answer: "いいえ。NexLetterは元のコード全体を保存せず、GitHub, Slackなどが提供するサマリーメタデータのみを収集します。<br />機密テキストは自動的にフィルタリングされて処理されます。",
+            answer: "いいえ。IEUMは元のコード全体を保存せず、GitHub, Slackなどが提供するサマリーメタデータのみを収集します。<br />機密テキストは自動的にフィルタリングされて処理されます。",
           },
         },
       },
@@ -936,7 +936,7 @@ const ja: Translation = {
         questions: {
           summary: {
             question: "AIはどのようにサマリーを生成しますか？",
-            answer: "収集されたデータは、重複除去 → 文書リンク → トピッククラスタリング → ハイライト抽出 → KPI計算 → チーム別カスタムコンテンツ生成のパイプラインを通過します。<br />すべてのプロセスは、NexLetter専用のOpenAI Agentが自動処理します。<br /><br />結果として、チームの1週間の活動を人間が読みやすいストーリーに変換します。",
+            answer: "収集されたデータは、重複除去 → 文書リンク → トピッククラスタリング → ハイライト抽出 → KPI計算 → チーム別カスタムコンテンツ生成のパイプラインを通過します。<br />すべてのプロセスは、IEUM専用のOpenAI Agentが自動処理します。<br /><br />結果として、チームの1週間の活動を人間が読みやすいストーリーに変換します。",
           },
           delivery: {
             question: "ニュースレターはどのような方法で送信されますか？",
@@ -950,10 +950,10 @@ const ja: Translation = {
       },
       security: {
         name: "セキュリティ & プライバシー保護",
-        description: "NexLetterのデータ保護ポリシーとセキュリティ構造に関するガイドです。",
+        description: "IEUMのデータ保護ポリシーとセキュリティ構造に関するガイドです。",
         questions: {
           protection: {
-            question: "NexLetterはどのような方法でデータを保護しますか？",
+            question: "IEUMはどのような方法でデータを保護しますか？",
             answer: "Supabase Row Level Security、JWTベースのアクセス制御、データ暗号化、VaultベースのAPI Key保管などでデータを保護します。<br />Workspace単位の強力な分離構造を採用しています。",
           },
           externalTransfer: {
@@ -986,13 +986,13 @@ const ja: Translation = {
           },
           filtering: {
             question: "特定のチームまたはプロジェクトのみを選んでレポートを作成できますか？",
-            answer: "可能です。ターゲットごとに特定のGitHub Repository、Slack Channelなどの詳細フィルター設定をサポートします。<br />現時点では、ターゲットごとに1つのGitHub Repositoryと3つのSlack Channelを設定できます。<br />（例）target1 ==> gitrepo: nexletter-dev, slackchannel: (@nexletter-dev, @nexletter-test, @nexletter-prod)<br />今後、より多様なフィルタリング条件をサポートする予定です。",
+            answer: "可能です。ターゲットごとに特定のGitHub Repository、Slack Channelなどの詳細フィルター設定をサポートします。<br />現時点では、ターゲットごとに1つのGitHub Repositoryと3つのSlack Channelを設定できます。<br />（例）target1 ==> gitrepo: ieum-dev, slackchannel: (@ieum-dev, @ieum-test, @ieum-prod)<br />今後、より多様なフィルタリング条件をサポートする予定です。",
           },
         },
       },
       support: {
         name: "カスタマーサポート & 技術サポート",
-        description: "NexLetter使用中にサポートが必要な場合に提供されるサポート案内です。",
+        description: "IEUM使用中にサポートが必要な場合に提供されるサポート案内です。",
         questions: {
           help: {
             question: "初期設定が難しい場合はサポートを受けられますか？",
@@ -1021,11 +1021,11 @@ const ja: Translation = {
     },
   },
   pricing: {
-    title: "NexLetter - 料金プラン",
+    title: "IEUM - 料金プラン",
     subtitle: "AIベースの社内ニュースレター自動化のための料金プラン",
-    description: "チーム規模に応じて柔軟に拡張されるNexLetter料金プラン",
+    description: "チーム規模に応じて柔軟に拡張されるIEUM料金プラン",
     hero: {
-      title: "透明で拡張可能なNexLetter料金プラン",
+      title: "透明で拡張可能なIEUM料金プラン",
       subtitle: "チーム規模とワークフローに合わせてAIニュースレター自動化を今すぐ始めて、継続してください。",
       description: "すべてのプランには、Slack・GitHub統合、KPIウィジェット、多言語ニュースレターが標準で含まれています。Freeトライアル後も、Starterプランで同じ自動化を継続して利用できます。",
       primaryButton: "無料トライアルを開始",
@@ -1045,7 +1045,7 @@ const ja: Translation = {
     plans: {
       free: {
         name: "Free",
-        description: "NexLetterを軽く体験してみる",
+        description: "IEUMを軽く体験してみる",
         seats: "最大3名までニュースレター送信",
         bestFor: "個人ユーザー・体験目的",
         features: [
@@ -1056,7 +1056,7 @@ const ja: Translation = {
       },
       starter: {
         name: "Starter",
-        description: "小規模チームが最も早くNexLetterを始める方法",
+        description: "小規模チームが最も早くIEUMを始める方法",
         seats: "最大10名までニュースレター送信",
         bestFor: "個人開発者・初期スタートアップ",
         badge: "最も多く選択",
@@ -1152,7 +1152,7 @@ const ja: Translation = {
     },
     enterprise: {
       title: "エンタープライズプラン",
-      description: "100名以上の組織向けカスタマイズNexLetter",
+      description: "100名以上の組織向けカスタマイズIEUM",
       features: [
         "SAML / SSO、監査ログ",
         "データレジデンシー & セキュリティオプション",
@@ -1196,7 +1196,7 @@ const ja: Translation = {
     subtitle: "チームの流れを記録する新しい方法",
     description: "チームの流れを記録する新しい方法",
     hero: {
-      description: "あなたのチームが動く瞬間。私たちはその流れが消えないようにします。NexLetterは日常の活動の中で残される無数の動きの中から意味を発見し、散らばった記録を1つの物語に織り上げ、チームの文化と成果を自動的に残します。",
+      description: "あなたのチームが動く瞬間。私たちはその流れが消えないようにします。IEUMは日常の活動の中で残される無数の動きの中から意味を発見し、散らばった記録を1つの物語に織り上げ、チームの文化と成果を自動的に残します。",
       primaryButton: "始める",
       secondaryButton: "サンプルを見る",
     },
@@ -1243,9 +1243,9 @@ const ja: Translation = {
     },
     solution: {
       badge: "💡 私たちの答え",
-      title: "チームが働けば、NexLetterが物語にします。",
+      title: "チームが働けば、IEUMが物語にします。",
       description: "散らばるデータをつなぎ、意味を作り、チームのストーリーを自動的に記録するAIベースのニュースレタープラットフォームです。",
-      intro: "NexLetterは「間の空間」を埋めるために生まれました。",
+      intro: "IEUMは「間の空間」を埋めるために生まれました。",
       points: [
         "チームの活動をリアルタイムで検出し",
         "意味のある流れに再構成し",
@@ -1263,7 +1263,7 @@ const ja: Translation = {
         },
         meaning: {
           title: "意味を見つけ出し",
-          description: "NexLetter AIエンジンが活動を整理・分類・クラスタリングして文脈を構築します。",
+          description: "IEUM AIエンジンが活動を整理・分類・クラスタリングして文脈を構築します。",
         },
         summarize: {
           title: "核心を要約し",
@@ -1276,7 +1276,7 @@ const ja: Translation = {
       },
     },
     value: {
-      badge: "🎯 NexLetterが提供する価値",
+      badge: "🎯 IEUMが提供する価値",
       title: "私たちが作るのは文書ではなく、明確なナラティブです",
       description: "チームの流れを誰でも追えるようにする5つの約束。",
       items: {
@@ -1329,7 +1329,7 @@ const ja: Translation = {
           step: "04",
           title: "共有",
           description: "メール、Slack、Webなど、希望するチャネルにすぐに配信されます。",
-          detail: "一度設定すれば、NexLetterが流れを見逃すことなく自動的に配信します。",
+          detail: "一度設定すれば、IEUMが流れを見逃すことなく自動的に配信します。",
         },
       },
     },
@@ -1370,12 +1370,12 @@ const ja: Translation = {
         "良いチームはよく記録するチームだと信じています。",
         "AIが繰り返し作業を代行するとき、人はより重要な決定を扱うことができます。",
       ],
-      conclusion: "NexLetterは「働き方で最も煩わしかった部分」を最初に変えます。",
+      conclusion: "IEUMは「働き方で最も煩わしかった部分」を最初に変えます。",
     },
     team: {
-      title: "NexLetterチーム",
+      title: "IEUMチーム",
       description: "開発者が文書作成に時間を奪われる瞬間を最も嫌いました。",
-      intro: "だから自分たちで解決策を作り始め、その結果が今日のNexLetterです。",
+      intro: "だから自分たちで解決策を作り始め、その結果が今日のIEUMです。",
       points: [
         "小さくても深く問題に取り組むチーム",
         "現実的な問題を最後まで解決しようとするチーム",
@@ -1396,7 +1396,7 @@ const ja: Translation = {
     cta: {
       badge: "🚀 始めてみましょう",
       title: "チームが働くすべての瞬間を、明確なストーリーとして。",
-      description: "今すぐNexLetterを体験し、流れを記録する新しい方法を発見してください。",
+      description: "今すぐIEUMを体験し、流れを記録する新しい方法を発見してください。",
       startButton: "始める",
       loginButton: "ログイン",
       samplesButton: "サンプルを見る",
@@ -1407,7 +1407,7 @@ const ja: Translation = {
     skip: "このステップをスキップ",
     steps: {
       welcome: {
-        title: "NexLetterセットアップ開始",
+        title: "IEUMセットアップ開始",
         description: "ニュースレターの設定を始めましょう。設定ボタンをクリックしてください。",
       },
       setup_integrations: {
@@ -1428,7 +1428,7 @@ const ja: Translation = {
       },
       completed: {
         title: "セットアップ完了！",
-        description: "おめでとうございます！NexLetterのセットアップが完了しました。",
+        description: "おめでとうございます！IEUMのセットアップが完了しました。",
       },
     },
     progressSteps: {
@@ -1520,7 +1520,7 @@ const ja: Translation = {
       completed: "完了",
     },
     dashboard: {
-      welcomeBanner: "NexLetterへようこそ！設定を始めましょう。",
+      welcomeBanner: "IEUMへようこそ！設定を始めましょう。",
       goToSettings: "設定へ移動",
     },
     integrations: {
@@ -1574,31 +1574,31 @@ const ja: Translation = {
     },
     onboardingComplete: {
       title: "セットアップ完了！",
-      description: "NexLetterのセットアップが完了しました。最初のニュースレターが正常に送信されました。 <br />次回のメールは{{schedule}}に自動送信されます。",
+      description: "IEUMのセットアップが完了しました。最初のニュースレターが正常に送信されました。 <br />次回のメールは{{schedule}}に自動送信されます。",
     },
   },
   howItWorks: {
     meta: {
-      title: "使い方 | NexLetter",
-      description: "NexLetterの使い方：インテグレーション接続、ターゲット設定、ニュースレター生成、チームへの共有。",
+      title: "使い方 | IEUM",
+      description: "IEUMの使い方：インテグレーション接続、ターゲット設定、ニュースレター生成、チームへの共有。",
     },
     hero: {
-      title: "NexLetterの使い方",
+      title: "IEUMの使い方",
       subtitle: "接続 → 設定 → 生成 → 共有",
-      description: "NexLetterはSlackやGitHubなどの連携ツールからアクティビティデータを収集し、週次ニュースレターを自動生成・配信します。4つのシンプルなステップで始められます。",
+      description: "IEUMはSlackやGitHubなどの連携ツールからアクティビティデータを収集し、週次ニュースレターを自動生成・配信します。4つのシンプルなステップで始められます。",
       primaryButton: "セットアップフローを見る",
       secondaryButton: "はじめる",
     },
     steps: {
       badge: "4つのステップ",
-      title: "4ステップでNexLetterを使う",
+      title: "4ステップでIEUMを使う",
       description: "接続 → 設定 → 生成 → 共有。一度セットアップすれば、すべて自動化されます。",
       items: {
         connect: {
           step: "01",
           title: "接続",
-          description: "SlackワークスペースとGitHubリポジトリをNexLetterに接続します。アクティビティデータの収集が自動的に始まります。",
-          detail: "NexLetterはOAuthを使用して安全な読み取り専用アクセスを行います。承認したデータのみ収集されます。",
+          description: "SlackワークスペースとGitHubリポジトリをIEUMに接続します。アクティビティデータの収集が自動的に始まります。",
+          detail: "IEUMはOAuthを使用して安全な読み取り専用アクセスを行います。承認したデータのみ収集されます。",
         },
         configure: {
           step: "02",
@@ -1610,7 +1610,7 @@ const ja: Translation = {
           step: "03",
           title: "生成",
           description: "AIが収集したメッセージ、コミット、アクティビティを分析し、ハイライト、KPI、読みやすいダイジェストを作成します。",
-          detail: "NexLetter AIエンジンがトピックをクラスタリングし、重要な瞬間を抽出して、チームの週次ストーリーを構築します。",
+          detail: "IEUM AIエンジンがトピックをクラスタリングし、重要な瞬間を抽出して、チームの週次ストーリーを構築します。",
         },
         share: {
           step: "04",
@@ -1623,7 +1623,7 @@ const ja: Translation = {
     integrations: {
       badge: "インテグレーション",
       title: "対応インテグレーション",
-      description: "NexLetterは連携ツールからアクティビティデータを収集します。現在、SlackとGitHubに対応しています。",
+      description: "IEUMは連携ツールからアクティビティデータを収集します。現在、SlackとGitHubに対応しています。",
       slack: {
         title: "Slack",
         description: "Slackワークスペースからチームの会話、ディスカッション、アクティビティを収集・分析します。",
@@ -1650,11 +1650,11 @@ const ja: Translation = {
     slackSetup: {
       badge: "Slackデータソース",
       title: "Slackデータソースの使い方",
-      description: "NexLetterは選択したチャンネルから活動を収集するため、Slackワークスペースに接続します。",
+      description: "IEUMは選択したチャンネルから活動を収集するため、Slackワークスペースに接続します。",
       features: {
         workspace: {
           title: "ワークスペースを接続",
-          description: "最小限のOAuth権限でNexLetterがSlackワークスペースにアクセスすることを許可します。",
+          description: "最小限のOAuth権限でIEUMがSlackワークスペースにアクセスすることを許可します。",
         },
         channels: {
           title: "分析チャンネルを選択",
@@ -1662,18 +1662,18 @@ const ja: Translation = {
         },
         readonly: {
           title: "読み取り専用アクセス",
-          description: "NexLetterは承認されたチャンネルのメッセージのみ読み取ります。投稿、変更、削除は一切行いません。",
+          description: "IEUMは承認されたチャンネルのメッセージのみ読み取ります。投稿、変更、削除は一切行いません。",
         },
       },
       connectionTitle: "Slackの接続方法",
       connectionDescription: "Slackのインストールはサインイン後に利用可能です。以下の手順で接続してください。",
       steps: [
-        "NexLetterにサインイン",
+        "IEUMにサインイン",
         "設定 → インテグレーションに移動",
         "「Slack接続」をクリック",
         "Slackワークスペースでアプリを承認",
       ],
-      note: "SlackのインストールはNexLetterにサインインした後に利用可能です。",
+      note: "SlackのインストールはIEUMにサインインした後に利用可能です。",
     },
     legal: {
       badge: "サポート・プライバシー",
@@ -1691,7 +1691,7 @@ const ja: Translation = {
     },
     preview: {
       title: "セットアップフロー プレビュー",
-      description: "NexLetterのセットアップ手順をステップごとにご覧ください。",
+      description: "IEUMのセットアップ手順をステップごとにご覧ください。",
       slides: {
         "1_login": {
           title: "サインイン & ダッシュボード",
@@ -1726,7 +1726,7 @@ const ja: Translation = {
     cta: {
       badge: "はじめる",
       title: "チームニュースレターを自動化する準備はできましたか？",
-      description: "今すぐNexLetterを体験してください。NexLetterの存在理由や理念については「About Us」をご覧ください。",
+      description: "今すぐIEUMを体験してください。IEUMの存在理由や理念については「About Us」をご覧ください。",
       startButton: "はじめる",
       aboutButton: "紹介",
       samplesButton: "セットアップフローを見る",

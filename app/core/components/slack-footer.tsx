@@ -12,7 +12,7 @@ export default function SlackFooter() {
             <div className="rounded-lg bg-primary/10 p-2">
               <Mail className="h-5 w-5 text-primary" />
             </div>
-            <span className="text-sm font-bold">NexLetter for Slack</span>
+            <span className="text-sm font-bold">IEUM for Slack</span>
           </div>
 
           {/* Center: main site link */}
@@ -22,7 +22,7 @@ export default function SlackFooter() {
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ExternalLink className="h-4 w-4" />
-            Go to NexLetter main site
+            Go to IEUM main site
           </Link>
 
           {/* Right: actions + legal */}
@@ -44,7 +44,7 @@ export default function SlackFooter() {
         </div>
 
         <div className="mt-6 text-center text-xs text-muted-foreground">
-          © 2026 LinkVerse. All rights reserved. NexLetter is a service operated by LinkVerse.
+          © 2026 LinkVerse. All rights reserved. IEUM is a service operated by LinkVerse.
         </div>
       </div>
     </footer>

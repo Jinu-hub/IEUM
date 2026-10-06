@@ -252,7 +252,7 @@ export default function SentMailDetailScreen( { loaderData }: Route.ComponentPro
                     <span className="text-sm font-medium text-muted-foreground">FROM</span>
                   </div>
                   <p className="text-sm text-foreground">
-                    NexLetter &lt;info@mail.nexletter.app&gt;
+                    IEUM &lt;info@mail.nexletter.app&gt;
                   </p>
                 </div>
 

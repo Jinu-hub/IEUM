@@ -64,7 +64,7 @@ type StepCard = IconCard & {
 export const meta: Route.MetaFunction = (args) => {
   const pageData = args.data as LoaderData | undefined;
   return [
-    { title: pageData?.title ?? "NexLetter – About" },
+    { title: pageData?.title ?? "IEUM – About" },
     {
       name: "description",
       content: pageData?.description ?? "팀의 흐름을 기록하는 새로운 방식"

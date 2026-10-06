@@ -119,7 +119,7 @@ export async function sendSlackNotification(
       `✅ *Newsletter sent*\n\n` +
       `• Target: ${targetDisplayName}\n` +
       `• Preview: ${preview}\n\n` +
-      `🔗 Check the NexLetter dashboard or email for details.`;
+      `🔗 Check the IEUM dashboard or email for details.`;
 
     for (const channelId of matchedChannels) {
       try {

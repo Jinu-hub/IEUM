@@ -1,7 +1,7 @@
 /**
- * How it Works – NexLetter Usage Guide
+ * How it Works – IEUM Usage Guide
  *
- * NexLetterの使い方を4ステップで説明するページ。
+ * IEUMの使い方を4ステップで説明するページ。
  * - Connect → Configure → Generate → Share
  * - Slack / GitHub インテグレーションの実際の動作
  * - Slack 接続手順の詳細
@@ -73,12 +73,12 @@ type IntegrationCard = {
 export const meta: Route.MetaFunction = ({ data }) => {
   const pageData = data as LoaderData | undefined;
   return [
-    { title: pageData?.title ?? "How it Works | NexLetter" },
+    { title: pageData?.title ?? "How it Works | IEUM" },
     {
       name: "description",
       content:
         pageData?.description ??
-        "Learn how NexLetter works: Connect integrations, configure targets, generate newsletters, and share with your team.",
+        "Learn how IEUM works: Connect integrations, configure targets, generate newsletters, and share with your team.",
     },
   ];
 };
@@ -87,11 +87,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   const t = await i18next.getFixedT(request);
   return {
     title: t("howItWorks.meta.title", {
-      defaultValue: "How it Works | NexLetter",
+      defaultValue: "How it Works | IEUM",
     }),
     description: t("howItWorks.meta.description", {
       defaultValue:
-        "Learn how NexLetter works: Connect integrations, configure targets, generate newsletters, and share with your team.",
+        "Learn how IEUM works: Connect integrations, configure targets, generate newsletters, and share with your team.",
     }),
   };
 }
