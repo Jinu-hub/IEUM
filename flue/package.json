@@ -1,0 +1,20 @@
+{
+  "name": "ieum-flue",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@flue/runtime": "^2.2.2",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "hono": "^4.13.13"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.62.5",
+    "@flue/vite": "^2.2.2",
+    "vite": "^7.3.7",
+    "wrangler": "^4.147.0"
+  }
+}

@@ -1,28 +1,39 @@
-import {
-  setDefaultOpenAIKey
-} from "@openai/agents";
 import type { ActionFunctionArgs } from "react-router";
 import { data } from "react-router";
 import type { FetchedRepoData } from "~/core/integrations/github/types";
 import type { FetchedMessage } from "~/core/integrations/slack/types";
 import { logger } from "~/core/lib/logger";
 import type { CreateContentsInput } from "~/core/lib/types";
-import { generateContents } from "~/core/processes/mainProcess";
 
-/**
- * OpenAI APIキーを初期化（一度だけ実行）
- */
-let isOpenAIInitialized = false;
-function initializeOpenAI() {
-  if (!isOpenAIInitialized) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is not set');
+const FLUE_AGENT_URL = process.env.FLUE_AGENT_URL ?? "http://localhost:8787/agents/test";
+
+async function askTestAgent(runId: string): Promise<string> {
+  const url = `${FLUE_AGENT_URL}/${runId}`;
+  const post = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kind: "user", body: "Go." }),
+  });
+  if (!post.ok) throw new Error(`Flue send failed: ${post.status}`);
+
+  for (let i = 0; i < 40; i++) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Flue read failed: ${res.status}`);
+    const snapshot = await res.json();
+    const done = snapshot.settlements?.some((s: { outcome?: string }) => s.outcome === "completed");
+    if (done) {
+      const assistant = [...(snapshot.messages ?? [])].reverse().find((m: { role?: string }) => m.role === "assistant");
+      const text = assistant?.parts?.find((p: { type?: string; text?: string }) => p.type === "text")?.text;
+      if (text) return text;
     }
-    setDefaultOpenAIKey(apiKey);
-    isOpenAIInitialized = true;
-    logger.info('✅ OpenAI API key initialized');
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
+  throw new Error("Flue reply timed out");
+}
+
+function toHtml(text: string) {
+  const escaped = text.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c] ?? c);
+  return `<p>${escaped}</p>`;
 }
 
 export function createGithubStats(githubResult : Record<string, FetchedRepoData>) {
@@ -51,15 +62,14 @@ function createSlackStats(slackResult : Record<string, FetchedMessage[]>) {
  */
 export async function createContents(input: CreateContentsInput) {
 
-  initializeOpenAI();
-
   const githubStats = createGithubStats(input.githubResult || {});
   const slackStats = createSlackStats(input.slackResult || {});
   logger.info('📝 Creating contents', { 
     workspaceId: input.workspaceId, targetId: input.targetId, github: githubStats, slack: slackStats
   });
 
-  const content = await generateContents(input);
+  const text = await askTestAgent(input.runId);
+  const content = { finalContents: text, htmlContents: toHtml(text) };
 
   logger.info('✅ Contents created successfully', {
     targetId: input.targetId,
