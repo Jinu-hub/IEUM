@@ -9,12 +9,12 @@ import type { CreateContentsInput } from "~/core/lib/types";
 import { incrementUsageCounter, saveRunLogEvent, updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
 import { createContents } from "~/features/cron/api/create-contents";
 import { sendMails } from "~/features/cron/api/send-mails";
-import { getIntegrationsInfo, getTargetSources, getUserSubscriptionPlanType } from "~/features/settings/db/queries";
+import { getUserSubscriptionPlanType } from "~/features/settings/db/queries";
 import { getWorkspaceOwnerUserId } from "~/features/users/queries";
-import { fetchIntegrationData } from "./integration-fetching";
+import { collectTargetSources } from "./collect-sources";
 import { checkEmailLimit } from "./limit-checking";
+import { recordRuns } from "./run-record";
 import { sendSlackNotification } from "./send_notifications";
-import { matchSourcesToIntegrations } from "./source-matching";
 import type { FetchedData, Target } from "./types";
 
 /**
@@ -60,6 +60,37 @@ export function createContentsInput(
   };
 }
 
+async function noteRun(
+  target: Target,
+  runMapping: { runId: string; runStepId: string },
+  level: string,
+  stepName: string,
+  message: string
+) {
+  const log = level === "error" ? logger.error : level === "warn" ? logger.warn : logger.info;
+  log(message, { targetId: target.target_id });
+  if (!recordRuns()) return;
+  await saveRunLogEvent(adminClient, {
+    workspaceId: target.workspace_id,
+    runId: runMapping.runId,
+    level,
+    stepName,
+    message,
+  });
+}
+
+async function closeRun(
+  runMapping: { runId: string; runStepId: string },
+  errorSummary: string
+) {
+  if (!recordRuns()) return;
+  await updateNewsletterRunError(adminClient, {
+    runId: runMapping.runId,
+    runStepId: runMapping.runStepId,
+    errorSummary,
+  });
+}
+
 /**
  * 단일 타겟 처리 메인 로직
  */
@@ -70,10 +101,10 @@ export async function processTarget(
   logger.info('--------------------------------');
   logger.info(`--- target: ${target.display_name} ---`);
   logger.info('--------------------------------');
-  await saveRunLogEvent(adminClient, {
-    workspaceId: target.workspace_id, runId: runMapping.runId, level: 'info',
-    stepName: 'target_processing_started', message: `Target processing started for target: ${target.display_name}`,
-  });
+  await noteRun(
+    target, runMapping, 'info', 'target_processing_started',
+    `Target processing started for target: ${target.display_name}`
+  );
 
   try {
 
@@ -81,16 +112,8 @@ export async function processTarget(
     const planType = await getUserSubscriptionPlanType(adminClient, { userId: ownerUserId as string });
   
     if (!planType) {
-      logger.warn('Skipping target processing: No valid subscription found', {
-        targetId: target.target_id,
-        targetName: target.display_name,
-        workspaceId: target.workspace_id,
-        ownerUserId
-      });
-      await saveRunLogEvent(adminClient, {
-        workspaceId: target.workspace_id, runId: runMapping.runId, level: 'warn',
-        stepName: 'target_processing_skipped', message: `Target processing skipped: No valid subscription found`,
-      });
+      await noteRun(target, runMapping, 'warn', 'target_processing_skipped', 'Target processing skipped: No valid subscription found');
+      await closeRun(runMapping, 'No valid subscription found');
       return;
     }
 
@@ -99,79 +122,29 @@ export async function processTarget(
       , planType as Database["public"]["Enums"]["plan_type"]);
     
     if (!limitCheck.allowed) {
-      logger.warn('Email limit exceeded, skipping target', {
-        target_id: target.target_id,
-        email_sent_count: limitCheck.usageCounter?.email_sent_count,
-        max_weekly_emails_per_month: limitCheck.planLimit?.max_weekly_emails_per_month
-      });
-      await saveRunLogEvent(adminClient, {
-        workspaceId: target.workspace_id, runId: runMapping.runId, level: 'warn',
-        stepName: 'target_processing_skipped', message: `Target processing skipped: Email limit exceeded`,
-      });
+      await noteRun(target, runMapping, 'warn', 'target_processing_skipped', 'Target processing skipped: Email limit exceeded');
+      await closeRun(runMapping, 'Email limit exceeded');
       return;
     }
 
     const runStartedAt = Date.now();
-    await updateNewsletterRun(adminClient, {
-      runId: runMapping.runId,
-      runStepId: runMapping.runStepId,
-      status: 'running',
-      step: 'collect_data',
-      metricsJson: {}
-    });
-    // 통합 정보 조회
-    const integrationsInfo = await getIntegrationsInfo(adminClient, { workspaceId: target.workspace_id });
-    const githubData = integrationsInfo?.find((integration: any) => integration.type === 'github')?.resource_cache_json as any;
-    const slackData = integrationsInfo?.find((integration: any) => integration.type === 'slack')?.resource_cache_json as any;
-    const sources = await getTargetSources(adminClient, { 
-      workspaceId: target.workspace_id, 
-      targetId: target.target_id 
-    });
-
-    if (sources.length === 0) {
-      logger.warn('No sources found for target', { targetId: target.target_id });
-      await saveRunLogEvent(adminClient, {
-        workspaceId: target.workspace_id, runId: runMapping.runId, level: 'warn',
-        stepName: 'target_processing_skipped', message: `Target processing skipped: No sources found for target: ${target.display_name}`,
+    if (recordRuns()) {
+      await updateNewsletterRun(adminClient, {
+        runId: runMapping.runId,
+        runStepId: runMapping.runStepId,
+        status: 'running',
+        step: 'collect_data',
+        metricsJson: {}
       });
-      return;
     }
 
-    // 소스 매칭
-    const matchedSources = matchSourcesToIntegrations(
-      sources,
-      integrationsInfo,
-      githubData,
-      slackData
-    );
-
-    // 매칭된 소스가 없는 경우 경고 로그를 출력하고 스킵
-    if (matchedSources.matchedRepos.length === 0 && matchedSources.matchedChannels.length === 0) {
-      logger.warn('No matched sources found for target, skipping', {
-        targetId: target.target_id,
-        targetName: target.display_name,
-        sourcesCount: sources.length,
-        sourcesWithType: matchedSources.sourcesWithType.map((s: any) => ({
-          sourceType: s.sourceType,
-          sourceIdent: s.sourceIdent,
-          integrationType: s.integrationType
-        }))
-      });
-      await saveRunLogEvent(adminClient, {
-        workspaceId: target.workspace_id, runId: runMapping.runId, level: 'warn',
-        stepName: 'target_processing_skipped', message: `Target processing skipped: No matched sources found for target: ${target.display_name}`,
-      });
-      await updateNewsletterRunError(adminClient, { 
-        runId: runMapping.runId, 
-        runStepId: runMapping.runStepId, 
-        errorSummary: 'No matched sources found for target', 
-      });
+    const collected = await collectTargetSources(target);
+    if ("skip" in collected) {
+      await noteRun(target, runMapping, 'warn', 'target_processing_skipped', `Target processing skipped: ${collected.skip}`);
+      await closeRun(runMapping, collected.skip);
       return;
     }
-
-    // 데이터 페칭
-    const fetchedData = await fetchIntegrationData(integrationsInfo, matchedSources);
-   // await saveContentToFile(fetchedData, 'output-test', 'fetched_data_', 'json');
+    const { fetchedData, integrationsInfo, matchedSources } = collected;
 
     // 날짜 범위 생성
     const dateRange = createDateRange();
@@ -185,19 +158,21 @@ export async function processTarget(
       targetId: target.target_id,
       result: content.status
     });
-    await saveRunLogEvent(adminClient, {
-      workspaceId: target.workspace_id, runId: runMapping.runId, level: 'info',
-      stepName: 'contents_generation_completed', message: `Contents generation completed for target: ${target.display_name}`,
-    });
+    await noteRun(
+      target, runMapping, 'info', 'contents_generation_completed',
+      `Contents generation completed for target: ${target.display_name}`
+    );
 
-    await updateNewsletterRun(adminClient, { 
-      runId: runMapping.runId, 
-      runStepId: runMapping.runStepId, 
-      status: 'success', 
-      step: 'send_email',
-      metricsJson: {},
-      accuratedTokens: input.accuratedTokens || 0
-    });
+    if (recordRuns()) {
+      await updateNewsletterRun(adminClient, {
+        runId: runMapping.runId,
+        runStepId: runMapping.runStepId,
+        status: 'success',
+        step: 'send_email',
+        metricsJson: {},
+        accuratedTokens: input.accuratedTokens || 0
+      });
+    }
 
     // slack 통지 메시지 전송 (이미 보유한 integrationsInfo·matchedChannels 전달하여 중복 조회 방지)
     await sendSlackNotification(
@@ -218,29 +193,23 @@ export async function processTarget(
       limitCheck.maxMembers
     );
 
-    // 사용량 카운터 업데이트
-    if (limitCheck.usageCounter?.counter_id) {
-      await incrementUsageCounter(adminClient, { 
-        counterId: limitCheck.usageCounter.counter_id,
-        accuratedTokens: input.accuratedTokens || 0
-      });
-    } else {
-      logger.warn('Skipping usage counter update: missing counter_id', {
-        counterId: limitCheck.usageCounter?.counter_id
-      });
+    if (recordRuns()) {
+      if (limitCheck.usageCounter?.counter_id) {
+        await incrementUsageCounter(adminClient, {
+          counterId: limitCheck.usageCounter.counter_id,
+          accuratedTokens: input.accuratedTokens || 0
+        });
+      } else {
+        logger.warn('Skipping usage counter update: missing counter_id', {
+          counterId: limitCheck.usageCounter?.counter_id
+        });
+      }
     }
 
   } catch (error: any) {
     logger.error('Cron actions target running error', { error: error.message });
-    await saveRunLogEvent(adminClient, {
-      workspaceId: target.workspace_id, runId: runMapping.runId, level: 'error',
-      stepName: 'target_processing_error', message: `Target processing error: ${error.message}`,
-    });
-    await updateNewsletterRunError(adminClient, { 
-      runId: runMapping.runId, 
-      runStepId: runMapping.runStepId, 
-      errorSummary: error.message 
-    });
+    await noteRun(target, runMapping, 'error', 'target_processing_error', `Target processing error: ${error.message}`);
+    await closeRun(runMapping, error.message);
     throw error;
   }
 }

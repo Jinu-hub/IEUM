@@ -7,6 +7,7 @@ import { generatePeriodKey } from "~/core/processes/lib/utils";
 import { saveNewsletterEditions } from "~/features/contents/db/mutations";
 import { getUniquePeriodKey } from "~/features/contents/db/queries";
 import { getMailingListMembers, getUserEmail, getWorkspaceOwner } from "~/features/settings/db/queries";
+import { recordRuns } from "./run-record";
 
 /**
  * 이메일 목록을 가져오는 함수
@@ -161,6 +162,8 @@ export async function sendMails(
       bcc: bccEmails,
       range: input.range,
     };
+
+    if (!recordRuns()) return;
 
     const period = input.period;
     const basePeriodKey = generatePeriodKey(period, input.from);

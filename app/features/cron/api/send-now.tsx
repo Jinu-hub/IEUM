@@ -12,6 +12,7 @@ import makeServerClient from "~/core/lib/supa-client.server";
 import { createNewsletterRun } from "~/features/contents/db/mutations";
 import { updateFirstMailSend } from "~/features/settings/db/mutations";
 import { getTargets } from "~/features/settings/db/queries";
+import { recordRuns } from "./run-record";
 
 /**
  * Phase1: run 생성만 하고 runId/runStepId 반환.
@@ -88,16 +89,20 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     // Newsletter run 생성 (adminClient 사용 - RLS 정책 우회)
-    const { runId, runStepId } = await createNewsletterRun(adminClient, {
-      workspaceId,
-      trigger: 'manual',
-      logRef: null,
-    });
+    const { runId, runStepId } = recordRuns()
+      ? await createNewsletterRun(adminClient, {
+          workspaceId,
+          trigger: 'manual',
+          logRef: null,
+        })
+      : { runId: crypto.randomUUID(), runStepId: crypto.randomUUID() };
 
-    // 온보딩: first_mail_send 를 yes 로 갱신 (first_mail_run_id 도 설정)
-    await updateFirstMailSend(adminClient, { workspaceId, runId, firstMailSend: 'yes' }).catch((err) => {
-      logger.warn('updateFirstMailSend failed (non-blocking)', { error: err?.message, workspaceId });
-    });
+    if (recordRuns()) {
+      // 온보딩: first_mail_send 를 yes 로 갱신 (first_mail_run_id 도 설정)
+      await updateFirstMailSend(adminClient, { workspaceId, runId, firstMailSend: 'yes' }).catch((err) => {
+        logger.warn('updateFirstMailSend failed (non-blocking)', { error: err?.message, workspaceId });
+      });
+    }
 
     return data({ 
       status: 'success', 

@@ -6,6 +6,7 @@ import { isScheduledWithinHour } from "~/core/lib/cron-utils";
 import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import { createNewsletterRun } from "~/features/contents/db/mutations";
+import { recordRuns } from "./run-record";
 import type { RunMapping, Target } from "./types";
 
 /**
@@ -56,8 +57,13 @@ export async function fetchScheduledTargets(): Promise<Target[]> {
  */
 export async function createRunMappings(targets: Target[]): Promise<RunMapping> {
   const runMapping: RunMapping = {};
-  
+  if (!recordRuns()) logger.info("CRON_RECORD=0, newsletter run rows are not saved");
+
   for (const target of targets) {
+    if (!recordRuns()) {
+      runMapping[target.target_id] = { runId: crypto.randomUUID(), runStepId: crypto.randomUUID() };
+      continue;
+    }
     const { runId, runStepId } = await createNewsletterRun(adminClient, {
       workspaceId: target.workspace_id,
       trigger: 'cron',
