@@ -149,3 +149,113 @@ export const getRunLogEvents = async (
 
   return data;
 };
+
+/**
+ * subscriptions を取得（更新日時の新しい順）
+ */
+export const getSubscriptions = async (client: SupabaseClient<Database>) => {
+  const { data, error } = await client
+    .from('subscriptions')
+    .select(`
+      subscription_id,
+      user_id,
+      plan_type,
+      status,
+      mode,
+      billing_interval,
+      billing_currency,
+      started_at,
+      ends_at,
+      updated_at,
+      stripe_subscription_id,
+      payment_methods (
+        pg_provider
+      )
+    `)
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.error('getSubscriptions error:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+/**
+ * payments を取得（最新順）
+ */
+export const getPayments = async (
+  client: SupabaseClient<Database>,
+  { limit = 200 }: { limit?: number } = {}
+) => {
+  const { data, error } = await client
+    .from('payments')
+    .select(`
+      payment_id,
+      user_id,
+      pg_provider,
+      order_name,
+      total_amount,
+      currency,
+      status,
+      approved_at,
+      created_at,
+      receipt_url
+    `)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('getPayments error:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+/**
+ * 有効な targets を取得（workspace のオーナー user_id 付き）
+ */
+export const getActiveTargets = async (client: SupabaseClient<Database>) => {
+  const { data, error } = await client
+    .from('targets')
+    .select(`
+      target_id,
+      display_name,
+      schedule_cron,
+      schedule_hour,
+      timezone,
+      category,
+      language,
+      last_sent_at,
+      workspace!inner (
+        name,
+        owner_user_id
+      )
+    `)
+    .eq('is_active', true)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('getActiveTargets error:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+/**
+ * user_id → email のマップを取得（auth.users は PostgREST で join できないため）
+ */
+export const getUserEmailMap = async (client: SupabaseClient<Database>) => {
+  // ponytail: first 1000 users only, paginate listUsers if the user base grows past that
+  const { data, error } = await client.auth.admin.listUsers({ perPage: 1000 });
+
+  if (error) {
+    console.error('getUserEmailMap error:', error);
+    throw error;
+  }
+
+  return Object.fromEntries(data.users.map((u) => [u.id, u.email ?? ""]));
+};

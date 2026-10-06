@@ -571,6 +571,7 @@ const ko: Translation = {
     testApi: "API 테스트",
     monitoring: "모니터링",
     runLogs: "실행 로그",
+    billing: "결제·구독",
     user: {
       upgrade: "업그레이드",
       upgradeToStarter: "Starter로 업그레이드",

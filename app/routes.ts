@@ -168,6 +168,7 @@ export default [
         route("/test-api", "features/admin/screens/test-api.tsx"),
         route("/monitoring", "features/admin/screens/monitoring.tsx"),
         route("/logs", "features/admin/screens/run-logs.tsx"),
+        route("/billing", "features/admin/screens/billing.tsx"),
       ]),
     ]),
   ]),

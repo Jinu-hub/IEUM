@@ -570,6 +570,7 @@ export type Translation = {
     testApi: string;
     monitoring: string;
     runLogs: string;
+    billing: string;
     user: {
       upgrade: string;
       upgradeToStarter: string;

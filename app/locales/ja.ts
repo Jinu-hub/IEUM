@@ -573,6 +573,7 @@ const ja: Translation = {
     testApi: "APIテスト",
     monitoring: "モニター",
     runLogs: "実行ログ",
+    billing: "決済・サブスク",
     user: {
       upgrade: "アップグレード",
       upgradeToStarter: "Starterにアップグレード",

@@ -163,6 +163,7 @@ const getSidebarData = (
               { title: t("testApi"), url: "/admin/test-api" },
               { title: t("monitoring"), url: "/admin/monitoring" },
               { title: t("runLogs"), url: "/admin/logs" },
+              { title: t("billing"), url: "/admin/billing" },
             ],
           },
         ]
