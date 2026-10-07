@@ -9,15 +9,16 @@ const FLUE_AGENT_URL = process.env.FLUE_AGENT_URL ?? "http://localhost:8787/agen
 
 async function askTestAgent(runId: string): Promise<string> {
   const url = `${FLUE_AGENT_URL}/${runId}`;
+  const auth = { Authorization: `Bearer ${process.env.FLUE_API_TOKEN ?? ""}` };
   const post = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...auth },
     body: JSON.stringify({ kind: "user", body: "Go." }),
   });
   if (!post.ok) throw new Error(`Flue send failed: ${post.status}`);
 
   for (let i = 0; i < 40; i++) {
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: auth });
     if (!res.ok) throw new Error(`Flue read failed: ${res.status}`);
     const snapshot = await res.json();
     const done = snapshot.settlements?.some((s: { outcome?: string }) => s.outcome === "completed");

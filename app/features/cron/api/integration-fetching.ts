@@ -29,7 +29,7 @@ export async function fetchGithubData(
       outDir: 'output-test',
       token: githubToken,
       installationId: credentialRef,
-      days: 7,
+      days: 1,
     });
 
     const enabled = githubResult && Object.keys(githubResult).length > 0;
@@ -67,7 +67,7 @@ export async function fetchSlackData(
       channels: slackChannels,
       outDir: 'output-test',
       token: slackToken,
-      days: 7,
+      days: 1,
       sources: sourcesWithType,
     });
 
