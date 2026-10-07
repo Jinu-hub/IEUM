@@ -24,7 +24,8 @@ async function askTestAgent(runId: string): Promise<string> {
     const done = snapshot.settlements?.some((s: { outcome?: string }) => s.outcome === "completed");
     if (done) {
       const assistant = [...(snapshot.messages ?? [])].reverse().find((m: { role?: string }) => m.role === "assistant");
-      const text = assistant?.parts?.find((p: { type?: string; text?: string }) => p.type === "text")?.text;
+      // After a worker restart Flue keeps the cut-off partial as an earlier text part.
+      const text = assistant?.parts?.findLast((p: { type?: string; text?: string }) => p.type === "text")?.text;
       if (text) return text;
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
