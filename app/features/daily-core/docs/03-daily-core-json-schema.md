@@ -842,8 +842,7 @@ Schema Validation 성공
         ↓
 BEGIN
         ↓
-daily_core_generations 저장
-daily_core_source_snapshots 저장
+daily_core_generations 저장 (input_source_data_ids 포함, Source 데이터 자체는 수집 단계에서 저장됨)
 daily_core_metrics 저장
 daily_core_items 저장
 daily_core_data.current_generation_no 갱신

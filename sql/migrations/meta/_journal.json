@@ -302,6 +302,13 @@
       "when": 1787045878430,
       "tag": "0042_left_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1791467129314,
+      "tag": "0043_first_power_man",
+      "breakpoints": true
     }
   ]
 }

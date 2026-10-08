@@ -6,7 +6,7 @@ type DailyCoreDataInsert = TablesInsert<"daily_core_data">;
 type DailyCoreDataUpdate = TablesUpdate<"daily_core_data">;
 type DailyCoreGenerationInsert = TablesInsert<"daily_core_generations">;
 type DailyCoreGenerationUpdate = TablesUpdate<"daily_core_generations">;
-type DailyCoreSourceSnapshotInsert = TablesInsert<"daily_core_source_snapshots">;
+type DailyCoreSourceDataInsert = TablesInsert<"daily_core_source_data">;
 type DailyCoreItemInsert = TablesInsert<"daily_core_items">;
 type DailyCoreMetricInsert = TablesInsert<"daily_core_metrics">;
 type Language = Database["public"]["Enums"]["language"];
@@ -105,12 +105,10 @@ export async function touchDailyCoreAttempt(
   {
     dailyCoreId,
     lastGenerationNo,
-    lastJobId,
     qualityStatus,
   }: {
     dailyCoreId: string;
     lastGenerationNo: number;
-    lastJobId?: string | null;
     qualityStatus?: DailyCoreQualityStatus;
   }
 ) {
@@ -118,7 +116,6 @@ export async function touchDailyCoreAttempt(
     dailyCoreId,
     patch: {
       last_generation_no: lastGenerationNo,
-      last_job_id: lastJobId ?? null,
       last_attempt_at: new Date().toISOString(),
       ...(qualityStatus ? { quality_status: qualityStatus } : {}),
     },
@@ -184,14 +181,14 @@ export async function createDailyCoreGeneration(
     workspaceId,
     targetId,
     generationNo,
-    jobId,
     trigger,
     schemaVersion,
     taxonomyVersion,
-    promptVersion,
+    promptVersion = null,
     pipelineVersion,
-    modelProvider,
-    modelName,
+    modelProvider = null,
+    modelName = null,
+    inputSourceDataIds = [],
     modelConfigJson = {},
     inputStatsJson = {},
     tokenUsageJson = {},
@@ -208,14 +205,14 @@ export async function createDailyCoreGeneration(
     workspaceId: string;
     targetId: string;
     generationNo: number;
-    jobId?: string | null;
     trigger: DailyCoreGenerationTrigger;
     schemaVersion: string;
     taxonomyVersion: string;
-    promptVersion: string;
+    promptVersion?: string | null;
     pipelineVersion: string;
-    modelProvider: string;
-    modelName: string;
+    modelProvider?: string | null;
+    modelName?: string | null;
+    inputSourceDataIds?: string[];
     modelConfigJson?: Json;
     inputStatsJson?: Json;
     tokenUsageJson?: Json;
@@ -234,10 +231,10 @@ export async function createDailyCoreGeneration(
     workspace_id: workspaceId,
     target_id: targetId,
     generation_no: generationNo,
-    job_id: jobId ?? null,
     trigger,
     generation_status: generationStatus,
     quality_status: qualityStatus,
+    input_source_data_ids: inputSourceDataIds,
     input_hash: inputHash,
     content_hash: contentHash,
     core_json: coreJson,
@@ -252,7 +249,7 @@ export async function createDailyCoreGeneration(
     token_usage_json: tokenUsageJson ?? {},
     processing_metrics_json: processingMetricsJson ?? {},
     validation_json: validationJson ?? {},
-    started_at: startedAt ?? new Date().toISOString(),
+    started_at: startedAt ?? null,
   };
 
   const { data, error } = await client
@@ -362,13 +359,14 @@ export async function failDailyCoreGeneration(
   });
 }
 
-export async function replaceDailyCoreSourceSnapshots(
+// Append-only: re-collection adds rows so older generations keep their inputs.
+export async function insertDailyCoreSourceData(
   client: SupabaseClient<Database>,
   {
-    generationId,
+    dailyCoreId,
     rows,
   }: {
-    generationId: string;
+    dailyCoreId: string;
     rows: Array<{
       workspace_id: string;
       target_id: string;
@@ -378,28 +376,21 @@ export async function replaceDailyCoreSourceSnapshots(
       source_ident: string;
       config_snapshot_json?: Json;
       collection_status: DailyCoreCollectionStatus;
-      window_start_at: string;
-      window_end_at: string;
+      normalized_json?: Json;
       item_count?: number;
-      raw_bytes?: number | null;
-      estimated_tokens?: number | null;
-      source_input_hash?: string | null;
-      raw_snapshot_ref?: string | null;
+      content_hash?: string | null;
       stats_json?: Json;
       error_code?: string | null;
       error_message?: string | null;
-      collected_at?: string;
     }>;
   }
 ) {
-  await client.from("daily_core_source_snapshots").delete().eq("generation_id", generationId);
-
   if (rows.length === 0) {
     return [];
   }
 
-  const payload: DailyCoreSourceSnapshotInsert[] = rows.map((row) => ({
-    generation_id: generationId,
+  const payload: DailyCoreSourceDataInsert[] = rows.map((row) => ({
+    daily_core_id: dailyCoreId,
     workspace_id: row.workspace_id,
     target_id: row.target_id,
     target_source_id: row.target_source_id ?? null,
@@ -408,26 +399,21 @@ export async function replaceDailyCoreSourceSnapshots(
     source_ident: row.source_ident,
     config_snapshot_json: row.config_snapshot_json ?? {},
     collection_status: row.collection_status,
-    window_start_at: row.window_start_at,
-    window_end_at: row.window_end_at,
+    normalized_json: row.normalized_json ?? [],
     item_count: row.item_count ?? 0,
-    raw_bytes: row.raw_bytes ?? null,
-    estimated_tokens: row.estimated_tokens ?? null,
-    source_input_hash: row.source_input_hash ?? null,
-    raw_snapshot_ref: row.raw_snapshot_ref ?? null,
+    content_hash: row.content_hash ?? null,
     stats_json: row.stats_json ?? {},
     error_code: row.error_code ?? null,
     error_message: row.error_message ?? null,
-    collected_at: row.collected_at ?? new Date().toISOString(),
   }));
 
   const { data, error } = await client
-    .from("daily_core_source_snapshots")
+    .from("daily_core_source_data")
     .insert(payload)
     .select();
 
   if (error) {
-    console.error("replaceDailyCoreSourceSnapshots error", error);
+    console.error("insertDailyCoreSourceData error", error);
     throw error;
   }
 

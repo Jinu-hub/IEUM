@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -66,6 +66,8 @@ export type Database = {
       }
       daily_core_data: {
         Row: {
+          collected_at: string | null
+          collection_stage: Database["public"]["Enums"]["daily_core_collection_stage"]
           core_date: string
           created_at: string
           current_generation_no: number | null
@@ -76,7 +78,6 @@ export type Database = {
           last_error_message: string | null
           last_generated_at: string | null
           last_generation_no: number
-          last_job_id: string | null
           quality_status: Database["public"]["Enums"]["daily_core_quality_status"]
           target_category: Database["public"]["Enums"]["category_type"]
           target_display_name: string
@@ -88,6 +89,8 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          collected_at?: string | null
+          collection_stage?: Database["public"]["Enums"]["daily_core_collection_stage"]
           core_date: string
           created_at?: string
           current_generation_no?: number | null
@@ -98,7 +101,6 @@ export type Database = {
           last_error_message?: string | null
           last_generated_at?: string | null
           last_generation_no?: number
-          last_job_id?: string | null
           quality_status?: Database["public"]["Enums"]["daily_core_quality_status"]
           target_category: Database["public"]["Enums"]["category_type"]
           target_display_name: string
@@ -110,6 +112,8 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          collected_at?: string | null
+          collection_stage?: Database["public"]["Enums"]["daily_core_collection_stage"]
           core_date?: string
           created_at?: string
           current_generation_no?: number | null
@@ -120,7 +124,6 @@ export type Database = {
           last_error_message?: string | null
           last_generated_at?: string | null
           last_generation_no?: number
-          last_job_id?: string | null
           quality_status?: Database["public"]["Enums"]["daily_core_quality_status"]
           target_category?: Database["public"]["Enums"]["category_type"]
           target_display_name?: string
@@ -132,13 +135,6 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "daily_core_data_last_job_id_job_queue_id_fk"
-            columns: ["last_job_id"]
-            isOneToOne: false
-            referencedRelation: "job_queue"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "daily_core_data_target_id_targets_target_id_fk"
             columns: ["target_id"]
@@ -157,6 +153,8 @@ export type Database = {
       }
       daily_core_generations: {
         Row: {
+          agent_conversation_id: string | null
+          agent_output_json: Json | null
           content_hash: string | null
           core_json: Json | null
           created_at: string
@@ -168,19 +166,19 @@ export type Database = {
           generation_no: number
           generation_status: Database["public"]["Enums"]["daily_core_generation_status"]
           input_hash: string | null
+          input_source_data_ids: string[]
           input_stats_json: Json
-          job_id: string | null
           model_config_json: Json
-          model_name: string
-          model_provider: string
+          model_name: string | null
+          model_provider: string | null
           pipeline_version: string
           processing_metrics_json: Json
-          prompt_version: string
+          prompt_version: string | null
           quality_status:
             | Database["public"]["Enums"]["daily_core_quality_status"]
             | null
           schema_version: string
-          started_at: string
+          started_at: string | null
           target_id: string
           taxonomy_version: string
           token_usage_json: Json
@@ -189,6 +187,8 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          agent_conversation_id?: string | null
+          agent_output_json?: Json | null
           content_hash?: string | null
           core_json?: Json | null
           created_at?: string
@@ -200,19 +200,19 @@ export type Database = {
           generation_no: number
           generation_status?: Database["public"]["Enums"]["daily_core_generation_status"]
           input_hash?: string | null
+          input_source_data_ids?: string[]
           input_stats_json?: Json
-          job_id?: string | null
           model_config_json?: Json
-          model_name: string
-          model_provider: string
+          model_name?: string | null
+          model_provider?: string | null
           pipeline_version: string
           processing_metrics_json?: Json
-          prompt_version: string
+          prompt_version?: string | null
           quality_status?:
             | Database["public"]["Enums"]["daily_core_quality_status"]
             | null
           schema_version: string
-          started_at: string
+          started_at?: string | null
           target_id: string
           taxonomy_version: string
           token_usage_json?: Json
@@ -221,6 +221,8 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          agent_conversation_id?: string | null
+          agent_output_json?: Json | null
           content_hash?: string | null
           core_json?: Json | null
           created_at?: string
@@ -232,19 +234,19 @@ export type Database = {
           generation_no?: number
           generation_status?: Database["public"]["Enums"]["daily_core_generation_status"]
           input_hash?: string | null
+          input_source_data_ids?: string[]
           input_stats_json?: Json
-          job_id?: string | null
           model_config_json?: Json
-          model_name?: string
-          model_provider?: string
+          model_name?: string | null
+          model_provider?: string | null
           pipeline_version?: string
           processing_metrics_json?: Json
-          prompt_version?: string
+          prompt_version?: string | null
           quality_status?:
             | Database["public"]["Enums"]["daily_core_quality_status"]
             | null
           schema_version?: string
-          started_at?: string
+          started_at?: string | null
           target_id?: string
           taxonomy_version?: string
           token_usage_json?: Json
@@ -259,13 +261,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "daily_core_data"
             referencedColumns: ["daily_core_id"]
-          },
-          {
-            foreignKeyName: "daily_core_generations_job_id_job_queue_id_fk"
-            columns: ["job_id"]
-            isOneToOne: false
-            referencedRelation: "job_queue"
-            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_core_generations_target_id_targets_target_id_fk"
@@ -444,121 +439,109 @@ export type Database = {
           },
         ]
       }
-      daily_core_source_snapshots: {
+      daily_core_source_data: {
         Row: {
           collected_at: string
           collection_status: Database["public"]["Enums"]["daily_core_collection_status"]
           config_snapshot_json: Json
+          content_hash: string | null
+          daily_core_id: string
           error_code: string | null
           error_message: string | null
-          estimated_tokens: number | null
-          generation_id: string
           integration_id: string | null
           item_count: number
-          raw_bytes: number | null
-          raw_snapshot_ref: string | null
+          normalized_json: Json
+          source_data_id: string
           source_ident: string
-          source_input_hash: string | null
-          source_snapshot_id: string
           source_type: string
           stats_json: Json
           target_id: string
           target_source_id: string | null
-          window_end_at: string
-          window_start_at: string
           workspace_id: string
         }
         Insert: {
-          collected_at: string
+          collected_at?: string
           collection_status: Database["public"]["Enums"]["daily_core_collection_status"]
           config_snapshot_json?: Json
+          content_hash?: string | null
+          daily_core_id: string
           error_code?: string | null
           error_message?: string | null
-          estimated_tokens?: number | null
-          generation_id: string
           integration_id?: string | null
           item_count?: number
-          raw_bytes?: number | null
-          raw_snapshot_ref?: string | null
+          normalized_json?: Json
+          source_data_id?: string
           source_ident: string
-          source_input_hash?: string | null
-          source_snapshot_id?: string
           source_type: string
           stats_json?: Json
           target_id: string
           target_source_id?: string | null
-          window_end_at: string
-          window_start_at: string
           workspace_id: string
         }
         Update: {
           collected_at?: string
           collection_status?: Database["public"]["Enums"]["daily_core_collection_status"]
           config_snapshot_json?: Json
+          content_hash?: string | null
+          daily_core_id?: string
           error_code?: string | null
           error_message?: string | null
-          estimated_tokens?: number | null
-          generation_id?: string
           integration_id?: string | null
           item_count?: number
-          raw_bytes?: number | null
-          raw_snapshot_ref?: string | null
+          normalized_json?: Json
+          source_data_id?: string
           source_ident?: string
-          source_input_hash?: string | null
-          source_snapshot_id?: string
           source_type?: string
           stats_json?: Json
           target_id?: string
           target_source_id?: string | null
-          window_end_at?: string
-          window_start_at?: string
           workspace_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "daily_core_source_snapshots_generation_id_daily_core_generation"
-            columns: ["generation_id"]
+            foreignKeyName: "daily_core_source_data_daily_core_id_daily_core_data_daily_core"
+            columns: ["daily_core_id"]
             isOneToOne: false
-            referencedRelation: "daily_core_generations"
-            referencedColumns: ["generation_id"]
+            referencedRelation: "daily_core_data"
+            referencedColumns: ["daily_core_id"]
           },
           {
-            foreignKeyName: "daily_core_source_snapshots_integration_id_integrations_integra"
+            foreignKeyName: "daily_core_source_data_integration_id_integrations_integration_"
             columns: ["integration_id"]
             isOneToOne: false
             referencedRelation: "integrations"
             referencedColumns: ["integration_id"]
           },
           {
-            foreignKeyName: "daily_core_source_snapshots_integration_id_integrations_integra"
+            foreignKeyName: "daily_core_source_data_integration_id_integrations_integration_"
             columns: ["integration_id"]
             isOneToOne: false
             referencedRelation: "v_integration_info"
             referencedColumns: ["integration_id"]
           },
           {
-            foreignKeyName: "daily_core_source_snapshots_integration_id_integrations_integra"
+            foreignKeyName: "daily_core_source_data_integration_id_integrations_integration_"
             columns: ["integration_id"]
             isOneToOne: false
             referencedRelation: "v_integration_is_connected"
             referencedColumns: ["integration_id"]
           },
           {
-            foreignKeyName: "daily_core_source_snapshots_target_id_targets_target_id_fk"
+            foreignKeyName: "daily_core_source_data_target_id_targets_target_id_fk"
             columns: ["target_id"]
             isOneToOne: false
             referencedRelation: "targets"
             referencedColumns: ["target_id"]
           },
           {
-            foreignKeyName: "daily_core_source_snapshots_target_source_id_target_sources_tar"
+            foreignKeyName: "daily_core_source_data_target_source_id_target_sources_target_s"
             columns: ["target_source_id"]
             isOneToOne: false
             referencedRelation: "target_sources"
             referencedColumns: ["target_source_id"]
           },
           {
-            foreignKeyName: "daily_core_source_snapshots_workspace_id_workspace_workspace_id"
+            foreignKeyName: "daily_core_source_data_workspace_id_workspace_workspace_id_fk"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspace"
@@ -2248,6 +2231,7 @@ export type Database = {
         | "error"
         | "never"
         | "disconnected"
+      daily_core_collection_stage: "pending" | "collected" | "failed"
       daily_core_collection_status: "success" | "empty" | "failed"
       daily_core_generation_status:
         | "queued"
@@ -2377,12 +2361,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2406,11 +2390,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2431,11 +2415,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2456,11 +2440,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2473,11 +2457,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2518,6 +2502,7 @@ export const Constants = {
         "never",
         "disconnected",
       ],
+      daily_core_collection_stage: ["pending", "collected", "failed"],
       daily_core_collection_status: ["success", "empty", "failed"],
       daily_core_generation_status: [
         "queued",

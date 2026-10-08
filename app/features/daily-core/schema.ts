@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 import {
-  bigint,
   date,
   index,
   integer,
@@ -19,7 +18,6 @@ import { authenticatedRole, serviceRole } from "drizzle-orm/supabase";
 import {
   categoryType,
   integrations,
-  jobQueue,
   language,
   targetSources,
   targets,
@@ -53,6 +51,12 @@ export const dailyCoreGenerationTrigger = pgEnum("daily_core_generation_trigger"
 export const dailyCoreCollectionStatus = pgEnum("daily_core_collection_status", [
   "success",
   "empty",
+  "failed",
+]);
+
+export const dailyCoreCollectionStage = pgEnum("daily_core_collection_stage", [
+  "pending",
+  "collected",
   "failed",
 ]);
 
@@ -95,9 +99,10 @@ export const dailyCoreData = pgTable(
     windowStartAt: timestamp("window_start_at", { withTimezone: true }).notNull(),
     windowEndAt: timestamp("window_end_at", { withTimezone: true }).notNull(),
     qualityStatus: dailyCoreQualityStatus("quality_status").notNull().default("missing"),
+    collectionStage: dailyCoreCollectionStage("collection_stage").notNull().default("pending"),
+    collectedAt: timestamp("collected_at", { withTimezone: true }),
     lastGenerationNo: integer("last_generation_no").notNull().default(0),
     currentGenerationNo: integer("current_generation_no"),
-    lastJobId: uuid("last_job_id").references(() => jobQueue.id, { onDelete: "set null" }),
     lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
     lastGeneratedAt: timestamp("last_generated_at", { withTimezone: true }),
     lastErrorCode: text("last_error_code"),
@@ -110,6 +115,7 @@ export const dailyCoreData = pgTable(
     index("idx_daily_core_data_workspace_date").on(table.workspaceId, table.coreDate),
     index("idx_daily_core_data_target_date").on(table.targetId, table.coreDate),
     index("idx_daily_core_data_quality_date").on(table.qualityStatus, table.coreDate),
+    index("idx_daily_core_data_collection_date").on(table.collectionStage, table.coreDate),
 
     pgPolicy("dcd_select", {
       for: "select",
@@ -141,19 +147,22 @@ export const dailyCoreGenerations = pgTable(
       .notNull()
       .references(() => targets.targetId, { onDelete: "cascade" }),
     generationNo: integer("generation_no").notNull(),
-    jobId: uuid("job_id").references(() => jobQueue.id, { onDelete: "set null" }),
     trigger: dailyCoreGenerationTrigger("trigger").notNull(),
     generationStatus: dailyCoreGenerationStatus("generation_status").notNull().default("queued"),
     qualityStatus: dailyCoreQualityStatus("quality_status"),
+    // Same parent daily_core as the referenced rows, so they cascade together.
+    inputSourceDataIds: uuid("input_source_data_ids").array().notNull().default(sql`'{}'::uuid[]`),
     inputHash: text("input_hash"),
     contentHash: text("content_hash"),
+    agentConversationId: text("agent_conversation_id"),
+    agentOutputJson: jsonb("agent_output_json"),
     coreJson: jsonb("core_json"),
     schemaVersion: text("schema_version").notNull(),
     taxonomyVersion: text("taxonomy_version").notNull(),
-    promptVersion: text("prompt_version").notNull(),
+    promptVersion: text("prompt_version"),
     pipelineVersion: text("pipeline_version").notNull(),
-    modelProvider: text("model_provider").notNull(),
-    modelName: text("model_name").notNull(),
+    modelProvider: text("model_provider"),
+    modelName: text("model_name"),
     modelConfigJson: jsonb("model_config_json").notNull().default(sql`'{}'::jsonb`),
     inputStatsJson: jsonb("input_stats_json").notNull().default(sql`'{}'::jsonb`),
     tokenUsageJson: jsonb("token_usage_json").notNull().default(sql`'{}'::jsonb`),
@@ -161,14 +170,13 @@ export const dailyCoreGenerations = pgTable(
     validationJson: jsonb("validation_json").notNull().default(sql`'{}'::jsonb`),
     errorCode: text("error_code"),
     errorMessage: text("error_message"),
-    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     uniqueIndex("uq_daily_core_generations_no").on(table.dailyCoreId, table.generationNo),
     index("idx_daily_core_generations_daily_core_created").on(table.dailyCoreId, table.createdAt),
-    index("idx_daily_core_generations_job").on(table.jobId),
     index("idx_daily_core_generations_input_hash").on(table.inputHash),
 
     pgPolicy("dcg_select", {
@@ -187,13 +195,13 @@ export const dailyCoreGenerations = pgTable(
   ]
 );
 
-export const dailyCoreSourceSnapshots = pgTable(
-  "daily_core_source_snapshots",
+export const dailyCoreSourceData = pgTable(
+  "daily_core_source_data",
   {
-    sourceSnapshotId: uuid("source_snapshot_id").defaultRandom().primaryKey(),
-    generationId: uuid("generation_id")
+    sourceDataId: uuid("source_data_id").defaultRandom().primaryKey(),
+    dailyCoreId: uuid("daily_core_id")
       .notNull()
-      .references(() => dailyCoreGenerations.generationId, { onDelete: "cascade" }),
+      .references(() => dailyCoreData.dailyCoreId, { onDelete: "cascade" }),
     workspaceId: uuid("workspace_id")
       .notNull()
       .references(() => workspace.workspaceId, { onDelete: "cascade" }),
@@ -210,36 +218,32 @@ export const dailyCoreSourceSnapshots = pgTable(
     sourceIdent: text("source_ident").notNull(),
     configSnapshotJson: jsonb("config_snapshot_json").notNull().default(sql`'{}'::jsonb`),
     collectionStatus: dailyCoreCollectionStatus("collection_status").notNull(),
-    windowStartAt: timestamp("window_start_at", { withTimezone: true }).notNull(),
-    windowEndAt: timestamp("window_end_at", { withTimezone: true }).notNull(),
+    // NormalizedSourceItem[] within the parent daily_core window. Provider raw payloads are not kept.
+    normalizedJson: jsonb("normalized_json").notNull().default(sql`'[]'::jsonb`),
     itemCount: integer("item_count").notNull().default(0),
-    rawBytes: bigint("raw_bytes", { mode: "number" }),
-    estimatedTokens: integer("estimated_tokens"),
-    sourceInputHash: text("source_input_hash"),
-    rawSnapshotRef: text("raw_snapshot_ref"),
+    contentHash: text("content_hash"),
     statsJson: jsonb("stats_json").notNull().default(sql`'{}'::jsonb`),
     errorCode: text("error_code"),
     errorMessage: text("error_message"),
-    collectedAt: timestamp("collected_at", { withTimezone: true }).notNull(),
+    collectedAt: timestamp("collected_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    index("idx_daily_core_source_snapshots_generation").on(table.generationId),
-    index("idx_daily_core_source_snapshots_target_source").on(table.targetSourceId),
-    index("idx_daily_core_source_snapshots_type_ident").on(table.sourceType, table.sourceIdent),
+    index("idx_daily_core_source_data_daily_core_collected").on(table.dailyCoreId, table.collectedAt),
+    index("idx_daily_core_source_data_target_source").on(table.targetSourceId),
 
-    pgPolicy("dcss_select", {
+    pgPolicy("dcsd_select", {
       for: "select",
       to: authenticatedRole,
       using: isMember(table.workspaceId),
     }),
-    pgPolicy("dcss_insert", { for: "insert", to: serviceRole, withCheck: sql`true` }),
-    pgPolicy("dcss_update", {
+    pgPolicy("dcsd_insert", { for: "insert", to: serviceRole, withCheck: sql`true` }),
+    pgPolicy("dcsd_update", {
       for: "update",
       to: serviceRole,
       using: sql`true`,
       withCheck: sql`true`,
     }),
-    pgPolicy("dcss_delete", { for: "delete", to: serviceRole, using: sql`true` }),
+    pgPolicy("dcsd_delete", { for: "delete", to: serviceRole, using: sql`true` }),
   ]
 );
 

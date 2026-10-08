@@ -3,7 +3,7 @@ import type { Database, Tables } from "database.types";
 
 export type DailyCoreDataRow = Tables<"daily_core_data">;
 export type DailyCoreGenerationRow = Tables<"daily_core_generations">;
-export type DailyCoreSourceSnapshotRow = Tables<"daily_core_source_snapshots">;
+export type DailyCoreSourceDataRow = Tables<"daily_core_source_data">;
 export type DailyCoreItemRow = Tables<"daily_core_items">;
 export type DailyCoreMetricRow = Tables<"daily_core_metrics">;
 type DailyCoreQualityStatus = Database["public"]["Enums"]["daily_core_quality_status"];
@@ -146,18 +146,21 @@ export async function getDailyCoreDataById(
   return data;
 }
 
-export async function listDailyCoreSourceSnapshots(
+export async function listDailyCoreSourceData(
   client: SupabaseClient<Database>,
-  { generationId }: { generationId: string }
-): Promise<DailyCoreSourceSnapshotRow[]> {
-  const { data, error } = await client
-    .from("daily_core_source_snapshots")
+  { dailyCoreId, sourceDataIds }: { dailyCoreId: string; sourceDataIds?: string[] }
+): Promise<DailyCoreSourceDataRow[]> {
+  let query = client
+    .from("daily_core_source_data")
     .select("*")
-    .eq("generation_id", generationId)
+    .eq("daily_core_id", dailyCoreId)
     .order("collected_at", { ascending: true });
 
+  if (sourceDataIds) query = query.in("source_data_id", sourceDataIds);
+
+  const { data, error } = await query;
   if (error) {
-    console.log("listDailyCoreSourceSnapshots error", error);
+    console.log("listDailyCoreSourceData error", error);
     throw error;
   }
 
@@ -293,14 +296,17 @@ export async function getDailyCoreBundle(
     return {
       dailyCore,
       generation: null,
-      sourceSnapshots: [],
+      sourceData: [],
       items: [],
       metrics: [],
     };
   }
 
-  const [sourceSnapshots, items, metrics] = await Promise.all([
-    listDailyCoreSourceSnapshots(client, { generationId: generation.generation_id }),
+  const [sourceData, items, metrics] = await Promise.all([
+    listDailyCoreSourceData(client, {
+      dailyCoreId: dailyCore.daily_core_id,
+      sourceDataIds: generation.input_source_data_ids,
+    }),
     listDailyCoreItems(client, {
       workspaceId: dailyCore.workspace_id,
       generationId: generation.generation_id,
@@ -314,7 +320,7 @@ export async function getDailyCoreBundle(
   return {
     dailyCore,
     generation,
-    sourceSnapshots,
+    sourceData,
     items,
     metrics,
   };
