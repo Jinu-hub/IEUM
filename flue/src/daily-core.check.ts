@@ -32,7 +32,7 @@ const input = buildAgentInput(
           meta: { context_only: true },
         }),
         item("S002", "2.0", "2026-10-09T01:00:00Z", "", { meta: { kind: "app" } }),
-        item("S003", "3.0", "2026-10-09T02:00:00Z", "reply to old", { thread_ref: "1.0" }),
+        item("S003", "3.0", "2026-10-09T02:00:00Z", "<@U2> <@U404> <!channel> reply to old", { thread_ref: "1.0" }),
         item("S004", "4.0", "2026-10-09T03:00:00Z", "standalone", { author: { id: "U2", name: "Jinu Son" } }),
         item("S005", "5.0", "2026-10-09T04:00:00Z", "", { thread_ref: "4.0" }),
         item("S006", "6.0", "2026-10-09T05:00:00Z", "[LEAD] Bo updated #12", { author: { name: "redmine" } }),
@@ -55,7 +55,7 @@ assert.deepEqual(input.contextRefs, ["S001"]);
 assert.deepEqual(input.botRefs, ["S006", "S009"]);
 assert.deepEqual(input.people, ["Aki", "Jinu Son", "takamune-dsl"]);
 assert.deepEqual(input.counts, { total: 9, included: 7, dropped: 2, context: 1, bot: 2, people: 3 });
-assert.match(input.text, /\[S001\] \(context, 2026-10-07\) Old: old parent\n {2}↳ \[S003\] 11:00 Aki: reply to old/);
+assert.match(input.text, /\[S001\] \(context, 2026-10-07\) Old: old parent\n {2}↳ \[S003\] 11:00 Aki: @Jinu Son @U404 @channel reply to old/);
 assert.match(input.text, /\[S006\] 14:00 redmine \(bot notification\): \[LEAD\] Bo updated #12/);
 assert.match(input.text, /\[S007\] 15:00 Jinu Son \(commit\): fix/);
 assert.match(input.text, /\(no activity: empty\)/);

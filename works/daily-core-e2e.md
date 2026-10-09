@@ -190,7 +190,9 @@ Slack/GitHub 수집 (Vercel 코드)
 
 - `meta.context_only` 항목은 `(context, 날짜)`로 표시해서 넣음.
 - 본문이 빈 앱 메시지는 뺌(답글이 달린 부모는 남김). 같은 내용이 `LEAD` repo 수집에 있음.
-- Agent `DailyCore` 하나. 출력은 `DailyCoreAnalysisFields`를 Valibot 스키마로 검증. Phase 2에서는 `classifications.attributes`와 `payload`를 뺐음(쓸 곳이 생기면 추가).
+- Agent `DailyCore` 하나. 출력은 Valibot 스키마로 검증.
+  - v1~v3: `DailyCoreAnalysisFields`(overview, highlights, topics, progress_roadmap, member_activity).
+  - v4부터: 공통 뼈대(entities, events, states)와 카테고리 템플릿. 아래 "Core 뼈대 재설계" 참고.
 - 구조화 출력은 제출용 Tool로 받음. Tool의 입력 스키마가 Core 스키마이고, 통과하면 `useDataWriter`로 내보낸 뒤 `terminate: true`로 끝냄. Worker는 `AgentReply.data`에서 꺼냄.
   - 근거 규칙도 Tool 안에서 검사함. 없는 ref를 쓰거나 맥락 ref만 인용하면 에러를 돌려주고, 모델이 고쳐서 다시 제출함.
   - 제출 없이 끝내려 하면 `useAgentFinish`가 다시 일을 시킴.
@@ -286,6 +288,103 @@ Slack/GitHub 수집 (Vercel 코드)
   - title은 두 번 모두 이름만. Jinu Son 등은 한 사람으로 나옴. 6회는 Keiichi Takamune를 뺌("활동한 사람 전원" 규칙은 없음).
   - 발견: 출력 토큰이 계속 늘어남(v1 약 1만 → v2 약 1.4만 → v3 약 2.1만). 출력 JSON은 1만~1.2만 자라서 대부분은 추론 토큰으로 보임. Flue 기본 추론 강도는 `medium`이고, `useModel(model, { thinkingLevel })`로 낮출 수 있음. 품질과 맞바꾸는 문제라 바꾸지 않음.
   - 사용자 확인용 출력: `works/out/daily-core-run5.md`, `works/out/daily-core-run6.md`.
+- 2026-10-09 사용자: v3 결과는 생각한 Core 데이터와 많이 다름. 구조화된 데이터라기엔 어정쩡함. 다른 업종(영업, 상사, 금융)에서도 쓸 수 있게 일반화의 뼈대를 잡고, 카테고리별 템플릿으로 가자.
+  - 원인 분석(에이전트)
+    - 스키마가 리포트 목차 모양이라(highlights / topics / progress / member) 각 항목이 요약 카드가 됨. 배열 간 중복도 여기서 생김.
+    - `tags`, `classifications`, `entities`가 자유 텍스트. run6의 `classifications.primary`는 항목 20개에 16종. 날짜를 넘어 묶거나 셀 수 없음.
+    - overview와 highlights는 Report의 일(무엇을 강조할지)임(`docs/ieum-architecture.md` 8, 15장).
+
+### Core 뼈대 재설계 (v4)
+
+결정
+
+- 세 층으로 나눔.
+  - 공통 뼈대(코드에 고정): 출력 형태, 사건 종류, 상태 어휘, 근거 검사. 모든 카테고리가 같음.
+  - 카테고리 템플릿(우리가 제공): 엔티티 종류와 추출 규칙, 모델이 추가할 수 있는 엔티티 종류, 프롬프트 안내 문단. Target의 `category`로 고름. 없으면 `generic`.
+  - workspace 설정(고객마다): 티켓 번호 형식, 봇 정책, 사람 대응표. 아직 저장할 곳을 만들지 않고 development 템플릿의 기본값으로 둠.
+- 출력
+  - `entities`: 입력 목록에 없는데 필요한 대상만 모델이 추가. 종류는 템플릿이 허용한 것만. 키는 `<type>:<slug>`.
+  - `events`: 그날 일어난 사실 하나씩. `type`은 decision / progress / completion / issue / risk / request / plan / discussion / announcement / other. `subject`(엔티티 키), `actors`(사람 키), `fact`(한 문장), `stage`(도메인 단계), `measures`(금액·수량·기한, 원문 그대로), `importance`(1~5), `evidence_refs`.
+  - `states`: 그날 움직인 대상별 하루 끝 상태. `status`는 planned / in_progress / blocked / completed / unknown, 그리고 `stage`, `next_step`.
+- 출력에서 뺀 것: overview, highlights(Report가 `importance`로 고름), `member_activity`(사건을 사람별로 묶어 코드로 만듦), 자유 텍스트 `tags` / `classifications`.
+- 엔티티는 코드로 뽑음(development 템플릿): `#123`(Redmine), `ABC-123`(Backlog, Jira), Redmine 알림 링크의 티켓 제목, GitHub PR과 repo. 사람은 작성자에서 `person:<이름 정규화>`로 만듦.
+- 제출 Tool 검사(코드)
+  - 근거 ref가 입력에 있고 그날 줄을 하나 이상 포함.
+  - `subject`와 `actors`가 입력 목록이나 모델이 추가한 엔티티에 있음.
+  - 봇 알림이나 맥락만 인용한 사건에는 `actors`를 넣을 수 없음.
+  - `measures`의 값이 인용한 줄의 원문에 있음(숫자를 지어내지 못하게. 영업·금융용).
+  - 모델이 추가한 엔티티 종류가 템플릿 허용 목록에 있고, 입력 엔티티와 겹치지 않음. 같은 대상의 state는 하나.
+
+확인 기록
+
+- 2026-10-09 에이전트: `daily-core-v4/development@1`로 구현하고 1회 실행(사용자 요청: 테스트 실행은 1번만).
+  - 코드: `flue/src/daily-core-templates.ts`(development, generic), `flue/src/daily-core.ts`(뼈대 스키마, 입력, 검사, `memberActivity`), Agent 지시문 교체, `/core/generate` 응답에 `memberActivity`와 입력 엔티티·사람 추가.
+  - `daily-core.check.ts`(assert) 통과: 엔티티 추출(티켓 3형식, Redmine 제목, PR, repo), generic은 추출 없음, 검사 규칙 전부, `memberActivity` 집계. `tsc` 오류 없음.
+  - 실데이터 엔티티 추출(모델 없이): 38개(티켓, PR, repo). 그중 16개는 Redmine 알림에서 제목도 얻음. 오탐은 보이지 않음.
+  - 실행 결과
+
+    | 항목 | 값 |
+    |---|---|
+    | 소요 시간 | 36.1초 |
+    | 토큰 입력 / 출력 | 10,850 / 7,361 |
+    | 비용 | $0.041 |
+    | 제출 Tool 호출 | 1회, 에러 없음 |
+    | 검사 위반 | 0 |
+    | events / states / 추가 엔티티 | 11 / 11 / 0 |
+    | 사건 종류 | progress 5, completion 3, discussion 2, plan 1 |
+
+  - 좋아진 점
+    - 모든 사건과 상태가 엔티티 키(`ticket:23163` 등)에 붙음. 같은 티켓이 여러 배열에 흩어지던 중복이 없어짐.
+    - 상태에 `stage`(実装中, 検証中, レビュー依頼中)와 `next_step`이 남음.
+    - v3보다 시간 1/3, 비용 1/2 이하.
+  - 발견: 빠진 사실이 많음. 같은 날 사람이 쓴 줄 71개 중 25개만 인용됨(46개 미인용).
+    - 빠진 것 예: MillviV3 자막 대응 요청과 우선순위 조정(S012~S021), Naoya의 11월 수정의뢰표 No.8 수정(S032), 10월 버전 모듈 작성(S099, S045), Codex 장애 공유(S096), PERF_TUNING-164 성능 개선 문의(S052), #23054 출력 이력 수 제한(S027), 5-5 No342 대응 설명(S122, S123), 개인 업무 보고(S004, S005, S039, S120, S126).
+    - 원인: 티켓 키가 있는 일만 사건으로 잡고, 티켓 번호가 없는 일(고객사 안건, 개인 보고)은 건너뜀. 추가 엔티티가 0개였던 것도 같은 이유.
+    - 봇 알림(Redmine)만 있는 티켓 변경은 사건으로 잡히지 않음. 사람 행위가 없으니 actors 없이 기록해도 되는데 하지 않음.
+  - 발견: Slack 멘션이 `<@U0ASSK21ND7>` 같은 ID로 들어가서 누구에게 한 말인지 모델이 모름. 작성자 목록에서 ID → 이름으로 바꿔 넣을 수 있음.
+  - 사용자 확인용 출력: `works/out/daily-core-run7.md`(사건, 상태, 코드로 만든 멤버 활동, 입력 엔티티).
+- 2026-10-09 에이전트: `daily-core-v5/development@1`로 고치고 1회 실행(run 8).
+  - 바꾼 것
+    - 출력에 `skipped_refs`(사실이 없는 줄: 인사, 감사, 맞장구) 추가. 제출 Tool이 그날 사람이 쓴 줄이 모두 사건 근거나 `skipped_refs`에 들어갔는지 검사하고, 빠진 ref를 에러로 돌려줌.
+    - 지시문: 티켓 없는 일도 사건으로(엔티티 추가 또는 `subject: null`), 개인 업무 보고는 작성자의 plan / progress, 봇 알림만 있는 변경은 actors 없는 사건으로 둘 수 있음.
+    - Slack 멘션 `<@U…>`를 그날 작성자 목록으로 `@이름`으로 바꿈. `<!channel>` 등은 `@channel`.
+  - `daily-core.check.ts` 통과(멘션 치환, 미처리 줄 검출, `skipped_refs`의 모르는 ref). `tsc` 오류 없음.
+  - 실행 결과
+
+    | 항목 | run 7 (v4) | run 8 (v5) |
+    |---|---|---|
+    | 소요 시간 | 36.1초 | 362.8초 |
+    | 토큰 입력 / 출력 | 10,850 / 7,361 | 70,470 / 64,240 |
+    | 비용 | $0.041 | $0.343 |
+    | 제출 Tool 호출 | 1회 | 2회(1회차 검사 에러, 2회차 통과) |
+    | 사람 줄 71개 처리 | 25개 인용 | 64개 인용 + 7개 건너뜀 |
+    | events / states / 추가 엔티티 | 11 / 11 / 0 | 25 / 31 / 0 |
+    | `subject: null` 사건 | 0 | 10 |
+
+  - 좋아진 점
+    - run 7에서 빠졌던 일이 대부분 들어옴: MillviV3 자막 대응, Naoya No.8 수정, 10월 모듈 작성, Codex 장애, PERF_TUNING-164 문의, No342 설명, 개인 업무 보고.
+    - 멘션이 이름으로 들어가서 사실 문장에 누가 누구에게 한 말인지 나옴.
+  - 발견
+    - 시간 10배, 비용 8배. 출력 토큰 대부분이 추론으로 보임(줄 99개를 대조하고, 1회 반려 후 전체를 다시 냄).
+    - 사건이 "대화 요약"이 됨. 사건당 근거 평균 3.2개, 최대 7개. 여러 사람의 행동을 한 문장에 묶어서, 코드로 만든 멤버 활동에 남의 사실이 섞임(Yoko에게 사실 9개, 대부분 다른 사람의 일).
+    - 엔티티를 추가하지 않고 `subject: null`로 처리(MillviV3 등). 같은 대상을 다른 날과 잇기 어려움.
+    - 봇 알림 티켓 변경을 티켓 여러 개를 묶은 `other` 사건 하나로 만들고, 그 티켓마다 `unknown` 상태를 만듦(31개 중 13개가 `unknown`).
+    - 사실이 있는 줄도 건너뜀으로 빠져나감: S027(#23054 처리 제안), S031(개요서 작성 완료).
+  - 사용자 확인용 출력: `works/out/daily-core-run8.md`, 입력 원문 `works/out/daily-core-run8-input.txt`.
+  - 사용자 판단: 이러면 안 됨. 강제는 빼기로.
+- 2026-10-09 에이전트: `daily-core-v6/development@1`. v5에서 `skipped_refs`, 줄 처리 검사, "모든 줄 처리" 지시만 뺌. 멘션 치환과 티켓 없는 일·개인 보고·봇 알림 안내 문장은 남김. 1회 실행(run 9).
+  - 결과: 131.1초, 토큰 입력 11,382 / 출력 21,002, $0.105. 제출 2회(1회차 검사 에러). 위반 0. events 15 / states 29(그중 `unknown` 12) / 추가 엔티티 0.
+  - 사람 줄 71개 중 23개 인용. run 7(25개)과 비슷하게 돌아감. MillviV3, 개인 업무 보고, No.8, No342 다시 빠짐.
+  - 사건 문장은 run 8보다 한 사람 한 사실에 가까움(여러 actors 2건). 다만 #23163 사건의 문장은 Yuki Kato인데 actors가 Yuuki Imai로 들어감. 이름이 비슷한 사람을 잘못 고름(코드 검사로는 못 잡음).
+  - 봇 알림 티켓 12개를 사건 하나로 묶고, 티켓마다 `unknown` 상태를 만드는 문제는 그대로.
+  - 사용자 확인용 출력: `works/out/daily-core-run9.md`.
+  - 사용자 판단: 내용 자체가 말이 안 됨(예: Momoko의 활동에 Yoko의 발언이 들어감). 못 씀.
+- 2026-10-09 에이전트: 코드를 run 6 상태(`daily-core-v3`, 커밋 `68d0391`)로 되돌림. `tsc`와 `daily-core.check.ts` 통과. v4~v6 코드는 `works/out/daily-core-v4-v6.patch`와 `works/out/daily-core-templates.v6.ts`에 보관.
+- 2026-10-09 에이전트: v3에 Slack 멘션 치환만 추가(`daily-core-v3.1`). `<@U…>`를 그날 작성자 목록으로 `@이름`, 모르는 ID는 `@U…`, `<!channel>` 등은 `@channel`. `tsc`, `daily-core.check.ts` 통과. 1회 실행(run 10).
+  - 결과: 70.4초, 토큰 입력 9,746 / 출력 12,139, $0.062. 제출 1회, 근거 위반 0. highlights 5 / topics 3 / progress_roadmap 7 / member_activity 11.
+  - run 6(113초, $0.097)보다 빠르고 쌈. 사람 줄 71개 중 48개 인용. MillviV3가 topic 문장과 Momoko의 활동에 이름으로 나옴. Codex 문제(Yuki Kato), 10월 모듈 작성(Yuuki Imai), PERF_TUNING-164 문의(Katsuya)도 들어감.
+  - 남은 점: 같은 사실이 highlights, progress_roadmap, member_activity에 겹침(v3 그대로). 멤버 활동 11명(Mitsuru 등 빠짐). 1회 실행이라 run 6과의 차이에 모델 변동이 섞였을 수 있음.
+  - 사용자 확인용 출력: `works/out/daily-core-run10.md`.
 
 ---
 

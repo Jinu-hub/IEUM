@@ -63,10 +63,19 @@ export function buildAgentInput(rows: SourceRow[], timezone: string) {
   // ponytail: GitHub authors join Slack people only when the login or name equals a Slack name
   // ignoring case and symbols (jinuSon = Jinu Son). Others (takamune-dsl) need an identity table.
   const slackNames = new Map<string, string>();
+  // Mentioned users are named only if they wrote something in this Daily Core.
+  const slackIds = new Map<string, string>();
   for (const item of rows.flatMap((row) => row.normalized_json)) {
     const key = nameKey(item.author?.name);
-    if (item.source_type === "slack_channel" && item.author?.id && key) slackNames.set(key, item.author.name!);
+    if (item.source_type === "slack_channel" && item.author?.id && key) {
+      slackNames.set(key, item.author.name!);
+      slackIds.set(item.author.id, item.author.name!);
+    }
   }
+  const mentions = (text: string) =>
+    text
+      .replace(/<@(\w+)>/g, (_, id: string) => `@${slackIds.get(id) ?? id}`)
+      .replace(/<!(channel|here|everyone)>/g, "@$1");
   const author = (item: SourceItem) => {
     const name = item.author?.name ?? "unknown";
     if (item.source_type !== "github_repo") return name;
@@ -84,7 +93,7 @@ export function buildAgentInput(rows: SourceRow[], timezone: string) {
       ? `(context, ${day.format(new Date(item.occurred_at))})`
       : time.format(new Date(item.occurred_at));
     const kind = isBot(item) ? " (bot notification)" : item.meta?.kind ? ` (${item.meta.kind})` : "";
-    const text = [item.title, item.content].filter(Boolean).join(" / ").replace(/\s+/g, " ");
+    const text = mentions([item.title, item.content].filter(Boolean).join(" / ")).replace(/\s+/g, " ");
     return `[${item.source_ref}] ${when} ${author(item)}${kind}: ${text}`;
   };
 

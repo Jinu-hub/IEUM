@@ -12,7 +12,7 @@ import * as v from "valibot";
 import { DailyCoreOutput, evidenceProblems } from "../daily-core.ts";
 
 export const DAILY_CORE_MODEL = "openai/gpt-5.4-mini";
-export const DAILY_CORE_PROMPT_VERSION = "daily-core-v3";
+export const DAILY_CORE_PROMPT_VERSION = "daily-core-v3.1";
 
 const SUBMIT = "submit_daily_core";
 
