@@ -4,5 +4,8 @@
   "compatibility_date": "2026-10-06",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["FlueTestAgentAgent"] }]
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["FlueTestAgentAgent"] },
+    { "tag": "v2", "new_sqlite_classes": ["FlueDailyCoreAgent"] }
+  ]
 }

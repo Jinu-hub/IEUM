@@ -91,11 +91,12 @@ Slack/GitHub 수집 (Vercel 코드)
 
 사용자 확인
 
-- [ ] 저장된 항목 수가 그날 Slack/GitHub 화면에서 본 양과 대략 맞다(빠진 채널이나 repo가 없다).
-- [ ] 항목 2~3개를 골라 내용·작성자·시간이 원본과 같다.
+- [x] 저장된 항목 수가 그날 Slack/GitHub 화면에서 본 양과 대략 맞다(빠진 채널이나 repo가 없다).
+- [x] 항목 2~3개를 골라 내용·작성자·시간이 원본과 같다.
 
 확인 기록
 
+- 2026-10-09 사용자: Phase 1 확인 완료(보완 포함). Phase 1 통과.
 - 2026-10-09 에이전트: 구현과 확인.
   - 코드
     - `daily-core/normalize.ts`: 날짜 창, fetch 일수, Slack/GitHub 정규화, 창 필터.
@@ -147,7 +148,7 @@ Slack/GitHub 수집 (Vercel 코드)
 
 사용자 확인
 
-- [ ] 맥락으로 붙은 부모 메시지가 실제로 그 답글들의 질문(스레드 시작 메시지)이다.
+- [x] 맥락으로 붙은 부모 메시지가 실제로 그 답글들의 질문(스레드 시작 메시지)이다.
 
 확인 기록
 
@@ -187,18 +188,22 @@ Slack/GitHub 수집 (Vercel 코드)
     ↳ [S0xx] 오늘 답글 …
   ```
 
-- `meta.context_only` 항목은 "맥락용, 그날 활동으로 세지 않음"으로 표시해서 넣음.
-- 본문이 빈 앱 메시지(`#dev_lead`의 GitHub 앱 등)를 뺄지 정함.
-- `DailyCoreAgent` 하나. 출력은 `DailyCoreAnalysisFields`(overview, highlights, topics, progress_roadmap, member_activity, 각 항목은 `evidence_refs`만 가짐)를 Valibot 스키마로 검증.
-- 구조화 출력을 받는 방법은 이 Phase에서 작게 시험해 정함. 후보: Flue `result` 스키마, 또는 입력 스키마가 Core 스키마인 제출용 Tool(`terminate: true`).
+- `meta.context_only` 항목은 `(context, 날짜)`로 표시해서 넣음.
+- 본문이 빈 앱 메시지는 뺌(답글이 달린 부모는 남김). 같은 내용이 `LEAD` repo 수집에 있음.
+- Agent `DailyCore` 하나. 출력은 `DailyCoreAnalysisFields`를 Valibot 스키마로 검증. Phase 2에서는 `classifications.attributes`와 `payload`를 뺐음(쓸 곳이 생기면 추가).
+- 구조화 출력은 제출용 Tool로 받음. Tool의 입력 스키마가 Core 스키마이고, 통과하면 `useDataWriter`로 내보낸 뒤 `terminate: true`로 끝냄. Worker는 `AgentReply.data`에서 꺼냄.
+  - 근거 규칙도 Tool 안에서 검사함. 없는 ref를 쓰거나 맥락 ref만 인용하면 에러를 돌려주고, 모델이 고쳐서 다시 제출함.
+  - 제출 없이 끝내려 하면 `useAgentFinish`가 다시 일을 시킴.
+  - Flue `result`(harness.prompt)는 Tool이나 hook 안에서 별도 대화를 열어야 해서 쓰지 않음.
 
 에이전트 확인
 
-- [ ] 로컬 Worker(8787)에서 호출하면 스키마 검증을 통과한 JSON이 나온다.
-- [ ] 모든 `evidence_refs`가 입력에 있는 `source_ref`다(없는 참조 0개).
-- [ ] 같은 입력으로 2번 돌려 소요 시간과 토큰 사용량을 기록한다.
-- [ ] Agent 입력 항목 수가 그 Daily Core의 `item_count` 합과 같고 `source_ref` 중복이 없다.
-- [ ] 실행마다 새 Flue 대화 ID를 쓴다(이전 기록이 섞여 입력 토큰이 쌓이지 않게).
+- [x] 로컬 Worker(8787)에서 호출하면 스키마 검증을 통과한 JSON이 나온다.
+- [x] 모든 `evidence_refs`가 입력에 있는 `source_ref`다(없는 참조 0개).
+- [x] 모든 항목이 맥락이 아닌 ref를 1개 이상 인용한다(맥락 부모는 참조용).
+- [x] 같은 입력으로 2번 돌려 소요 시간과 토큰 사용량을 기록한다.
+- [x] Agent 입력 항목 수(넣은 것 + 뺀 빈 메시지)가 그 Daily Core의 `item_count` 합과 같고 `source_ref` 중복이 없다.
+- [x] 실행마다 새 Flue 대화 ID를 쓴다(이전 기록이 섞여 입력 토큰이 쌓이지 않게).
 
 사용자 확인
 
@@ -210,7 +215,77 @@ Slack/GitHub 수집 (Vercel 코드)
 
 확인 기록
 
-- (비어 있음)
+- 2026-10-09 에이전트: 구현과 확인.
+  - 코드(`flue/`)
+    - `src/daily-core.ts`: 출력 스키마, 입력 만들기(스레드 묶기, 맥락 표시, 빈 메시지 빼기), 근거 검사.
+    - `src/agents/daily-core.ts`: Agent `DailyCore`(모델 `openai/gpt-5.4-mini`, `daily-core-v1`). 제출 Tool, 제출 강제, 토큰 사용량과 Tool 호출을 response metadata에 남김.
+    - `src/app.ts`: `POST /core/generate`(토큰 필요, uuid 검사). Supabase REST로 읽고 `init(DailyCore)`로 매번 새 인스턴스를 만들어 실행. DB에는 쓰지 않음.
+    - `wrangler.jsonc`: migration `v2`(`FlueDailyCoreAgent`).
+    - `src/daily-core.check.ts`(assert) 통과: 스레드 묶기, 맥락 표시, 빈 메시지 빼기, 근거 검사. `tsc` 오류 없음.
+  - 발견: Worker의 Vite가 7.3.7이었는데 `@flue/vite`는 Vite 8 이상을 요구함. Vite 7의 파서는 Agent 파일의 TypeScript 문법(`type`, 제네릭)을 읽지 못해 dev 서버가 뜨지 않음. Vite 8.3.4로 올림. 새 의존성(`valibot`, `hono/bearer-auth`)은 `optimizeDeps.include`에 추가.
+  - 로컬 `.dev.vars`에 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`가 없어서 루트 `.env`에서 옮김(값은 출력하지 않음). 배포본은 이미 secret이 있음(`/db/ping`).
+  - 입력: 항목 128개 중 99개를 넣고 빈 메시지 29개를 뺌(99 + 29 = 128). 맥락 6개. 본문 15,212자.
+  - 실행 결과(같은 입력)
+
+    | | 1회 | 2회 |
+    |---|---|---|
+    | 대화 ID | `instance_01M4GE2MXC…` | `instance_01M4GE4N21…` |
+    | 소요 시간 | 42.3초 | 40.3초 |
+    | 토큰 입력 / 출력 | 9,899 / 10,460 | 9,899 / 8,407 |
+    | 비용 | $0.054 | $0.045 |
+    | 제출 Tool 호출 | (기록 전) | 1회, 에러 없음 |
+    | highlights / topics / progress / member | 4 / 7 / 6 / 16 | 5 / 6 / 5 / 11 |
+    | 근거 위반 | 0 | 0 |
+    | 맥락 ref 인용 | 0 | 0 |
+
+  - 발견: 두 번 모두 같은 사건이 여러 배열에 들어감. #23163, #22506은 highlights, topics, progress_roadmap 세 곳에 모두 있음. 프롬프트의 "한 곳에만" 규칙을 모델이 따르지 않음.
+  - 발견: `member_activity`가 실행마다 다름. 1회는 16명이고 title이 이름이었고, 2회는 11명이고 title이 문장이었음(티켓 업데이트만 한 5명이 빠짐).
+  - 사용자 확인용 출력: `works/out/daily-core-run1.md`, `works/out/daily-core-run2.md`(gitignore 대상. 팀 대화 내용이 들어 있음).
+- 2026-10-09 사용자: `member_activity`에 모르는 사람이 있음(Chisho Yamada, Nobunao Nagai, Miyuu Yano).
+  - 원인: `#dev_lead`의 Redmine 봇 알림(`[LEAD] X updated #N`) 본문 속 이름. 작성자는 `redmine` 봇이고 user id가 없음. 이 Daily Core에서 20건. Agent가 본문 속 이름을 활동한 멤버로 봄.
+  - 결정(사용자): 봇 알림을 입력에서 표시하고, 멤버 항목은 직접 쓴 메시지·커밋·PR로만 만듦. 봇 알림은 같은 티켓 항목의 보조 근거로만 씀.
+- 2026-10-09 에이전트: `daily-core-v2`로 반영하고 확인.
+  - Slack 항목 중 user id가 없는 것을 봇으로 보고 `(bot notification)`으로 표시. 데이터를 다시 수집하지 않고 Worker에서 판단함.
+  - 프롬프트에 봇 알림 설명과 규칙 추가. 제출 Tool에서 `member_activity` 항목이 봇 알림이나 맥락 ref만 인용하면 에러를 돌려줌.
+  - `daily-core.check.ts`에 봇 표시와 검사 assert 추가, 통과. `tsc` 오류 없음.
+  - 실행 결과(같은 입력, 입력 15,592자, 봇 알림 20개)
+
+    | | 3회 | 4회 |
+    |---|---|---|
+    | 소요 시간 | 80.4초 | 78.4초 |
+    | 토큰 입력 / 출력 | 10,054 / 15,648 | 10,054 / 13,555 |
+    | 비용 | $0.078 | $0.069 |
+    | 제출 Tool 호출 | 1회, 에러 없음 | 1회, 에러 없음 |
+    | highlights / topics / progress / member | 4 / 4 / 6 / 13 | 5 / 5 / 5 / 14 |
+    | 근거 위반 | 0 | 0 |
+
+  - Redmine 알림에만 나온 4명(Chisho Yamada, Nobunao Nagai, Miyuu Yano, Yasuhiro Oba)은 두 번 모두 `member_activity`에서 빠짐. 봇 알림은 #23145, #23126 항목의 보조 근거로 인용됨.
+  - 발견: 같은 사람이 GitHub 로그인과 Slack 이름으로 따로 잡힘. 4회에서 `takamune-dsl`과 Keiichi Takamune, GitHub `Jinwoo Song`(`jinuSon`)과 Slack Jinu Son이 각각 다른 멤버로 나옴. 3회에서는 모델이 합쳤음. GitHub 작성자는 이름이 없으면 로그인을 씀(`takamune-dsl`, `Katsuya-Matsuzaki`, `SuchonKou`, `Yuuki-Imai`).
+  - 발견: v1보다 소요 시간이 약 2배(40초 → 80초), 출력 토큰이 약 1.5배 늘어남. 입력은 거의 같음(+155 토큰). 규칙이 늘어서 모델의 추론 토큰이 늘어난 것으로 보임.
+  - 발견: `member_activity` title 형식이 여전히 실행마다 다름(3회는 문장, 4회는 이름).
+  - 사용자 확인용 출력: `works/out/daily-core-run3.md`, `works/out/daily-core-run4.md`.
+- 2026-10-09 사용자 결정: 배열 간 중복 규칙은 지금대로 둠. 사람 합치기는 이름 비교(방법 1)로 하고, `member_activity` title은 이름만.
+  - 검토한 다른 방법: 이메일 비교(GitHub 커밋 이메일을 수집해야 함), workspace 단위 대응표(Slack user id ↔ GitHub 로그인). 대응표는 나중에, 이름 비교는 그때 기본값으로 남김.
+- 2026-10-09 에이전트: `daily-core-v3`로 반영하고 확인.
+  - GitHub 작성자의 로그인이나 이름을 대소문자·기호를 빼고 비교해서, 같은 Daily Core의 Slack 작성자 이름과 같으면 입력에 Slack 이름으로 씀. 원본 데이터는 바꾸지 않음.
+    - 실제 데이터: `jinuSon` → Jinu Son, `Katsuya-Matsuzaki`, `SuchonKou`, `Yuuki-Imai`가 합쳐짐. `takamune-dsl`은 Slack 이름(Keiichi Takamune)과 달라서 안 합쳐짐(대응표가 필요).
+  - Slackbot 리마인더(`USLACKBOT`, 2건)도 봇으로 처리. 처음 확인에서 사람 목록에 Slackbot이 들어가 있어서 고침.
+  - 입력에 나온 사람 목록(봇·맥락 제외, 13명)을 Agent에 넘기고, 제출 Tool에서 `member_activity` title이 그 목록의 이름과 정확히 같은지 검사.
+  - `daily-core.check.ts`에 이름 합치기, Slackbot, title 검사 assert 추가, 통과. `tsc` 오류 없음.
+  - 실행 결과(같은 입력)
+
+    | | 5회 | 6회 |
+    |---|---|---|
+    | 소요 시간 | 137.8초 | 112.6초 |
+    | 토큰 입력 / 출력 | 10,074 / 23,392 | 10,074 / 19,778 |
+    | 비용 | $0.113 | $0.097 |
+    | 제출 Tool 호출 | 1회, 에러 없음 | 1회, 에러 없음 |
+    | highlights / topics / progress / member | 5 / 5 / 6 / 13 | 5 / 4 / 3 / 12 |
+    | 근거 위반 / 맥락 ref 인용 | 0 / 0 | 0 / 0 |
+
+  - title은 두 번 모두 이름만. Jinu Son 등은 한 사람으로 나옴. 6회는 Keiichi Takamune를 뺌("활동한 사람 전원" 규칙은 없음).
+  - 발견: 출력 토큰이 계속 늘어남(v1 약 1만 → v2 약 1.4만 → v3 약 2.1만). 출력 JSON은 1만~1.2만 자라서 대부분은 추론 토큰으로 보임. Flue 기본 추론 강도는 `medium`이고, `useModel(model, { thinkingLevel })`로 낮출 수 있음. 품질과 맞바꾸는 문제라 바꾸지 않음.
+  - 사용자 확인용 출력: `works/out/daily-core-run5.md`, `works/out/daily-core-run6.md`.
 
 ---
 
@@ -222,7 +297,7 @@ Slack/GitHub 수집 (Vercel 코드)
 - Agent 실행 후 merge:
   - meta는 `daily_core_data`에서 가져옴.
   - `evidence_refs`를 원본 항목으로 바꿔 evidence 객체로 만듦.
-  - 개수 metrics는 코드로 계산.
+  - 개수 metrics는 코드로 계산. `context_only` 항목은 세지 않음(활동 수는 `stats_json.in_window` 기준).
   - quality는 항목이 없으면 `empty`, 있으면 `ready`.
 - `core_json`, `agent_output_json`, 토큰 사용량 저장 → `succeeded`. `daily_core_data`의 `current_generation_no`, `quality_status`, `last_generated_at` 갱신.
 - 실패하면 generation `failed` + 에러 기록. current generation은 바꾸지 않음.

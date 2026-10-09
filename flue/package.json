@@ -9,12 +9,13 @@
   "dependencies": {
     "@flue/runtime": "^2.2.2",
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "hono": "^4.13.13"
+    "hono": "^4.13.13",
+    "valibot": "^1.5.0"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.62.5",
     "@flue/vite": "^2.2.2",
-    "vite": "^7.3.7",
+    "vite": "^8.3.4",
     "wrangler": "^4.147.0"
   }
 }

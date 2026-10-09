@@ -19,6 +19,8 @@ export default defineConfig({
           "@flue/runtime/cloudflare/workers-ai",
           "agents",
           "hono",
+          "hono/bearer-auth",
+          "valibot",
         ],
       },
     },
