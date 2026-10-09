@@ -213,7 +213,8 @@ Slack/GitHub 수집 (Vercel 코드)
 - [ ] 같은 사건이 highlights / topics / progress_roadmap에 중복으로 들어가 있지 않다.
 - [ ] 맥락용 부모 메시지(예전 날짜)의 내용을 그날 일어난 일로 쓰지 않았다.
 - [ ] Target의 `language`로 쓰였다.
-- [ ] 이 정도 품질이면 Phase 3으로 가도 된다고 판단한다. 아니면 프롬프트를 고치고 이 Phase를 반복한다.
+- [x] 이 정도 품질이면 Phase 3으로 가도 된다고 판단한다. 아니면 프롬프트를 고치고 이 Phase를 반복한다.
+  - 사용자(2026-10-09): 품질은 차차 개선. `daily-core-v3.1`로 Phase 3 진행. 위 네 항목(정확성, 중복, 맥락, 언어)은 품질 개선 과제로 남김.
 
 확인 기록
 
@@ -403,18 +404,34 @@ Slack/GitHub 수집 (Vercel 코드)
 
 에이전트 확인
 
-- [ ] `daily_core_generations`에 `succeeded` 행 1개, `core_json`의 meta가 `daily_core_data`와 같다.
-- [ ] `core_json`의 모든 evidence에 `source_item_id`, `occurred_at`이 있고, 같은 정보가 `normalized_json`에 있다.
-- [ ] 다시 생성하면 generation 2가 생기고, current가 2로 바뀌고, 1은 남아 있다.
-- [ ] 일부러 실패시키면(예: 잘못된 모델명) `failed`와 에러가 남고 current는 그대로다.
+- [x] `daily_core_generations`에 `succeeded` 행 1개, `core_json`의 meta가 `daily_core_data`와 같다.
+- [x] `core_json`의 모든 evidence에 `source_item_id`, `occurred_at`이 있고, 같은 정보가 `normalized_json`에 있다.
+- [x] 다시 생성하면 generation 2가 생기고, current가 2로 바뀌고, 1은 남아 있다.
+- [x] 일부러 실패시키면(예: 잘못된 모델명) `failed`와 에러가 남고 current는 그대로다.
 
 사용자 확인
 
 - [ ] evidence의 URL 2~3개를 열어 보면 해당 Slack 메시지나 커밋으로 간다.
+  - GitHub 커밋: https://github.com/digitalsheep/LEAD/commit/f15c0616238d819e9161cbf4e12a03167a790589 (Jinu Son, 09:35 KST)
+  - Slack 메시지: https://slack.com/archives/CDR68RY0L/p1791520922169759 (#dev_lead, 13:42 KST)
+  - Slack 스레드 답글: https://slack.com/archives/C05CSNH7XKK/p1791519491225919?thread_ts=1791504896.607899&cid=C05CSNH7XKK (#dev_cs_d3, 13:18 KST)
 
 확인 기록
 
-- (비어 있음)
+- 2026-10-09 에이전트: 구현
+  - `POST /core/generate`가 저장까지 함(dry run 끝). 순서: generation 행 생성(`generation_no = last_generation_no + 1`, `processing`, `manual`, `input_source_data_ids`, 버전·모델) → `daily_core_data.last_generation_no`, `last_attempt_at` → Agent → merge → generation `succeeded`(`core_json`, `agent_output_json`, 토큰, 처리 시간·Tool 호출, 근거 검사 결과) → `daily_core_data`의 `current_generation_no`, `quality_status`, `last_generated_at`, 에러 비움.
+  - 실패하면 generation `failed`, `error_code = generation_failed`, `error_message`. `daily_core_data`에는 `last_error_*`만 남기고 current는 그대로.
+  - 요청 본문의 `model`로 모델을 바꿀 수 있음(기본 `openai/gpt-5.4-mini`). 실패 확인에 사용.
+  - merge(`buildCoreJson`, `flue/src/daily-core.ts`): `DailyCoreJson` 형태(`schema_version`, `meta`, `overview`, 4개 배열, `metrics`, `quality`). 각 항목의 `evidence_refs`를 원본 항목(`source_type`, `source_ident`, `source_item_id`, `occurred_at`, `url`)으로 바꿈. metrics는 코드 계산: 소스별 `slack_message_count`, `github_<kind>_count`(맥락 항목 제외), `active_member_count`. quality는 그날 항목이 있으면 `ready`, 없으면 `empty`.
+  - 버전: `schema_version = daily-core-v1`, `taxonomy_version = free-text`, `pipeline_version = flue-single-agent-v1`.
+  - Slack URL: `conversations.history`에는 permalink가 없어서 `url`이 전부 null이었음. `normalize.ts`에서 `https://slack.com/archives/<채널ID>/p<ts>`(답글은 `?thread_ts=…&cid=…`)로 채움. 워크스페이스 도메인 없이 열리는 형식. 같은 날짜를 `collect.run.ts`로 다시 수집(메시지 수 36 / 59 / 21, GitHub 6으로 이전과 같음, source_ref는 새로 매김).
+  - `daily-core.check.ts`(merge: meta 필드만, evidence 변환, 모르는 ref 무시, metrics, quality empty), `normalize.check.ts`(Slack URL) 통과. `tsc` 오류 없음.
+  - 이번에 안 한 것: `daily_core_items` / `daily_core_metrics` projection, `content_hash`, `input_hash`, 트랜잭션(RPC).
+- 2026-10-09 에이전트: 확인(DB를 Supabase REST로 직접 읽어 비교)
+  - generation 1: 86.7초, $0.095, `succeeded` / `ready`. `core_json.meta` 8개 필드가 `daily_core_data`와 같음. evidence 90개 전부 `normalized_json`의 같은 항목(`occurred_at`, `url` 일치)을 가리킴, URL 90/90. `input_source_data_ids`가 현재 source 행 4개와 같음. metrics: Slack 36 / 21 / 59, 커밋 5, PR 1, 활동 인원 13.
+  - generation 2: 80.1초, $0.072, `succeeded`. evidence 102개 전부 일치. `current_generation_no` 1 → 2, generation 1은 그대로 남음.
+  - generation 3(`model: openai/no-such-model`): 1.3초 만에 `failed`, `error_code = generation_failed`, `error_message = "[flue] Agent run failed (submission …)"`. `current_generation_no`는 2 그대로, `last_generation_no`는 3.
+  - 발견: Flue의 실패 메시지에 원인(모델 없음)이 들어 있지 않음. 원인은 Flue 쪽 로그나 conversation에서 봐야 함.
 
 ---
 

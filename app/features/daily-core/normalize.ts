@@ -27,6 +27,11 @@ export function fetchDaysFor(coreDate: string, timezone: string, now = Date.now(
 
 export type Unreffed = Omit<NormalizedSourceItem, "source_ref">;
 
+// conversations.history has no permalink. slack.com/archives works without the workspace domain.
+const slackUrl = (channelId: string, ts: string, threadTs?: string) =>
+  `https://slack.com/archives/${channelId}/p${ts.replace(".", "")}` +
+  (threadTs && threadTs !== ts ? `?thread_ts=${threadTs}&cid=${channelId}` : "");
+
 export function normalizeSlackMessages(sourceIdent: string, channelId: string, messages: FetchedMessage[]): Unreffed[] {
   return messages.map((m) => ({
     source_type: "slack_channel",
@@ -38,7 +43,7 @@ export function normalizeSlackMessages(sourceIdent: string, channelId: string, m
       name: m.userInfo?.profile?.display_name || m.userInfo?.real_name || m.author,
     },
     content: m.text ?? "",
-    url: m.permalink ?? null,
+    url: m.permalink ?? slackUrl(channelId, m.ts, m.thread_ts),
     thread_ref: m.thread_ts && m.thread_ts !== m.ts ? m.thread_ts : null,
     meta: { channel_id: channelId, ...(m.reply_count ? { reply_count: m.reply_count } : {}) },
   }));

@@ -22,12 +22,13 @@ const InitialData = v.object({
   botRefs: v.array(v.string()),
   people: v.array(v.string()),
   language: v.string(),
+  model: v.string(),
 });
 type InitialData = v.InferOutput<typeof InitialData>;
 
 export function DailyCore() {
-  useModel(DAILY_CORE_MODEL);
-  const { language, ...evidence }: InitialData = useInitialData();
+  const { language, model, ...evidence }: InitialData = useInitialData();
+  useModel(model);
   const writeCore = useDataWriter("dailyCore", { schema: DailyCoreOutput });
 
   useTool({

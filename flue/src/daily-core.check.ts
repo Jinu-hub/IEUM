@@ -1,6 +1,6 @@
 // Run: npx tsx flue/src/daily-core.check.ts
 import assert from "node:assert/strict";
-import { buildAgentInput, type DailyCoreOutput, evidenceProblems, type SourceItem } from "./daily-core.ts";
+import { buildAgentInput, buildCoreJson, type DailyCoreOutput, evidenceProblems, type SourceItem } from "./daily-core.ts";
 
 const item = (ref: string, id: string, at: string, content: string, extra: Partial<SourceItem> = {}) => ({
   source_ref: ref,
@@ -91,5 +91,51 @@ assert.match(problems(core(["S006"], "member_activity"))[0], /bot notifications/
 assert.deepEqual(problems(core(["S006", "S004", "S007"], "member_activity", "Jinu Son")), []);
 assert.match(problems(core(["S004"], "member_activity", "Jinu Son pushed fixes"))[0], /title must be/);
 assert.match(problems(core(["S006", "S004"], "member_activity", "Bo"))[0], /title must be/);
+
+const meta = {
+  target_id: "t",
+  core_date: "2026-10-09",
+  timezone: "Asia/Tokyo",
+  language: "ja",
+  target_display_name: "Dev",
+  target_category: "development",
+  window_start_at: "2026-10-08T15:00:00Z",
+  window_end_at: "2026-10-09T15:00:00Z",
+};
+const sources = [
+  {
+    source_type: "slack_channel",
+    source_ident: "#dev",
+    collection_status: "success",
+    normalized_json: [
+      item("S001", "1.0", "2026-10-07T01:00:00Z", "old", { meta: { context_only: true } }),
+      item("S003", "3.0", "2026-10-09T02:00:00Z", "hi", { url: "https://slack.com/archives/C1/p30" }),
+    ],
+  },
+  { source_type: "github_repo", source_ident: "LEAD", collection_status: "success", normalized_json: [commit("S007", "a", "A")] },
+];
+const json = buildCoreJson({ ...meta, workspace_id: "w" } as typeof meta, sources, core(["S001", "S003", "S999"]), ["Aki"]);
+assert.deepEqual(json.meta, meta);
+assert.deepEqual(json.highlights[0].evidence, [
+  { source_type: "slack_channel", source_ident: "#dev", source_item_id: "1.0", occurred_at: "2026-10-07T01:00:00Z", url: null },
+  {
+    source_type: "slack_channel",
+    source_ident: "#dev",
+    source_item_id: "3.0",
+    occurred_at: "2026-10-09T02:00:00Z",
+    url: "https://slack.com/archives/C1/p30",
+  },
+]);
+assert.ok(!("evidence_refs" in json.highlights[0]));
+assert.deepEqual(
+  json.metrics.map((m) => [m.key, m.value, "dimensions" in m ? m.dimensions.source_ident : null]),
+  [
+    ["slack_message_count", 1, "#dev"],
+    ["github_commit_count", 1, "LEAD"],
+    ["active_member_count", 1, null],
+  ],
+);
+assert.equal(json.quality.status, "ready");
+assert.equal(buildCoreJson(meta, [{ ...sources[0], normalized_json: [sources[0].normalized_json[0]] }], core(["S001"]), []).quality.status, "empty");
 
 console.log("daily-core checks passed");

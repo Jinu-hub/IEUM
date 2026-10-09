@@ -10,6 +10,7 @@ export type SourceItem = {
   author?: { id?: string; name?: string };
   title?: string | null;
   content: string;
+  url?: string | null;
   thread_ref?: string | null;
   meta?: Record<string, unknown>;
 };
@@ -186,4 +187,78 @@ export function evidenceProblems(
     }
   }
   return problems;
+}
+
+// Mirrors DailyCoreJson in app/features/daily-core/contracts/pipeline-result.ts.
+export const CORE_SCHEMA_VERSION = "daily-core-v1";
+
+export type CoreMeta = {
+  target_id: string;
+  core_date: string;
+  timezone: string;
+  language: string;
+  target_display_name: string;
+  target_category: string;
+  window_start_at: string;
+  window_end_at: string;
+};
+
+export function buildCoreJson(meta: CoreMeta, rows: SourceRow[], output: DailyCoreOutput, people: string[]) {
+  const byRef = new Map(rows.flatMap((row) => row.normalized_json).map((item) => [item.source_ref, item]));
+  const item = ({ evidence_refs, ...rest }: DailyCoreOutput["highlights"][number]) => ({
+    ...rest,
+    evidence: evidence_refs.flatMap((ref) => {
+      const source = byRef.get(ref);
+      if (!source) return [];
+      const { source_type, source_ident, source_item_id, occurred_at, url } = source;
+      return [{ source_type, source_ident, source_item_id, occurred_at, url: url ?? null }];
+    }),
+    payload: {},
+  });
+
+  // Context parents happened on earlier days, so they are not counted.
+  const counts = new Map<string, { key: string; source_ident: string; value: number }>();
+  for (const row of rows) {
+    for (const source of row.normalized_json) {
+      if (isContext(source)) continue;
+      const key =
+        row.source_type === "slack_channel" ? "slack_message_count" : `github_${source.meta?.kind ?? "item"}_count`;
+      const id = `${key}|${row.source_ident}`;
+      const metric = counts.get(id) ?? { key, source_ident: row.source_ident, value: 0 };
+      metric.value++;
+      counts.set(id, metric);
+    }
+  }
+  const activity = [...counts.values()].reduce((sum, metric) => sum + metric.value, 0);
+
+  return {
+    schema_version: CORE_SCHEMA_VERSION,
+    meta: {
+      target_id: meta.target_id,
+      core_date: meta.core_date,
+      timezone: meta.timezone,
+      language: meta.language,
+      target_display_name: meta.target_display_name,
+      target_category: meta.target_category,
+      window_start_at: meta.window_start_at,
+      window_end_at: meta.window_end_at,
+    },
+    overview: output.overview,
+    highlights: output.highlights.map(item),
+    topics: output.topics.map(item),
+    progress_roadmap: output.progress_roadmap.map(item),
+    member_activity: output.member_activity.map(item),
+    metrics: [
+      ...[...counts.values()].map(({ key, source_ident, value }) => ({
+        key,
+        value,
+        unit: "count",
+        origin: "computed" as const,
+        rollup_hint: "sum" as const,
+        dimensions: { source_ident },
+      })),
+      { key: "active_member_count", value: people.length, unit: "count", origin: "computed" as const, rollup_hint: "none" as const },
+    ],
+    quality: { status: activity > 0 ? ("ready" as const) : ("empty" as const) },
+  };
 }

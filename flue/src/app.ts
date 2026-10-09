@@ -4,7 +4,19 @@ import { Hono, type MiddlewareHandler } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { DAILY_CORE_MODEL, DAILY_CORE_PROMPT_VERSION, DailyCore } from "./agents/daily-core.ts";
 import { TestAgent } from "./agents/test-agent.ts";
-import { buildAgentInput, type DailyCoreOutput, evidenceProblems, type SourceRow } from "./daily-core.ts";
+import {
+  buildAgentInput,
+  buildCoreJson,
+  CORE_SCHEMA_VERSION,
+  type CoreMeta,
+  type DailyCoreOutput,
+  evidenceProblems,
+  type SourceRow,
+} from "./daily-core.ts";
+
+const PIPELINE_VERSION = "flue-single-agent-v1";
+// Classifications are free text until a taxonomy exists.
+const TAXONOMY_VERSION = "free-text";
 
 type Env = {
   Bindings: {
@@ -57,35 +69,37 @@ app.post("/db/ping", async (c) => {
   return c.json(await res.json(), res.status as 201);
 });
 
-// Dry run: generates and returns the Daily Core without saving it.
+// Generates a Daily Core and saves it as the next generation. `model` overrides the default model.
 app.post("/core/generate", async (c) => {
-  const { dailyCoreId } = await c.req.json<{ dailyCoreId?: string }>();
+  const { dailyCoreId, model = DAILY_CORE_MODEL } = await c.req.json<{ dailyCoreId?: string; model?: string }>();
   if (!dailyCoreId || !/^[0-9a-f-]{36}$/i.test(dailyCoreId)) {
     return c.json({ error: "dailyCoreId must be a uuid" }, 400);
   }
 
   const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = c.env;
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return c.text("Supabase secrets are not set", 500);
-  const select = async <T,>(path: string) => {
+  // ponytail: sequential REST writes, no transaction. A crash mid-way leaves the generation `processing`;
+  // move the writes into one Postgres function (RPC) when projections are added.
+  const db = async <T,>(path: string, init: { method?: string; body?: unknown } = {}) => {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-      headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+      method: init.method ?? "GET",
+      headers: {
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: init.body === undefined ? undefined : JSON.stringify(init.body),
     });
     if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
     return (await res.json()) as T[];
   };
+  const coreRow = `daily_core_data?daily_core_id=eq.${dailyCoreId}`;
 
-  const [core] = await select<{
-    target_display_name: string;
-    target_category: string;
-    core_date: string;
-    timezone: string;
-    language: string;
-    window_start_at: string;
-    window_end_at: string;
-  }>(`daily_core_data?daily_core_id=eq.${dailyCoreId}`);
+  const [core] = await db<CoreMeta & { workspace_id: string; last_generation_no: number }>(coreRow);
   if (!core) return c.json({ error: "daily core not found" }, 404);
-  const rows = await select<SourceRow>(
-    `daily_core_source_data?daily_core_id=eq.${dailyCoreId}&select=source_type,source_ident,collection_status,normalized_json&order=source_type,source_ident`,
+  const rows = await db<SourceRow & { source_data_id: string }>(
+    `daily_core_source_data?daily_core_id=eq.${dailyCoreId}&select=source_data_id,source_type,source_ident,collection_status,normalized_json&order=source_type,source_ident`,
   );
 
   const input = buildAgentInput(rows, core.timezone);
@@ -95,31 +109,107 @@ app.post("/core/generate", async (c) => {
     "",
     input.text,
   ].join("\n");
+  const inputStats = { ...input.counts, chars: body.length };
+
+  const generationNo = core.last_generation_no + 1;
+  const startedAt = new Date();
+  const [modelProvider, ...modelName] = model.split("/");
+  const [generation] = await db<{ generation_id: string }>("daily_core_generations", {
+    method: "POST",
+    body: {
+      daily_core_id: dailyCoreId,
+      workspace_id: core.workspace_id,
+      target_id: core.target_id,
+      generation_no: generationNo,
+      trigger: "manual",
+      generation_status: "processing",
+      input_source_data_ids: rows.map((row) => row.source_data_id),
+      schema_version: CORE_SCHEMA_VERSION,
+      taxonomy_version: TAXONOMY_VERSION,
+      prompt_version: DAILY_CORE_PROMPT_VERSION,
+      pipeline_version: PIPELINE_VERSION,
+      model_provider: modelProvider,
+      model_name: modelName.join("/"),
+      input_stats_json: inputStats,
+      started_at: startedAt.toISOString(),
+    },
+  });
+  const generationRow = `daily_core_generations?generation_id=eq.${generation.generation_id}`;
+  await db(coreRow, {
+    method: "PATCH",
+    body: { last_generation_no: generationNo, last_attempt_at: startedAt.toISOString(), updated_at: startedAt.toISOString() },
+  });
 
   const { refs, contextRefs, botRefs, people } = input;
   const evidence = { refs, contextRefs, botRefs, people };
-  const startedAt = Date.now();
   const agent = init(DailyCore);
-  const receipt = await agent.dispatch({
-    message: { kind: "user", body },
-    initialData: { ...evidence, language: core.language },
-  });
-  const reply = await agent.read(receipt);
-  const output = (reply.data.dailyCore?.at(-1) as DailyCoreOutput | undefined) ?? null;
+  try {
+    const receipt = await agent.dispatch({
+      message: { kind: "user", body },
+      initialData: { ...evidence, language: core.language, model },
+    });
+    const reply = await agent.read(receipt);
+    const output = reply.data.dailyCore?.at(-1) as DailyCoreOutput | undefined;
+    if (!output) throw new Error(`agent finished without a Daily Core: ${reply.text.slice(0, 500)}`);
 
-  return c.json({
-    dailyCoreId,
-    conversationId: agent.id,
-    model: DAILY_CORE_MODEL,
-    promptVersion: DAILY_CORE_PROMPT_VERSION,
-    elapsedMs: Date.now() - startedAt,
-    usage: reply.metadata?.usage ?? null,
-    toolCalls: reply.metadata?.toolCalls ?? null,
-    input: { ...input.counts, chars: body.length },
-    evidenceProblems: output ? evidenceProblems(output, evidence) : ["no output"],
-    output,
-    text: reply.text,
-  });
+    const coreJson = buildCoreJson(core, rows, output, people);
+    const finishedAt = new Date().toISOString();
+    await db(generationRow, {
+      method: "PATCH",
+      body: {
+        generation_status: "succeeded",
+        quality_status: coreJson.quality.status,
+        agent_conversation_id: agent.id,
+        agent_output_json: output,
+        core_json: coreJson,
+        token_usage_json: reply.metadata?.usage ?? {},
+        processing_metrics_json: {
+          elapsed_ms: Date.now() - startedAt.getTime(),
+          tool_calls: reply.metadata?.toolCalls ?? [],
+        },
+        validation_json: { evidence_problems: evidenceProblems(output, evidence) },
+        finished_at: finishedAt,
+      },
+    });
+    await db(coreRow, {
+      method: "PATCH",
+      body: {
+        current_generation_no: generationNo,
+        quality_status: coreJson.quality.status,
+        last_generated_at: finishedAt,
+        last_error_code: null,
+        last_error_message: null,
+        updated_at: finishedAt,
+      },
+    });
+    return c.json({
+      dailyCoreId,
+      generationNo,
+      status: "succeeded",
+      elapsedMs: Date.now() - startedAt.getTime(),
+      usage: reply.metadata?.usage ?? null,
+      coreJson,
+    });
+  } catch (error) {
+    const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
+    const finishedAt = new Date().toISOString();
+    await db(generationRow, {
+      method: "PATCH",
+      body: {
+        generation_status: "failed",
+        agent_conversation_id: agent.id,
+        error_code: "generation_failed",
+        error_message: message,
+        processing_metrics_json: { elapsed_ms: Date.now() - startedAt.getTime() },
+        finished_at: finishedAt,
+      },
+    });
+    await db(coreRow, {
+      method: "PATCH",
+      body: { last_error_code: "generation_failed", last_error_message: message, updated_at: finishedAt },
+    });
+    return c.json({ dailyCoreId, generationNo, status: "failed", error: message }, 500);
+  }
 });
 
 export default app;

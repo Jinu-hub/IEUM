@@ -37,5 +37,7 @@ const thread = normalizeSlackMessages("#dev", "C1", [
   { ts: "300.0", text: "plain message" },
 ]);
 assert.deepEqual(missingThreadParents(thread), ["50.0"]);
+assert.equal(thread[0].url, "https://slack.com/archives/C1/p1000");
+assert.equal(thread[1].url, "https://slack.com/archives/C1/p1010?thread_ts=100.0&cid=C1");
 
 console.log("normalize.check ok");
