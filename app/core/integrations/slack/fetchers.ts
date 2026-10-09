@@ -173,6 +173,34 @@ export async function fetchReplies(
   return replies;
 }
 
+/** Root message of a thread only (conversations.replies returns the root first). */
+export async function fetchThreadParent(
+  slack: WebClient,
+  channel: string,
+  thread_ts: string
+): Promise<FetchedMessage | null> {
+  return replyLimit(async () => {
+    try {
+      const res = await slack.conversations.replies({ channel, ts: thread_ts, limit: 1 });
+      const m: any = res.messages?.[0];
+      if (!m) return null;
+      const userInfo = m.user ? await fetchUserInfo(slack, m.user) : null;
+      return {
+        ts: m.ts!,
+        author: slackMessageAuthor(m),
+        user: m.user,
+        userInfo: userInfo || undefined,
+        text: m.text,
+        thread_ts: m.thread_ts,
+        reply_count: m.reply_count,
+      };
+    } catch (error) {
+      logger.warn("Failed to fetch thread parent", { channel, thread_ts, error: String(error) });
+      return null;
+    }
+  });
+}
+
 export interface FetchChannelMessagesOptions {
   /**
    * スレッドの返信を取得するかどうか

@@ -3,7 +3,7 @@
  */
 
 import { runGithubFetch } from "~/core/integrations/github/run";
-import { runSlackFetch } from "~/core/integrations/slack/run";
+import { runSlackFetch, runSlackThreadParents } from "~/core/integrations/slack/run";
 import { logger } from "~/core/lib/logger";
 import type { EnableCreateContents } from "~/core/lib/types";
 import type { FetchedData, MatchedSources } from "./types";
@@ -13,7 +13,8 @@ import type { FetchedData, MatchedSources } from "./types";
  */
 export async function fetchGithubData(
   credentialRef: string,
-  repos: string[]
+  repos: string[],
+  days = 1
 ): Promise<{ result: any; enabled: boolean }> {
   const { getGitHubToken } = await import("~/core/lib/secrets-manager.server");
   const githubToken = await getGitHubToken(credentialRef) || undefined;
@@ -29,7 +30,7 @@ export async function fetchGithubData(
       outDir: 'output-test',
       token: githubToken,
       installationId: credentialRef,
-      days: 1,
+      days,
     });
 
     const enabled = githubResult && Object.keys(githubResult).length > 0;
@@ -51,7 +52,8 @@ export async function fetchGithubData(
 export async function fetchSlackData(
   credentialRef: string,
   channels: string[],
-  sourcesWithType: any[]
+  sourcesWithType: any[],
+  days = 1
 ): Promise<{ result: any; enabled: boolean }> {
   const { getSlackBotToken } = await import("~/core/lib/secrets-manager.server");
   const slackToken = await getSlackBotToken(credentialRef) || undefined;
@@ -67,7 +69,7 @@ export async function fetchSlackData(
       channels: slackChannels,
       outDir: 'output-test',
       token: slackToken,
-      days: 1,
+      days,
       sources: sourcesWithType,
     });
 
@@ -80,11 +82,23 @@ export async function fetchSlackData(
 }
 
 /**
+ * 스레드 부모 메시지만 페칭 (답글은 있는데 부모가 수집 범위 밖인 경우)
+ */
+export async function fetchSlackThreadParents(integrationsInfo: any[], channelId: string, threadTs: string[]) {
+  if (threadTs.length === 0) return [];
+  const credentialRef = integrationsInfo.find((integration: any) => integration.type === 'slack')?.credential_ref;
+  const { getSlackBotToken } = await import("~/core/lib/secrets-manager.server");
+  const token = await getSlackBotToken(credentialRef) || undefined;
+  return runSlackThreadParents({ token, channelId, threadTs });
+}
+
+/**
  * GitHub/Slack 데이터 통합 페칭
  */
 export async function fetchIntegrationData(
   integrationsInfo: any[],
-  matchedSources: MatchedSources
+  matchedSources: MatchedSources,
+  days = 1
 ): Promise<FetchedData> {
   const githubCredentialRef = integrationsInfo.find((integration: any) => integration.type === 'github')?.credential_ref;
   const slackCredentialRef = integrationsInfo.find((integration: any) => integration.type === 'slack')?.credential_ref;
@@ -101,7 +115,7 @@ export async function fetchIntegrationData(
   // GitHub 데이터 페칭
   if (githubCredentialRef && matchedSources.matchedRepos.length > 0) {
     try {
-      const { result, enabled } = await fetchGithubData(githubCredentialRef, matchedSources.matchedRepos);
+      const { result, enabled } = await fetchGithubData(githubCredentialRef, matchedSources.matchedRepos, days);
       githubResult = result;
       enableCreateContents.github = enabled;
     } catch (error) {
@@ -116,7 +130,8 @@ export async function fetchIntegrationData(
     const { result, enabled } = await fetchSlackData(
       slackCredentialRef,
       matchedSources.matchedChannels,
-      matchedSources.sourcesWithType
+      matchedSources.sourcesWithType,
+      days
     );
     slackResult = result;
     enableCreateContents.slack = enabled;

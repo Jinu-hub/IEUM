@@ -16,7 +16,8 @@ export type CollectedSources = {
 };
 
 export async function collectTargetSources(
-  target: Target
+  target: Target,
+  days = 1
 ): Promise<CollectedSources | { skip: string }> {
   const integrationsInfo = await getIntegrationsInfo(adminClient, { workspaceId: target.workspace_id });
   const githubData = integrationsInfo?.find((integration: any) => integration.type === "github")?.resource_cache_json as any;
@@ -39,6 +40,6 @@ export async function collectTargetSources(
     return { skip: `No matched sources found for target: ${target.display_name}` };
   }
 
-  const fetchedData = await fetchIntegrationData(integrationsInfo, matchedSources);
+  const fetchedData = await fetchIntegrationData(integrationsInfo, matchedSources, days);
   return { fetchedData, integrationsInfo, matchedSources };
 }

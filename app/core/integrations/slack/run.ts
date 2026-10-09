@@ -5,8 +5,22 @@ import type { IntegrationSource } from "~/features/settings/lib/types";
 import { logger } from "../../lib/logger";
 import { createSlackClient } from "./client";
 import { getSlackConfig } from "./config";
-import { fetchChannelInfo, fetchChannelMembers, fetchChannelMessages, listChannels } from "./fetchers";
-import type { ChannelData } from "./types";
+import { fetchChannelInfo, fetchChannelMembers, fetchChannelMessages, fetchThreadParent, listChannels } from "./fetchers";
+import type { ChannelData, FetchedMessage } from "./types";
+
+export async function runSlackThreadParents({
+  token,
+  channelId,
+  threadTs,
+}: {
+  token?: string;
+  channelId: string;
+  threadTs: string[];
+}): Promise<FetchedMessage[]> {
+  const slack = createSlackClient(getSlackConfig(process.env, { token }).token);
+  const parents = await Promise.all(threadTs.map((ts) => fetchThreadParent(slack, channelId, ts)));
+  return parents.filter((m): m is FetchedMessage => m !== null);
+}
 
 export async function runSlackFetch(overrides?: {
   token?: string;

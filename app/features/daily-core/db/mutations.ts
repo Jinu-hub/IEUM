@@ -359,8 +359,9 @@ export async function failDailyCoreGeneration(
   });
 }
 
-// Append-only: re-collection adds rows so older generations keep their inputs.
-export async function insertDailyCoreSourceData(
+// Re-collection replaces every row of the daily core, so older generations'
+// input_source_data_ids may point at deleted rows.
+export async function replaceDailyCoreSourceData(
   client: SupabaseClient<Database>,
   {
     dailyCoreId,
@@ -385,6 +386,15 @@ export async function insertDailyCoreSourceData(
     }>;
   }
 ) {
+  const { error: deleteError } = await client
+    .from("daily_core_source_data")
+    .delete()
+    .eq("daily_core_id", dailyCoreId);
+  if (deleteError) {
+    console.error("replaceDailyCoreSourceData delete error", deleteError);
+    throw deleteError;
+  }
+
   if (rows.length === 0) {
     return [];
   }
@@ -413,7 +423,7 @@ export async function insertDailyCoreSourceData(
     .select();
 
   if (error) {
-    console.error("insertDailyCoreSourceData error", error);
+    console.error("replaceDailyCoreSourceData error", error);
     throw error;
   }
 

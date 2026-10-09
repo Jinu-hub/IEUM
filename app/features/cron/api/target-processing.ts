@@ -11,11 +11,16 @@ import { createContents } from "~/features/cron/api/create-contents";
 import { sendMails } from "~/features/cron/api/send-mails";
 import { getUserSubscriptionPlanType } from "~/features/settings/db/queries";
 import { getWorkspaceOwnerUserId } from "~/features/users/queries";
+import { saveDailyCoreCollection } from "~/features/daily-core/collect";
+import { fetchDaysFor } from "~/features/daily-core/normalize";
 import { collectTargetSources } from "./collect-sources";
 import { checkEmailLimit } from "./limit-checking";
 import { recordRuns } from "./run-record";
 import { sendSlackNotification } from "./send_notifications";
 import type { FetchedData, Target } from "./types";
+
+// Temporary fixed date for works/daily-core-e2e.md. Remove after the E2E run.
+const DAILY_CORE_TEST_DATE = "2026-10-09";
 
 /**
  * 날짜 범위 생성
@@ -138,13 +143,20 @@ export async function processTarget(
       });
     }
 
-    const collected = await collectTargetSources(target);
+    const fetchDays = fetchDaysFor(DAILY_CORE_TEST_DATE, target.timezone ?? "UTC");
+    const collected = await collectTargetSources(target, fetchDays);
     if ("skip" in collected) {
       await noteRun(target, runMapping, 'warn', 'target_processing_skipped', `Target processing skipped: ${collected.skip}`);
       await closeRun(runMapping, collected.skip);
       return;
     }
     const { fetchedData, integrationsInfo, matchedSources } = collected;
+
+    const dailyCore = await saveDailyCoreCollection(target, collected, DAILY_CORE_TEST_DATE);
+    await noteRun(
+      target, runMapping, 'info', 'daily_core_collected',
+      `Daily core collected: ${dailyCore.dailyCoreId} (${DAILY_CORE_TEST_DATE}, ${dailyCore.itemCount} items, ${dailyCore.sourceDataIds.length} sources)`
+    );
 
     // 날짜 범위 생성
     const dateRange = createDateRange();

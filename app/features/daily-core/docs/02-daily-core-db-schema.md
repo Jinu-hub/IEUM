@@ -215,7 +215,7 @@ core_json
 Vercel이 수집·정규화한 하루치 Source 데이터를 저장한다. Generation보다 먼저 만들어지며, Worker(Flue)는 이 행을 읽어 Core를 생성한다. 원본 데이터를 Agent 대화에 직접 싣지 않는다.
 
 ```text
-1 Daily Core × 1 Source × 1 수집
+1 Daily Core × 1 Source (최신 수집 1회분)
 ```
 
 예:
@@ -229,7 +229,7 @@ GitHub repo A  → 15 events
 GitHub repo B  → ERROR
 ```
 
-재수집(늦게 유입된 데이터 등)은 UPDATE가 아니라 새 행을 추가한다. 각 Generation은 `input_source_data_ids`로 실제 사용한 행을 가리키므로 과거 Generation의 입력이 보존된다.
+재수집(늦게 유입된 데이터 등)은 그 Daily Core의 행을 모두 지우고 새로 넣는다. 같은 내용이 여러 벌 쌓이면 Worker가 중복으로 읽어 입력 토큰이 늘어나기 때문이다. 그 대신 재수집 후에는 과거 Generation의 `input_source_data_ids`가 지워진 행을 가리킬 수 있다(과거 입력은 보존되지 않음).
 
 Provider 원본 payload는 저장하지 않는다. 필터·압축을 거친 `NormalizedSourceItem[]`만 저장한다. 정규화 로직이 바뀌면 다시 수집한다.
 
@@ -538,7 +538,7 @@ targets
 daily_core_data
    │
    ├──────────────────────────────┐
-   │  수집 (append-only)           │  Generation History
+   │  수집 (재수집 시 교체)        │  Generation History
    ▼                              ▼
 daily_core_source_data  ◀──  daily_core_generations
                     input_source_data_ids

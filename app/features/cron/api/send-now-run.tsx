@@ -56,6 +56,7 @@ export async function action({ request }: ActionFunctionArgs) {
       schedule_cron: target.scheduleCron || null,
       is_active: target.isActive,
       language: target.language || 'en',
+      category: target.category,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
