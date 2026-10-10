@@ -2,6 +2,7 @@ import { init } from "@flue/runtime";
 import { createAgentRouter } from "@flue/runtime/routing";
 import { Hono, type MiddlewareHandler } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
+import { CORE_INTERPRETER_PROMPT_VERSION, CoreInterpreter } from "./agents/core-interpreter.ts";
 import { DAILY_CORE_MODEL, DAILY_CORE_PROMPT_VERSION, DailyCore } from "./agents/daily-core.ts";
 import { TestAgent } from "./agents/test-agent.ts";
 import {
@@ -12,6 +13,9 @@ import {
   coreStats,
   type DailyCoreOutput,
   evidenceProblems,
+  type Interpretation,
+  interpretationProblems,
+  interpretationStats,
   type SourceRow,
 } from "./daily-core.ts";
 
@@ -44,7 +48,11 @@ app.route("/agents/test", createAgentRouter(TestAgent));
 
 // Generates a Daily Core and saves it as the next generation. `model` overrides the default model.
 app.post("/core/generate", async (c) => {
-  const { dailyCoreId, model = DAILY_CORE_MODEL } = await c.req.json<{ dailyCoreId?: string; model?: string }>();
+  const {
+    dailyCoreId,
+    model = DAILY_CORE_MODEL,
+    dryRun = false,
+  } = await c.req.json<{ dailyCoreId?: string; model?: string; dryRun?: boolean }>();
   if (!dailyCoreId || !/^[0-9a-f-]{36}$/i.test(dailyCoreId)) {
     return c.json({ error: "dailyCoreId must be a uuid" }, 400);
   }
@@ -83,6 +91,50 @@ app.post("/core/generate", async (c) => {
     input.text,
   ].join("\n");
   const inputStats = { ...input.counts, chars: body.length };
+
+  // Two-call pipeline in progress: only Call 1 (CoreInterpreter) runs, nothing is saved.
+  if (dryRun) {
+    const startedAt = Date.now();
+    const interpreter = init(CoreInterpreter);
+    const receipt = await interpreter.dispatch({
+      message: { kind: "user", body },
+      initialData: {
+        refs: input.refs,
+        contextRefs: input.contextRefs,
+        botRefs: input.botRefs,
+        authors: input.authors,
+        language: core.language,
+        model,
+      },
+    });
+    // Tool call metadata keeps only isError; the stream carries why a submission was rejected
+    // (schema validation or interpretationProblems).
+    const rejections: string[] = [];
+    const reply = await interpreter.read(receipt, {
+      onEvent: (chunk) => {
+        if (chunk.type === "tool-output-error") rejections.push(chunk.errorText.slice(0, 2000));
+      },
+    });
+    const interpretation = reply.data.interpretation?.at(-1) as Interpretation | undefined;
+    if (!interpretation) {
+      return c.json({ error: `interpreter finished without output: ${reply.text.slice(0, 500)}` }, 500);
+    }
+    return c.json({
+      dailyCoreId,
+      dryRun: true,
+      promptVersion: CORE_INTERPRETER_PROMPT_VERSION,
+      conversationId: interpreter.id,
+      elapsedMs: Date.now() - startedAt,
+      usage: reply.metadata?.usage ?? null,
+      toolCalls: reply.metadata?.toolCalls ?? [],
+      rejections,
+      droppedActors: reply.data.droppedActors?.at(-1) ?? [],
+      inputStats,
+      stats: interpretationStats(interpretation, input),
+      problems: interpretationProblems(interpretation, input),
+      interpretation,
+    });
+  }
 
   const generationNo = core.last_generation_no + 1;
   const startedAt = new Date();

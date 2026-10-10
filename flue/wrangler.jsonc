@@ -6,6 +6,7 @@
   "observability": { "enabled": true },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["FlueTestAgentAgent"] },
-    { "tag": "v2", "new_sqlite_classes": ["FlueDailyCoreAgent"] }
+    { "tag": "v2", "new_sqlite_classes": ["FlueDailyCoreAgent"] },
+    { "tag": "v3", "new_sqlite_classes": ["FlueCoreInterpreterAgent"] }
   ]
 }

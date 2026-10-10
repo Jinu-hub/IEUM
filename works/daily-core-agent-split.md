@@ -55,8 +55,9 @@ Agent 입력(지금과 같은 텍스트: 스레드 묶기, 맥락·봇 표시, �
 
 사용자 확인
 
-- [ ] 기준선 숫자(특히 중복 수, 사람 줄 인용 수)가 눈으로 본 문제를 잘 나타낸다. 아니면 지표를 고친다.
-- [ ] 위 "정해 둔 것"으로 Phase 1에 들어가도 된다.
+- [x] 기준선 숫자(특히 중복 수, 사람 줄 인용 수)가 눈으로 본 문제를 잘 나타낸다. 아니면 지표를 고친다.
+- [x] 위 "정해 둔 것"으로 Phase 1에 들어가도 된다.
+  - 사용자(2026-10-10): Phase 1 진행.
 
 확인 기록
 
@@ -89,24 +90,116 @@ Agent 입력(지금과 같은 텍스트: 스레드 묶기, 맥락·봇 표시, �
 
 - Agent `CoreInterpreter`(`flue/src/agents/core-interpreter.ts`). 입력은 지금 Agent와 같은 텍스트.
 - 출력 스키마(Valibot, 제출 Tool): `overview_candidate.summary`, `core_items[]`
-  - `concept_key`(kebab-case, 유일), `title`, `summary`, `importance`(1~5), `confidence`(0~1), `roles`(highlight / topic / progress / member_activity 후보), `status`, `tags`, `classifications`, `entities`, `actors`(type, name), `evidence_refs`, `progress`(선택).
-- Tool 검사: 지금 규칙(모르는 ref, 맥락만 인용) + `concept_key` 유일 + member actor 이름이 입력 사람 목록에 있음 + member actor가 있는 항목은 봇·맥락이 아닌 ref를 인용.
+  - `concept_key`(kebab-case, 유일), `title`, `summary`, `importance`(1~5), `confidence`(0~1), `roles`(highlight / topic / progress 후보), `status`, `tags`, `classifications`, `entities`, `actors`(type, name), `evidence_refs`, `progress`(선택).
+  - 계약(`InterpretedCoreItem`)에서 뺀 것: `roles`의 `member_activity`(멤버 활동은 member actor로 정해짐), `classifications.attributes`, `notes`, 별도 `core_item_id`.
+- Tool 검사: 지금 규칙(모르는 ref, 맥락만 인용) + `concept_key` 유일 + **member actor는 인용한 줄 중 하나 이상의 작성자**(입력을 만들 때 ref별 작성자 표 `authors`를 같이 만듦). 사람 목록 검사는 이 규칙에 포함됨.
 - 지시문 핵심: 같은 사건(같은 티켓·안건)은 하나의 core item으로 합친다. 사람이 한 일은 그 사람을 actor로.
 - `/core/generate`에 `dryRun: true`: DB에 쓰지 않고 Agent 출력과 stats를 돌려줌. 이 Phase에서는 Call 1까지만 돈다.
 
 에이전트 확인
 
-- [ ] `check.ts`에 Call 1 검사 assert 추가, 통과. `tsc` 오류 없음.
-- [ ] 로컬 Worker dry run 1회: 스키마 통과, 근거 위반 0, `concept_key` 중복 0.
-- [ ] 시간·토큰·비용, core item 수, 사람 줄 인용 수를 기록(기준선과 비교).
+- [x] `check.ts`에 Call 1 검사 assert 추가, 통과. `tsc` 오류 없음.
+- [x] 로컬 Worker dry run 1회: 스키마 통과, 근거 위반 0, `concept_key` 중복 0.
+- [x] 시간·토큰·비용, core item 수, 사람 줄 인용 수를 기록(기준선과 비교).
 
 사용자 확인
 
 - [ ] core item 하나가 사건 하나다. 같은 사건이 두 item으로 나뉘거나, 다른 사건이 한 item에 섞이지 않았다.
 - [ ] actor가 맞다(남의 발언을 다른 사람의 일로 쓰지 않음).
 - [ ] 빠진 일이 기준선보다 많지 않다.
+- [ ] 봇 알림만으로 만든 item(아래 발견)과 비용을 어떻게 할지 정한다.
 
 확인 기록
+
+- 2026-10-10 에이전트: 구현과 확인.
+  - 코드
+    - `flue/src/daily-core.ts`: `buildAgentInput`이 `authors`(그날 사람이 쓴 줄의 ref → 작성자, 봇·맥락 제외)도 돌려줌. `Interpretation` 스키마, `interpretationProblems`, `interpretationStats`(core item 수, 사람 줄 인용, actor가 된 사람 수).
+    - `flue/src/agents/core-interpreter.ts`: Agent `CoreInterpreter`(`core-interpreter-v1`, 모델은 기존과 같은 `openai/gpt-5.4-mini`). 제출 Tool·제출 강제·usage 기록 방식은 `DailyCore`와 같음.
+    - `flue/src/app.ts`: `/core/generate`에 `dryRun: true`. Call 1만 돌리고 DB에는 쓰지 않음. 응답에 `interpretation`, `stats`, `problems`, usage.
+    - `wrangler.jsonc`: migration `v3`(`FlueCoreInterpreterAgent`). 로컬 vite dev는 재시작 없이 새 Agent를 인식함.
+  - `daily-core.check.ts` 통과(작성자 표, 모르는 ref, 맥락만, actor가 쓴 줄 없음, 사람 목록 밖 이름, `concept_key` 중복, stats). `tsc` 오류 없음.
+  - Target의 `daily_core_data`가 다시 0행이어서(사용자가 지운 것으로 보임) 재수집: `d36d689e-04bf-4bbf-821c-d307ea1a45d5`, 항목 128개.
+  - 실행(run 12, dry run): 제출 1회, 에러 없음, 위반 0.
+
+    | 항목 | run 11 (기준선, 단일) | run 12 (Call 1만) |
+    |---|---|---|
+    | 소요 시간 | 67.5초 | 120.5초 |
+    | 토큰 입력 / 출력 | 9,732 / 18,993 | 9,563 / 30,683 |
+    | 비용 | $0.093 | $0.145 |
+    | 항목 수 | 5 / 4 / 4 / 12 (배열별) | core item 32 |
+    | 사람 줄 인용 | 71개 중 44개 | 71개 중 54개 |
+    | 멤버 / actor가 된 사람 | 12 / 13 | 13 / 13 |
+
+  - 좋아진 점
+    - 같은 티켓이 두 item으로 나뉜 경우 0(제목·요약의 `#번호` 기준). 여러 item에 인용된 ref는 3개뿐이고, 한 메시지에 여러 안건을 적은 줄(S127 일일 보고 등)이었음.
+    - 기준선에서 겹쳤던 #23145 / #23189가 한 item(`ticket-23145-delete-timing-db-design-23189`)으로 합쳐짐.
+    - 빠지던 사람(Mitsuru Ikeshita)이 actor로 들어옴. 티켓 없는 일(No.230, No.342, 11월 No.8, Codex 문제, 10월 모듈 작성)도 각각 item이 됨.
+  - 발견
+    - 32개 중 12개가 Redmine 봇 알림 하나만 인용한 item(actor `redmine`, importance 2). 지시문의 "봇 알림만으로는 item을 거의 만들지 않음"을 따르지 않음. v4~v6에서 봇 알림 티켓마다 `unknown` 상태가 생기던 것과 같은 경향.
+    - roles는 progress가 25개, topic 3개, 둘 다 4개. highlight 후보는 0개(importance 5는 1개).
+    - Call 1만으로 기준선보다 시간 1.8배, 비용 1.6배. 출력 JSON은 1.6만 자인데 출력 토큰 3만이라 대부분 추론으로 보임. Call 2가 더해지면 합계는 더 늘어남.
+  - 1회 실행이라 모델 변동이 섞일 수 있음.
+  - 사용자 확인용 출력: `works/out/daily-core-run12.md`(importance 순, actors와 refs 포함).
+- 2026-10-10 사용자 결정: 봇 알림만 인용한 item은 제출 Tool이 거부(봇 알림은 같은 안건 item의 보조 근거로만). 비용은 그렇게 고친 뒤 1회 다시 돌려 보고 판단.
+- 2026-10-10 에이전트: `core-interpreter-v2`로 반영하고 1회 실행(run 13).
+  - 검사: 맥락이 아닌 ref가 모두 봇 알림이면 에러. 지시문도 "모든 item은 그날 사람이 쓴 줄을 하나 이상 인용, 봇 알림에만 나온 티켓은 item이 아님"으로 바꿈. `check.ts` 통과, `tsc` 오류 없음.
+
+    | 항목 | run 11 (기준선) | run 12 (v1) | run 13 (v2) |
+    |---|---|---|---|
+    | 소요 시간 | 67.5초 | 120.5초 | 141.3초 |
+    | 토큰 입력 / 출력 / 캐시 읽기 | 9,732 / 18,993 / 0 | 9,563 / 30,683 / 0 | 10,200 / 35,132 / 76,288 |
+    | 비용 | $0.093 | $0.145 | $0.171 |
+    | 제출 | 1회 | 1회 | 3회(2회 거부) |
+    | core item | — | 32(봇만 12) | 18(봇만 0) |
+    | 사람 줄 인용 | 44 / 71 | 54 / 71 | 54 / 71 |
+    | actor가 된 사람 | — | 13 / 13 | 13 / 13 |
+
+  - 좋아진 점: 봇 알림 item이 모두 빠지고 사람 줄 인용 수는 그대로. `concept_key`가 `ticket-23163`처럼 짧아짐. importance 5가 3개(#23163, #23145, #20038 No.224/227)로 기준선 highlights와 비슷함.
+  - 발견: 제출이 2번 거부되어 시간·비용이 오히려 늘어남(캐시 읽기 7.6만 토큰 = 다시 제출할 때마다 대화 전체를 다시 읽음). Flue의 Tool 호출 기록에는 `isError`만 있어서 거부 이유는 남지 않음. 다음 실행부터 보이도록 거부된 제출의 문제 목록을 `rejections`로 응답에 남기게 함.
+  - 발견: run 12에 있던 #23054(Momoko, S027), #23000(Yoko), No.230이 이번엔 별도 item이 아님. No.230은 `ticket-22839`(S119, S127)로 보이고, 나머지는 빠졌거나 다른 item에 묻힘. 사람 줄 인용 수가 같아서 숫자로는 구분 안 됨.
+  - 1회 실행이라 거부 횟수에도 모델 변동이 섞일 수 있음.
+  - 사용자 확인용 출력: `works/out/daily-core-run13.md`.
+- 2026-10-10 사용자 제안: 봇 알림은 수집 단계에서 빼서 DB에 넣지 않는 게 효율적이지 않나.
+  - 에이전트 의견: 모델 비용은 입력에서 빼면 같아짐. 수집에서 빼면 봇 판별(user id 없음 = 봇)이 틀렸을 때 다시 수집해야 복구되고, Redmine 알림의 티켓 번호·제목(v4 엔티티 추출에 썼음)도 잃음. 빈 GitHub 앱 메시지도 이미 같은 방식(DB에 두고 입력에서만 뺌).
+  - 사용자 결정: Agent 입력을 만들 때 빼고 DB에는 남김.
+- 2026-10-10 에이전트: 반영하고 2회 실행(run 14, 15).
+  - `buildAgentInput`: 봇 메시지는 입력에서 뺌(`counts.bot_dropped`). 답글이 달린 봇 부모는 남김. 이 날짜의 Slackbot 리마인더 2개(`進捗報告スレッド`)에 사람들의 진행 보고가 답글로 달려 있었음. 이 날짜에서 빠진 봇 메시지 21개(`#dev_lead` Redmine 20, Slackbot 1). 봇 검사(봇만 인용하면 거부)는 남은 봇 부모용으로 둠. `core-interpreter-v3`.
+  - 거부 이유 기록: 처음엔 거부된 제출의 문제 목록을 data writer로 남겼는데, run 14에서 거부 1번이 있었는데도 비어 있었음. Tool 입력이 스키마 검증에서 떨어지면 `run`이 불리지 않기 때문. `read()`의 `onEvent`에서 `tool-output-error` 조각의 `errorText`를 모으는 방식으로 바꿈(스키마 실패와 검사 실패 모두 잡힘).
+  - `check.ts`(봇 제외, 답글 달린 봇 부모 유지, 작성자 표) 통과, `tsc` 오류 없음.
+
+    | 항목 | run 11 (기준선) | run 13 (v2) | run 14 (v3) | run 15 (v3) |
+    |---|---|---|---|---|
+    | 입력 줄 / 글자 | 99 / 15.6천 | 99 / 15.6천 | 79 / 12.3천 | 79 / 12.3천 |
+    | 소요 시간 | 67.5초 | 141.3초 | 167.1초 | 150.8초 |
+    | 토큰 출력 / 캐시 읽기 | 18,993 / 0 | 35,132 / 76,288 | 43,676 / 46,080 | 39,584 / 79,360 |
+    | 비용 | $0.093 | $0.171 | $0.212 | $0.193 |
+    | 제출 | 1회 | 3회 | 2회 | 3회 |
+    | core item | — | 18 | 23 | 21 |
+    | 사람 줄 인용 | 44 / 71 | 54 / 71 | 66 / 71 | 66 / 71 |
+
+  - run 15 거부 이유 2개
+    - 스키마: `core_items.3: must be object`. 모델이 긴 JSON을 내다가 item 하나를 깨뜨림.
+    - 검사: `ticket-23163`의 member actor Yoko Nishimura가 인용한 줄을 하나도 쓰지 않음.
+  - 발견: 거부 1번마다 모델이 JSON 전체(1만 자 이상)를 다시 냄. 비용이 늘어난 주원인. 봇 알림을 빼서 입력은 20% 줄었지만 비용은 줄지 않음.
+  - 발견: 사람 줄 인용이 66 / 71로 늘었음. run 13에서 빠졌던 #23054(Momoko), No.230이 다시 item이 됨. 대신 "朝の作業予定共有", "evening-status-share", 개인 일일 보고처럼 사람별 예정·보고를 묶은 item이 생김(importance 1~2).
+  - 사용자 확인용 출력: `works/out/daily-core-run14.md`, `works/out/daily-core-run15.md`.
+- 2026-10-10 사용자 결정: 인용한 줄을 쓰지 않은 member actor는 거부하지 않고 코드가 뺌. (함께 제안한 Call 1 스키마 축소, 추론 강도 낮추기는 고르지 않음.)
+- 2026-10-10 에이전트: `core-interpreter-v4`로 반영하고 1회 실행(run 16).
+  - `dropUnwrittenActors`(`daily-core.ts`): 제출 Tool이 검사를 통과한 출력에서 그런 actor를 빼고 저장, 뺀 목록은 `droppedActors`로 응답에 남김. `interpretationProblems`에서는 actor 검사를 뺌. 지시문의 actor 규칙은 그대로. `check.ts` 통과, `tsc` 오류 없음.
+
+    | 항목 | run 11 (기준선) | run 15 (v3) | run 16 (v4) |
+    |---|---|---|---|
+    | 소요 시간 | 67.5초 | 150.8초 | 107.0초 |
+    | 토큰 입력 / 출력 / 캐시 읽기 | 9,732 / 18,993 / 0 | 11,432 / 39,584 / 79,360 | 8,135 / 21,792 / 0 |
+    | 비용 | $0.093 | $0.193 | $0.104 |
+    | 제출 | 1회 | 3회 | 1회 |
+    | core item | — | 21 | 20 |
+    | 사람 줄 인용 | 44 / 71 | 66 / 71 | 63 / 71 |
+    | 뺀 actor | — | — | 2 (`ticket-23163`: Yoko Nishimura, `daily-status-sharing`: Manseon Jeon) |
+
+  - 거부 없이 1회에 통과. 출력 JSON 1만 자. 거부가 없으면 Call 1 비용은 기준선 단일 Agent와 비슷함($0.104 vs $0.093). 다만 스키마 실패(깨진 item)는 이번엔 없었을 뿐 다시 날 수 있음.
+  - 같은 티켓이 두 item으로 나뉜 경우 0. #23054(Momoko)는 이번에도 별도 item이 아님(run 14, 15에는 있었음). 실행마다 흔들림.
+  - 사용자 확인용 출력: `works/out/daily-core-run16.md`.
 
 ---
 

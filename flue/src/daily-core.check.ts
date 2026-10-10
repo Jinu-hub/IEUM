@@ -5,7 +5,11 @@ import {
   buildCoreJson,
   coreStats,
   type DailyCoreOutput,
+  dropUnwrittenActors,
   evidenceProblems,
+  type Interpretation,
+  interpretationProblems,
+  interpretationStats,
   type SourceItem,
 } from "./daily-core.ts";
 
@@ -44,6 +48,8 @@ const input = buildAgentInput(
         item("S005", "5.0", "2026-10-09T04:00:00Z", "", { thread_ref: "4.0" }),
         item("S006", "6.0", "2026-10-09T05:00:00Z", "[LEAD] Bo updated #12", { author: { name: "redmine" } }),
         item("S009", "9.0", "2026-10-09T05:30:00Z", "Reminder", { author: { id: "USLACKBOT", name: "Slackbot" } }),
+        item("S010", "10.0", "2026-10-09T06:00:00Z", "Progress thread", { author: { id: "USLACKBOT", name: "Slackbot" } }),
+        item("S011", "11.0", "2026-10-09T06:10:00Z", "did #12", { thread_ref: "10.0" }),
       ],
     },
     {
@@ -57,13 +63,14 @@ const input = buildAgentInput(
   "Asia/Tokyo",
 );
 
-assert.deepEqual(input.refs, ["S001", "S003", "S004", "S006", "S009", "S007", "S008"]);
+assert.deepEqual(input.refs, ["S001", "S003", "S004", "S010", "S011", "S007", "S008"]);
 assert.deepEqual(input.contextRefs, ["S001"]);
-assert.deepEqual(input.botRefs, ["S006", "S009"]);
+assert.deepEqual(input.botRefs, ["S010"]);
 assert.deepEqual(input.people, ["Aki", "Jinu Son", "takamune-dsl"]);
-assert.deepEqual(input.counts, { total: 9, included: 7, dropped: 2, context: 1, bot: 2, people: 3 });
+assert.deepEqual(input.counts, { total: 11, included: 7, dropped: 2, bot_dropped: 2, context: 1, bot: 1, people: 3 });
 assert.match(input.text, /\[S001\] \(context, 2026-10-07\) Old: old parent\n {2}↳ \[S003\] 11:00 Aki: @Jinu Son @U404 @channel reply to old/);
-assert.match(input.text, /\[S006\] 14:00 redmine \(bot notification\): \[LEAD\] Bo updated #12/);
+assert.match(input.text, /\[S010\] 15:00 Slackbot \(bot notification\): Progress thread\n {2}↳ \[S011\] 15:10 Aki: did #12/);
+assert.doesNotMatch(input.text, /S006|S009/);
 assert.match(input.text, /\[S007\] 15:00 Jinu Son \(commit\): fix/);
 assert.match(input.text, /\(no activity: empty\)/);
 
@@ -93,23 +100,65 @@ const problems = (output: DailyCoreOutput) => evidenceProblems(output, input);
 assert.deepEqual(problems(core(["S001", "S003"])), []);
 assert.match(problems(core(["S001"]))[0], /only context/);
 assert.match(problems(core(["S999"]))[0], /unknown refs S999/);
-assert.deepEqual(problems(core(["S006"])), []);
-assert.match(problems(core(["S006"], "member_activity"))[0], /bot notifications/);
-assert.deepEqual(problems(core(["S006", "S004", "S007"], "member_activity", "Jinu Son")), []);
+assert.deepEqual(problems(core(["S010"])), []);
+assert.match(problems(core(["S010"], "member_activity"))[0], /bot notifications/);
+assert.deepEqual(problems(core(["S010", "S004", "S007"], "member_activity", "Jinu Son")), []);
 assert.match(problems(core(["S004"], "member_activity", "Jinu Son pushed fixes"))[0], /title must be/);
-assert.match(problems(core(["S006", "S004"], "member_activity", "Bo"))[0], /title must be/);
+assert.match(problems(core(["S010", "S004"], "member_activity", "Bo"))[0], /title must be/);
 
 const statsOutput = core(["S003", "S004"]);
-statsOutput.topics = [{ ...statsOutput.highlights[0], evidence_refs: ["S004", "S006", "S001"] }];
-statsOutput.progress_roadmap = [{ ...statsOutput.highlights[0], evidence_refs: ["S006"] }];
+statsOutput.topics = [{ ...statsOutput.highlights[0], evidence_refs: ["S004", "S010", "S001"] }];
+statsOutput.progress_roadmap = [{ ...statsOutput.highlights[0], evidence_refs: ["S010"] }];
 statsOutput.member_activity = [{ ...statsOutput.highlights[0], evidence_refs: ["S007"] }];
 assert.deepEqual(coreStats(statsOutput, input), {
   items: { highlights: 1, topics: 1, progress_roadmap: 1, member_activity: 1 },
-  human_refs: 4,
+  human_refs: 5,
   human_refs_cited: 3,
   human_refs_in_multiple_sections: 1,
   people: 3,
 });
+
+assert.deepEqual(input.authors, { S003: "Aki", S004: "Jinu Son", S011: "Aki", S007: "Jinu Son", S008: "takamune-dsl" });
+
+const interpreted = (refs: string[], actors: string[], key = "ticket-12"): Interpretation["core_items"][number] => ({
+  concept_key: key,
+  title: "",
+  summary: "",
+  importance: 3,
+  confidence: 0.8,
+  roles: ["progress"],
+  tags: [],
+  classifications: { primary: "", secondary: [] },
+  entities: [],
+  actors: actors.map((name) => ({ type: "member" as const, name })),
+  evidence_refs: refs,
+});
+const interpretation = (...core_items: Interpretation["core_items"]): Interpretation => ({
+  overview_candidate: { summary: "" },
+  core_items,
+});
+const iProblems = (output: Interpretation) => interpretationProblems(output, input);
+assert.deepEqual(iProblems(interpretation(interpreted(["S001", "S003", "S010", "S007"], ["Aki", "Jinu Son"]))), []);
+assert.match(iProblems(interpretation(interpreted(["S001"], [])))[0], /only context/);
+assert.match(iProblems(interpretation(interpreted(["S999", "S003"], [])))[0], /unknown refs S999/);
+assert.deepEqual(iProblems(interpretation(interpreted(["S010", "S004"], ["Jinu Son"]))), []);
+assert.match(iProblems(interpretation(interpreted(["S010", "S001"], [])))[0], /only bot notifications/);
+const withSystem = interpreted(["S003", "S010"], ["Aki", "Bo", "Jinu Son"]);
+withSystem.actors.push({ type: "system", name: "redmine" });
+const fixed = dropUnwrittenActors(interpretation(withSystem, interpreted(["S004"], ["Jinu Son"], "b")), input.authors);
+assert.deepEqual(fixed.dropped, ["ticket-12: Bo", "ticket-12: Jinu Son"]);
+assert.deepEqual(
+  fixed.output.core_items.map((item) => item.actors.map((actor) => actor.name)),
+  [["Aki", "redmine"], ["Jinu Son"]],
+);
+assert.match(
+  iProblems(interpretation(interpreted(["S003"], []), interpreted(["S004"], [])))[0],
+  /ticket-12: concept_key is used twice/,
+);
+assert.deepEqual(
+  interpretationStats(interpretation(interpreted(["S003", "S010"], ["Aki"]), interpreted(["S004"], ["Jinu Son"], "b")), input),
+  { core_items: 2, human_refs: 5, human_refs_cited: 2, people: 3, people_as_actors: 2 },
+);
 
 const meta = {
   target_id: "t",

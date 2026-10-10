@@ -103,8 +103,11 @@ export function buildAgentInput(rows: SourceRow[], timezone: string) {
   const contextRefs: string[] = [];
   const botRefs: string[] = [];
   const people = new Set<string>();
+  // Who wrote each line of this day (bots and context excluded).
+  const authors: Record<string, string> = {};
   let total = 0;
   let dropped = 0;
+  let botDropped = 0;
 
   for (const row of rows) {
     lines.push(`## ${row.source_type} ${row.source_ident}`);
@@ -122,17 +125,25 @@ export function buildAgentInput(rows: SourceRow[], timezone: string) {
       refs.push(item.source_ref);
       if (isContext(item)) contextRefs.push(item.source_ref);
       if (isBot(item)) botRefs.push(item.source_ref);
-      if (!isBot(item) && !isContext(item)) people.add(author(item));
+      if (!isBot(item) && !isContext(item)) {
+        people.add(author(item));
+        authors[item.source_ref] = author(item);
+      }
     };
 
     for (const root of items) {
       if (root.thread_ref && ids.has(root.thread_ref)) continue;
       const children = replies.get(root.source_item_id) ?? [];
       // Bot messages with no text (e.g. GitHub app posts) carry nothing the repo sources don't.
-      if (root.content.trim() || root.title || children.length) keep(root, "");
+      // Bot notifications (e.g. Redmine) stay in the DB but not in the model input: models turned
+      // each one into its own item. Bot parents with replies stay (Slackbot progress-report threads).
+      if (children.length) keep(root, "");
+      else if (isBot(root)) botDropped++;
+      else if (root.content.trim() || root.title) keep(root, "");
       else dropped++;
       for (const child of children) {
-        if (child.content.trim()) keep(child, "  ↳ ");
+        if (isBot(child)) botDropped++;
+        else if (child.content.trim()) keep(child, "  ↳ ");
         else dropped++;
       }
     }
@@ -146,10 +157,12 @@ export function buildAgentInput(rows: SourceRow[], timezone: string) {
     contextRefs,
     botRefs,
     people: [...people],
+    authors,
     counts: {
       total,
       included: refs.length,
       dropped,
+      bot_dropped: botDropped,
       context: contextRefs.length,
       bot: botRefs.length,
       people: people.size,
@@ -217,6 +230,100 @@ export function coreStats(output: DailyCoreOutput, { refs, contextRefs, botRefs,
     human_refs_cited: human.filter((ref) => cited.has(ref)).length,
     human_refs_in_multiple_sections: human.filter((ref) => (sectionsPerRef.get(ref) ?? 0) > 1).length,
     people: people.length,
+  };
+}
+
+// Call 1 (CoreInterpreter): one item per event, merged across sources. core_item_id = concept_key.
+const InterpretedItem = v.object({
+  concept_key: v.pipe(
+    v.string(),
+    v.regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
+    v.description("Stable kebab-case key, unique in the output, e.g. ticket-23163 or millvi-v3-subtitles."),
+  ),
+  title: v.string(),
+  summary: v.string(),
+  importance: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(5), v.description("5 = key outcome of the day")),
+  confidence: v.pipe(v.number(), v.minValue(0), v.maxValue(1)),
+  roles: v.pipe(
+    v.array(v.picklist(["highlight", "topic", "progress"])),
+    v.description("Candidate placements. The final placement is decided later."),
+  ),
+  status: v.optional(v.nullable(v.picklist(["planned", "in_progress", "blocked", "completed", "unknown"]))),
+  tags: v.array(v.string()),
+  classifications: v.object({ primary: v.string(), secondary: v.array(v.string()) }),
+  entities: v.array(v.object({ type: v.string(), name: v.string(), ident: v.optional(v.string()) })),
+  actors: v.pipe(
+    v.array(v.object({ type: v.picklist(["member", "team", "system", "other"]), name: v.string() })),
+    v.description("Who did it. A member actor must be the author of at least one cited line."),
+  ),
+  evidence_refs: v.pipe(v.array(v.string()), v.minLength(1), v.description("source_ref ids from the input, e.g. S012.")),
+  progress: v.optional(
+    v.object({ from: v.optional(v.string()), to: v.optional(v.string()), next_step: v.optional(v.string()) }),
+  ),
+});
+
+export const Interpretation = v.object({
+  overview_candidate: v.object({ summary: v.string() }),
+  core_items: v.array(InterpretedItem),
+});
+export type Interpretation = v.InferOutput<typeof Interpretation>;
+
+export type InterpretationEvidence = {
+  refs: string[];
+  contextRefs: string[];
+  botRefs: string[];
+  authors: Record<string, string>;
+};
+
+export function interpretationProblems(output: Interpretation, { refs, contextRefs, botRefs }: InterpretationEvidence) {
+  const known = new Set(refs);
+  const context = new Set(contextRefs);
+  const bot = new Set(botRefs);
+  const seen = new Set<string>();
+  const problems: string[] = [];
+  for (const item of output.core_items) {
+    const key = item.concept_key;
+    if (seen.has(key)) problems.push(`${key}: concept_key is used twice; merge the items or rename one`);
+    seen.add(key);
+    const unknown = item.evidence_refs.filter((ref) => !known.has(ref));
+    if (unknown.length) problems.push(`${key}: unknown refs ${unknown.join(", ")}`);
+    if (item.evidence_refs.every((ref) => context.has(ref))) {
+      problems.push(`${key}: cites only context refs; add a ref from this day`);
+    } else if (item.evidence_refs.every((ref) => context.has(ref) || bot.has(ref))) {
+      problems.push(
+        `${key}: cites only bot notifications; cite a line a person wrote about the same matter, or drop the item`,
+      );
+    }
+  }
+  return problems;
+}
+
+// A member actor must have written a cited line; others were only mentioned. Code drops them
+// instead of rejecting, because a rejection makes the model resend the whole output.
+export function dropUnwrittenActors(output: Interpretation, authors: Record<string, string>) {
+  const dropped: string[] = [];
+  const core_items = output.core_items.map((item) => {
+    const writers = new Set(item.evidence_refs.map((ref) => authors[ref]));
+    const actors = item.actors.filter((actor) => actor.type !== "member" || writers.has(actor.name));
+    for (const actor of item.actors) if (!actors.includes(actor)) dropped.push(`${item.concept_key}: ${actor.name}`);
+    return { ...item, actors };
+  });
+  return { output: { ...output, core_items }, dropped };
+}
+
+export function interpretationStats(output: Interpretation, { refs, contextRefs, botRefs, people }: EvidenceSets) {
+  const skip = new Set([...contextRefs, ...botRefs]);
+  const human = refs.filter((ref) => !skip.has(ref));
+  const cited = new Set(output.core_items.flatMap((item) => item.evidence_refs));
+  const actors = new Set(
+    output.core_items.flatMap((item) => item.actors.filter((a) => a.type === "member").map((a) => a.name)),
+  );
+  return {
+    core_items: output.core_items.length,
+    human_refs: human.length,
+    human_refs_cited: human.filter((ref) => cited.has(ref)).length,
+    people: people.length,
+    people_as_actors: actors.size,
   };
 }
 
