@@ -23,6 +23,7 @@ import {
 const DAILY_CORE_MODEL = "openai/gpt-5.4-mini";
 // v2: both calls at thinkingLevel "low" (v1 used the default "medium").
 const PIPELINE_VERSION = "flue-two-call-v2";
+const MAX_REJECTIONS = 2;
 const PROMPT_VERSION = `${CORE_INTERPRETER_PROMPT_VERSION}+${CORE_STRUCTURER_PROMPT_VERSION}`;
 // Classifications are free text until a taxonomy exists.
 const TAXONOMY_VERSION = "free-text";
@@ -63,11 +64,19 @@ async function runAgent<T>(
   // Tool call metadata keeps only isError; the stream carries why a submission was rejected.
   const rejections: string[] = [];
   const receipt = await handle.dispatch({ message: { kind: "user", body }, initialData });
-  const reply = await handle.read(receipt, {
-    onEvent: (chunk) => {
-      if (chunk.type === "tool-output-error") rejections.push(chunk.errorText.slice(0, 2000));
-    },
-  });
+  const reply = await handle
+    .read(receipt, {
+      onEvent: (chunk) => {
+        if (chunk.type !== "tool-output-error") return;
+        rejections.push(chunk.errorText.slice(0, 2000));
+        // Each retry re-emits the whole submission, so stop a model that keeps failing.
+        if (rejections.length >= MAX_REJECTIONS) void handle.abort();
+      },
+    })
+    .catch((error) => {
+      if (rejections.length < MAX_REJECTIONS) throw error;
+      throw new Error(`${key}: stopped after ${rejections.length} rejections: ${rejections.at(-1)}`);
+    });
   const output = reply.data[key]?.at(-1) as T | undefined;
   if (!output) throw new Error(`${key}: agent finished without output: ${reply.text.slice(0, 500)}`);
   return {
