@@ -1,0 +1,22 @@
+---
+description: Weekly work log and TODO files under works/
+alwaysApply: true
+---
+
+# Work log (`works/`)
+
+Work is logged per ISO week: `works/<ISO year>/W<week>.md` (done) and `W<week>_TODO.md` (to do). Full rules: `works/README.md`.
+
+Before writing to either file, run `date +%G/W%V` to get the current week.
+
+If that week's files don't exist yet:
+1. Create `W<week>.md` starting with `# W<week> (<Mon> ~ <Sun>)` and `이전 주: W<prev>.md`.
+2. Create `W<week>_TODO.md`, copying every unchecked `[ ]` item from the previous week's TODO with its section structure.
+3. Do not edit the previous week's files.
+
+Logging:
+- Add done work under `## YYYY-MM-DD` in `W<week>.md`, written in Korean like the existing entries.
+- Mark finished TODO items `[x]`; never delete them.
+- Prioritize decisions and their reasons, including approaches that were tried and rejected. What changed is already in git.
+- Logs are true as of when they were written. If a log and the code disagree, trust the code and re-check anything important there.
+- The TODO is the current plan, not a commitment: add, reorder, or drop items as plans change. Only finished items stay as `[x]`.
