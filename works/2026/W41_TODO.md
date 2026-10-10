@@ -6,7 +6,7 @@ Daily Core E2E(Phase 0~4) 완료 이후 할 일. 한 일은 `W41.md`, E2E 경과
 
 ### 1-1. Agent 분리
 
-- [ ] Agent 분리: 지금의 단일 Agent(`DailyCore`)를 `app/features/daily-core/dev/02-pipeline-architecture.md`의 3개 역할(Signal Extractor → Core Interpreter → Core Structurer)로 나눈다. 계약은 `app/features/daily-core/contracts/agent-io.ts`. 품질 개선(항목 간 중복 등)과도 이어진다.
+- [x] Agent 분리: 지금의 단일 Agent(`DailyCore`)를 `app/features/daily-core/dev/02-pipeline-architecture.md`의 3개 역할(Signal Extractor → Core Interpreter → Core Structurer)로 나눈다. 계약은 `app/features/daily-core/contracts/agent-io.ts`. 품질 개선(항목 간 중복 등)과도 이어진다.
   - v1은 호출 2회: Call 1 Extraction+Interpretation, Call 2 Structuring(문서 권장). 3회 분리는 단계별 추적이 필요해지면.
   - Call 2 출력 스키마를 정할 때 각 배열이 `daily_core_items`의 어떤 `item_type`이 될지 메모해 둔다(projection에서 씀).
   - Phase별 계획과 확인 기록: `works/daily-core-agent-split.md`.
@@ -44,6 +44,11 @@ Daily Core E2E(Phase 0~4) 완료 이후 할 일. 한 일은 `W41.md`, E2E 경과
   - member_activity에서 빠지는 사람(Mitsuru 등).
   - 사람이 쓴 줄 71개 중 48개만 인용(run 10 기준).
   - 사람 대응표(workspace 단위, Slack user id ↔ GitHub 로그인). 이름 비교로 못 합치는 사람(`takamune-dsl`)용.
+  - 2호출 분리 후 시간·비용: 추론 강도 `medium`에서는 실행마다 2배 이상 흔들림(run 18 345초 / $0.297). `low` + `core-interpreter-v5`로 바꿔 배포본 42초 / $0.057. 덮는 범위가 다시 줄면 `medium`과 비교.
+  - 같은 일이 두 core item으로 나뉨(run 20: #23087 topics / progress, 모듈 작성 2개).
+  - progress 배치 기준: run 21에서 progress 2개뿐, 진행 보고가 topics / highlights로 감.
+  - member_activity 누락(run 20: Naoya Tsujimoto). 지시만으로는 실행마다 흔들림.
+  - Agent 분리 Phase 1에서 남긴 것(`works/daily-core-agent-split.md`): 실행마다 item이 생겼다 빠졌다 함(#23054), 긴 출력 JSON에서 item 하나가 깨져 재제출될 수 있음, 사람별 예정·보고를 묶은 낮은 중요도 item, 인용 안 된 사람 줄(run 16 기준 8개).
 
 ### 3-4. 구조와 스키마 정리
 

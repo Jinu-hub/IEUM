@@ -327,6 +327,124 @@ export function interpretationStats(output: Interpretation, { refs, contextRefs,
   };
 }
 
+// Call 2 (CoreStructurer): places core items into the Daily Core arrays. The model writes only
+// placement and text; refs, tags, classifications, entities, importance come from the core items.
+const PlacedItem = v.object({
+  item_key: v.pipe(v.string(), v.description("Stable kebab-case key, unique within its array.")),
+  title: v.string(),
+  summary: v.string(),
+  status: v.optional(v.nullable(v.picklist(["planned", "in_progress", "blocked", "completed", "unknown"]))),
+  core_item_ids: v.pipe(
+    v.array(v.string()),
+    v.minLength(1),
+    v.description("concept_key values of the core items this entry is built from."),
+  ),
+});
+export const Structuring = v.object({
+  overview: v.object({ summary: v.string() }),
+  highlights: v.array(PlacedItem),
+  topics: v.array(PlacedItem),
+  progress_roadmap: v.array(PlacedItem),
+  member_activity: v.array(PlacedItem),
+});
+export type Structuring = v.InferOutput<typeof Structuring>;
+
+const SECTIONS = [...EVENT_SECTIONS, "member_activity"] as const;
+
+export function structurerInput({ overview_candidate, core_items }: Interpretation, people: string[]) {
+  return JSON.stringify({
+    people,
+    overview_candidate,
+    core_items: core_items.map(({ concept_key, title, summary, importance, roles, status, progress, actors }) => ({
+      concept_key,
+      title,
+      summary,
+      importance,
+      roles,
+      status,
+      progress,
+      members: actors.filter((actor) => actor.type === "member").map((actor) => actor.name),
+    })),
+  });
+}
+
+export type StructuringEvidence = {
+  coreRefs: Record<string, string[]>;
+  authors: Record<string, string>;
+  people: string[];
+};
+
+const ownRefs = (refs: string[], name: string, authors: Record<string, string>) =>
+  refs.filter((ref) => authors[ref] === name);
+
+export function structuringProblems(output: Structuring, { coreRefs, authors, people }: StructuringEvidence) {
+  const problems: string[] = [];
+  const placements = new Map<string, string[]>();
+  for (const section of SECTIONS) {
+    for (const item of output[section]) {
+      const unknown = item.core_item_ids.filter((id) => !(id in coreRefs));
+      if (unknown.length) problems.push(`${section}/${item.item_key}: unknown core_item_ids ${unknown.join(", ")}`);
+      if (section !== "member_activity") {
+        for (const id of item.core_item_ids) placements.set(id, [...(placements.get(id) ?? []), section]);
+        continue;
+      }
+      if (!people.includes(item.title)) {
+        problems.push(`${section}/${item.item_key}: title must be exactly one name from people: ${people.join(", ")}`);
+      } else if (!ownRefs(item.core_item_ids.flatMap((id) => coreRefs[id] ?? []), item.title, authors).length) {
+        problems.push(
+          `${section}/${item.item_key}: ${item.title} is not a member of any cited core item; cite items listing them in members, or drop the entry`,
+        );
+      }
+    }
+  }
+  for (const [id, sections] of placements) {
+    if (sections.length > 1) {
+      problems.push(`${id}: placed ${sections.length} times (${sections.join(", ")}); use each core item in at most one entry of highlights, topics, progress_roadmap`);
+    }
+  }
+  const names = output.member_activity.map((item) => item.title);
+  for (const name of new Set(names.filter((name, i) => names.indexOf(name) !== i))) {
+    problems.push(`member_activity: ${name} has several entries; use one per person`);
+  }
+  return problems;
+}
+
+// Turns placed items back into the single-agent output shape, so buildCoreJson stays as is.
+export function resolveStructuring(
+  output: Structuring,
+  { core_items }: Interpretation,
+  authors: Record<string, string>,
+): DailyCoreOutput {
+  const byKey = new Map(core_items.map((item) => [item.concept_key, item]));
+  const resolve = (section: (typeof SECTIONS)[number]) =>
+    output[section].map(({ item_key, title, summary, status, core_item_ids }) => {
+      const sources = core_item_ids.flatMap((id) => byKey.get(id) ?? []);
+      const refs = [...new Set(sources.flatMap((source) => source.evidence_refs))];
+      const lead = sources.reduce((a, b) => (b.importance > a.importance ? b : a));
+      return {
+        item_key,
+        title,
+        summary,
+        status: status ?? null,
+        importance: lead.importance / 5,
+        confidence: Math.min(...sources.map((source) => source.confidence)),
+        tags: [...new Set(sources.flatMap((source) => source.tags))],
+        classifications: lead.classifications,
+        entities: [
+          ...new Map(sources.flatMap((source) => source.entities).map((e) => [`${e.type}|${e.name}`, e])).values(),
+        ],
+        evidence_refs: section === "member_activity" ? ownRefs(refs, title, authors) : refs,
+      };
+    });
+  return {
+    overview: output.overview,
+    highlights: resolve("highlights"),
+    topics: resolve("topics"),
+    progress_roadmap: resolve("progress_roadmap"),
+    member_activity: resolve("member_activity"),
+  };
+}
+
 // Mirrors DailyCoreJson in app/features/daily-core/contracts/pipeline-result.ts.
 export const CORE_SCHEMA_VERSION = "daily-core-v1";
 

@@ -3,7 +3,7 @@ import { createAgentRouter } from "@flue/runtime/routing";
 import { Hono, type MiddlewareHandler } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { CORE_INTERPRETER_PROMPT_VERSION, CoreInterpreter } from "./agents/core-interpreter.ts";
-import { DAILY_CORE_MODEL, DAILY_CORE_PROMPT_VERSION, DailyCore } from "./agents/daily-core.ts";
+import { CORE_STRUCTURER_PROMPT_VERSION, CoreStructurer } from "./agents/core-structurer.ts";
 import { TestAgent } from "./agents/test-agent.ts";
 import {
   buildAgentInput,
@@ -11,15 +11,19 @@ import {
   CORE_SCHEMA_VERSION,
   type CoreMeta,
   coreStats,
-  type DailyCoreOutput,
   evidenceProblems,
   type Interpretation,
-  interpretationProblems,
   interpretationStats,
+  resolveStructuring,
   type SourceRow,
+  type Structuring,
+  structurerInput,
 } from "./daily-core.ts";
 
-const PIPELINE_VERSION = "flue-single-agent-v1";
+const DAILY_CORE_MODEL = "openai/gpt-5.4-mini";
+// v2: both calls at thinkingLevel "low" (v1 used the default "medium").
+const PIPELINE_VERSION = "flue-two-call-v2";
+const PROMPT_VERSION = `${CORE_INTERPRETER_PROMPT_VERSION}+${CORE_STRUCTURER_PROMPT_VERSION}`;
 // Classifications are free text until a taxonomy exists.
 const TAXONOMY_VERSION = "free-text";
 
@@ -30,6 +34,54 @@ type Env = {
     SUPABASE_SERVICE_ROLE_KEY?: string;
   };
 };
+
+type Usage = { [key: string]: number | Usage };
+const sumUsage = (a: Usage = {}, b: Usage = {}): Usage =>
+  Object.fromEntries(
+    [...new Set([...Object.keys(a), ...Object.keys(b)])].map((key) => {
+      const [x, y] = [a[key], b[key]];
+      return [
+        key,
+        typeof x === "object" || typeof y === "object"
+          ? sumUsage(x as Usage, y as Usage)
+          : ((x as number | undefined) ?? 0) + ((y as number | undefined) ?? 0),
+      ];
+    }),
+  );
+
+// Runs one agent in a fresh conversation and returns what it wrote under `key`.
+async function runAgent<T>(
+  agent: Parameters<typeof init>[0],
+  key: string,
+  body: string,
+  initialData: unknown,
+  conversations: string[],
+) {
+  const handle = init(agent);
+  conversations.push(handle.id);
+  const startedAt = Date.now();
+  // Tool call metadata keeps only isError; the stream carries why a submission was rejected.
+  const rejections: string[] = [];
+  const receipt = await handle.dispatch({ message: { kind: "user", body }, initialData });
+  const reply = await handle.read(receipt, {
+    onEvent: (chunk) => {
+      if (chunk.type === "tool-output-error") rejections.push(chunk.errorText.slice(0, 2000));
+    },
+  });
+  const output = reply.data[key]?.at(-1) as T | undefined;
+  if (!output) throw new Error(`${key}: agent finished without output: ${reply.text.slice(0, 500)}`);
+  return {
+    output,
+    data: reply.data,
+    usage: (reply.metadata?.usage ?? {}) as Usage,
+    metrics: {
+      conversation_id: handle.id,
+      elapsed_ms: Date.now() - startedAt,
+      tool_calls: reply.metadata?.toolCalls ?? [],
+      rejections,
+    },
+  };
+}
 
 const app = new Hono<Env>();
 
@@ -47,12 +99,9 @@ app.use("/core/*", requireToken);
 app.route("/agents/test", createAgentRouter(TestAgent));
 
 // Generates a Daily Core and saves it as the next generation. `model` overrides the default model.
+// Call 1 (CoreInterpreter) merges the day into core items, Call 2 (CoreStructurer) places them.
 app.post("/core/generate", async (c) => {
-  const {
-    dailyCoreId,
-    model = DAILY_CORE_MODEL,
-    dryRun = false,
-  } = await c.req.json<{ dailyCoreId?: string; model?: string; dryRun?: boolean }>();
+  const { dailyCoreId, model = DAILY_CORE_MODEL } = await c.req.json<{ dailyCoreId?: string; model?: string }>();
   if (!dailyCoreId || !/^[0-9a-f-]{36}$/i.test(dailyCoreId)) {
     return c.json({ error: "dailyCoreId must be a uuid" }, 400);
   }
@@ -87,54 +136,11 @@ app.post("/core/generate", async (c) => {
   const body = [
     `Target: ${core.target_display_name} (${core.target_category})`,
     `Date: ${core.core_date} (${core.timezone}, ${core.window_start_at} to ${core.window_end_at})`,
+    `People who wrote today: ${input.people.join(", ")}`,
     "",
     input.text,
   ].join("\n");
   const inputStats = { ...input.counts, chars: body.length };
-
-  // Two-call pipeline in progress: only Call 1 (CoreInterpreter) runs, nothing is saved.
-  if (dryRun) {
-    const startedAt = Date.now();
-    const interpreter = init(CoreInterpreter);
-    const receipt = await interpreter.dispatch({
-      message: { kind: "user", body },
-      initialData: {
-        refs: input.refs,
-        contextRefs: input.contextRefs,
-        botRefs: input.botRefs,
-        authors: input.authors,
-        language: core.language,
-        model,
-      },
-    });
-    // Tool call metadata keeps only isError; the stream carries why a submission was rejected
-    // (schema validation or interpretationProblems).
-    const rejections: string[] = [];
-    const reply = await interpreter.read(receipt, {
-      onEvent: (chunk) => {
-        if (chunk.type === "tool-output-error") rejections.push(chunk.errorText.slice(0, 2000));
-      },
-    });
-    const interpretation = reply.data.interpretation?.at(-1) as Interpretation | undefined;
-    if (!interpretation) {
-      return c.json({ error: `interpreter finished without output: ${reply.text.slice(0, 500)}` }, 500);
-    }
-    return c.json({
-      dailyCoreId,
-      dryRun: true,
-      promptVersion: CORE_INTERPRETER_PROMPT_VERSION,
-      conversationId: interpreter.id,
-      elapsedMs: Date.now() - startedAt,
-      usage: reply.metadata?.usage ?? null,
-      toolCalls: reply.metadata?.toolCalls ?? [],
-      rejections,
-      droppedActors: reply.data.droppedActors?.at(-1) ?? [],
-      inputStats,
-      stats: interpretationStats(interpretation, input),
-      problems: interpretationProblems(interpretation, input),
-      interpretation,
-    });
-  }
 
   const generationNo = core.last_generation_no + 1;
   const startedAt = new Date();
@@ -151,7 +157,7 @@ app.post("/core/generate", async (c) => {
       input_source_data_ids: rows.map((row) => row.source_data_id),
       schema_version: CORE_SCHEMA_VERSION,
       taxonomy_version: TAXONOMY_VERSION,
-      prompt_version: DAILY_CORE_PROMPT_VERSION,
+      prompt_version: PROMPT_VERSION,
       pipeline_version: PIPELINE_VERSION,
       model_provider: modelProvider,
       model_name: modelName.join("/"),
@@ -165,35 +171,66 @@ app.post("/core/generate", async (c) => {
     body: { last_generation_no: generationNo, last_attempt_at: startedAt.toISOString(), updated_at: startedAt.toISOString() },
   });
 
-  const { refs, contextRefs, botRefs, people } = input;
-  const evidence = { refs, contextRefs, botRefs, people };
-  const agent = init(DailyCore);
+  const conversations: string[] = [];
   try {
-    const receipt = await agent.dispatch({
-      message: { kind: "user", body },
-      initialData: { ...evidence, language: core.language, model },
-    });
-    const reply = await agent.read(receipt);
-    const output = reply.data.dailyCore?.at(-1) as DailyCoreOutput | undefined;
-    if (!output) throw new Error(`agent finished without a Daily Core: ${reply.text.slice(0, 500)}`);
+    const call1 = await runAgent<Interpretation>(
+      CoreInterpreter,
+      "interpretation",
+      body,
+      {
+        refs: input.refs,
+        contextRefs: input.contextRefs,
+        botRefs: input.botRefs,
+        authors: input.authors,
+        language: core.language,
+        model,
+      },
+      conversations,
+    );
+    const interpretation = call1.output;
+    const call2 = await runAgent<Structuring>(
+      CoreStructurer,
+      "structuring",
+      structurerInput(interpretation, input.people),
+      {
+        coreRefs: Object.fromEntries(interpretation.core_items.map((item) => [item.concept_key, item.evidence_refs])),
+        authors: input.authors,
+        people: input.people,
+        language: core.language,
+        model,
+      },
+      conversations,
+    );
+    const structuring = call2.output;
 
-    const coreJson = buildCoreJson(core, rows, output, people);
-    const stats = coreStats(output, evidence);
+    const output = resolveStructuring(structuring, interpretation, input.authors);
+    const coreJson = buildCoreJson(core, rows, output, input.people);
+    const placed = new Set(
+      [...structuring.highlights, ...structuring.topics, ...structuring.progress_roadmap, ...structuring.member_activity].flatMap(
+        (item) => item.core_item_ids,
+      ),
+    );
+    const stats = {
+      ...coreStats(output, input),
+      interpretation: interpretationStats(interpretation, input),
+      unplaced_core_items: interpretation.core_items.map((item) => item.concept_key).filter((key) => !placed.has(key)),
+    };
+    const usage = { ...sumUsage(call1.usage, call2.usage), calls: { interpretation: call1.usage, structuring: call2.usage } };
     const finishedAt = new Date().toISOString();
     await db(generationRow, {
       method: "PATCH",
       body: {
         generation_status: "succeeded",
         quality_status: coreJson.quality.status,
-        agent_conversation_id: agent.id,
-        agent_output_json: output,
+        agent_conversation_id: conversations[0],
+        agent_output_json: { interpretation, structuring, dropped_actors: call1.data.droppedActors?.at(-1) ?? [] },
         core_json: coreJson,
-        token_usage_json: reply.metadata?.usage ?? {},
+        token_usage_json: usage,
         processing_metrics_json: {
           elapsed_ms: Date.now() - startedAt.getTime(),
-          tool_calls: reply.metadata?.toolCalls ?? [],
+          calls: { interpretation: call1.metrics, structuring: call2.metrics },
         },
-        validation_json: { evidence_problems: evidenceProblems(output, evidence), stats },
+        validation_json: { evidence_problems: evidenceProblems(output, input), stats },
         finished_at: finishedAt,
       },
     });
@@ -213,7 +250,8 @@ app.post("/core/generate", async (c) => {
       generationNo,
       status: "succeeded",
       elapsedMs: Date.now() - startedAt.getTime(),
-      usage: reply.metadata?.usage ?? null,
+      usage,
+      calls: { interpretation: call1.metrics, structuring: call2.metrics },
       stats,
       coreJson,
     });
@@ -224,10 +262,10 @@ app.post("/core/generate", async (c) => {
       method: "PATCH",
       body: {
         generation_status: "failed",
-        agent_conversation_id: agent.id,
+        agent_conversation_id: conversations[0] ?? null,
         error_code: "generation_failed",
         error_message: message,
-        processing_metrics_json: { elapsed_ms: Date.now() - startedAt.getTime() },
+        processing_metrics_json: { elapsed_ms: Date.now() - startedAt.getTime(), conversations },
         finished_at: finishedAt,
       },
     });

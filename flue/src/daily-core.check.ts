@@ -10,7 +10,11 @@ import {
   type Interpretation,
   interpretationProblems,
   interpretationStats,
+  resolveStructuring,
   type SourceItem,
+  type Structuring,
+  structurerInput,
+  structuringProblems,
 } from "./daily-core.ts";
 
 const item = (ref: string, id: string, at: string, content: string, extra: Partial<SourceItem> = {}) => ({
@@ -159,6 +163,73 @@ assert.deepEqual(
   interpretationStats(interpretation(interpreted(["S003", "S010"], ["Aki"]), interpreted(["S004"], ["Jinu Son"], "b")), input),
   { core_items: 2, human_refs: 5, human_refs_cited: 2, people: 3, people_as_actors: 2 },
 );
+
+const coreA = {
+  ...interpreted(["S003", "S010"], ["Aki"], "a"),
+  importance: 4,
+  tags: ["x"],
+  classifications: { primary: "fix", secondary: [] },
+  entities: [{ type: "ticket", name: "#12" }],
+};
+const coreB = {
+  ...interpreted(["S004", "S007", "S011"], ["Jinu Son"], "b"),
+  importance: 2,
+  confidence: 0.5,
+  tags: ["x", "y"],
+  entities: [{ type: "ticket", name: "#12" }, { type: "pr", name: "#5" }],
+};
+const coreC = interpreted(["S008"], ["takamune-dsl"], "c");
+const interpretedDay = interpretation(coreA, coreB, coreC);
+const toStructurer = JSON.parse(structurerInput(interpretedDay, input.people));
+assert.deepEqual(toStructurer.people, input.people);
+assert.deepEqual(toStructurer.core_items[0].members, ["Aki"]);
+assert.ok(!("evidence_refs" in toStructurer.core_items[0]));
+
+const placed = (title: string, ids: string[], key = "k") => ({ item_key: key, title, summary: "", core_item_ids: ids });
+const structuring = (parts: Partial<Structuring>): Structuring => ({
+  overview: { summary: "" },
+  highlights: [],
+  topics: [],
+  progress_roadmap: [],
+  member_activity: [],
+  ...parts,
+});
+const structuringEvidence = {
+  coreRefs: Object.fromEntries(interpretedDay.core_items.map((item) => [item.concept_key, item.evidence_refs])),
+  authors: input.authors,
+  people: input.people,
+};
+const sProblems = (output: Structuring) => structuringProblems(output, structuringEvidence);
+const good = structuring({
+  highlights: [placed("A and B", ["a", "b"])],
+  progress_roadmap: [placed("C", ["c"])],
+  member_activity: [placed("Aki", ["a", "b"], "aki"), placed("Jinu Son", ["b"], "jinu")],
+});
+assert.deepEqual(sProblems(good), []);
+assert.match(sProblems(structuring({ highlights: [placed("A", ["a"])], topics: [placed("A", ["a"])] }))[0], /a: placed 2 times \(highlights, topics\)/);
+assert.match(sProblems(structuring({ topics: [placed("Z", ["z"])] }))[0], /unknown core_item_ids z/);
+assert.match(sProblems(structuring({ member_activity: [placed("Bo", ["a"])] }))[0], /title must be exactly one name/);
+assert.match(sProblems(structuring({ member_activity: [placed("Jinu Son", ["c"])] }))[0], /Jinu Son is not a member/);
+assert.match(
+  sProblems(structuring({ member_activity: [placed("Aki", ["a"], "1"), placed("Aki", ["b"], "2")] }))[0],
+  /Aki has several entries/,
+);
+
+const resolved = resolveStructuring(good, interpretedDay, input.authors);
+assert.deepEqual(resolved.highlights[0], {
+  item_key: "k",
+  title: "A and B",
+  summary: "",
+  status: null,
+  importance: 0.8,
+  confidence: 0.5,
+  tags: ["x", "y"],
+  classifications: { primary: "fix", secondary: [] },
+  entities: [{ type: "ticket", name: "#12" }, { type: "pr", name: "#5" }],
+  evidence_refs: ["S003", "S010", "S004", "S007", "S011"],
+});
+assert.deepEqual(resolved.member_activity.map((item) => item.evidence_refs), [["S003", "S011"], ["S004", "S007"]]);
+assert.deepEqual(evidenceProblems(resolved, input), []);
 
 const meta = {
   target_id: "t",

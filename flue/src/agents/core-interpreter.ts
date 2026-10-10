@@ -11,7 +11,7 @@ import {
 import * as v from "valibot";
 import { dropUnwrittenActors, Interpretation, interpretationProblems } from "../daily-core.ts";
 
-export const CORE_INTERPRETER_PROMPT_VERSION = "core-interpreter-v4";
+export const CORE_INTERPRETER_PROMPT_VERSION = "core-interpreter-v5";
 
 const SUBMIT = "submit_interpretation";
 
@@ -27,7 +27,7 @@ type InitialData = v.InferOutput<typeof InitialData>;
 
 export function CoreInterpreter() {
   const { language, model, ...evidence }: InitialData = useInitialData();
-  useModel(model);
+  useModel(model, { thinkingLevel: "low" });
   const write = useDataWriter("interpretation", { schema: Interpretation });
   const writeDroppedActors = useDataWriter("droppedActors", { schema: v.array(v.string()) });
 
@@ -85,6 +85,8 @@ Rules:
   progress = concrete work moving forward with a status. An item may have several.
 - status and progress (from, to, next_step) only when the input states them.
 - Cover the day: every line with a fact should belong to some item. Greetings and acknowledgements can be left out.
+  Small matters count: each ticket or task someone reports progress on (done, in progress, next) is an item, even at importance 1.
+  Every name in "People who wrote today" must be a member actor of at least one item.
 - overview_candidate.summary: 2-4 sentences about the whole day.
 - If the day has no meaningful activity, return no items and say so in the overview.
 - Write every human-readable text in language: ${language}.

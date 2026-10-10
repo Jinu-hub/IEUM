@@ -15,6 +15,7 @@ Agent 입력(지금과 같은 텍스트: 스레드 묶기, 맥락·봇 표시, �
 - 각 Phase의 확인 항목을 모두 통과해야 다음 Phase로 간다.
 - 확인 항목은 **에이전트 확인**과 **사용자 확인**으로 나누고, 확인한 방법을 "확인 기록"에 적는다.
 - 테스트 데이터: Target `D_G_S開発チーム`, 날짜 `2026-10-09`(사용자가 기존 Core 데이터를 지움). 모델 실행은 Phase마다 1회(비용). 1회라 모델 변동이 섞일 수 있음을 결과에 적는다.
+- 토큰을 아낀다(사용자, 2026-10-10). Phase 0~1에서 6회(run 11~16) 돌림. 목표는 "어느 정도 수준"이고, 품질 튜닝 반복은 하지 않는다. 다시 돌리기 전에 원인을 코드나 기존 출력으로 먼저 확인하고, 품질 문제는 TODO 3-3으로 넘긴다.
 
 정해 둔 것 (기본값. 사용자 확인에서 바꿀 수 있음)
 
@@ -104,10 +105,11 @@ Agent 입력(지금과 같은 텍스트: 스레드 묶기, 맥락·봇 표시, �
 
 사용자 확인
 
-- [ ] core item 하나가 사건 하나다. 같은 사건이 두 item으로 나뉘거나, 다른 사건이 한 item에 섞이지 않았다.
-- [ ] actor가 맞다(남의 발언을 다른 사람의 일로 쓰지 않음).
-- [ ] 빠진 일이 기준선보다 많지 않다.
-- [ ] 봇 알림만으로 만든 item(아래 발견)과 비용을 어떻게 할지 정한다.
+- [x] core item 하나가 사건 하나다. 같은 사건이 두 item으로 나뉘거나, 다른 사건이 한 item에 섞이지 않았다.
+- [x] actor가 맞다(남의 발언을 다른 사람의 일로 쓰지 않음).
+- [x] 빠진 일이 기준선보다 많지 않다.
+- [x] 봇 알림만으로 만든 item(아래 발견)과 비용을 어떻게 할지 정한다.
+  - 사용자(2026-10-10): 완벽할 수는 없으니 run 16(`core-interpreter-v4`) 수준으로 통과. 어느 정도 수준이면 됨. 남은 품질 문제는 TODO 3-3(품질 개선)에 두고, 실제 결과를 보면서 다시 판단. 완벽을 노리면 테스트 실행에 토큰이 너무 많이 듦(이미 상당히 씀). 팀 전체 내용을 한 사람이 다 대조할 수는 없으므로, 코드가 보장하는 것(ref 존재, actor가 인용 줄 작성자, 키 중복 없음)은 빼고 사람은 자기 item, 인용 안 된 줄, 중요도 높은 몇 개만 본다.
 
 확인 기록
 
@@ -208,24 +210,48 @@ Agent 입력(지금과 같은 텍스트: 스레드 묶기, 맥락·봇 표시, �
 만들 것
 
 - Agent `CoreStructurer`(`flue/src/agents/core-structurer.ts`). 입력은 Call 1 출력 JSON + 사람 목록 + language.
-- 출력: 지금 `DailyCoreOutput`에서 항목의 `evidence_refs`를 `core_item_ids`로 바꾼 것.
-- Tool 검사: 모르는 `core_item_id`, 한 core item이 highlights / topics / progress_roadmap 중 2곳 이상, `member_activity` title이 사람 목록에 없음, 작성자 필터 후 근거가 빈 멤버 항목.
+- 출력(토큰 절약으로 계획에서 줄임, 2026-10-10): 각 항목은 `item_key` / `title` / `summary` / `status` / `core_item_ids`만. importance(근거 core item 중 최댓값 / 5), confidence(최솟값), tags(합집합), classifications(importance가 가장 높은 core item), entities(중복 제거)는 코드가 근거 core item에서 채움. Call 2 입력에는 core item의 evidence_refs를 넣지 않고 `members`(member actor 이름)만 넣음.
+- Tool 검사: 모르는 `core_item_id`, 한 core item이 highlights / topics / progress_roadmap 중 2곳 이상(같은 배열 안 2번도), `member_activity` title이 사람 목록에 없음, 작성자 필터 후 근거가 빈 멤버 항목, 같은 사람 항목 2개 이상.
 - 코드: `core_item_ids` → `evidence_refs` 변환(멤버는 본인 줄만) → 기존 `buildCoreJson`.
-- `/core/generate`가 Call 1 → Call 2 → merge → 저장. 버전 기록, `agent_output_json = { interpretation, structuring }`, 토큰은 두 호출 합계와 각각.
+- `/core/generate`가 Call 1 → Call 2 → merge → 저장. 버전 기록(`flue-two-call-v1`, `core-interpreter-v4+core-structurer-v1`), `agent_output_json = { interpretation, structuring, dropped_actors }`, 토큰은 두 호출 합계와 각각. Phase 1용 `dryRun`은 지움.
 - `daily_core_items.item_type` 대응 메모(projection용): highlights → `highlight`, topics → `topic`, progress_roadmap → `progress_roadmap`, member_activity → `member_activity`. overview는 item이 아님(`core_json`에만).
 
 에이전트 확인
 
-- [ ] `check.ts`에 Call 2 검사·변환 assert 추가, 통과. `tsc` 오류 없음.
-- [ ] 로컬 1회: generation `succeeded`, `core_json`이 기존과 같은 키, evidence 전부 원본 항목과 일치.
-- [ ] stats: 배열 간 중복이 기준선보다 줄었다. 시간·비용을 기준선과 나란히 기록.
+- [x] `check.ts`에 Call 2 검사·변환 assert 추가, 통과. `tsc` 오류 없음.
+- [x] 로컬 1회: generation `succeeded`, `core_json`이 기존과 같은 키, evidence 전부 원본 항목과 일치.
+- [x] stats: 배열 간 중복이 기준선보다 줄었다. 시간·비용을 기준선과 나란히 기록.
 
 사용자 확인
 
-- [ ] 결과가 기준선보다 낫다(중복, 정확성, 빠진 일). 분리를 채택할지 판단. 채택하지 않으면 원인을 적고 Phase 1 또는 2를 고친다.
-- [ ] 시간·비용이 받아들일 만하다.
+- [x] 결과가 기준선보다 낫다(중복, 정확성, 빠진 일). 분리를 채택할지 판단. 채택하지 않으면 원인을 적고 Phase 1 또는 2를 고친다.
+- [x] 시간·비용이 받아들일 만하다.
+  - 사용자(2026-10-10): 분리 채택. 시간·비용 개선은 TODO 3-3으로 넘기고 Phase 3 진행.
 
 확인 기록
+
+- 2026-10-10 에이전트: 구현하고 1회 실행(run 17).
+  - 코드: `Structuring` 스키마, `structurerInput`, `structuringProblems`, `resolveStructuring`(`daily-core.ts`), Agent `CoreStructurer`(`core-structurer-v1`), `wrangler.jsonc` migration v4. `check.ts` 통과(검사 5종, ref 합집합, 멤버 본인 줄 필터, importance / 5), `tsc` 오류 없음.
+  - 생성: daily core `d36d689e-…`, generation 1 `succeeded` / `ready`, 대화(Call 1) `instance_01M4JBKZ4245JQHV4KD2WPK1EY`. `core_json` 키는 기준선과 같음. evidence 110개 전부 `daily_core_source_data` 원본 항목(id, 시각, url)과 일치, 근거 위반 0.
+
+    | 항목 | run 11 (기준선, 단일) | run 17 (2호출) |
+    |---|---|---|
+    | 소요 시간 | 67.5초 | 150.1초 (Call 1 99.4 + Call 2 49.3) |
+    | 토큰 입력 / 출력 | 9,732 / 18,993 | 11,913 / 28,044 |
+    | 비용 | $0.093 | $0.135 (Call 1 $0.087 + Call 2 $0.048) |
+    | 제출 | 1회 | Call 1 1회, Call 2 1회 (거부 0) |
+    | highlights / topics / progress / member | 5 / 4 / 4 / 12 | 4 / 6 / 11 / 13 |
+    | 사람 줄 인용 | 44 / 71 | 54 / 71 |
+    | 2개 이상 배열(member 제외)에 인용된 사람 줄 | 6개 | 2개 |
+    | 근거 ref가 겹치는 항목 쌍(member 제외) | 5쌍 | 2쌍 |
+    | 멤버 / 입력의 사람 | 12 / 13 | 13 / 13 |
+    | 배치되지 않은 core item | — | 0 / 21 |
+
+  - 남은 겹침 2쌍은 같은 티켓의 중복이 아님. 한 사람의 하루 보고 줄 하나가 두 core item(No.224/227 반영과 다음 작업, アンケート 복수문 표시와 MillviV3 자막)에 함께 인용된 경우.
+  - 기준선의 #23189 / #23145 덩어리(3개 배열에 나뉨)는 highlights 1개("#23145 の関連テーブル削除タイミング変更を子チケット化")로 합쳐짐.
+  - 사람 줄 인용이 Call 1(run 16)의 63에서 54로 줄었음. Call 1 결과가 run 16과 다른 실행이라 생긴 차이(이번 Call 1 자체가 54). Call 2에서 빠진 core item은 0.
+  - 시간 2.2배, 비용 1.5배. Call 1이 대부분(추론 토큰). 품질 튜닝으로 더 돌리지 않음.
+  - 사용자 확인용 출력: `works/out/daily-core-run17.md`.
 
 ---
 
@@ -238,11 +264,69 @@ Agent 입력(지금과 같은 텍스트: 스레드 묶기, 맥락·봇 표시, �
 
 에이전트 확인
 
-- [ ] 배포본 결과가 Phase 2와 같은 형태로 DB에 남는다.
-- [ ] Cloudflare 로그에 두 Agent 실행이 error 없이 남는다.
+- [x] 배포본 결과가 Phase 2와 같은 형태로 DB에 남는다.
+- [x] Cloudflare 로그에 두 Agent 실행이 error 없이 남는다. (끝부분 100건만 확인, 아래 기록)
 
 사용자 확인
 
-- [ ] 마무리. `W41_TODO.md` 1-1 체크.
+- [x] 마무리. `W41_TODO.md` 1-1 체크.
+  - 사용자(2026-10-10): 추론 강도 `low` + `core-interpreter-v5` 채택, 배포본 1회 확인 후 마무리.
 
 확인 기록
+
+- 2026-10-10 에이전트: 정리, 배포, 배포본 1회(run 18).
+  - 코드: `flue/src/agents/daily-core.ts` 삭제, `DAILY_CORE_MODEL`은 `app.ts`로 옮김. `wrangler.jsonc` migration v5 `deleted_classes: ["FlueDailyCoreAgent"]`. `check.ts`, `tsc` 통과.
+  - 배포: 버전 `3785a2d3…`. 바인딩은 `FlueCoreInterpreterAgent`, `FlueCoreStructurerAgent`, `FlueTestAgentAgent`(메일 경로용으로 유지).
+  - 생성: generation 2 `succeeded` / `ready`, current 2, 대화(Call 1) `instance_01M4JC2GS3ZT74P2Z0ZD07V3P0`. `core_json` 키 같음, evidence 127개 전부 원본과 일치, 근거 위반 0, 뺀 actor 0.
+
+    | 항목 | run 11 (기준선) | run 17 (로컬) | run 18 (배포본) |
+    |---|---|---|---|
+    | 소요 시간 | 67.5초 | 150.1초 | 345.3초 (Call 1 279.8 + Call 2 64.1) |
+    | 토큰 입력 / 출력 | 9,732 / 18,993 | 11,913 / 28,044 | 12,308 / 64,054 |
+    | 비용 | $0.093 | $0.135 | $0.297 (Call 1 $0.237 + Call 2 $0.060) |
+    | 제출 | 1회 | 1 + 1 (거부 0) | 1 + 1 (거부 0) |
+    | highlights / topics / progress / member | 5 / 4 / 4 / 12 | 4 / 6 / 11 / 13 | 4 / 7 / 11 / 13 |
+    | 사람 줄 인용 | 44 / 71 | 54 / 71 | 64 / 71 |
+    | 2개 이상 배열(member 제외)에 인용된 사람 줄 | 6개 | 2개 | 2개 |
+
+  - 발견: Call 1 입력은 run 16과 같은 8,135 토큰인데 출력이 51,310 토큰(run 16은 21,792). 제출 1회, 거부 0이라 늘어난 건 추론 토큰으로 보임. 실행마다 추론 길이가 크게 흔들림. 비용 상한이 필요하면 추론 강도 조절이나 출력 토큰 상한(TODO 3-3).
+  - Cloudflare 로그(Workers Observability, 최근 30분 중 끝부분 100건): `CoreInterpreter` long-poll → `history` → `CoreStructurer` dispatch → long-poll → `history` → `POST /core/generate` 순서로 남음. 모두 info, error 없음. 앞부분(Call 1 초중반)의 warn / error / 스트림 중단 여부는 추가 조회를 사용자가 건너뛰어서 확인 못 함.
+  - 사용자 확인용 출력: `works/out/daily-core-run18.md`.
+- 2026-10-10 사용자 결정: 마무리 전에 Call 1 비용 상한부터 잡는다.
+- 2026-10-10 에이전트: 두 Agent를 `useModel(model, { thinkingLevel: "low" })`로(기본값은 `medium`). Flue `useModel`에는 출력 토큰 상한 옵션이 없음. `PIPELINE_VERSION = "flue-two-call-v2"`. 지시문은 그대로. 로컬 1회(run 19, generation 3).
+
+    | 항목 | run 17 (medium, 로컬) | run 18 (medium, 배포본) | run 19 (low, 로컬) |
+    |---|---|---|---|
+    | 소요 시간 | 150.1초 | 345.3초 | 25.9초 (Call 1 14.0 + Call 2 11.6) |
+    | 출력 토큰 (Call 1 / Call 2) | 28,044 합계 | 51,310 / 12,744 | 3,349 / 3,153 |
+    | 비용 | $0.135 | $0.297 | $0.038 |
+    | core item | 21 | 24 | 14 |
+    | highlights / topics / progress / member | 4 / 6 / 11 / 13 | 4 / 7 / 11 / 13 | 4 / 5 / 5 / 11 |
+    | 사람 줄 인용 | 54 / 71 | 64 / 71 | 41 / 71 (기준선 44) |
+    | 2개 이상 배열에 인용된 사람 줄 | 2 | 2 | 2 |
+
+  - 거부 0, 근거 위반 0. 시간·비용은 기준선(67초, $0.093)보다도 낮음. 대신 덜 덮음: core item 14개, 사람 줄 인용 41 / 71로 기준선보다 적고, member에서 Momoko Terada, Naoya Tsujimoto가 빠짐(run 18에는 있음). progress가 11 → 5.
+  - 사용자 확인용 출력: `works/out/daily-core-run19.md`.
+- 2026-10-10 사용자 결정: `low`를 유지하고 Call 1 지시문의 "덮기"를 강화해서 1회 더.
+- 2026-10-10 에이전트: `core-interpreter-v5`. Call 1 입력 머리에 `People who wrote today: …`(입력의 사람 목록)를 넣고, 지시문에 "진행을 보고한 티켓·작업은 importance 1이라도 item", "그 목록의 모든 이름은 적어도 한 item의 member actor"를 추가. 로컬 1회(run 20, generation 4).
+
+    | 항목 | run 11 (기준선) | run 19 (low, v4) | run 20 (low, v5) |
+    |---|---|---|---|
+    | 소요 시간 | 67.5초 | 25.9초 | 29.6초 (Call 1 18.5 + Call 2 10.8) |
+    | 비용 | $0.093 | $0.038 | $0.044 |
+    | core item | — | 14 | 19 |
+    | highlights / topics / progress / member | 5 / 4 / 4 / 12 | 4 / 5 / 5 / 11 | 4 / 6 / 5 / 12 |
+    | 사람 줄 인용 | 44 / 71 | 41 / 71 | 51 / 71 |
+    | 2개 이상 배열에 인용된 사람 줄 | 6 | 2 | 2 |
+
+  - 거부 0, 근거 위반 0. Momoko Terada는 돌아왔고 Naoya Tsujimoto는 여전히 빠짐(Call 1 actor 12 / 13).
+  - 남은 품질 문제(TODO 3-3 감): #23087이 topics("修正後に性能改善の優先度を相談")와 progress("DB 高負荷対応をコミット") 두 item으로 나뉨. "モジュール 5.3.10_0011 を作成"과 "LEAD 10月バージョンのモジュール作成を開始"도 같은 일일 수 있음.
+  - 사용자 확인용 출력: `works/out/daily-core-run20.md`.
+- 2026-10-10 사용자 결정: `low` + `core-interpreter-v5` 채택. 배포본 1회 확인 후 마무리. 남은 품질 문제는 TODO 3-3.
+- 2026-10-10 에이전트: 배포(`305353a5…`) 후 배포본 1회(run 21, generation 5).
+  - `succeeded` / `ready`, current 5, `flue-two-call-v2`, `core-interpreter-v5+core-structurer-v1`, 대화(Call 1) `instance_01M4JCVGVG3EFAM8TYR0XD9F5R`. `core_json` 키 같음, evidence 111개 전부 원본과 일치, 근거 위반 0.
+  - 42.3초(Call 1 20.8 + Call 2 20.2), $0.057. core item 20, highlights / topics / progress / member 4 / 6 / 2 / 13, 사람 줄 53 / 71, 2개 이상 배열 인용 0, member 13 / 13.
+  - Call 2가 1번 거부됨(`ticket-23145-review-request`를 highlights와 topics에 둘 다 둠) → 고쳐서 재제출. Tool 검사가 의도대로 동작. 거부 1번으로 Call 2 시간이 로컬(10.8초)의 2배.
+  - 발견: progress가 2개뿐. 진행 보고 item이 topics / highlights로 갔음. 배치 기준은 TODO 3-3.
+  - Cloudflare 로그는 이번엔 조회하지 않음(run 18에서 두 Agent 경로 확인, 앞부분 조회는 사용자가 건너뜀).
+  - 사용자 확인용 출력: `works/out/daily-core-run21.md`.

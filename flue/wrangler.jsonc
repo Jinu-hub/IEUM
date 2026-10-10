@@ -7,6 +7,8 @@
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["FlueTestAgentAgent"] },
     { "tag": "v2", "new_sqlite_classes": ["FlueDailyCoreAgent"] },
-    { "tag": "v3", "new_sqlite_classes": ["FlueCoreInterpreterAgent"] }
+    { "tag": "v3", "new_sqlite_classes": ["FlueCoreInterpreterAgent"] },
+    { "tag": "v4", "new_sqlite_classes": ["FlueCoreStructurerAgent"] },
+    { "tag": "v5", "deleted_classes": ["FlueDailyCoreAgent"] }
   ]
 }
