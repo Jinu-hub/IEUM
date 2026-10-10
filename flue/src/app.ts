@@ -9,6 +9,7 @@ import {
   buildCoreJson,
   CORE_SCHEMA_VERSION,
   type CoreMeta,
+  coreStats,
   type DailyCoreOutput,
   evidenceProblems,
   type SourceRow,
@@ -125,6 +126,7 @@ app.post("/core/generate", async (c) => {
     if (!output) throw new Error(`agent finished without a Daily Core: ${reply.text.slice(0, 500)}`);
 
     const coreJson = buildCoreJson(core, rows, output, people);
+    const stats = coreStats(output, evidence);
     const finishedAt = new Date().toISOString();
     await db(generationRow, {
       method: "PATCH",
@@ -139,7 +141,7 @@ app.post("/core/generate", async (c) => {
           elapsed_ms: Date.now() - startedAt.getTime(),
           tool_calls: reply.metadata?.toolCalls ?? [],
         },
-        validation_json: { evidence_problems: evidenceProblems(output, evidence) },
+        validation_json: { evidence_problems: evidenceProblems(output, evidence), stats },
         finished_at: finishedAt,
       },
     });
@@ -160,6 +162,7 @@ app.post("/core/generate", async (c) => {
       status: "succeeded",
       elapsedMs: Date.now() - startedAt.getTime(),
       usage: reply.metadata?.usage ?? null,
+      stats,
       coreJson,
     });
   } catch (error) {

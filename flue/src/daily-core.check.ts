@@ -1,6 +1,13 @@
 // Run: npx tsx flue/src/daily-core.check.ts
 import assert from "node:assert/strict";
-import { buildAgentInput, buildCoreJson, type DailyCoreOutput, evidenceProblems, type SourceItem } from "./daily-core.ts";
+import {
+  buildAgentInput,
+  buildCoreJson,
+  coreStats,
+  type DailyCoreOutput,
+  evidenceProblems,
+  type SourceItem,
+} from "./daily-core.ts";
 
 const item = (ref: string, id: string, at: string, content: string, extra: Partial<SourceItem> = {}) => ({
   source_ref: ref,
@@ -91,6 +98,18 @@ assert.match(problems(core(["S006"], "member_activity"))[0], /bot notifications/
 assert.deepEqual(problems(core(["S006", "S004", "S007"], "member_activity", "Jinu Son")), []);
 assert.match(problems(core(["S004"], "member_activity", "Jinu Son pushed fixes"))[0], /title must be/);
 assert.match(problems(core(["S006", "S004"], "member_activity", "Bo"))[0], /title must be/);
+
+const statsOutput = core(["S003", "S004"]);
+statsOutput.topics = [{ ...statsOutput.highlights[0], evidence_refs: ["S004", "S006", "S001"] }];
+statsOutput.progress_roadmap = [{ ...statsOutput.highlights[0], evidence_refs: ["S006"] }];
+statsOutput.member_activity = [{ ...statsOutput.highlights[0], evidence_refs: ["S007"] }];
+assert.deepEqual(coreStats(statsOutput, input), {
+  items: { highlights: 1, topics: 1, progress_roadmap: 1, member_activity: 1 },
+  human_refs: 4,
+  human_refs_cited: 3,
+  human_refs_in_multiple_sections: 1,
+  people: 3,
+});
 
 const meta = {
   target_id: "t",

@@ -189,6 +189,37 @@ export function evidenceProblems(
   return problems;
 }
 
+const EVENT_SECTIONS = ["highlights", "topics", "progress_roadmap"] as const;
+
+// Numbers for comparing prompt and pipeline versions on the same input.
+export function coreStats(output: DailyCoreOutput, { refs, contextRefs, botRefs, people }: EvidenceSets) {
+  const skip = new Set([...contextRefs, ...botRefs]);
+  const human = refs.filter((ref) => !skip.has(ref));
+  const sectionsPerRef = new Map<string, number>();
+  for (const section of EVENT_SECTIONS) {
+    for (const ref of new Set(output[section].flatMap((item) => item.evidence_refs))) {
+      sectionsPerRef.set(ref, (sectionsPerRef.get(ref) ?? 0) + 1);
+    }
+  }
+  const cited = new Set(
+    [...EVENT_SECTIONS, "member_activity" as const].flatMap((section) =>
+      output[section].flatMap((item) => item.evidence_refs),
+    ),
+  );
+  return {
+    items: {
+      highlights: output.highlights.length,
+      topics: output.topics.length,
+      progress_roadmap: output.progress_roadmap.length,
+      member_activity: output.member_activity.length,
+    },
+    human_refs: human.length,
+    human_refs_cited: human.filter((ref) => cited.has(ref)).length,
+    human_refs_in_multiple_sections: human.filter((ref) => (sectionsPerRef.get(ref) ?? 0) > 1).length,
+    people: people.length,
+  };
+}
+
 // Mirrors DailyCoreJson in app/features/daily-core/contracts/pipeline-result.ts.
 export const CORE_SCHEMA_VERSION = "daily-core-v1";
 
