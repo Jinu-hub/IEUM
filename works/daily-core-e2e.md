@@ -411,7 +411,8 @@ Slack/GitHub 수집 (Vercel 코드)
 
 사용자 확인
 
-- [ ] evidence의 URL 2~3개를 열어 보면 해당 Slack 메시지나 커밋으로 간다.
+- [x] evidence의 URL 2~3개를 열어 보면 해당 Slack 메시지나 커밋으로 간다.
+  - 사용자(2026-10-10): 확인 완료.
   - GitHub 커밋: https://github.com/digitalsheep/LEAD/commit/f15c0616238d819e9161cbf4e12a03167a790589 (Jinu Son, 09:35 KST)
   - Slack 메시지: https://slack.com/archives/CDR68RY0L/p1791520922169759 (#dev_lead, 13:42 KST)
   - Slack 스레드 답글: https://slack.com/archives/C05CSNH7XKK/p1791519491225919?thread_ts=1791504896.607899&cid=C05CSNH7XKK (#dev_cs_d3, 13:18 KST)
@@ -444,16 +445,25 @@ Slack/GitHub 수집 (Vercel 코드)
 
 에이전트 확인
 
-- [ ] 배포본 호출 결과가 Phase 3과 같은 형태로 DB에 남는다.
-- [ ] Cloudflare 로그에 같은 시각 요청이 error 없이 남는다.
+- [x] 배포본 호출 결과가 Phase 3과 같은 형태로 DB에 남는다.
+- [x] Cloudflare 로그에 같은 시각 요청이 error 없이 남는다.
 
 사용자 확인
 
-- [ ] 한 번 생성에 걸린 시간과 토큰 비용이 받아들일 만하다.
+- [x] 한 번 생성에 걸린 시간과 토큰 비용이 받아들일 만하다.
+  - 사용자(2026-10-10): 이걸로 됨. E2E 완료.
+  - 배포본 1회: 72초, 토큰 입력 9,746 / 출력 12,121, $0.062. 로컬 실행은 70~90초, $0.06~0.10.
 
 확인 기록
 
-- (비어 있음)
+- 2026-10-10 사용자: 날짜는 2026-10-09 그대로, 기존 데이터는 사용자가 지움(Target의 `daily_core_data` 0행 확인).
+- 2026-10-10 에이전트: 실행과 확인
+  - 배포: `flue/`에서 `npm run build` → `npx wrangler deploy`. 버전 `26da0f9a-015f-4360-ba9a-57eeb2aa1e32`. 바인딩에 `FlueDailyCoreAgent`(Durable Object)가 새로 올라감. 시크릿은 기존 것(`OPENAI_API_KEY`, `FLUE_API_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`)을 그대로 씀.
+  - 수집: 계획의 "Phase 1 엔드포인트"(`processTarget`)는 팀 Slack 알림과 메일을 보내므로 이번에도 `collect.run.ts`로 수집만 함. 새 `daily_core_data` `2fb9c244-99da-454a-aaaf-a03db926d5d3`, 항목 128개(이전과 같음). 수집은 로컬 코드라 Slack 토큰은 여전히 `.env` 대체 경로(Vercel 배포 환경의 시크릿 조회는 이번 범위에서 확인 못 함).
+  - 생성: 배포본 `https://ieum-flue.jinu30dev.workers.dev/core/generate` 호출, HTTP 200, 72.7초.
+  - DB(Supabase REST로 조회): generation 1 `succeeded` / `ready`, `current_generation_no = 1`, 에러 없음. `core_json`은 Phase 3과 같은 키(`schema_version`, `meta`, `overview`, 4개 배열, `metrics`, `quality`). meta 8개 필드가 `daily_core_data`와 같음. evidence 96개 전부 `normalized_json`의 같은 항목을 가리키고 URL도 96/96. `input_source_data_ids`가 source 행 4개와 같음. metrics도 Phase 3과 같음(Slack 36 / 21 / 59, 커밋 5, PR 1, 활동 인원 13).
+  - Cloudflare 로그(`wrangler tail`): `POST /core/generate - Ok @ 00:55:49 KST`, 같은 시각에 `[agent] DailyCore@instance_01M4GP1EDXDR21M59Y46DNKCKS started`, 이후 `FlueDailyCoreAgent` 내부 요청과 Alarm이 모두 `Ok`. error나 exception 없음. conversation ID가 DB의 `agent_conversation_id`와 같음.
+  - 정할 것: `/db/ping`은 이제 실제 생성이 Supabase에 쓰므로 지워도 됨. `TestAgent`는 앱 `FLUE_AGENT_URL`(`/agents/test`)이 기존 메일 발송에 쓰고 있어서, 메일 경로를 바꾸기 전까지는 남겨야 함.
 
 ---
 

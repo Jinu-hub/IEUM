@@ -29,3 +29,34 @@
 `.dev.vars` 값이 따옴표로 감싸져 있으면 시크릿에는 따옴표를 빼고 넣는다. 로컬 wrangler는 따옴표를 벗기지만 `wrangler secret put`은 그대로 올려서, 따옴표째 올린 `OPENAI_API_KEY`가 OpenAI 401을 냈음.
 
 배포 명령은 `flue/`에서 `npm run build` 후, `.dev.vars`의 `CLOUDFLARE_API_TOKEN`·`CLOUDFLARE_ACCOUNT_ID`를 셸에 export하고 `npx wrangler deploy`. 토큰은 "Edit Cloudflare Workers" 템플릿.
+
+
+# 배포 방법
+
+모든 명령은 `flue/`에서 실행한다. 이미 `flue/`에 있으면 생략.
+
+```bash
+cd flue
+```
+
+### 1. Cloudflare 인증 정보를 셸에 넣기 — 터미널을 새로 열었을 때만
+값은 화면에 출력되지 않는다. 같은 터미널에서는 다시 할 필요 없음. `.dev.vars`의 토큰을 바꿨을 때도 다시 실행.
+
+```bash
+export CLOUDFLARE_API_TOKEN=$(sed -nE 's/^CLOUDFLARE_API_TOKEN="?([^"]*)"?$/\1/p' .dev.vars)
+export CLOUDFLARE_ACCOUNT_ID=$(sed -nE 's/^CLOUDFLARE_ACCOUNT_ID="?([^"]*)"?$/\1/p' .dev.vars)
+```
+
+### 2. 빌드 + 배포 — 매번
+
+```bash
+npm run deploy
+```
+
+`vite build && wrangler deploy`를 실행한다. `wrangler deploy`는 빌드 결과물을 올리므로 빌드 없이 배포하면 이전 코드가 올라간다.
+
+### 로그 확인 (선택)
+
+```bash
+npx wrangler tail ieum-flue --format pretty
+```

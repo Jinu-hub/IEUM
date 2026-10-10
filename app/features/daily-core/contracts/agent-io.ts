@@ -23,7 +23,6 @@ export type CoreInterpreterInput = {
 export type CoreInterpreterOutput = {
   overview_candidate: {
     summary: string;
-    key_points: string[];
   };
   core_items: InterpretedCoreItem[];
 };

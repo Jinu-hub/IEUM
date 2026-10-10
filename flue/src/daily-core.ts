@@ -44,7 +44,7 @@ const CoreItem = v.object({
 });
 
 export const DailyCoreOutput = v.object({
-  overview: v.object({ summary: v.string(), key_points: v.array(v.string()) }),
+  overview: v.object({ summary: v.string() }),
   highlights: v.array(CoreItem),
   topics: v.array(CoreItem),
   progress_roadmap: v.array(CoreItem),

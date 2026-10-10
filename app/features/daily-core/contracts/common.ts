@@ -29,7 +29,6 @@ export type Classifications = {
 
 export type OverviewSummary = {
   summary: string;
-  key_points: string[];
 };
 
 export type KnownConceptItem = {

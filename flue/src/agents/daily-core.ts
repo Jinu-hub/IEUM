@@ -12,7 +12,7 @@ import * as v from "valibot";
 import { DailyCoreOutput, evidenceProblems } from "../daily-core.ts";
 
 export const DAILY_CORE_MODEL = "openai/gpt-5.4-mini";
-export const DAILY_CORE_PROMPT_VERSION = "daily-core-v3.1";
+export const DAILY_CORE_PROMPT_VERSION = "daily-core-v3.2";
 
 const SUBMIT = "submit_daily_core";
 
@@ -76,7 +76,7 @@ Rules:
   - member_activity: one item per person who wrote messages, commits, or PRs themselves, summarizing what they did. It may cite the same refs as the other arrays.
     The title is only the person's name, exactly as written in the input.
 - Bot notifications may be cited as supporting evidence for an item about the same ticket. Never create a member_activity item from bot notifications alone.
-- overview.summary: 2-4 sentences. key_points: at most 5.
+- overview.summary: 2-4 sentences.
 - If the day has no meaningful activity, return empty arrays and say so in the overview.
 - Write every human-readable text in language: ${language}.
 - Finish by calling ${SUBMIT} once. Do not reply in plain text.`;

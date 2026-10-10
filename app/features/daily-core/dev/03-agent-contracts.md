@@ -236,7 +236,6 @@ export type CoreInterpreterInput = {
 export type CoreInterpreterOutput = {
   overview_candidate: {
     summary: string;
-    key_points: string[];
   };
 
   core_items: InterpretedCoreItem[];
@@ -288,7 +287,6 @@ export type DailyCoreAnalysisItem = {
 export type CoreStructurerInput = {
   overview_candidate: {
     summary: string;
-    key_points: string[];
   };
 
   core_items: InterpretedCoreItem[];
@@ -301,7 +299,6 @@ export type CoreStructurerInput = {
 export type DailyCoreAnalysisFields = {
   overview: {
     summary: string;
-    key_points: string[];
   };
 
   highlights: DailyCoreAnalysisItem[];
@@ -335,7 +332,6 @@ export type FinalDailyCoreResult = {
 
     overview: {
       summary: string;
-      key_points: string[];
     };
 
     highlights: Array<{

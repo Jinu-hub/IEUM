@@ -65,7 +65,7 @@ const core = (
   section: "highlights" | "member_activity" = "highlights",
   title = "Aki",
 ): DailyCoreOutput => ({
-  overview: { summary: "", key_points: [] },
+  overview: { summary: "" },
   highlights: [],
   topics: [],
   progress_roadmap: [],
