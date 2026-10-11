@@ -11,7 +11,11 @@ import {
 import * as v from "valibot";
 import { dropUnwrittenActors, Interpretation, interpretationProblems } from "../daily-core.ts";
 
-export const CORE_INTERPRETER_PROMPT_VERSION = "core-interpreter-v5";
+// v6: asks for progress.next_step (v5 left it empty on every item; the report uses it).
+// v7: next_step is a required top-level field; v6 still left progress null on every item (run 22).
+// v8: null is the normal next_step. v7 said "set on every item" and got guesses such as
+// "continue if needed (owner not stated)" (run 23).
+export const CORE_INTERPRETER_PROMPT_VERSION = "core-interpreter-v8";
 
 const SUBMIT = "submit_interpretation";
 
@@ -83,7 +87,13 @@ Rules:
 - importance: 1 to 5. 5 = the most important outcomes or decisions of the day.
 - roles: candidate placements. highlight = key outcome or decision, topic = discussion or theme,
   progress = concrete work moving forward with a status. An item may have several.
-- status and progress (from, to, next_step) only when the input states them.
+- status and progress (from, to) only when the input states them.
+- next_step: the next action, plan, or deadline someone wrote for this matter, with who and when if written
+  (e.g. "request review after testing (Aki, today)", "start once the spec arrives").
+  Look for it in daily plans, "next", "after", "by", "waiting for" lines.
+  null is normal: use it when nobody wrote a next step. Never guess one, never write a conditional
+  ("if needed, continue"), never restate the current work as the next step, and never mark missing
+  details ("owner not stated"); leave such details out or use null.
 - Cover the day: every line with a fact should belong to some item. Greetings and acknowledgements can be left out.
   Small matters count: each ticket or task someone reports progress on (done, in progress, next) is an item, even at importance 1.
   Every name in "People who wrote today" must be a member actor of at least one item.

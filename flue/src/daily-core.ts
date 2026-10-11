@@ -41,6 +41,8 @@ const CoreItem = v.object({
     v.minLength(1),
     v.description("source_ref ids from the input, e.g. S012."),
   ),
+  owners: v.optional(v.array(v.string())),
+  next_steps: v.optional(v.array(v.string())),
 });
 
 export const DailyCoreOutput = v.object({
@@ -59,6 +61,16 @@ const isBot = (item: SourceItem) =>
   item.source_type === "slack_channel" && (!item.author?.id || item.author.id === "USLACKBOT");
 const nameKey = (name?: string) =>
   (name ?? "").normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+
+// Slack mrkdwn a reader should not see in a quote: emoji codes, strikethrough (struck text is
+// retracted), and link labels that are only a URL. Safe to apply twice.
+export const plainSlackText = (text: string) =>
+  text
+    .replace(/~[^~\n]+~/g, "")
+    .replace(/:[a-z0-9_+-]+:/g, "")
+    .replace(/\S*\b[\w-]+(\.[\w-]+)+\/\S*/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 export function buildAgentInput(rows: SourceRow[], timezone: string) {
   // ponytail: GitHub authors join Slack people only when the login or name equals a Slack name
@@ -89,13 +101,28 @@ export function buildAgentInput(rows: SourceRow[], timezone: string) {
     minute: "2-digit",
   });
   const day = new Intl.DateTimeFormat("en-CA", { timeZone: timezone });
+  const textOf = (item: SourceItem) => mentions([item.title, item.content].filter(Boolean).join(" / ")).replace(/\s+/g, " ");
+  // What a report may quote: Slack text without addressing (leading mentions, cc lists in
+  // parentheses) or link markup. Commit messages already show up as item titles.
+  const quoteText = (item: SourceItem) =>
+    item.source_type !== "slack_channel"
+      ? ""
+      : plainSlackText(
+          mentions(
+            item.content
+              .replace(/^(\s*<[@!][^>]+>)+/, "")
+              .replace(/[(（]\s*(<[@!][^>]+>\s*)+[)）]?/g, "")
+              .replace(/<#\w+\|([^>]+)>/g, "#$1")
+              .replace(/<https?:[^|>]+\|([^>]+)>/g, "$1")
+              .replace(/<https?:[^>]+>/g, ""),
+          ),
+        );
   const line = (item: SourceItem) => {
     const when = isContext(item)
       ? `(context, ${day.format(new Date(item.occurred_at))})`
       : time.format(new Date(item.occurred_at));
     const kind = isBot(item) ? " (bot notification)" : item.meta?.kind ? ` (${item.meta.kind})` : "";
-    const text = mentions([item.title, item.content].filter(Boolean).join(" / ")).replace(/\s+/g, " ");
-    return `[${item.source_ref}] ${when} ${author(item)}${kind}: ${text}`;
+    return `[${item.source_ref}] ${when} ${author(item)}${kind}: ${textOf(item)}`;
   };
 
   const lines: string[] = [];
@@ -103,8 +130,9 @@ export function buildAgentInput(rows: SourceRow[], timezone: string) {
   const contextRefs: string[] = [];
   const botRefs: string[] = [];
   const people = new Set<string>();
-  // Who wrote each line of this day (bots and context excluded).
+  // Who wrote each line of this day (bots and context excluded), and its quotable text.
   const authors: Record<string, string> = {};
+  const texts: Record<string, string> = {};
   let total = 0;
   let dropped = 0;
   let botDropped = 0;
@@ -128,6 +156,8 @@ export function buildAgentInput(rows: SourceRow[], timezone: string) {
       if (!isBot(item) && !isContext(item)) {
         people.add(author(item));
         authors[item.source_ref] = author(item);
+        const quote = quoteText(item);
+        if (quote) texts[item.source_ref] = quote;
       }
     };
 
@@ -158,6 +188,7 @@ export function buildAgentInput(rows: SourceRow[], timezone: string) {
     botRefs,
     people: [...people],
     authors,
+    texts,
     counts: {
       total,
       included: refs.length,
@@ -257,8 +288,11 @@ const InterpretedItem = v.object({
     v.description("Who did it. A member actor must be the author of at least one cited line."),
   ),
   evidence_refs: v.pipe(v.array(v.string()), v.minLength(1), v.description("source_ref ids from the input, e.g. S012.")),
-  progress: v.optional(
-    v.object({ from: v.optional(v.string()), to: v.optional(v.string()), next_step: v.optional(v.string()) }),
+  progress: v.optional(v.object({ from: v.optional(v.string()), to: v.optional(v.string()) })),
+  // Required on purpose: as an optional field inside progress it was never filled (v5, v6).
+  next_step: v.pipe(
+    v.nullable(v.string()),
+    v.description("Next action, plan, or deadline someone wrote for this matter, with who and when if written. null when nobody wrote one."),
   ),
 });
 
@@ -434,6 +468,12 @@ export function resolveStructuring(
           ...new Map(sources.flatMap((source) => source.entities).map((e) => [`${e.type}|${e.name}`, e])).values(),
         ],
         evidence_refs: section === "member_activity" ? ownRefs(refs, title, authors) : refs,
+        // A member entry is about its title person already.
+        owners:
+          section === "member_activity"
+            ? []
+            : [...new Set(sources.flatMap((s) => s.actors.filter((a) => a.type === "member").map((a) => a.name)))],
+        next_steps: [...new Set(sources.flatMap((s) => (s.next_step?.trim() ? [s.next_step.trim()] : [])))],
       };
     });
   return {
@@ -459,17 +499,44 @@ export type CoreMeta = {
   window_end_at: string;
 };
 
-export function buildCoreJson(meta: CoreMeta, rows: SourceRow[], output: DailyCoreOutput, people: string[]) {
+// Long enough for a report to quote one message, short enough to keep core_json small.
+const EXCERPT_MAX = 200;
+const excerpt = (text: string | undefined) =>
+  !text ? null : text.length > EXCERPT_MAX ? `${text.slice(0, EXCERPT_MAX - 1)}…` : text;
+
+// Optional fields are missing in core_json stored before generation 6.
+type CoreEvidence = {
+  source_type: string;
+  source_ident: string;
+  source_item_id: string;
+  occurred_at: string;
+  url: string | null;
+  author?: string | null;
+  excerpt?: string | null;
+};
+type CorePayload = { owners?: string[]; next_steps?: string[] };
+
+export function buildCoreJson(
+  meta: CoreMeta,
+  rows: SourceRow[],
+  output: DailyCoreOutput,
+  people: string[],
+  // From buildAgentInput: set only for lines a person wrote that day (no bots, no context);
+  // texts only for Slack lines.
+  { authors, texts }: { authors: Record<string, string>; texts: Record<string, string> } = { authors: {}, texts: {} },
+) {
   const byRef = new Map(rows.flatMap((row) => row.normalized_json).map((item) => [item.source_ref, item]));
-  const item = ({ evidence_refs, ...rest }: DailyCoreOutput["highlights"][number]) => ({
+  const item = ({ evidence_refs, owners, next_steps, ...rest }: DailyCoreOutput["highlights"][number]) => ({
     ...rest,
-    evidence: evidence_refs.flatMap((ref) => {
+    evidence: evidence_refs.flatMap((ref): CoreEvidence[] => {
       const source = byRef.get(ref);
       if (!source) return [];
       const { source_type, source_ident, source_item_id, occurred_at, url } = source;
-      return [{ source_type, source_ident, source_item_id, occurred_at, url: url ?? null }];
+      return [
+        { source_type, source_ident, source_item_id, occurred_at, url: url ?? null, author: authors[ref] ?? null, excerpt: excerpt(texts[ref]) },
+      ];
     }),
-    payload: {},
+    payload: { owners: owners ?? [], next_steps: next_steps ?? [] } as CorePayload,
   });
 
   // Context parents happened on earlier days, so they are not counted.

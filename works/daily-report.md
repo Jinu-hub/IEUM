@@ -107,6 +107,7 @@ Phase 0 사용자 결정: LLM에 섹션 압축과 흐름 연결까지 맡긴다.
 - Writer 결과를 보고, 흐름과 문장을 더 자연스럽게 다듬는 Agent를 뒤에 하나 더 붙일 수 있음.
 - 붙인다면 같은 `ReportDraft` 구조를 받아 `opening` / `points[].text` / `headline` / `text` / `closing`만 고치고 `section`과 `item_ids`는 그대로 둔다. 검사(`draftProblems`)와 렌더를 그대로 다시 쓰고, Tool에서 entry 수와 entry별 `section` / `item_ids`가 Writer와 같은지만 더 본다. 문장이 바뀌어도 근거 링크가 entry와 어긋나지 않음.
 - 판단은 Phase 1 사용자 확인에서. Writer 지시문만 고쳐서 될 문제인지(예: 문단 묶기, 연결 문장)와 호출 1회 추가 비용(Writer 기준 약 $0.005)을 같이 본다.
+- 사용자(2026-10-11, v3를 보고): Phase 2 전에 Finalizer를 먼저 붙여 본다. 구현: `flue/src/agents/daily-report-finalizer.ts`, `/report/generate`의 `finalize: true`(Writer 뒤에 실행)와 `draft`(저장된 Writer 초안을 주면 Writer를 건너뜀). Tool 검사는 `structureProblems`(points·entries 수, entry별 `section` / `item_ids`, points별 `item_ids`가 초안과 같음) + `labelProblems`(제목·포인트 앞의 【進行中】 같은 라벨) + 기존 `draftProblems`. migration `v7`(`FlueDailyReportFinalizerAgent`).
 
 에이전트 확인
 
@@ -149,6 +150,49 @@ Phase 0 사용자 결정: LLM에 섹션 압축과 흐름 연결까지 맡긴다.
   - 사용자 확인용 출력: `works/out/daily-report-p1v3.md` / `.html`, 응답 원문 `daily-report-p1v3.json`, 같은 틀의 코드 렌더 `daily-report-p0v2.*`.
   - 사용자 요청으로 섹션 제목 변경(코드 상수만, 모델 재실행 없이 저장된 v3 초안으로 다시 렌더): メンバー → 👥 メンバーアクティビティ, 数字 → 📊 今日のKPI(ko: 멤버 활동 / 오늘의 KPI, en: Member activity / Today's KPIs). 처음엔 メンバー別の動き / 今日の数字로 바꿨으나 사용자가 이쪽을 고름.
   - KPI 섹션을 표로(사용자 요청, 모델 재실행 없음): 열은 指標 / 件数(언어별 상수). 출처가 2개 이상인 값(Slack 채널별)은 합계 행 아래에 작은 회색 내역 행(markdown은 `└ #dev_lead`). 내역에서 0인 출처는 뺌. 3열(내역 열)은 휴대폰 폭에서 채널 이름이 줄바꿈되어 안 씀.
+- 2026-10-11 에이전트: Finalizer 시도(사용자 선택). 입력은 저장된 v3 초안(Writer 재실행 없음), 로컬 Worker, generation 5.
+  - 검사: `daily-report.check.ts`(구조 비교 4가지, 라벨 검사, 변경 통계, Finalizer 입력 모양) 통과, `tsc` 오류 없음. 에러 경로(모델 없음): 스키마가 다른 `draft` 400, 이 generation에 없는 id를 쓴 `draft` 400.
+  - run p1-4(finalizer-v1): 성공(8.0초, 입력 3,421 / 출력 1,442 토큰, $0.0091, 반려 0)이지만 쓸 수 없음. "상태 아이콘과 어긋나지 않게"라는 지시를 "상태를 써라"로 읽어 모든 제목 앞에 【進行中】【完了】【不明】을 붙임(코드 아이콘과 중복, `unknown`까지 씀). 본문·오프닝·마무리는 그대로. 원문 `works/out/daily-report-p1v3f-run1-labels.json`.
+    - 고친 것(v2): 라벨 금지를 지시문에 명시하고 `labelProblems`로 Tool에서도 반려. "문장을 다시 쓸 것"과 오프닝·본문·마무리 각각의 방향, 걸러낼 상투구(〜が共有されました 등)를 구체적으로.
+  - run p1-5(finalizer-v2): 6.5초, 입력 3,552 / 출력 1,302 토큰, **$0.0085**, 반려 0. 29개 문장 중 10개만 바뀜(1,446 → 1,452자).
+    - 나아진 곳: 오프닝이 티켓 나열 대신 하루의 모양("実装の完了と反映が進む一方で…いくつかは次の確認待ち")을 말함. 세 번째 point가 "完了反映とレビュー調整を進行" → "#23145 の子チケット化と反映案件の整理"로 구체적. 마무리 끝을 "進める流れです" → "進めます".
+    - 안 바뀐 곳: entry 12개 중 8개(진행 2, 논의 6)는 글자 그대로. 바뀐 4개도 단어 몇 개("共有されました" 일부는 남음). 걸러내라고 한 상투구가 그대로 있음.
+  - 판단 재료(사용자용)
+    - Finalizer가 가진 사실이 Writer와 같은 Core summary뿐이라, 새로 말할 내용이 없음. 결과적으로 "같은 문장의 미세 수정"에 머물고, 리포트 비용이 약 2배($0.0077 → 합계 $0.016)가 됨.
+    - 효과가 있던 오프닝·points 규칙(하루의 모양, 구체적인 포인트, 상투구 금지)은 Writer 지시문에 옮기면 호출 1회로 같은 효과를 낼 수 있음.
+    - 지시문을 더 고치거나 `thinkingLevel`을 올려 다시 돌리는 건 하지 않음(Phase마다 1회 원칙, 이미 2회).
+  - 사용자 확인용 출력: `works/out/daily-report-p1v3f.md` / `.html`(Finalizer v2), 응답 원문 `daily-report-p1v3f.json`(`writerDraft`에 입력 초안).
+- 2026-10-11 에이전트: 품질 개선(사용자가 `sample/final.html`과 비교 후 인용 / Core 필드 / Writer 톤 3가지 모두 고름).
+  - 차이의 원인으로 본 것: Writer가 받는 사실이 40~130자 Core summary뿐. Core가 담당자(actors)와 다음 단계(`next_step`)를 `core_json`에서 버리고 있었고, 원문도 없음. 지시문도 "사실만, 1~2문장"으로 좁음.
+  - Core 쪽(`core_json`에 추가, Report는 계속 `core_json`만 읽음): evidence마다 `author`(그날 사람이 쓴 줄만, 봇·컨텍스트는 null)와 `excerpt`(멘션 정리, 200자). item `payload`에 `owners`(member actor 합집합, 멤버 섹션은 빈 배열)와 `next_steps`. 계약 `DailyCoreEvidence.author` 추가. 새 필드는 모두 optional이라 `daily-core-v1` 유지(generation 5 이전 `core_json`도 그대로 렌더). Interpreter `core-interpreter-v6`: `progress.next_step`을 명시적으로 요구(v5까지 20개 item 모두 progress가 null).
+  - Report 쪽: 인용 후보는 코드가 고름(item마다 작성자 있는 excerpt 중 긴 것 3개, 중복 제거, 시간순, id `H1.2`). 모델은 highlights entry에 `quote_ids`(최대 2)만 내고 원문은 코드가 그대로 붙임(인용을 모델이 쓰면 원문과 달라질 수 있음). Tool 검사: 인용은 그 entry가 인용한 item의 후보여야 함, highlights 밖에는 인용 금지. 인용 원문과 next_steps의 티켓 번호도 "입력에 있는 번호"로 인정. Finalizer 구조 비교에 `quote_ids` 추가. Writer `daily-report-writer-v4`: owners / next_steps / quotes를 입력에 넣고, 의미 문장은 항목·인용이 말할 때만, 팀원에게 쓰는 따뜻한 톤(과장·사람 비교·명언 금지), Finalizer에서 효과 있던 규칙(오프닝은 하루의 모양, 구체적 points, 상투구 금지)을 옮김.
+  - 검사: `daily-core.check.ts`(owners / next_steps 병합, 멤버 섹션 owners 빈 배열, evidence author / excerpt와 200자 자르기, payload), `daily-report.check.ts`(인용 후보 선택·순서·봇 제외·중복 제거, 옛 `core_json`은 빈 배열, 인용 검사 2종, 인용 3개는 스키마 실패, 구조 비교, markdown / HTML 인용 렌더) 통과, `tsc` 오류 없음.
+  - Core run 22(generation 6, 새 필드가 필요해서 Core 재생성 1회): 29초, $0.036, 반려 0, item 13 + 멤버 12. owners는 모든 이벤트 item에 채워짐, 인용 후보도 모든 item에 있음. 하지만 **`next_steps`는 13개 모두 빈 배열**: Interpreter 원출력에서 `progress`가 여전히 모두 null("仕様書到着後に着手予定" item조차). 지시문만으로는 optional 중첩 객체를 안 채움. 고치려면 스키마를 바꿔야 함(예: `next_step`을 최상위 필수 `string | null`로 해서 매 item 판단하게). Core를 또 돌려야 해서 하지 않음.
+  - run p1-6(writer-v4, generation 6): 6.4초, 입력 6,122 / 출력 1,350 토큰, **$0.011**(v3 $0.0077, 입력이 인용 후보로 2.5배), 반려 0. 13개 중 10개 인용(빠진 것: P1 インポート修正 진행 중, T4, T5), points 3, entries 하이라이트 4 / 진행 3 / 논의 3, 인용 7개.
+    - 좋아진 점: 담당자 이름이 들어감("Yuki Kato が…"). 이유 문장이 생김("本体とは切り分けて進めることで、設計確認を先に進める狙いです", 인용 원문 "DB設計部分は別で分離した方が良いと判断"에 근거). 다음 단계가 구체적("次は No.158 修正が予定", "詰まらなければ本日中にレビュー依頼"). 논의 섹션이 6 → 3으로 줄어 압축이 돌아옴.
+    - 인용이 문제: 원문 그대로라 `@Yoko Nishimura @Mitsuru Ikeshita ( @UHH4TRCNR …` 같은 멘션 줄, `@channel 【本日の作業予定】… 【体調】 普通` 같은 하루 보고 양식, Redmine 링크 마크업(`<https://…|…>`), 200자에서 잘린 "…", 커밋 메시지 반복(" / ")이 그대로 보임. "긴 것 3개"로 고르니 양식 보고가 잘 뽑힘. 좋은 인용은 "詰まらなければ本日中にレビュー依頼出せるかと" 같은 짧은 한마디.
+    - 약한 추론 몇 개: "実装の仕上げ段階に入っています", "リリース向けの作成作業はひと区切りです", "受入指摘を踏まえた修正が反映された形です"(상투구). 오프닝은 아직 티켓 나열에 가까움.
+  - 다음 후보(사용자 판단): 인용 정리는 코드만으로 가능(앞쪽 멘션·`@channel` 제거, Slack 링크 마크업을 라벨로, 커밋은 후보에서 빼기, 양식 보고 줄 제외, 길이 대신 짧고 완결된 문장 우선). 인용 후보 선택이 바뀌면 id가 바뀌어 저장된 v4 초안은 못 씀(Writer 1회 다시). `next_step`은 Interpreter 스키마 변경 + Core 1회.
+  - 사용자 확인용 출력: `works/out/daily-report-p1v4.md` / `.html`, 응답 원문 `daily-report-p1v4.json`, Core 응답 `daily-core-run22.json`.
+- 2026-10-11 에이전트: 인용 정리 + `next_step` 고치기(사용자가 둘 다 고름). Core 1회 + Writer 1회.
+  - 인용 정리(코드): Core가 인용용 텍스트를 따로 만듦. Slack 줄만(커밋 메시지는 이미 item 제목에 있음). 앞쪽 멘션·`@channel`·괄호 속 cc 멘션 제거, `<url|label>`은 label, 맨 URL은 제거, `<#C|ch>`는 `#ch`. 이모지 코드(`:pray::skin-tone-2:`), 취소선(`~…~`, 철회한 말), URL처럼 생긴 링크 라벨은 `plainSlackText`로 지움(두 번 적용해도 같음). 이 함수는 Report도 후보를 고를 때 적용해서 이미 저장된 excerpt에도 효과가 있음. Report 쪽 선택: 15~120자만(짧으면 맞장구, 길면 보고문이고 200자에서 잘렸을 수 있음), 하루 보고 양식 제외(`【…】`로 시작, `【…】` 2개 이상, `・` 2개 이상), 남은 것 중 긴 3개를 시간순으로.
+  - `next_step`(Interpreter `core-interpreter-v7`): `progress` 안의 optional 필드를 item 최상위의 필수 `string | null`로 옮김. optional이면 모델이 아예 안 씀(v5, v6). 지시문 예시는 이 데이터가 아닌 일반 문장으로 바꿈. Structurer 입력에는 안 넣음(병합은 코드가 하므로 토큰만 늘어남).
+  - 검사: `daily-core.check.ts`(인용 텍스트는 사람의 Slack 줄만, 멘션·링크 정리, `plainSlackText`, `next_step` 병합), `daily-report.check.ts`(길이 범위·양식 제외 포함 후보 선택) 통과, `tsc` 오류 없음.
+  - Core run 23(generation 7): 28초, $0.035, 반려 0. **`next_steps`가 13개 → 11개 item 모두에 채워짐**("来週 13〜14日ごろに残りの対応をレビュー依頼", "#20878 の No.158 修正に着手" 등). 대신 필수라서 근거 없는 항목도 채움: "リリースや受入確認が必要なら続けて対応する（担当未記載）", "次の関連作業があれば別途着手する（記載なし）", 지금 하는 일을 다음 단계로 다시 씀(P4). 출력 토큰은 비슷(6,209 → 6,029).
+    - 덮기 감소: item 13 → 11(MillviV3 字幕, Naoya Tsujimoto의 임포트 수정이 빠짐), 사람 줄 인용 43 → 36 / 71, 멤버 항목 12 → 10(Naoya Tsujimoto, Momoko Terada, Mitsuru Ikeshita). 출력 길이가 같아서 필수 필드 탓인지 실행마다 흔들리는 것(TODO 3-3, run 16 / 17도 9개 차이)인지 1회로는 구분 못 함.
+  - run p1-7(writer-v4, generation 7): 6.6초, 입력 3,896 / 출력 1,474 토큰, **$0.0096**, 반려 0. 11개 항목 모두 인용, entries 하이라이트 5 / 진행 5 / 논의 1, 인용 8개.
+    - 인용이 읽힘: 멘션·양식·링크 마크업·이모지 코드가 사라지고 "展示会の時間外の9:00～10:00、17:00～ で、実施できると思うので…", "詰まらなければ本日中にレビュー依頼出せるかと" 같은 말이 붙음. 약한 인용도 있음("はい。今朝すぐコミットします。", 제목을 반복하는 #23145 확인 요청).
+    - 다음 단계가 본문과 마무리에 들어감(来週13〜14日ごろ, No.158, No.230 → #23145 / #23126). 근거 없는 next_step 하나가 그대로 옮겨짐(#23087 "受入やリリース確認が必要なら、この後続けて対応する流れです").
+    - 문체가 섞임: "〜を作り、先に確認を進めた。"(だ체)와 "〜予定です。"(です체)가 한 문단에.
+  - 남은 후보(사용자 판단): `next_step`이 비어야 할 때 null을 쓰게 하기(지시문에 "추측·조건부 문장은 null" 명시, 또는 "記載なし"류를 코드로 거르기는 언어 의존이라 비추천). Writer 지시문에 문체 통일(ja는 です・ます). 덮기 감소는 평가 세트(TODO 3-3)로 판단.
+  - 사용자 확인용 출력: `works/out/daily-report-p1v4b.md` / `.html`, 응답 원문 `daily-report-p1v4b.json`, Core 응답 `daily-core-run23.json`.
+- 2026-10-11 에이전트: 근거 없는 `next_step` 고치기(사용자). 문체 혼재는 고치지 않음(사용자: 사람이 써도 섞이니 어느 정도 자유도를 줌). Core 항목 감소는 요주의(사용자).
+  - 원인 판단: 필수 필드라서가 아니라 v7 지시문의 "set on every item"과 "null only when nothing is stated". 필드는 이미 `string | null`이었고, 모델이 "（担当未記載）"를 붙인 걸 보면 근거가 없다는 걸 알면서 채움. 필수 필드는 유지(optional이던 v5, v6에서는 0개).
+  - `core-interpreter-v8`: 스키마는 그대로, 지시문만. "null이 보통", 추측·조건부("if needed, continue")·지금 하는 일을 다시 쓰기·빠진 정보 표시("owner not stated")는 쓰지 말 것.
+  - Core run 24(generation 8): 29초, $0.040, 반려 0. `next_steps`가 16개 중 8개(나머지 null). 조건부·"記載なし"류는 사라짐. 남은 애매한 것 1개: "LEAD 10月バージョンのモジュールを作成する"(본인이 "作成します"라고 쓴 계획이라 근거는 있음).
+    - 덮기(요주의): item 16, 멤버 13 / 13, actor 13 / 13, 사람 줄 인용 40 / 71. generation 6 / 7 / 8은 item 13 / 11 / 16, 인용 43 / 36 / 40, 멤버 12 / 10 / 13. v8에서 회복했지만 기준(run 21: 인용 53, 멤버 13)보다는 낮고, 실행마다 흔들리는 폭(36~53)이 큼. MillviV3 字幕 item은 generation 7, 8 모두 없음(사람 줄은 있음). 같은 일이 둘로 나뉨: "モジュール作成（5.3.10_0011）"(진행)과 "LEAD 10月バージョンのモジュール作成を開始"(논의). 평가 세트(TODO 3-3)로 판단할 것.
+  - run p1-8(writer-v4, generation 8): 7.8초, 입력 3,993 / 출력 1,736 토큰, **$0.011**, 반려 0. 16개 항목 모두 인용, entries 하이라이트 4 / 진행 8 / 논의 4, 인용 7개. #23087의 근거 없는 다음 단계가 사라지고, 다음 단계는 근거 있는 것만 본문에 들어감(No.158, 13〜14日ごろ, 仕様確認の返答を受けて). Writer가 덧붙인 의미 문장 하나는 근거가 약함("再発時の作業停滞を防ぐための共有が行われています").
+  - 사용자 확인용 출력: `works/out/daily-report-p1v4c.md` / `.html`, 응답 원문 `daily-report-p1v4c.json`, Core 응답 `daily-core-run24.json`.
 
 ---
 

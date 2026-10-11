@@ -10,6 +10,7 @@
     { "tag": "v3", "new_sqlite_classes": ["FlueCoreInterpreterAgent"] },
     { "tag": "v4", "new_sqlite_classes": ["FlueCoreStructurerAgent"] },
     { "tag": "v5", "deleted_classes": ["FlueDailyCoreAgent"] },
-    { "tag": "v6", "new_sqlite_classes": ["FlueDailyReportWriterAgent"] }
+    { "tag": "v6", "new_sqlite_classes": ["FlueDailyReportWriterAgent"] },
+    { "tag": "v7", "new_sqlite_classes": ["FlueDailyReportFinalizerAgent"] }
   ]
 }

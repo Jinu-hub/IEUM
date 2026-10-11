@@ -7,9 +7,13 @@ import {
   draftProblems,
   draftStats,
   eventItems,
+  finalizerInput,
+  labelProblems,
   ReportDraft,
   renderDailyReport,
   reportView,
+  revisionStats,
+  structureProblems,
   writerInput,
 } from "./daily-report.ts";
 
@@ -131,15 +135,32 @@ assert.deepEqual(
   [["H1", "High"], ["H2", "Mid"], ["H3", "Low"], ["P1", "Unknown status"], ["T1", "Topic #23163"]],
 );
 const input = JSON.parse(writerInput(withTicket));
-assert.deepEqual(Object.keys(input.items[0]), ["id", "section", "title", "summary", "status", "importance"]);
+assert.deepEqual(Object.keys(input.items[0]), [
+  "id",
+  "section",
+  "title",
+  "summary",
+  "status",
+  "importance",
+  "owners",
+  "next_steps",
+  "quotes",
+]);
+// Old core_json has an empty payload.
+assert.deepEqual([input.items[0].owners, input.items[0].next_steps, input.items[0].quotes], [[], [], []]);
 const evidenceSets = draftEvidence(withTicket);
-assert.deepEqual(evidenceSets, { ids: ["H1", "H2", "H3", "P1", "T1"], required: ["H1", "H2", "H3"], tickets: ["#23163"] });
+assert.deepEqual(evidenceSets, {
+  ids: ["H1", "H2", "H3", "P1", "T1"],
+  required: ["H1", "H2", "H3"],
+  tickets: ["#23163"],
+  quotes: { H1: [], H2: [], H3: [], P1: [], T1: [] },
+});
 
 type Section = ReportDraft["entries"][number]["section"];
-const draft = (entries: [Section, string[]][], text = "ok", closing = "", points = [["H1"]]): ReportDraft => ({
+const draft = (entries: [Section, string[], string[]?][], text = "ok", closing = "", points = [["H1"]]): ReportDraft => ({
   opening: "Opening.",
   points: points.map((item_ids, i) => ({ text: `Point ${i + 1}`, item_ids })),
-  entries: entries.map(([section, item_ids], i) => ({ section, headline: `Head ${i + 1}`, text, item_ids })),
+  entries: entries.map(([section, item_ids, quote_ids = []], i) => ({ section, headline: `Head ${i + 1}`, text, item_ids, quote_ids })),
   closing,
 });
 const highlightsOnly: [Section, string[]][] = [["highlights", ["H1", "H2", "H3"]]];
@@ -164,8 +185,95 @@ assert.deepEqual(draftStats(draft(highlightsOnly), evidenceSets), {
   unused: ["P1", "T1"],
   points: 1,
   entries: { highlights: 1, progress_roadmap: 0, topics: 0 },
+  quotes: 0,
   chars: "Opening.\nPoint 1\nHead 1\nok\n".length,
 });
+
+// Quotes: lines people wrote, longest 3 in time order, without bots, repeats, too short or too long
+// lines, or status forms.
+const said = (author: string | null, excerpt: string, at: string) => ({ ...evidence(null), occurred_at: at, author, excerpt });
+const quotedItem = {
+  ...item("Quoted", 2, [], "completed"),
+  evidence: [
+    said("Aki", "thanks!", "2026-10-09T01:00:00Z"),
+    said("Bo", "the longest line of all #4242", "2026-10-09T03:00:00Z"),
+    said(null, "a bot notification that is long", "2026-10-09T02:00:00Z"),
+    said("Aki", "a fairly long line", "2026-10-09T04:00:00Z"),
+    said("Bo", "the longest line of all #4242", "2026-10-09T05:00:00Z"),
+    said("Cy", "a mid-size line", "2026-10-09T00:30:00Z"),
+    said("Cy", "x".repeat(121), "2026-10-09T06:00:00Z"),
+    said("Dee", "【本日の作業予定】 #4242 →開発", "2026-10-09T07:00:00Z"),
+    said("Dee", "today: ・No.1 done ・No.2 in progress", "2026-10-09T07:30:00Z"),
+    said("Eve", "a short note, but enough", "2026-10-09T08:00:00Z"),
+  ],
+  payload: { owners: ["Aki", "Bo"], next_steps: ["release #5151 on Monday"] },
+} as Item;
+const withQuotes = { ...withTicket, highlights: [...withTicket.highlights, quotedItem] } as DailyCoreJson;
+const quotedInput = JSON.parse(writerInput(withQuotes)).items[0];
+assert.deepEqual(quotedInput.quotes, [
+  { id: "H1.1", author: "Bo", text: "the longest line of all #4242" },
+  { id: "H1.2", author: "Aki", text: "a fairly long line" },
+  { id: "H1.3", author: "Eve", text: "a short note, but enough" },
+]);
+assert.deepEqual([quotedInput.owners, quotedInput.next_steps], [["Aki", "Bo"], ["release #5151 on Monday"]]);
+const quoteSets = draftEvidence(withQuotes);
+assert.deepEqual(quoteSets.quotes.H1, ["H1.1", "H1.2", "H1.3"]);
+// Tickets in quotes and next steps may be written.
+assert.ok(quoteSets.tickets.includes("#4242") && quoteSets.tickets.includes("#5151"));
+const allHighlights: [Section, string[], string[]?] = ["highlights", ["H1", "H2", "H3", "H4"], ["H1.1"]];
+assert.deepEqual(draftProblems(draft([allHighlights]), quoteSets), []);
+assert.match(
+  draftProblems(draft([["highlights", ["H2", "H3", "H4"], ["H1.1"]], ["highlights", ["H1"]]]), quoteSets)[0],
+  /quote_ids not offered by the entry's items: H1\.1/,
+);
+assert.match(
+  draftProblems(draft([allHighlights, ["topics", ["T1", "H1"], ["H1.1"]]]), quoteSets)[0],
+  /quotes outside highlights: "Head 2"/,
+);
+assert.equal(v.safeParse(ReportDraft, draft([["highlights", ["H1"], ["H1.1", "H1.2", "H1.3"]]])).success, false);
+const quotedView = reportView(withQuotes, draft([allHighlights]));
+assert.deepEqual(quotedView.sections[0].entries[0].quotes, [{ author: "Bo", text: "the longest line of all #4242" }]);
+const quotedReport = renderDailyReport(withQuotes, draft([allHighlights]));
+assert.match(quotedReport.markdown, /\n> \*\*Bo\*\*: the longest line of all #4242 {2}\n/);
+assert.ok(quotedReport.html.includes("<strong>Bo</strong>: the longest line of all #4242"));
+
+// Finalizer: wording may change, structure may not.
+const written = draft([["highlights", ["H1", "H2"]], ["topics", ["T1"]]], "ok", "Next.", [["H1"], ["H2"]]);
+const reworded: ReportDraft = {
+  ...written,
+  opening: "New opening.",
+  entries: written.entries.map((e) => ({ ...e, text: `${e.text}!` })),
+};
+assert.deepEqual(structureProblems(written, reworded), []);
+assert.deepEqual(revisionStats(written, reworded), {
+  texts: 8,
+  changed: 3,
+  chars_before: "Opening.Point 1Point 2Head 1okHead 2okNext.".length,
+  chars_after: "New opening.Point 1Point 2Head 1ok!Head 2ok!Next.".length,
+});
+assert.deepEqual(structureProblems(written, { ...reworded, points: reworded.points.slice(1) }), ["points: keep exactly 2 points"]);
+assert.deepEqual(
+  structureProblems(written, { ...reworded, points: [reworded.points[1], reworded.points[0]] }),
+  ["points 1, 2: keep item_ids as in the draft"],
+);
+assert.deepEqual(structureProblems(written, { ...reworded, entries: reworded.entries.slice(0, 1) }), [
+  "entries: keep all 2 entries in the draft order",
+]);
+assert.deepEqual(
+  structureProblems(written, { ...reworded, entries: [reworded.entries[0], { ...reworded.entries[1], section: "progress_roadmap" }] }),
+  ["entries 2: keep section, item_ids and quote_ids as in the draft"],
+);
+assert.deepEqual(
+  structureProblems(written, { ...reworded, entries: [{ ...reworded.entries[0], quote_ids: ["H1.1"] }, reworded.entries[1]] }),
+  ["entries 1: keep section, item_ids and quote_ids as in the draft"],
+);
+assert.deepEqual(labelProblems(reworded), []);
+const labeled = { ...reworded, entries: [{ ...reworded.entries[0], headline: "【進行中】#23163 done" }, reworded.entries[1]] };
+assert.match(labelProblems(labeled)[0], /remove leading labels or brackets: "【進行中】#23163 done"/);
+assert.equal(labelProblems({ ...reworded, points: [{ text: "[Done] x", item_ids: ["H1"] }] }).length, 1);
+const finalizerPayload = JSON.parse(finalizerInput(withTicket, written));
+assert.deepEqual(Object.keys(finalizerPayload), ["target", "date", "items", "draft"]);
+assert.deepEqual(finalizerPayload.items, input.items);
 
 // Draft order is ignored: entries go to the fixed sections.
 const story = reportView(withTicket, draft([["topics", ["T1"]], ["highlights", ["H1", "T1"]], ["highlights", ["H2", "H3"]]], "Para", "Next."));
@@ -179,7 +287,15 @@ assert.deepEqual(story.sections.map((s) => [s.heading, s.entries.map((e) => e.ti
   ["💬 議論・調整", ["Head 1"]],
 ]);
 // Merged links: High has 7, the topic repeats High's first URL. Mixed statuses show no icon.
-assert.deepEqual(story.sections[0].entries[0], { title: "Head 2", icon: null, status: null, summary: "Para", links: urls(3), more: 4 });
+assert.deepEqual(story.sections[0].entries[0], {
+  title: "Head 2",
+  icon: null,
+  status: null,
+  summary: "Para",
+  links: urls(3),
+  more: 4,
+  quotes: [],
+});
 assert.deepEqual(story.closing, { heading: "⏭ 次の焦点", text: "Next." });
 assert.deepEqual(story.members?.entries.map((e) => e.title), ["Zed", "Aki"]);
 const storyReport = renderDailyReport(withTicket, draft([["highlights", ["H1"]], ["highlights", ["H2", "H3"]]], "Para <b>", "Next."));

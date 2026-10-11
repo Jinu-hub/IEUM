@@ -13,6 +13,8 @@ export type DailyCoreEvidence = {
   source_item_id: string;
   occurred_at: string;
   url?: string | null;
+  /** Who wrote it; null for bot notifications and earlier-day context lines. */
+  author?: string | null;
   excerpt?: string | null;
 };
 

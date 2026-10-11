@@ -30,6 +30,11 @@ Daily Core E2E(Phase 0~4) 완료 이후 할 일. 한 일은 `W41.md`, E2E 경과
   - [x] Phase 0 형식: 코드 렌더(LLM 0회)로 markdown / html을 만들어 보고, LLM이 필요한지 정한다. 사용자 결정(2026-10-11): LLM에 섹션 압축·흐름 연결까지 맡김, 멤버 섹션은 그대로, 활동 없는 날도 보냄.
   - [ ] Phase 1 Report Agent: 오프닝, highlights / progress / topics 압축·연결, 마무리. 멤버·숫자 섹션은 코드 렌더 그대로. 출력은 문단마다 근거 `item_ids`, 링크·HTML은 코드가 붙임. 활동 없는 날은 모델 안 부름. v2 구현·에이전트 확인 끝(2026-10-11, $0.005 / 4.6초). 사용자 요청으로 v3(고정 섹션 + 결과 제목 + 今日のポイント, $0.0077 / 7.6초), 사용자 확인 대기. 길이가 Phase 0 수준으로 돌아와서 논의 섹션을 줄일지 볼 것.
     - 결과에 따라 뒤에 `DailyReportFinalizer`(문장·흐름 다듬기)를 붙일 수 있음(사용자). 같은 초안 구조를 받아 문장만 고치고 `item_ids`는 유지.
+    - Finalizer 구현·2회 실행 끝(2026-10-11, v2 $0.0085). 오프닝·points만 나아지고 entry 대부분 그대로. 쓸지(기본으로 켤지 / 접고 규칙을 Writer로 옮길지) 사용자 판단 대기.
+    - [x] 품질 개선 1차(사용자 선택: 인용 / Core 필드 / Writer 톤): Core가 evidence `author` / `excerpt`, item `owners` / `next_steps`를 남기고, Writer v4가 인용 id·담당자·다음 단계를 씀. Core run 22 + run p1-6($0.011). Finalizer 규칙은 Writer로 옮김.
+    - [x] 인용 정리(코드만): 멘션·링크 마크업·이모지 코드·취소선 제거, 커밋·양식 보고 줄 제외, 15~120자. run p1-7.
+    - [x] `next_steps`가 비는 문제: `next_step`을 최상위 필수 `string | null`로(`core-interpreter-v7`). Core run 23에서 모든 item에 채워짐.
+    - [x] 근거 없는 `next_step`: `core-interpreter-v8`("null이 보통", 추측·조건부 금지). Core run 24에서 16개 중 8개만 채워지고 조건부·"記載なし"류 없음.
   - [ ] Phase 2 `daily_reports` 테이블: LLM을 쓰기로 해서 진행(Phase 1에서 LLM을 접으면 건너뜀).
   - [ ] Phase 3 메일 연결: `processTarget`이 수집 → `/core/generate` → 리포트 → `sendMails`. Vercel 즉시 발송의 함수 시간 확인.
   - [ ] Phase 4 배포·정리: Worker 배포, `TestAgent` 제거(4-3과 같이).
@@ -73,9 +78,10 @@ Daily Core E2E(Phase 0~4) 완료 이후 할 일. 한 일은 `W41.md`, E2E 경과
   - 인용 안 된 사람 줄: 71개 중 48개만 인용(run 10), run 16 기준 8개 남음.
   - member_activity에서 빠지는 사람: Mitsuru 등, run 20의 Naoya Tsujimoto.
   - 실행마다 item이 생겼다 빠졌다 함(#23054, Phase 1).
+  - 요주의(사용자, 2026-10-11): Core 항목 감소. generation 6 / 7 / 8(`core-interpreter-v6` / `v7` / `v8`)에서 item 13 / 11 / 16, 인용 43 / 36 / 40(기준 run 21: 53), 멤버 12 / 10 / 13. MillviV3 字幕 item은 generation 7, 8 모두 없음. 지시문을 바꿀 때마다 평가 세트로 덮기가 줄지 않았는지 확인.
 - [ ] 겹침·나뉨·배치: core item을 어떻게 묶고 어느 배열에 둘지.
   - 같은 사실이 highlights, progress_roadmap, member_activity에 겹침.
-  - 같은 일이 두 core item으로 나뉨(run 20: #23087 topics / progress, 모듈 작성 2개).
+  - 같은 일이 두 core item으로 나뉨(run 20: #23087 topics / progress, 모듈 작성 2개; run 24에서도 모듈 작성이 진행 / 논의로 나뉨).
   - progress 배치 기준: run 21에서 progress 2개뿐, 진행 보고가 topics / highlights로 감.
   - 사람별 예정·보고를 묶은 낮은 중요도 item(Phase 1).
 - [ ] 사람 대응표(workspace 단위, Slack user id ↔ GitHub 로그인). 이름 비교로 못 합치는 사람(`takamune-dsl`)용.

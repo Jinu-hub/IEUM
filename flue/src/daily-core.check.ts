@@ -10,6 +10,7 @@ import {
   type Interpretation,
   interpretationProblems,
   interpretationStats,
+  plainSlackText,
   resolveStructuring,
   type SourceItem,
   type Structuring,
@@ -136,6 +137,7 @@ const interpreted = (refs: string[], actors: string[], key = "ticket-12"): Inter
   entities: [],
   actors: actors.map((name) => ({ type: "member" as const, name })),
   evidence_refs: refs,
+  next_step: null,
 });
 const interpretation = (...core_items: Interpretation["core_items"]): Interpretation => ({
   overview_candidate: { summary: "" },
@@ -177,6 +179,7 @@ const coreB = {
   confidence: 0.5,
   tags: ["x", "y"],
   entities: [{ type: "ticket", name: "#12" }, { type: "pr", name: "#5" }],
+  next_step: " review (Aki) ",
 };
 const coreC = interpreted(["S008"], ["takamune-dsl"], "c");
 const interpretedDay = interpretation(coreA, coreB, coreC);
@@ -227,8 +230,11 @@ assert.deepEqual(resolved.highlights[0], {
   classifications: { primary: "fix", secondary: [] },
   entities: [{ type: "ticket", name: "#12" }, { type: "pr", name: "#5" }],
   evidence_refs: ["S003", "S010", "S004", "S007", "S011"],
+  owners: ["Aki", "Jinu Son"],
+  next_steps: ["review (Aki)"],
 });
 assert.deepEqual(resolved.member_activity.map((item) => item.evidence_refs), [["S003", "S011"], ["S004", "S007"]]);
+assert.deepEqual(resolved.member_activity.map((item) => item.owners), [[], []]);
 assert.deepEqual(evidenceProblems(resolved, input), []);
 
 const meta = {
@@ -253,19 +259,59 @@ const sources = [
   },
   { source_type: "github_repo", source_ident: "LEAD", collection_status: "success", normalized_json: [commit("S007", "a", "A")] },
 ];
-const json = buildCoreJson({ ...meta, workspace_id: "w" } as typeof meta, sources, core(["S001", "S003", "S999"]), ["Aki"]);
+const json = buildCoreJson({ ...meta, workspace_id: "w" } as typeof meta, sources, core(["S001", "S003", "S999"]), ["Aki"], {
+  authors: { S003: "Aki" },
+  texts: { S001: "old", S003: "x".repeat(250) },
+});
 assert.deepEqual(json.meta, meta);
 assert.deepEqual(json.highlights[0].evidence, [
-  { source_type: "slack_channel", source_ident: "#dev", source_item_id: "1.0", occurred_at: "2026-10-07T01:00:00Z", url: null },
+  {
+    source_type: "slack_channel",
+    source_ident: "#dev",
+    source_item_id: "1.0",
+    occurred_at: "2026-10-07T01:00:00Z",
+    url: null,
+    author: null,
+    excerpt: "old",
+  },
   {
     source_type: "slack_channel",
     source_ident: "#dev",
     source_item_id: "3.0",
     occurred_at: "2026-10-09T02:00:00Z",
     url: "https://slack.com/archives/C1/p30",
+    author: "Aki",
+    excerpt: `${"x".repeat(199)}…`,
   },
 ]);
+assert.deepEqual(json.highlights[0].payload, { owners: [], next_steps: [] });
 assert.ok(!("evidence_refs" in json.highlights[0]));
+// Quotable text: people's Slack lines only, without addressing or link markup.
+assert.deepEqual(input.texts, { S003: "reply to old", S004: "standalone", S011: "did #12" });
+const quotable = buildAgentInput(
+  [
+    {
+      source_type: "slack_channel",
+      source_ident: "#dev",
+      collection_status: "success",
+      normalized_json: [
+        item(
+          "S001",
+          "1.0",
+          "2026-10-09T01:00:00Z",
+          "<@U2> <!here> ( <@U3> <@U4> #12 see <https://x.test/12|#12 note> and <https://x.test/raw> in <#C1|dev>, ask <@U1>",
+        ),
+      ],
+    },
+  ],
+  "Asia/Tokyo",
+);
+assert.equal(quotable.texts.S001, "#12 see #12 note and in #dev, ask @Aki");
+assert.equal(
+  plainSlackText("thanks:pray::skin-tone-2: ~room is taken,~ my desk see redmine.example.jp/issues/1#… ok"),
+  "thanks my desk see ok",
+);
+assert.equal(plainSlackText("v5.3.10 at 10:15 ok"), "v5.3.10 at 10:15 ok");
 assert.deepEqual(
   json.metrics.map((m) => [m.key, m.value, "dimensions" in m ? m.dimensions.source_ident : null]),
   [

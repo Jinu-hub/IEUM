@@ -2,8 +2,10 @@ import { init } from "@flue/runtime";
 import { createAgentRouter } from "@flue/runtime/routing";
 import { Hono, type MiddlewareHandler } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
+import * as v from "valibot";
 import { CORE_INTERPRETER_PROMPT_VERSION, CoreInterpreter } from "./agents/core-interpreter.ts";
 import { CORE_STRUCTURER_PROMPT_VERSION, CoreStructurer } from "./agents/core-structurer.ts";
+import { DAILY_REPORT_FINALIZER_PROMPT_VERSION, DailyReportFinalizer } from "./agents/daily-report-finalizer.ts";
 import { DAILY_REPORT_WRITER_PROMPT_VERSION, DailyReportWriter } from "./agents/daily-report-writer.ts";
 import { TestAgent } from "./agents/test-agent.ts";
 import {
@@ -23,10 +25,13 @@ import {
 import {
   type DailyCoreJson,
   draftEvidence,
+  draftProblems,
   draftStats,
+  finalizerInput,
   REPORT_FORMAT_VERSION,
-  type ReportDraft,
+  ReportDraft,
   renderDailyReport,
+  revisionStats,
   writerInput,
 } from "./daily-report.ts";
 
@@ -228,7 +233,7 @@ app.post("/core/generate", async (c) => {
     const structuring = call2.output;
 
     const output = resolveStructuring(structuring, interpretation, input.authors);
-    const coreJson = buildCoreJson(core, rows, output, input.people);
+    const coreJson = buildCoreJson(core, rows, output, input.people, input);
     const placed = new Set(
       [...structuring.highlights, ...structuring.topics, ...structuring.progress_roadmap, ...structuring.member_activity].flatMap(
         (item) => item.core_item_ids,
@@ -303,14 +308,20 @@ app.post("/core/generate", async (c) => {
 
 // Writes the Daily Report from the current Daily Core generation. Only `dryRun: true` until
 // daily_reports exists. Days without activity get the code-rendered report and no model call.
+// `finalize` runs DailyReportFinalizer on the writer's draft. A given `draft` (a saved writer
+// output for the same generation) replaces the writer call.
 app.post("/report/generate", async (c) => {
-  const { dailyCoreId, model = REPORT_MODEL, dryRun } = await c.req.json<{
+  const { dailyCoreId, model = REPORT_MODEL, dryRun, finalize, draft } = await c.req.json<{
     dailyCoreId?: string;
     model?: string;
     dryRun?: boolean;
+    finalize?: boolean;
+    draft?: unknown;
   }>();
   if (!isUuid(dailyCoreId)) return c.json({ error: "dailyCoreId must be a uuid" }, 400);
   if (dryRun !== true) return c.json({ error: "only dryRun: true is supported until daily_reports exists" }, 400);
+  const given = draft === undefined ? undefined : v.safeParse(ReportDraft, draft);
+  if (given && !given.success) return c.json({ error: "draft does not match ReportDraft", issues: v.flatten(given.issues) }, 400);
   const db = supabase(c.env);
   if (!db) return c.text("Supabase secrets are not set", 500);
 
@@ -332,27 +343,46 @@ app.post("/report/generate", async (c) => {
   }
 
   const evidence = draftEvidence(coreJson);
+  const language = coreJson.meta.language;
+  if (given) {
+    const problems = draftProblems(given.output, evidence);
+    if (problems.length) return c.json({ error: "draft does not fit this generation", problems }, 400);
+  }
   try {
-    const writer = await runAgent<ReportDraft>(
-      DailyReportWriter,
-      "draft",
-      writerInput(coreJson),
-      { ...evidence, language: coreJson.meta.language, model },
-      [],
-    );
+    const writer = given
+      ? null
+      : await runAgent<ReportDraft>(DailyReportWriter, "draft", writerInput(coreJson), { ...evidence, language, model }, []);
+    const written = given?.output ?? writer!.output;
+    const finalizer = finalize
+      ? await runAgent<ReportDraft>(
+          DailyReportFinalizer,
+          "draft",
+          finalizerInput(coreJson, written),
+          { before: written, ...evidence, language, model },
+          [],
+        )
+      : null;
+    const final = finalizer?.output ?? written;
     return c.json({
       dailyCoreId,
       generationNo,
       status: "succeeded",
       formatVersion: REPORT_FORMAT_VERSION,
-      promptVersion: DAILY_REPORT_WRITER_PROMPT_VERSION,
+      promptVersion: [
+        writer ? DAILY_REPORT_WRITER_PROMPT_VERSION : "given-draft",
+        ...(finalizer ? [DAILY_REPORT_FINALIZER_PROMPT_VERSION] : []),
+      ].join("+"),
       model,
       elapsedMs: Date.now() - startedAt,
-      usage: writer.usage,
-      calls: { writer: writer.metrics },
-      stats: draftStats(writer.output, evidence),
-      draft: writer.output,
-      ...renderDailyReport(coreJson, writer.output),
+      usage: {
+        ...sumUsage(writer?.usage, finalizer?.usage),
+        calls: { ...(writer && { writer: writer.usage }), ...(finalizer && { finalizer: finalizer.usage }) },
+      },
+      calls: { ...(writer && { writer: writer.metrics }), ...(finalizer && { finalizer: finalizer.metrics }) },
+      stats: { ...draftStats(final, evidence), ...(finalizer && { revision: revisionStats(written, final) }) },
+      ...(finalizer && { writerDraft: written }),
+      draft: final,
+      ...renderDailyReport(coreJson, final),
     });
   } catch (error) {
     const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);

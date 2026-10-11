@@ -79,7 +79,7 @@ Skill, Subagent, MCP, Sandbox, 데이터 조회 Tool, Workers AI 바인딩은 �
 |---|---|
 | `GET /` | 헬스 체크 |
 | `POST /core/generate` | 본문 `{ dailyCoreId, model? }`. Bearer 토큰(`FLUE_API_TOKEN`) 필요. 응답에 stats, 토큰, 호출별 시간·반려 이유, `coreJson` |
-| `POST /report/generate` | 본문 `{ dailyCoreId, dryRun: true, model? }`. 현재 generation의 `core_json`으로 `DailyReportWriter` 실행, 저장 없이 `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. 활동 없는 날은 모델 없이 코드 렌더. `dryRun` 없이는 400(`daily_reports` 테이블 전) |
+| `POST /report/generate` | 본문 `{ dailyCoreId, dryRun: true, model?, finalize?, draft? }`. 현재 generation의 `core_json`으로 `DailyReportWriter` 실행, 저장 없이 `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. `finalize: true`면 뒤에 `DailyReportFinalizer`(문장만 고침, 응답에 `writerDraft`). `draft`(저장된 Writer 초안)를 주면 Writer를 건너뜀. 활동 없는 날은 모델 없이 코드 렌더. `dryRun` 없이는 400(`daily_reports` 테이블 전) |
 | `/agents/test/*` | `TestAgent`(한 문장 생성). 앱의 메일 발송 경로(`app/features/cron/api/create-contents.tsx`)가 사용 |
 
 ## 실행과 배포

@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import type { buildCoreJson } from "./daily-core.ts";
+import { type buildCoreJson, plainSlackText } from "./daily-core.ts";
 
 export type DailyCoreJson = ReturnType<typeof buildCoreJson>;
 type CoreItem = DailyCoreJson["highlights"][number];
@@ -93,6 +93,37 @@ export function eventItems(core: DailyCoreJson) {
   );
 }
 
+const MAX_QUOTES = 3;
+// Shorter lines are acknowledgements; longer ones are reports, not remarks (and may be cut at 200).
+const QUOTE_CHARS = { min: 15, max: 120 };
+export type Quote = { id: string; author: string; text: string };
+
+// Daily status posts ("【本日の作業予定】 #123 →開発 【体調】 普通", "・No.1 ⇒ 完了 ・No.2 …") are forms,
+// not something someone said.
+const isStatusForm = (text: string) =>
+  /^\s*【[^】]*】/.test(text) || (text.match(/【[^】]*】/g) ?? []).length >= 2 || (text.match(/・/g) ?? []).length >= 2;
+
+// Quote candidates: lines people wrote that day (author is null for bots and context lines).
+// The longest few carry the most substance; they are offered in time order.
+// Excerpts stored before generation 8 still carry emoji codes and URL labels.
+export function itemQuotes(item: CoreItem, itemId: string): Quote[] {
+  const seen = new Set<string>();
+  const lines = (item.evidence ?? []).flatMap((e) => {
+    const text = e.author && e.excerpt ? plainSlackText(e.excerpt) : "";
+    if (!text || seen.has(text)) return [];
+    if (text.length < QUOTE_CHARS.min || text.length > QUOTE_CHARS.max || isStatusForm(text)) return [];
+    seen.add(text);
+    return [{ author: e.author!, text, at: e.occurred_at }];
+  });
+  return lines
+    .sort((a, b) => b.text.length - a.text.length)
+    .slice(0, MAX_QUOTES)
+    .sort((a, b) => a.at.localeCompare(b.at))
+    .map(({ author, text }, i) => ({ id: `${itemId}.${i + 1}`, author, text }));
+}
+
+const payload = (item: CoreItem) => ({ owners: item.payload?.owners ?? [], next_steps: item.payload?.next_steps ?? [] });
+
 // Writer output, and the shape a later finalizer would rewrite: text changes, item_ids stay.
 // Code fixes the section frame and the model fills it. Flat on purpose: with paragraphs nested in
 // sections, the model left sections empty and put closing inside the last one (run p1-1).
@@ -107,6 +138,11 @@ export const ReportDraft = v.object({
         headline: v.pipe(v.string(), v.minLength(1)),
         text: v.pipe(v.string(), v.minLength(1)),
         item_ids: ItemIds,
+        quote_ids: v.pipe(
+          v.array(v.string()),
+          v.maxLength(2),
+          v.description("Quotes shown verbatim under a highlights entry, e.g. H1.2. Empty for other sections."),
+        ),
       }),
     ),
     v.minLength(1),
@@ -115,42 +151,90 @@ export const ReportDraft = v.object({
 });
 export type ReportDraft = v.InferOutput<typeof ReportDraft>;
 
+const reportItems = (core: DailyCoreJson) =>
+  eventItems(core).map(({ id, section, item }) => ({
+    id,
+    section,
+    title: item.title,
+    summary: item.summary,
+    status: item.status,
+    importance: item.importance,
+    ...payload(item),
+    quotes: itemQuotes(item, id),
+  }));
+
 export function writerInput(core: DailyCoreJson) {
   return JSON.stringify({
     target: core.meta.target_display_name,
     date: core.meta.core_date,
     overview: core.overview.summary,
-    items: eventItems(core).map(({ id, section, item }) => ({
-      id,
-      section,
-      title: item.title,
-      summary: item.summary,
-      status: item.status,
-      importance: item.importance,
-    })),
+    items: reportItems(core),
   });
 }
 
+// The finalizer sees the same items as the writer: they are the only facts it may use.
+export function finalizerInput(core: DailyCoreJson, draft: ReportDraft) {
+  return JSON.stringify({ target: core.meta.target_display_name, date: core.meta.core_date, items: reportItems(core), draft });
+}
+
+// A finalizer rewrites wording only. Same structure means links and icons still match the text.
+export function structureProblems(before: ReportDraft, after: ReportDraft) {
+  const same = (a: string[], b: string[]) => a.join() === b.join();
+  const problems: string[] = [];
+  if (after.points.length !== before.points.length) {
+    problems.push(`points: keep exactly ${before.points.length} points`);
+  } else {
+    const changed = after.points.flatMap((p, i) => (same(p.item_ids, before.points[i].item_ids) ? [] : [i + 1]));
+    if (changed.length) problems.push(`points ${changed.join(", ")}: keep item_ids as in the draft`);
+  }
+  if (after.entries.length !== before.entries.length) {
+    problems.push(`entries: keep all ${before.entries.length} entries in the draft order`);
+  } else {
+    const changed = after.entries.flatMap((e, i) => {
+      const b = before.entries[i];
+      return e.section === b.section && same(e.item_ids, b.item_ids) && same(e.quote_ids, b.quote_ids) ? [] : [i + 1];
+    });
+    if (changed.length) problems.push(`entries ${changed.join(", ")}: keep section, item_ids and quote_ids as in the draft`);
+  }
+  return problems;
+}
+
+// Icons already show the status; a leading 【進行中】 or [Done] repeats it (finalizer run p1-4).
+const LEADING_LABEL = /^\s*[【\[［(（]/;
+export function labelProblems(draft: ReportDraft) {
+  const labeled = [...draft.points.map((p) => p.text), ...draft.entries.map((e) => e.headline)].filter((t) => LEADING_LABEL.test(t));
+  return labeled.length ? [`remove leading labels or brackets: ${labeled.map((t) => `"${t}"`).join(", ")}; status icons are added by code`] : [];
+}
+
+export function revisionStats(before: ReportDraft, after: ReportDraft) {
+  const texts = (d: ReportDraft) => [d.opening, ...d.points.map((p) => p.text), ...d.entries.flatMap((e) => [e.headline, e.text]), d.closing];
+  const [a, b] = [texts(before), texts(after)];
+  return { texts: a.length, changed: a.filter((text, i) => text !== b[i]).length, chars_before: a.join("").length, chars_after: b.join("").length };
+}
+
 const TICKET = /#\d{3,}/g;
-export type DraftEvidence = { ids: string[]; required: string[]; tickets: string[] };
+// quotes: quote ids offered per item id.
+export type DraftEvidence = { ids: string[]; required: string[]; tickets: string[]; quotes: Record<string, string[]> };
 
 export function draftEvidence(core: DailyCoreJson): DraftEvidence {
-  const items = eventItems(core);
+  const items = eventItems(core).map(({ id, section, item }) => ({ id, section, item, quotes: itemQuotes(item, id) }));
   const text = [
     core.overview.summary,
-    ...[...EVENT_SECTIONS, "member_activity" as const].flatMap((s) => core[s].flatMap((i) => [i.title, i.summary])),
+    ...[...EVENT_SECTIONS, "member_activity" as const].flatMap((s) => core[s].flatMap((i) => [i.title, i.summary, ...payload(i).next_steps])),
+    ...items.flatMap((i) => i.quotes.map((q) => q.text)),
   ].join("\n");
   return {
     ids: items.map((i) => i.id),
     required: items.filter((i) => i.section === "highlights").map((i) => i.id),
     tickets: [...new Set(text.match(TICKET) ?? [])],
+    quotes: Object.fromEntries(items.map((i) => [i.id, i.quotes.map((q) => q.id)])),
   };
 }
 
 const draftText = (draft: ReportDraft) =>
   [draft.opening, ...draft.points.map((p) => p.text), ...draft.entries.flatMap((e) => [e.headline, e.text]), draft.closing].join("\n");
 
-export function draftProblems(draft: ReportDraft, { ids, required, tickets }: DraftEvidence) {
+export function draftProblems(draft: ReportDraft, { ids, required, tickets, quotes }: DraftEvidence) {
   const known = new Set(ids);
   const cited = new Set([...draft.points, ...draft.entries].flatMap((e) => e.item_ids));
   const used = new Set(draft.entries.flatMap((e) => e.item_ids));
@@ -168,6 +252,13 @@ export function draftProblems(draft: ReportDraft, { ids, required, tickets }: Dr
   if (missing.length) problems.push(`highlights not covered: ${missing.join(", ")}; cite each highlight in some entry`);
   const invented = [...new Set(draftText(draft).match(TICKET) ?? [])].filter((t) => !tickets.includes(t));
   if (invented.length) problems.push(`ticket numbers not in the input: ${invented.join(", ")}; use only numbers written in the items`);
+  const quoted = draft.entries.filter((e) => e.section !== "highlights" && e.quote_ids.length);
+  if (quoted.length) problems.push(`quotes outside highlights: ${quoted.map((e) => `"${e.headline}"`).join(", ")}; use [] there`);
+  const foreign = draft.entries.flatMap((e) => {
+    const offered = new Set(e.item_ids.flatMap((id) => quotes[id] ?? []));
+    return e.quote_ids.filter((q) => !offered.has(q));
+  });
+  if (foreign.length) problems.push(`quote_ids not offered by the entry's items: ${foreign.join(", ")}; pick from the quotes of the items it cites`);
   return problems;
 }
 
@@ -179,11 +270,20 @@ export function draftStats(draft: ReportDraft, { ids }: DraftEvidence) {
     unused: ids.filter((id) => !used.has(id)),
     points: draft.points.length,
     entries: Object.fromEntries(EVENT_SECTIONS.map((s) => [s, draft.entries.filter((e) => e.section === s).length])),
+    quotes: draft.entries.reduce((n, e) => n + e.quote_ids.length, 0),
     chars: draftText(draft).length,
   };
 }
 
-export type ReportEntry = { title: string; icon: string | null; status: string | null; summary: string; links: string[]; more: number };
+export type ReportEntry = {
+  title: string;
+  icon: string | null;
+  status: string | null;
+  summary: string;
+  links: string[];
+  more: number;
+  quotes: { author: string; text: string }[];
+};
 // block: entries with their own heading; list: one line each; members: name, then summary.
 export type ReportSection = { heading: string; layout: "block" | "list" | "members"; entries: ReportEntry[] };
 export type ReportMetric = { label: string; value: number; parts: { name: string; value: number }[] };
@@ -214,9 +314,16 @@ function commonStatus(items: CoreItem[]): Status | null {
   return statuses.size === 1 && only && only in ICON ? (only as Status) : null;
 }
 
-function entry(title: string, summary: string, items: CoreItem[], labels: Labels): ReportEntry {
+function entry(title: string, summary: string, items: CoreItem[], labels: Labels, quotes: Quote[] = []): ReportEntry {
   const status = commonStatus(items);
-  return { title, icon: status && ICON[status], status: status && labels.status[status], summary, ...links(items) };
+  return {
+    title,
+    icon: status && ICON[status],
+    status: status && labels.status[status],
+    summary,
+    ...links(items),
+    quotes: quotes.map(({ author, text }) => ({ author, text })),
+  };
 }
 
 const blockedFirst = (entries: ReportEntry[]) =>
@@ -228,12 +335,16 @@ const blockedFirst = (entries: ReportEntry[]) =>
 export function reportView(core: DailyCoreJson, draft?: ReportDraft): ReportView {
   const labels = LABELS[core.meta.language as keyof typeof LABELS] ?? LABELS.en;
   const story = draft && core.quality.status !== "empty" ? draft : undefined;
-  const byId = new Map(eventItems(core).map(({ id, item }) => [id, item]));
+  const events = eventItems(core);
+  const byId = new Map(events.map(({ id, item }) => [id, item]));
+  const quoteById = new Map(events.flatMap(({ id, item }) => itemQuotes(item, id).map((q) => [q.id, q] as const)));
   const cite = (ids: string[]) => ids.flatMap((id) => byId.get(id) ?? []);
 
   const sections = EVENT_SECTIONS.map((key): ReportSection => {
     const entries = story
-      ? story.entries.filter((e) => e.section === key).map((e) => entry(e.headline, e.text, cite(e.item_ids), labels))
+      ? story.entries
+          .filter((e) => e.section === key)
+          .map((e) => entry(e.headline, e.text, cite(e.item_ids), labels, e.quote_ids.flatMap((q) => quoteById.get(q) ?? [])))
       : byImportance(core[key]).map((item) => entry(item.title, item.summary, [item], labels));
     return { heading: labels[key], layout: LAYOUT[key], entries: key === "progress_roadmap" ? blockedFirst(entries) : entries };
   });
@@ -303,7 +414,10 @@ function markdown(view: ReportView) {
   const section = ({ heading, layout, entries }: ReportSection) => {
     lines.push(`## ${md(heading)}`, "");
     for (const e of entries) {
-      if (layout === "block") lines.push(`### ${iconText(e.icon)}${md(e.title)}`, "", withLinks(e), "");
+      if (layout === "block") {
+        lines.push(`### ${iconText(e.icon)}${md(e.title)}`, "", withLinks(e), "");
+        if (e.quotes.length) lines.push(...e.quotes.map((q) => `> **${md(q.author)}**: ${md(q.text)}  `), "");
+      }
       else if (layout === "list") lines.push(`- ${iconText(e.icon)}**${md(e.title)}** ${withLinks(e)}`);
       else lines.push(`- **${md(e.title)}**${e.status ? ` (${e.status})` : ""}`, `  ${withLinks(e)}`);
     }
@@ -368,6 +482,10 @@ function html(view: ReportView) {
           `<div style="margin:0 0 16px;padding-left:12px;border-left:3px solid #5E6AD2">`,
           `<div style="margin-bottom:2px;font-size:15px;font-weight:bold;line-height:1.5">${iconText(e.icon)}${esc(e.title)}</div>`,
           `<div style="line-height:1.7">${withLinks(e)}</div>`,
+          ...e.quotes.map(
+            (q) =>
+              `<div style="margin-top:6px;padding:6px 10px;background:#F6F7F9;border-radius:6px;font-size:12px;line-height:1.6;color:#4A4D57"><strong>${esc(q.author)}</strong>: ${esc(q.text)}</div>`,
+          ),
           `</div>`,
         );
       } else if (layout === "list") {
