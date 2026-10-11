@@ -306,27 +306,26 @@ app.post("/core/generate", async (c) => {
   }
 });
 
-// Writes the Daily Report from the current Daily Core generation. Only `dryRun: true` until
-// daily_reports exists. Days without activity get the code-rendered report and no model call.
-// `finalize` runs DailyReportFinalizer on the writer's draft. A given `draft` (a saved writer
-// output for the same generation) replaces the writer call.
+// Writes the Daily Report from the current Daily Core generation and saves it as the next
+// daily_reports row. Days without activity get the code-rendered report and no model call.
+// DailyReportFinalizer rewrites the writer's draft unless `finalize: false`; it is where later
+// editing (tone and the like) goes. A given `draft` (a saved writer output for the same
+// generation) replaces the writer call.
 app.post("/report/generate", async (c) => {
-  const { dailyCoreId, model = REPORT_MODEL, dryRun, finalize, draft } = await c.req.json<{
+  const { dailyCoreId, model = REPORT_MODEL, finalize = true, draft } = await c.req.json<{
     dailyCoreId?: string;
     model?: string;
-    dryRun?: boolean;
     finalize?: boolean;
     draft?: unknown;
   }>();
   if (!isUuid(dailyCoreId)) return c.json({ error: "dailyCoreId must be a uuid" }, 400);
-  if (dryRun !== true) return c.json({ error: "only dryRun: true is supported until daily_reports exists" }, 400);
   const given = draft === undefined ? undefined : v.safeParse(ReportDraft, draft);
   if (given && !given.success) return c.json({ error: "draft does not match ReportDraft", issues: v.flatten(given.issues) }, 400);
   const db = supabase(c.env);
   if (!db) return c.text("Supabase secrets are not set", 500);
 
-  const [core] = await db<{ current_generation_no: number | null }>(
-    `daily_core_data?daily_core_id=eq.${dailyCoreId}&select=current_generation_no`,
+  const [core] = await db<{ workspace_id: string; target_id: string; current_generation_no: number | null }>(
+    `daily_core_data?daily_core_id=eq.${dailyCoreId}&select=workspace_id,target_id,current_generation_no`,
   );
   if (!core) return c.json({ error: "daily core not found" }, 404);
   if (core.current_generation_no === null) return c.json({ error: "daily core has no current generation" }, 409);
@@ -336,22 +335,59 @@ app.post("/report/generate", async (c) => {
   );
   if (!generation?.core_json) return c.json({ error: `generation ${generationNo} has no core_json` }, 409);
   const coreJson = generation.core_json;
-
-  const startedAt = Date.now();
-  if (coreJson.quality.status === "empty") {
-    return c.json({ dailyCoreId, generationNo, status: "succeeded", formatVersion: REPORT_FORMAT_VERSION, ...renderDailyReport(coreJson) });
-  }
+  const empty = coreJson.quality.status === "empty";
 
   const evidence = draftEvidence(coreJson);
   const language = coreJson.meta.language;
-  if (given) {
+  if (given && !empty) {
     const problems = draftProblems(given.output, evidence);
     if (problems.length) return c.json({ error: "draft does not fit this generation", problems }, 400);
   }
+
+  // ponytail: report_no is max + 1 without a lock; a concurrent request fails on the unique index.
+  const [last] = await db<{ report_no: number }>(
+    `daily_reports?daily_core_id=eq.${dailyCoreId}&select=report_no&order=report_no.desc&limit=1`,
+  );
+  const reportNo = (last?.report_no ?? 0) + 1;
+  const startedAt = new Date();
+  const [report] = await db<{ report_id: string }>("daily_reports", {
+    method: "POST",
+    body: {
+      daily_core_id: dailyCoreId,
+      workspace_id: core.workspace_id,
+      target_id: core.target_id,
+      report_no: reportNo,
+      core_generation_no: generationNo,
+      report_status: "processing",
+      language,
+      format_version: REPORT_FORMAT_VERSION,
+      started_at: startedAt.toISOString(),
+    },
+  });
+  const reportRow = `daily_reports?report_id=eq.${report.report_id}`;
+  const saved = { dailyCoreId, reportId: report.report_id, reportNo, generationNo };
+
+  if (empty) {
+    const rendered = renderDailyReport(coreJson);
+    const finishedAt = new Date();
+    await db(reportRow, {
+      method: "PATCH",
+      body: {
+        report_status: "succeeded",
+        ...rendered,
+        processing_metrics_json: { elapsed_ms: finishedAt.getTime() - startedAt.getTime() },
+        finished_at: finishedAt.toISOString(),
+      },
+    });
+    return c.json({ ...saved, status: "succeeded", formatVersion: REPORT_FORMAT_VERSION, ...rendered });
+  }
+
+  const conversations: string[] = [];
+  const [modelProvider, ...modelName] = model.split("/");
   try {
     const writer = given
       ? null
-      : await runAgent<ReportDraft>(DailyReportWriter, "draft", writerInput(coreJson), { ...evidence, language, model }, []);
+      : await runAgent<ReportDraft>(DailyReportWriter, "draft", writerInput(coreJson), { ...evidence, language, model }, conversations);
     const written = given?.output ?? writer!.output;
     const finalizer = finalize
       ? await runAgent<ReportDraft>(
@@ -359,34 +395,71 @@ app.post("/report/generate", async (c) => {
           "draft",
           finalizerInput(coreJson, written),
           { before: written, ...evidence, language, model },
-          [],
+          conversations,
         )
       : null;
     const final = finalizer?.output ?? written;
+    const rendered = renderDailyReport(coreJson, final);
+    const promptVersion = [
+      writer ? DAILY_REPORT_WRITER_PROMPT_VERSION : "given-draft",
+      ...(finalizer ? [DAILY_REPORT_FINALIZER_PROMPT_VERSION] : []),
+    ].join("+");
+    const usage = {
+      ...sumUsage(writer?.usage, finalizer?.usage),
+      calls: { ...(writer && { writer: writer.usage }), ...(finalizer && { finalizer: finalizer.usage }) },
+    };
+    const calls = { ...(writer && { writer: writer.metrics }), ...(finalizer && { finalizer: finalizer.metrics }) };
+    const stats = { ...draftStats(final, evidence), ...(finalizer && { revision: revisionStats(written, final) }) };
+    const finishedAt = new Date();
+    const elapsedMs = finishedAt.getTime() - startedAt.getTime();
+    const modelUsed = conversations.length > 0;
+    await db(reportRow, {
+      method: "PATCH",
+      body: {
+        report_status: "succeeded",
+        ...rendered,
+        agent_conversation_id: conversations[0] ?? null,
+        agent_output_json: { draft: final, ...(finalizer && { writer_draft: written }) },
+        prompt_version: promptVersion,
+        model_provider: modelUsed ? modelProvider : null,
+        model_name: modelUsed ? modelName.join("/") : null,
+        token_usage_json: usage,
+        processing_metrics_json: { elapsed_ms: elapsedMs, calls },
+        validation_json: { stats },
+        finished_at: finishedAt.toISOString(),
+      },
+    });
     return c.json({
-      dailyCoreId,
-      generationNo,
+      ...saved,
       status: "succeeded",
       formatVersion: REPORT_FORMAT_VERSION,
-      promptVersion: [
-        writer ? DAILY_REPORT_WRITER_PROMPT_VERSION : "given-draft",
-        ...(finalizer ? [DAILY_REPORT_FINALIZER_PROMPT_VERSION] : []),
-      ].join("+"),
+      promptVersion,
       model,
-      elapsedMs: Date.now() - startedAt,
-      usage: {
-        ...sumUsage(writer?.usage, finalizer?.usage),
-        calls: { ...(writer && { writer: writer.usage }), ...(finalizer && { finalizer: finalizer.usage }) },
-      },
-      calls: { ...(writer && { writer: writer.metrics }), ...(finalizer && { finalizer: finalizer.metrics }) },
-      stats: { ...draftStats(final, evidence), ...(finalizer && { revision: revisionStats(written, final) }) },
+      elapsedMs,
+      usage,
+      calls,
+      stats,
       ...(finalizer && { writerDraft: written }),
       draft: final,
-      ...renderDailyReport(coreJson, final),
+      ...rendered,
     });
   } catch (error) {
     const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
-    return c.json({ dailyCoreId, generationNo, status: "failed", error: message }, 500);
+    const finishedAt = new Date();
+    await db(reportRow, {
+      method: "PATCH",
+      body: {
+        report_status: "failed",
+        agent_conversation_id: conversations[0] ?? null,
+        model_provider: modelProvider,
+        model_name: modelName.join("/"),
+        error_code: "report_failed",
+        error_message: message,
+        processing_metrics_json: { elapsed_ms: finishedAt.getTime() - startedAt.getTime(), conversations },
+        finished_at: finishedAt.toISOString(),
+      },
+    });
+    return c.json({ ...saved, status: "failed", error: message }, 500);
   }
 });
 

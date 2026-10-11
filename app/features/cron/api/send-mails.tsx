@@ -105,7 +105,7 @@ export async function getTargetEmails(
 /**
  * 이메일을 전송하는 함수
  * @param input 입력 데이터
- * @param targetDisplayName 타겟 디스플레이 이름
+ * @param subject 메일 제목
  * @param mailingListId 메일링 리스트 ID
  * @param slackResult Slack 결과
  * @param contents 콘텐츠
@@ -115,7 +115,7 @@ export async function getTargetEmails(
  */
 export async function sendMails(
   input: CreateContentsInput, 
-  targetDisplayName: string, 
+  subject: string, 
   mailingListId: string,
   slackResult: any, 
   contents: { finalContents: string, htmlContents: string },
@@ -130,7 +130,6 @@ export async function sendMails(
       return;
     }
 
-    const subject = `${targetDisplayName} Weekly Newsletter`;
     //to: "jinu35@ymail.ne.jp",
     const sendResult = await resendClient.emails.send({
       from: "IEUM <info@mail.nexone.ink>",

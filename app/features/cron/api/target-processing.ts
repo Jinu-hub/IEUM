@@ -7,11 +7,11 @@ import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import type { CreateContentsInput } from "~/core/lib/types";
 import { incrementUsageCounter, saveRunLogEvent, updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
-import { createContents } from "~/features/cron/api/create-contents";
 import { sendMails } from "~/features/cron/api/send-mails";
 import { getUserSubscriptionPlanType } from "~/features/settings/db/queries";
 import { getWorkspaceOwnerUserId } from "~/features/users/queries";
 import { saveDailyCoreCollection } from "~/features/daily-core/collect";
+import { generateDailyReport } from "~/features/daily-core/flue";
 import { fetchDaysFor } from "~/features/daily-core/normalize";
 import { collectTargetSources } from "./collect-sources";
 import { checkEmailLimit } from "./limit-checking";
@@ -23,15 +23,12 @@ import type { FetchedData, Target } from "./types";
 const DAILY_CORE_TEST_DATE = "2026-10-09";
 
 /**
- * 날짜 범위 생성
+ * 날짜 범위 생성 (Daily Core 날짜 하루). period_key는 UTC 날짜로 만들어지므로 UTC 자정으로 둔다.
  */
-export function createDateRange(): { startDate: Date; endDate: Date; range: string } {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(endDate.getDate() - 7);
-  const range = `${startDate.getFullYear()}-${startDate.getMonth() + 1}-${startDate.getDate()} ~ ${endDate.getFullYear()}-${endDate.getMonth() + 1}-${endDate.getDate()}`;
-  
-  return { startDate, endDate, range };
+export function createDateRange(coreDate: string): { startDate: Date; endDate: Date; range: string } {
+  const startDate = new Date(`${coreDate}T00:00:00Z`);
+  const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+  return { startDate, endDate, range: coreDate };
 }
 
 /**
@@ -51,7 +48,7 @@ export function createContentsInput(
     ) : null,
     workspaceId: target.workspace_id,
     targetId: target.target_id,
-    period: 'weekly',
+    period: 'daily',
     range: dateRange.range,
     from: dateRange.startDate,
     to: dateRange.endDate,
@@ -158,22 +155,18 @@ export async function processTarget(
       `Daily core collected: ${dailyCore.dailyCoreId} (${DAILY_CORE_TEST_DATE}, ${dailyCore.itemCount} items, ${dailyCore.sourceDataIds.length} sources)`
     );
 
-    // 날짜 범위 생성
-    const dateRange = createDateRange();
-
-    // CreateContentsInput 생성
+    const dateRange = createDateRange(DAILY_CORE_TEST_DATE);
     const input = createContentsInput(target, runMapping, fetchedData, dateRange, runStartedAt);
 
-    // 컨텐츠 생성
-    const content = await createContents(input);
-    logger.info('Contents generation completed', { 
-      targetId: target.target_id,
-      result: content.status
-    });
+    // Core → Report (Flue Worker). A failure throws, so no mail goes out and the run closes as an error.
+    const generated = await generateDailyReport(dailyCore.dailyCoreId);
+    const { core, report } = generated;
+    input.accuratedTokens = generated.totalTokens;
     await noteRun(
-      target, runMapping, 'info', 'contents_generation_completed',
-      `Contents generation completed for target: ${target.display_name}`
+      target, runMapping, 'info', 'daily_report_generated',
+      `Daily report generated: report ${report.reportNo} from core generation ${core.generationNo} (core ${core.elapsedMs}ms, report ${report.elapsedMs ?? 0}ms, $${generated.cost.toFixed(4)})`
     );
+    const content = { finalContents: report.markdown, htmlContents: report.html };
 
     if (recordRuns()) {
       await updateNewsletterRun(adminClient, {
@@ -181,8 +174,16 @@ export async function processTarget(
         runStepId: runMapping.runStepId,
         status: 'success',
         step: 'send_email',
-        metricsJson: {},
-        accuratedTokens: input.accuratedTokens || 0
+        metricsJson: {
+          daily_core_id: dailyCore.dailyCoreId,
+          core_generation_no: core.generationNo,
+          report_id: report.reportId,
+          report_no: report.reportNo,
+          core_ms: core.elapsedMs,
+          report_ms: report.elapsedMs ?? 0,
+          cost_usd: generated.cost,
+        },
+        accuratedTokens: input.accuratedTokens
       });
     }
 
@@ -190,17 +191,17 @@ export async function processTarget(
     await sendSlackNotification(
       input,
       target.display_name,
-      content.data as { finalContents: string; htmlContents: string },
+      content,
       { integrationsInfo, matchedChannels: matchedSources.matchedChannels }
     );
 
     // 이메일 전송
     await sendMails(
       input,
-      target.display_name,
+      report.subject,
       target.mailing_list_id || '',
       fetchedData.slackResult,
-      content.data as { finalContents: string, htmlContents: string },
+      content,
       planType as Database["public"]["Enums"]["plan_type"],
       limitCheck.maxMembers
     );

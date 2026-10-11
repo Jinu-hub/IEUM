@@ -348,3 +348,61 @@ export const dailyCoreMetrics = pgTable(
     pgPolicy("dcm_delete", { for: "delete", to: serviceRole, using: sql`true` }),
   ]
 );
+
+// A report written from one Core generation. Separate from newsletter_editions (one row per send):
+// regenerating a report or changing its format must not touch what was already sent.
+// The current report is the succeeded row with the largest report_no.
+export const dailyReports = pgTable(
+  "daily_reports",
+  {
+    reportId: uuid("report_id").defaultRandom().primaryKey(),
+    dailyCoreId: uuid("daily_core_id")
+      .notNull()
+      .references(() => dailyCoreData.dailyCoreId, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspace.workspaceId, { onDelete: "cascade" }),
+    targetId: uuid("target_id")
+      .notNull()
+      .references(() => targets.targetId, { onDelete: "cascade" }),
+    reportNo: integer("report_no").notNull(),
+    coreGenerationNo: integer("core_generation_no").notNull(),
+    reportStatus: dailyCoreGenerationStatus("report_status").notNull().default("processing"),
+    language: language("language").notNull(),
+    subject: text("subject"),
+    markdown: text("markdown"),
+    html: text("html"),
+    agentConversationId: text("agent_conversation_id"),
+    agentOutputJson: jsonb("agent_output_json"),
+    formatVersion: text("format_version").notNull(),
+    promptVersion: text("prompt_version"),
+    modelProvider: text("model_provider"),
+    modelName: text("model_name"),
+    tokenUsageJson: jsonb("token_usage_json").notNull().default(sql`'{}'::jsonb`),
+    processingMetricsJson: jsonb("processing_metrics_json").notNull().default(sql`'{}'::jsonb`),
+    validationJson: jsonb("validation_json").notNull().default(sql`'{}'::jsonb`),
+    errorCode: text("error_code"),
+    errorMessage: text("error_message"),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_daily_reports_no").on(table.dailyCoreId, table.reportNo),
+    index("idx_daily_reports_daily_core_created").on(table.dailyCoreId, table.createdAt),
+
+    pgPolicy("dr_select", {
+      for: "select",
+      to: authenticatedRole,
+      using: isMember(table.workspaceId),
+    }),
+    pgPolicy("dr_insert", { for: "insert", to: serviceRole, withCheck: sql`true` }),
+    pgPolicy("dr_update", {
+      for: "update",
+      to: serviceRole,
+      using: sql`true`,
+      withCheck: sql`true`,
+    }),
+    pgPolicy("dr_delete", { for: "delete", to: serviceRole, using: sql`true` }),
+  ]
+);

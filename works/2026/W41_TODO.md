@@ -28,16 +28,26 @@ Daily Core E2E(Phase 0~4) 완료 이후 할 일. 한 일은 `W41.md`, E2E 경과
 - [ ] Daily Report: Daily Core를 받아 리포트를 만든다. 다음 할 일. `daily_core_data.current_generation_no`가 가리키는 `daily_core_generations.core_json`을 직접 읽는다(projection 없이).
   - Phase별 계획과 확인 기록: `works/daily-report.md`. 테스트 데이터는 run 21(generation 5), Core는 다시 만들지 않음.
   - [x] Phase 0 형식: 코드 렌더(LLM 0회)로 markdown / html을 만들어 보고, LLM이 필요한지 정한다. 사용자 결정(2026-10-11): LLM에 섹션 압축·흐름 연결까지 맡김, 멤버 섹션은 그대로, 활동 없는 날도 보냄.
-  - [ ] Phase 1 Report Agent: 오프닝, highlights / progress / topics 압축·연결, 마무리. 멤버·숫자 섹션은 코드 렌더 그대로. 출력은 문단마다 근거 `item_ids`, 링크·HTML은 코드가 붙임. 활동 없는 날은 모델 안 부름. v2 구현·에이전트 확인 끝(2026-10-11, $0.005 / 4.6초). 사용자 요청으로 v3(고정 섹션 + 결과 제목 + 今日のポイント, $0.0077 / 7.6초), 사용자 확인 대기. 길이가 Phase 0 수준으로 돌아와서 논의 섹션을 줄일지 볼 것.
+  - [x] Phase 1 Report Agent: 오프닝, highlights / progress / topics 압축·연결, 마무리. 멤버·숫자 섹션은 코드 렌더 그대로. 출력은 문단마다 근거 `item_ids`, 링크·HTML은 코드가 붙임. 활동 없는 날은 모델 안 부름. v2 → v3(고정 섹션 + 결과 제목 + 今日のポイント) → v4(인용·담당자·다음 단계). 사용자가 Writer v4로 Phase 2 진행을 결정(2026-10-11).
     - 결과에 따라 뒤에 `DailyReportFinalizer`(문장·흐름 다듬기)를 붙일 수 있음(사용자). 같은 초안 구조를 받아 문장만 고치고 `item_ids`는 유지.
-    - Finalizer 구현·2회 실행 끝(2026-10-11, v2 $0.0085). 오프닝·points만 나아지고 entry 대부분 그대로. 쓸지(기본으로 켤지 / 접고 규칙을 Writer로 옮길지) 사용자 판단 대기.
+    - Finalizer 구현·2회 실행 끝(2026-10-11, v2 $0.0085). 오프닝·points만 나아지고 entry 대부분 그대로. 사용자 결정으로 기본으로 켬(`finalize: false`면 끔). 나중에 톤 바꾸기 같은 고도화된 편집을 맡길 자리.
     - [x] 품질 개선 1차(사용자 선택: 인용 / Core 필드 / Writer 톤): Core가 evidence `author` / `excerpt`, item `owners` / `next_steps`를 남기고, Writer v4가 인용 id·담당자·다음 단계를 씀. Core run 22 + run p1-6($0.011). Finalizer 규칙은 Writer로 옮김.
     - [x] 인용 정리(코드만): 멘션·링크 마크업·이모지 코드·취소선 제거, 커밋·양식 보고 줄 제외, 15~120자. run p1-7.
     - [x] `next_steps`가 비는 문제: `next_step`을 최상위 필수 `string | null`로(`core-interpreter-v7`). Core run 23에서 모든 item에 채워짐.
     - [x] 근거 없는 `next_step`: `core-interpreter-v8`("null이 보통", 추측·조건부 금지). Core run 24에서 16개 중 8개만 채워지고 조건부·"記載なし"류 없음.
-  - [ ] Phase 2 `daily_reports` 테이블: LLM을 쓰기로 해서 진행(Phase 1에서 LLM을 접으면 건너뜀).
-  - [ ] Phase 3 메일 연결: `processTarget`이 수집 → `/core/generate` → 리포트 → `sendMails`. Vercel 즉시 발송의 함수 시간 확인.
+  - [x] Phase 2 `daily_reports` 테이블: migration `0044`, `/report/generate` 저장(`dryRun` 제거). 에이전트 확인 끝(2026-10-11, report 1~4), 사용자가 행 확인 후 Phase 3로.
+    - [ ] failed 행의 `error_message`에 원인이 안 남음("[flue] Agent run failed"뿐). Core도 같은 `runAgent`. 필요해지면 Flue 이벤트에서 원인을 꺼냄.
+  - [ ] Phase 3 메일 연결: `processTarget`이 수집 → `/core/generate` → 리포트 → `sendMails`. 즉시 발송 1회 성공(2026-10-11, 52초, $0.059). 남은 것: Core 실패 경로 확인, Gmail에서 링크 열림(사용자). Vercel 함수 시간은 Phase 4 배포에서 확인.
+  - [ ] 메일 1회 발송 보장: daily core(Target × 날짜)당 메일 1번. Phase 3 뒤 별도 작업, **Phase 4 배포 전 필수**(사용자, 2026-10-11). 지금은 `getUniquePeriodKey`가 `_1`, `_2`를 붙여 중복 발송을 허용하고, edition에 보낸 리포트가 안 남음.
+    - `newsletter_editions`에 `daily_core_id` / `daily_report_id` 추가, `status`가 `sending` / `delivered` / `partial`인 행에만 `daily_core_id` unique 부분 인덱스.
+    - `sendMails` 순서 변경: Resend 호출 전에 `sending` 행 insert(충돌하면 건너뜀) → 발송 → `delivered` / `failed`로 갱신. `failed`는 인덱스에서 빠져 재시도 가능.
+    - 이미 보낸 날짜면 `processTarget`이 Core·리포트 생성 전에 건너뜀.
+    - 정책: Cron·즉시 발송 모두 건너뜀, 다시 보내기는 명시적 `force`(테스트용)만. 보낼 리포트는 그 실행의 `reportId`.
   - [ ] Phase 4 배포·정리: Worker 배포, `TestAgent` 제거(4-3과 같이).
+  - [ ] 메일 HTML 디자인 고도화(사용자, 2026-10-11). 지금은 `daily-report.ts`의 인라인 스타일 문자열(Phase 0부터 "꾸밈은 나중").
+    - 참고: `sample/final.html`, React Email은 `transactional-emails/`에 별도 패키지로만 있음(Worker에서 쓸지 정함).
+    - 확인 범위: Gmail 웹·모바일, 다크 모드, 휴대폰 폭(지금 약 4화면), 머리·꼬리(브랜드, 수신 설정 링크).
+    - 렌더만 바꾸는 작업이라 모델 재실행 없이 저장된 `daily_reports.agent_output_json.draft`로 다시 렌더해서 비교. 바꾸면 `REPORT_FORMAT_VERSION` 올림.
 
 ## 3. 나중에 천천히
 

@@ -32,6 +32,11 @@ export async function sendSlackNotification(
   if (!input.enableCreateContents?.slack || options?.matchedChannels.length === 0) {
     return;
   }
+  // Set SLACK_NOTIFY=0 to test the send path without posting to the team's channels.
+  if (process.env.SLACK_NOTIFY === "0") {
+    logger.info("Slack notification disabled by SLACK_NOTIFY=0", { targetId: input.targetId });
+    return;
+  }
 
   try {
     let integrationsInfo = options?.integrationsInfo;

@@ -29,7 +29,7 @@ daily_core_data.current_generation_no → daily_core_generations.core_json
 
 이번에 안 하는 것
 
-- Weekly Report, 사람별 리포트, 웹 화면, Slack 통지 내용 변경(지금처럼 본문 앞 200자 미리보기), Cron 연결(TODO 4-1), 테스트 날짜 고정 제거(TODO 3-2), Core 품질 개선(TODO 3-3).
+- Weekly Report, 사람별 리포트, 웹 화면, Slack 통지 내용 변경(지금처럼 본문 앞 200자 미리보기), Cron 연결(TODO 4-1), 테스트 날짜 고정 제거(TODO 3-2), Core 품질 개선(TODO 3-3), 메일 HTML 디자인 고도화(TODO 2, 사용자 2026-10-11).
 
 ---
 
@@ -117,9 +117,10 @@ Phase 0 사용자 결정: LLM에 섹션 압축과 흐름 연결까지 맡긴다.
 
 사용자 확인
 
-- [ ] Phase 0 코드 렌더와 나란히 보고 나아졌다. 아니면 LLM 없이 간다.
+- [x] Phase 0 코드 렌더와 나란히 보고 나아졌다. 아니면 LLM 없이 간다.
   - 사용자(2026-10-11, v2를 보고): Core 문장을 부드럽게 바꾼 것은 의미가 있다. Finalizer로 넘기기 전에 섹션을 더 강조해서 잘 읽히고 주요 부분이 잘 보이게. → v3. 섹션 틀은 코드 고정, 상단은 "今日のポイント" 최대 3줄만(숫자 한 줄 요약은 안 넣음).
-- [ ] Writer 지시문을 고칠지, Finalizer를 붙일지, 이대로 Phase 2로 갈지.
+- [x] Writer 지시문을 고칠지, Finalizer를 붙일지, 이대로 Phase 2로 갈지.
+  - 사용자(2026-10-11, Writer v4 + Core generation 8을 보고): "일단은" Phase 2로. Writer v4 채택. Finalizer는 처음엔 옵션으로만 남겼다가, 사용자 결정으로 **기본으로 켬**(`finalize: false`면 Writer만). 이유: 리포트 토큰은 Core보다 훨씬 적어서(리포트 $0.02 vs Core $0.04) 2배가 돼도 부담이 작고, 나중에 톤 바꾸기 같은 고도화된 편집을 Finalizer에 맡길 계획.
 
 확인 기록
 
@@ -213,14 +214,25 @@ LLM을 쓰면 필요(비용이 들고 실행마다 달라서 결과를 남겨야
 
 에이전트 확인
 
-- [ ] migration 적용, `database.types.ts` 갱신, `tsc` 오류 없음.
-- [ ] 생성 1회 → 행 `succeeded`, `core_generation_no = 5`. 잘못된 입력(현재 generation 없음)으로 409 / failed 경로 확인.
+- [x] migration 적용, `database.types.ts` 갱신, `tsc` 오류 없음.
+- [x] 생성 1회 → 행 `succeeded`, `core_generation_no`가 현재 generation(품질 개선으로 5 → 8). 잘못된 입력으로 400 / 404, 모델 실패로 failed 경로 확인. 409(현재 generation 없음)는 그런 daily core가 DB에 없어서 실행 못 함(행을 만들기 전에 돌려주는 코드만 확인).
 
 사용자 확인
 
-- [ ] Supabase에서 행을 열어 본다. 컬럼 구성이 괜찮다.
+- [x] Supabase에서 행을 열어 본다. 컬럼 구성이 괜찮다.
+  - 사용자(2026-10-11): 행 4개를 Supabase에서 확인하고 Phase 3로 진행.
 
 확인 기록
+
+- 2026-10-11 에이전트: 구현과 확인.
+  - 테이블 `daily_reports`(`app/features/daily-core/schema.ts`, migration `0044_wakeful_stick.sql`): 계획한 컬럼 + `agent_conversation_id`(Core generation과 같게, Flue 대화 추적용). 상태는 새 enum을 만들지 않고 `daily_core_generation_status`를 씀(값이 같음). unique `(daily_core_id, report_no)`, RLS는 `daily_core_generations`와 같음(조회는 workspace 멤버, 쓰기는 service role). `daily_core_data`에 포인터 컬럼은 안 만듦(계획대로).
+  - migration 적용 후 `postdb:migrate`가 `db:typegen`을 자동 실행. 이번엔 Supabase CLI 로그인이 맞아서 성공했고 `database.types.ts`에 `daily_reports`만 추가됨(10-08에는 실패하며 파일을 비웠음).
+  - `/report/generate`: `dryRun` 제거. 순서는 Core와 같음: 검사(400 / 404 / 409, 행 안 만듦) → `report_no = 최대 + 1`로 processing 행 → 생성 → succeeded(subject / markdown / html, `agent_output_json.draft`, 토큰, 시간, stats) / failed(`error_code = report_failed`). 활동 없는 날도 행을 남김(모델 없음). 저장된 초안을 준 경우 모델 컬럼은 null. `report_no`는 잠금 없이 계산해서 동시 요청은 unique 인덱스에서 실패함(지금은 요청이 하나뿐이라 둠).
+  - 검사: `flue` `tsc` 오류 없음. 앱 `tsc`는 `works/out/daily-core-templates.v6.ts`(이번과 무관한 작업 파일)의 import 오류 1개뿐.
+  - 실행(로컬 Worker, generation 8): 없는 daily core 404, 스키마가 다른 `draft` 400(행 없음). report 1: 저장된 v4 초안(`daily-report-p1v4c.json`) → succeeded, 모델 null, $0. report 2: 없는 모델 → failed, 5.5초. report 3: Writer v4 → succeeded, 13.5초, $0.0093, 저장된 HTML / markdown이 응답과 바이트 단위로 같음.
+  - 보인 점: failed 행의 `error_message`가 "[flue] Agent run failed (submission …)"뿐이라 원인(없는 모델)이 안 남음. Core 쪽도 같은 `runAgent`라 같을 것. 필요해지면 Flue 이벤트에서 원인을 꺼내는 걸 검토.
+  - Finalizer를 기본으로 켠 뒤(사용자) 기본 경로 1회: report 4, Writer v4 + Finalizer v2, 19.5초, **$0.022**(Writer $0.011 + Finalizer $0.011), 반려 0. 37개 문장 중 18개 바뀜, 1,889 → 1,601자(v3 초안에 돌렸던 p1-5는 29개 중 10개, 글자 수 그대로였음). points 3개는 그대로, 오프닝은 だ체 나열 → "〜が進んだ日でした"로 짧아짐. `agent_output_json`에 `draft`와 `writer_draft` 둘 다 남음. Phase 3의 시간 계산은 리포트 약 20초로 잡을 것.
+  - 사용자 확인용: Supabase `daily_reports`에서 `daily_core_id = d36d689e…`의 행 4개. 응답 원문 `works/out/daily-report-p2.json`(Writer만), `daily-report-p2f.json`(기본 경로).
 
 ---
 
@@ -233,18 +245,41 @@ LLM을 쓰면 필요(비용이 들고 실행마다 달라서 결과를 남겨야
   - Core 생성이 실패하면 메일을 보내지 않고 run을 에러로 닫는다(지금의 `closeRun`).
   - `sendMails`에 `{ finalContents: markdown, htmlContents: html }`, 제목은 리포트 `subject`, `period: daily`. Slack 통지는 그대로(markdown 앞 200자).
 - 확인할 것: 즉시 발송은 클라이언트가 Vercel `POST /api/cron/send-now/run`을 동기로 부름(Railway worker 전환은 아직 주석). Core 42~150초 + 리포트가 Vercel 함수 시간 안에 들어가는지. 넘으면 Worker가 Core 뒤에 리포트까지 이어서 하고 Vercel은 결과만 받는 방식으로 바꾼다.
+- 보낼 리포트는 그 실행에서 `/report/generate`가 돌려준 `reportId`의 HTML. "가장 큰 `report_no`의 succeeded"를 다시 찾지 않음.
+
+이번 Phase에서 안 하는 것: 메일 1회 발송 보장(사용자, 2026-10-11)
+
+- 메일은 daily core(Target × 날짜)당 1번이어야 함. 리포트는 다시 만들면 행이 쌓이지만 메일은 하나. 지금은 `sendMails`가 보낸 뒤에 `newsletter_editions`에 쓰고, `getUniquePeriodKey`가 `_1`, `_2`를 붙여 중복을 허용함.
+- Phase 3 뒤 별도 작업, Phase 4 배포 전 필수(TODO 2). Phase 3 동안은 수신자가 테스트 주소라 중복이 나가도 됨(테스트 날짜 고정이라 즉시 발송마다 같은 core로 나감).
+- 안: `newsletter_editions`에 `daily_core_id` / `daily_report_id`, `sending` / `delivered` / `partial` 행에만 `daily_core_id` unique 부분 인덱스. Resend 전에 `sending` 행을 넣어 발송권을 잡고, 충돌하면 건너뜀(동시 요청도 DB가 막음). 이미 보낸 날짜면 Core·리포트 생성 전에 건너뜀.
+- 정책: Cron·즉시 발송 모두 건너뜀, 다시 보내기는 명시적 `force`(테스트용)만.
 
 에이전트 확인
 
-- [ ] 로컬 앱 + 로컬 Worker로 즉시 발송 1회: 메일 도착, `newsletter_editions` 행(`period = daily`, html / text 본문), Core generation 1 증가, (Phase 2를 했으면) `daily_reports` 행.
+- [x] 로컬 앱 + 로컬 Worker로 즉시 발송 1회: 메일 도착, `newsletter_editions` 행(`period = daily`, html / text 본문), Core generation 1 증가, (Phase 2를 했으면) `daily_reports` 행.
 - [ ] Core 실패 경로(잘못된 모델명 등)에서 메일이 안 나가고 run이 에러로 닫힌다.
-- [ ] 전체 소요 시간 기록.
+- [x] 전체 소요 시간 기록.
 
 사용자 확인
 
 - [ ] 받은 메일을 Gmail(웹·모바일)에서 열어 본다. 링크가 Slack / GitHub로 열린다.
+  - 사용자(2026-10-11): 메일 도착 확인. 링크 열림은 아직.
 
 확인 기록
+
+- 2026-10-11 에이전트: 구현과 즉시 발송 1회.
+  - 코드
+    - `app/features/daily-core/flue.ts`(새 파일): `generateDailyReport(dailyCoreId)`가 Worker `/core/generate` → `/report/generate`를 차례로 부름. HTTP 오류나 `status: "failed"`면 throw. 주소는 `FLUE_BASE_URL`(없으면 `http://localhost:8787`), 토큰은 기존 `FLUE_API_TOKEN`.
+    - `processTarget`: `createContents`(TestAgent) 대신 위 함수. 실패하면 throw라 기존 `catch`(run 에러로 닫기)로 가고 메일은 안 나감. 메일 본문은 리포트 `markdown` / `html`, `period: daily`, 기간 키는 Core 날짜의 UTC 자정으로(`20261009`. 창 시작 시각으로 만들면 도쿄에서는 전날이 됨). run `metrics_json`에 daily core id, generation 번호, report id / 번호, 단계별 시간, 비용, `accurated_tokens`에 Core + 리포트 토큰 합.
+    - `sendMails`: 두 번째 인자가 표시 이름 대신 제목(리포트 `subject`).
+    - `SLACK_NOTIFY=0`이면 팀 Slack 채널 알림을 안 올림(사용자 결정: 테스트 때 실제 팀 채널에 "Newsletter sent"가 올라가지 않게). 루트 `.env`에 넣음.
+    - `create-contents.tsx`는 호출처가 없어졌지만 Phase 4에서 `TestAgent`와 같이 지움(계획대로). 앱 `FLUE_AGENT_URL`도 그때.
+  - 검사: 앱 `tsc`는 `works/out/daily-core-templates.v6.ts`의 기존 오류 1개뿐.
+  - 실행(사용자가 로컬 앱에서 즉시 발송, 로컬 Worker): run `1ae9421b…` success, 메일 도착(사용자).
+    - DB: `daily_core_data d36d689e…` 재수집 → generation 9 succeeded → report 5 succeeded(`core_generation_no = 9`, Writer v4 + Finalizer v2, 반려 0) → `newsletter_editions` `70c6e09f…`(`delivered`, `period = daily`, `period_key = 20261009`, 제목 "D_G_S開発チーム Daily Report 2026-10-09", HTML 20,935자 / text 8,014자).
+    - 시간: 전체 52.4초(run 시작 → 끝). 수집 약 10초, Core 30.1초, 리포트 10.5초(Writer 5.9 + Finalizer 4.6, report 4의 19.5초보다 짧음), 메일 약 1.4초.
+    - 비용: $0.059(Core 약 $0.041 + 리포트 $0.018), 토큰 30,621.
+  - Vercel 함수 시간: 로컬은 제한이 없어 확인 못 함. 배포(Phase 4)에서 즉시 발송 경로가 50~60초 걸린다는 전제로 Vercel 플랜의 함수 최대 시간을 확인. 넘으면 계획대로 Worker가 Core 뒤에 리포트까지 이어서 하는 방식으로.
 
 ---
 
@@ -252,6 +287,7 @@ LLM을 쓰면 필요(비용이 들고 실행마다 달라서 결과를 남겨야
 
 만들 것
 
+- 선행: 메일 1회 발송 보장(Phase 3 참고). 실제 수신자로 바뀌기 전에 있어야 함.
 - Worker 배포, Vercel에 `FLUE_BASE_URL`.
 - `TestAgent` 제거(TODO 4-3): `flue/src/agents/test-agent.ts`, `/agents/test` 라우트, `createContents`의 `askTestAgent`. Durable Object 클래스 삭제는 migration `deleted_classes`(Core 분리 Phase 3과 같은 방법).
 

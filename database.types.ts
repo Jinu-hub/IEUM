@@ -549,6 +549,112 @@ export type Database = {
           },
         ]
       }
+      daily_reports: {
+        Row: {
+          agent_conversation_id: string | null
+          agent_output_json: Json | null
+          core_generation_no: number
+          created_at: string
+          daily_core_id: string
+          error_code: string | null
+          error_message: string | null
+          finished_at: string | null
+          format_version: string
+          html: string | null
+          language: Database["public"]["Enums"]["language"]
+          markdown: string | null
+          model_name: string | null
+          model_provider: string | null
+          processing_metrics_json: Json
+          prompt_version: string | null
+          report_id: string
+          report_no: number
+          report_status: Database["public"]["Enums"]["daily_core_generation_status"]
+          started_at: string | null
+          subject: string | null
+          target_id: string
+          token_usage_json: Json
+          validation_json: Json
+          workspace_id: string
+        }
+        Insert: {
+          agent_conversation_id?: string | null
+          agent_output_json?: Json | null
+          core_generation_no: number
+          created_at?: string
+          daily_core_id: string
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          format_version: string
+          html?: string | null
+          language: Database["public"]["Enums"]["language"]
+          markdown?: string | null
+          model_name?: string | null
+          model_provider?: string | null
+          processing_metrics_json?: Json
+          prompt_version?: string | null
+          report_id?: string
+          report_no: number
+          report_status?: Database["public"]["Enums"]["daily_core_generation_status"]
+          started_at?: string | null
+          subject?: string | null
+          target_id: string
+          token_usage_json?: Json
+          validation_json?: Json
+          workspace_id: string
+        }
+        Update: {
+          agent_conversation_id?: string | null
+          agent_output_json?: Json | null
+          core_generation_no?: number
+          created_at?: string
+          daily_core_id?: string
+          error_code?: string | null
+          error_message?: string | null
+          finished_at?: string | null
+          format_version?: string
+          html?: string | null
+          language?: Database["public"]["Enums"]["language"]
+          markdown?: string | null
+          model_name?: string | null
+          model_provider?: string | null
+          processing_metrics_json?: Json
+          prompt_version?: string | null
+          report_id?: string
+          report_no?: number
+          report_status?: Database["public"]["Enums"]["daily_core_generation_status"]
+          started_at?: string | null
+          subject?: string | null
+          target_id?: string
+          token_usage_json?: Json
+          validation_json?: Json
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_reports_daily_core_id_daily_core_data_daily_core_id_fk"
+            columns: ["daily_core_id"]
+            isOneToOne: false
+            referencedRelation: "daily_core_data"
+            referencedColumns: ["daily_core_id"]
+          },
+          {
+            foreignKeyName: "daily_reports_target_id_targets_target_id_fk"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "targets"
+            referencedColumns: ["target_id"]
+          },
+          {
+            foreignKeyName: "daily_reports_workspace_id_workspace_workspace_id_fk"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspace"
+            referencedColumns: ["workspace_id"]
+          },
+        ]
+      }
       delivery_events_email: {
         Row: {
           edition_id: string

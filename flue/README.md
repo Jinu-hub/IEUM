@@ -79,8 +79,10 @@ Skill, Subagent, MCP, Sandbox, 데이터 조회 Tool, Workers AI 바인딩은 �
 |---|---|
 | `GET /` | 헬스 체크 |
 | `POST /core/generate` | 본문 `{ dailyCoreId, model? }`. Bearer 토큰(`FLUE_API_TOKEN`) 필요. 응답에 stats, 토큰, 호출별 시간·반려 이유, `coreJson` |
-| `POST /report/generate` | 본문 `{ dailyCoreId, dryRun: true, model?, finalize?, draft? }`. 현재 generation의 `core_json`으로 `DailyReportWriter` 실행, 저장 없이 `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. `finalize: true`면 뒤에 `DailyReportFinalizer`(문장만 고침, 응답에 `writerDraft`). `draft`(저장된 Writer 초안)를 주면 Writer를 건너뜀. 활동 없는 날은 모델 없이 코드 렌더. `dryRun` 없이는 400(`daily_reports` 테이블 전) |
-| `/agents/test/*` | `TestAgent`(한 문장 생성). 앱의 메일 발송 경로(`app/features/cron/api/create-contents.tsx`)가 사용 |
+| `POST /report/generate` | 본문 `{ dailyCoreId, model?, finalize?, draft? }`. 현재 generation의 `core_json`으로 `DailyReportWriter` 실행, `daily_reports`에 다음 `report_no`로 저장(processing → succeeded / failed)하고 `reportId`, `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. 기본으로 뒤에 `DailyReportFinalizer`(문장만 고침, 응답에 `writerDraft`)가 돌고, `finalize: false`면 Writer만. `draft`(저장된 Writer 초안)를 주면 Writer를 건너뜀. 활동 없는 날은 모델 없이 코드 렌더. 현재 generation이 없으면 409(행 안 만듦) |
+| `/agents/test/*` | `TestAgent`(한 문장 생성). 예전 메일 경로용, 지금은 호출처 없음(Daily Report Phase 4에서 제거) |
+
+앱의 메일 경로(`processTarget`)는 `app/features/daily-core/flue.ts`로 `/core/generate` → `/report/generate`를 차례로 부르고, 리포트의 `subject` / `markdown` / `html`을 메일로 보낸다.
 
 ## 실행과 배포
 

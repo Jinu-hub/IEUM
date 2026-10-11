@@ -309,6 +309,13 @@
       "when": 1791467129314,
       "tag": "0043_first_power_man",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1791703631447,
+      "tag": "0044_wakeful_stick",
+      "breakpoints": true
     }
   ]
 }
