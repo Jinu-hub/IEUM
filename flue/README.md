@@ -51,6 +51,9 @@ flowchart TD
 | `src/app.ts` | Hono 라우트, 인증, Supabase 읽기·쓰기, Agent 실행 순서 |
 | `src/daily-core.ts` | 모델 바깥의 규칙: 입력 만들기, 스키마, 검사, 보정, 변환, `core_json` 병합, 지표 |
 | `src/daily-core.check.ts` | 위 규칙의 assert 테스트. 모델 없이 돌아감 |
+| `src/daily-report.ts` | `core_json` → Daily Report(제목, markdown, 메일 HTML). 코드 렌더, 모델 없음 |
+| `src/daily-report.check.ts` | 렌더의 assert 테스트 |
+| `src/daily-report.run.ts` | 저장된 `core_json`(또는 `/core/generate` 응답)을 `.md` / `.html`로 렌더 |
 | `src/agents/*.ts` | Agent 지시문과 제출 Tool 연결 |
 | `wrangler.jsonc` | Worker 설정과 Durable Object migration(Agent 추가·삭제마다 한 줄) |
 
@@ -83,6 +86,8 @@ Skill, Subagent, MCP, Sandbox, 데이터 조회 Tool, Workers AI 바인딩은 �
 ```sh
 npm run dev                            # 로컬 Worker, http://localhost:8787
 npx tsx src/daily-core.check.ts        # 규칙 테스트 (flue/ 에서)
+npx tsx src/daily-report.check.ts      # 리포트 렌더 테스트
+npx tsx src/daily-report.run.ts <core.json> <out>   # 리포트 미리보기 파일
 npx tsc --noEmit -p .                  # 타입 검사
 npm run deploy                         # vite build + wrangler deploy
 ```
