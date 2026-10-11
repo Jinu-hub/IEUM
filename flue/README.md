@@ -51,7 +51,7 @@ flowchart TD
 | `src/app.ts` | Hono 라우트, 인증, Supabase 읽기·쓰기, Agent 실행 순서 |
 | `src/daily-core.ts` | 모델 바깥의 규칙: 입력 만들기, 스키마, 검사, 보정, 변환, `core_json` 병합, 지표 |
 | `src/daily-core.check.ts` | 위 규칙의 assert 테스트. 모델 없이 돌아감 |
-| `src/daily-report.ts` | `core_json` → Daily Report(제목, markdown, 메일 HTML). 코드 렌더, 모델 없음 |
+| `src/daily-report.ts` | `core_json` → Daily Report(제목, markdown, 메일 HTML). Writer 입력·초안 스키마·검사, 렌더(초안이 있으면 이벤트 섹션을 대신함) |
 | `src/daily-report.check.ts` | 렌더의 assert 테스트 |
 | `src/daily-report.run.ts` | 저장된 `core_json`(또는 `/core/generate` 응답)을 `.md` / `.html`로 렌더 |
 | `src/agents/*.ts` | Agent 지시문과 제출 Tool 연결 |
@@ -79,6 +79,7 @@ Skill, Subagent, MCP, Sandbox, 데이터 조회 Tool, Workers AI 바인딩은 �
 |---|---|
 | `GET /` | 헬스 체크 |
 | `POST /core/generate` | 본문 `{ dailyCoreId, model? }`. Bearer 토큰(`FLUE_API_TOKEN`) 필요. 응답에 stats, 토큰, 호출별 시간·반려 이유, `coreJson` |
+| `POST /report/generate` | 본문 `{ dailyCoreId, dryRun: true, model? }`. 현재 generation의 `core_json`으로 `DailyReportWriter` 실행, 저장 없이 `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. 활동 없는 날은 모델 없이 코드 렌더. `dryRun` 없이는 400(`daily_reports` 테이블 전) |
 | `/agents/test/*` | `TestAgent`(한 문장 생성). 앱의 메일 발송 경로(`app/features/cron/api/create-contents.tsx`)가 사용 |
 
 ## 실행과 배포
@@ -87,7 +88,7 @@ Skill, Subagent, MCP, Sandbox, 데이터 조회 Tool, Workers AI 바인딩은 �
 npm run dev                            # 로컬 Worker, http://localhost:8787
 npx tsx src/daily-core.check.ts        # 규칙 테스트 (flue/ 에서)
 npx tsx src/daily-report.check.ts      # 리포트 렌더 테스트
-npx tsx src/daily-report.run.ts <core.json> <out>   # 리포트 미리보기 파일
+npx tsx src/daily-report.run.ts <core.json> <out> [report.json]   # 리포트 미리보기 파일
 npx tsc --noEmit -p .                  # 타입 검사
 npm run deploy                         # vite build + wrangler deploy
 ```

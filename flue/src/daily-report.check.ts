@@ -1,6 +1,17 @@
 // Run: npx tsx flue/src/daily-report.check.ts
 import assert from "node:assert/strict";
-import { type DailyCoreJson, renderDailyReport, reportView } from "./daily-report.ts";
+import * as v from "valibot";
+import {
+  type DailyCoreJson,
+  draftEvidence,
+  draftProblems,
+  draftStats,
+  eventItems,
+  ReportDraft,
+  renderDailyReport,
+  reportView,
+  writerInput,
+} from "./daily-report.ts";
 
 type Item = DailyCoreJson["highlights"][number];
 const evidence = (url: string | null) => ({
@@ -62,22 +73,24 @@ const core = {
 
 const view = reportView(core);
 assert.equal(view.title, "Dev <Team> Daily Report");
-assert.deepEqual(view.overview, { heading: "今日の概要", summary: "A & B moved." });
+assert.deepEqual(view.overview, { heading: "👋 今日の概要", summary: "A & B moved.", points: null });
 // Empty topics are dropped; sections keep the fixed order.
-assert.deepEqual(view.sections.map((s) => s.key), ["highlights", "progress_roadmap", "member_activity"]);
+assert.deepEqual(view.sections.map((s) => [s.heading, s.layout]), [["✨ ハイライト", "block"], ["🔄 進捗・予定", "list"]]);
 assert.deepEqual(view.sections[0].entries.map((e) => e.title), ["High", "Mid", "Low"]);
-assert.deepEqual(view.sections[2].entries.map((e) => e.title), ["Zed", "Aki"]);
-assert.equal(view.sections[0].entries[0].status, "完了");
-assert.equal(view.sections[1].entries[0].status, null);
-assert.equal(view.sections[0].entries[0].links.length, 5);
-assert.equal(view.sections[0].entries[0].more, 2);
+assert.deepEqual(view.members?.entries.map((e) => e.title), ["Zed", "Aki"]);
+assert.equal(view.members?.layout, "members");
+assert.equal(view.closing, null);
+assert.deepEqual([view.sections[0].entries[0].icon, view.sections[0].entries[0].status], ["✅", "完了"]);
+assert.deepEqual([view.sections[1].entries[0].icon, view.sections[1].entries[0].status], [null, null]);
+assert.equal(view.sections[0].entries[0].links.length, 3);
+assert.equal(view.sections[0].entries[0].more, 4);
 // Non-http and duplicate URLs are not linked.
 assert.deepEqual(view.sections[0].entries[1].links, [urls(1)[0]]);
 assert.deepEqual(
   view.metrics.rows.map((r) => [r.label, r.value, r.parts.length]),
   [
     ["Slack メッセージ", 5, 2],
-    ["コミット", 4, 1],
+    ["コミット", 4, 0],
     ["活動メンバー", 2, 0],
   ],
 );
@@ -86,17 +99,99 @@ assert.equal(view.empty, null);
 const report = renderDailyReport(core);
 assert.equal(report.subject, "Dev <Team> Daily Report 2026-10-09");
 assert.match(report.markdown, /^# Dev \\<Team\\> Daily Report\n\n2026-10-09\n/);
-assert.match(report.markdown, /- \*\*High\*\* \(完了\)\n {2}High summary \[1\]\(https:\/\/slack\.com\/archives\/C1\/p0\) .* \+2\n/);
-assert.match(report.markdown, /- Slack メッセージ: 5 \(#a 3, #b 2\)\n- コミット: 4\n/);
+assert.match(report.markdown, /### ✅ High\n\nHigh summary \[1\]\(https:\/\/slack\.com\/archives\/C1\/p0\) .* \+4\n/);
+assert.match(report.markdown, /## 🔄 進捗・予定\n\n- \*\*Unknown status\*\* Unknown status summary\n/);
+assert.match(report.markdown, /- \*\*Aki\*\*\n {2}Aki summary\n/);
+assert.match(
+  report.markdown,
+  /\| 指標 \| 件数 \|\n\| --- \| ---: \|\n\| Slack メッセージ \| 5 \|\n\| └ #a \| 3 \|\n\| └ #b \| 2 \|\n\| コミット \| 4 \|\n\| 活動メンバー \| 2 \|\n/,
+);
+assert.ok(report.html.includes("<th"));
 assert.ok(report.html.includes("Dev &lt;Team&gt; Daily Report"));
 assert.ok(report.html.includes("A &amp; B moved."));
 assert.ok(!report.html.includes("javascript:"));
-assert.equal(report.html.match(/<a /g)?.length, 6);
+assert.equal(report.html.match(/<a /g)?.length, 4);
+
+const progress = reportView({
+  ...core,
+  progress_roadmap: [item("Moving", 1, [], "in_progress"), item("Stuck", 0.5, [], "blocked")],
+}).sections[1].entries;
+assert.deepEqual(progress.map((e) => [e.title, e.icon]), [["Stuck", "⛔"], ["Moving", "🚧"]]);
 
 const empty = reportView({ ...core, overview: { summary: " " }, highlights: [], progress_roadmap: [], member_activity: [], quality: { status: "empty" } });
 assert.equal(empty.overview, null);
 assert.deepEqual(empty.sections, []);
 assert.equal(empty.empty, "この日の活動はありませんでした。");
-assert.equal(reportView({ ...core, meta: { ...core.meta, language: "fr" } }).overview?.heading, "Overview");
+assert.equal(reportView({ ...core, meta: { ...core.meta, language: "fr" } }).overview?.heading, "👋 Overview");
+
+// Writer draft. Ids follow importance order within each array.
+const withTicket = { ...core, topics: [item("Topic #23163", 0.5, [urls(1)[0]])] } as DailyCoreJson;
+assert.deepEqual(
+  eventItems(withTicket).map((e) => [e.id, e.item.title]),
+  [["H1", "High"], ["H2", "Mid"], ["H3", "Low"], ["P1", "Unknown status"], ["T1", "Topic #23163"]],
+);
+const input = JSON.parse(writerInput(withTicket));
+assert.deepEqual(Object.keys(input.items[0]), ["id", "section", "title", "summary", "status", "importance"]);
+const evidenceSets = draftEvidence(withTicket);
+assert.deepEqual(evidenceSets, { ids: ["H1", "H2", "H3", "P1", "T1"], required: ["H1", "H2", "H3"], tickets: ["#23163"] });
+
+type Section = ReportDraft["entries"][number]["section"];
+const draft = (entries: [Section, string[]][], text = "ok", closing = "", points = [["H1"]]): ReportDraft => ({
+  opening: "Opening.",
+  points: points.map((item_ids, i) => ({ text: `Point ${i + 1}`, item_ids })),
+  entries: entries.map(([section, item_ids], i) => ({ section, headline: `Head ${i + 1}`, text, item_ids })),
+  closing,
+});
+const highlightsOnly: [Section, string[]][] = [["highlights", ["H1", "H2", "H3"]]];
+assert.deepEqual(draftProblems(draft([["highlights", ["H1", "H2"]], ["highlights", ["H3", "T1"]]], "#23163 moved"), evidenceSets), []);
+assert.match(draftProblems(draft([["highlights", ["H1", "H2", "H3", "X9"]]]), evidenceSets)[0], /unknown item_ids X9/);
+assert.match(draftProblems(draft(highlightsOnly, "ok", "", [["Z1"]]), evidenceSets)[0], /unknown item_ids Z1/);
+// An entry may merge items from other sections but must cite one of its own.
+assert.deepEqual(draftProblems(draft([...highlightsOnly, ["topics", ["T1", "P1"]]]), evidenceSets), []);
+assert.match(
+  draftProblems(draft([...highlightsOnly, ["topics", ["P1"]]]), evidenceSets)[0],
+  /entries citing no item of their section: "Head 2" \(topics\)/,
+);
+assert.match(draftProblems(draft([["highlights", ["H1"]]]), evidenceSets)[0], /highlights not covered: H2, H3/);
+// Points do not count as covering a highlight.
+assert.match(draftProblems(draft([["highlights", ["H1", "H2"]]], "ok", "", [["H3"]]), evidenceSets)[0], /highlights not covered: H3/);
+assert.match(draftProblems(draft(highlightsOnly, "#99999 done"), evidenceSets)[0], /ticket numbers not in the input: #99999/);
+assert.equal(v.safeParse(ReportDraft, draft(highlightsOnly, "ok", "", [["H1"], ["H2"], ["H3"], ["T1"]])).success, false);
+assert.equal(v.safeParse(ReportDraft, draft(highlightsOnly, "ok", "", [])).success, false);
+assert.deepEqual(draftStats(draft(highlightsOnly), evidenceSets), {
+  items: 5,
+  items_used: 3,
+  unused: ["P1", "T1"],
+  points: 1,
+  entries: { highlights: 1, progress_roadmap: 0, topics: 0 },
+  chars: "Opening.\nPoint 1\nHead 1\nok\n".length,
+});
+
+// Draft order is ignored: entries go to the fixed sections.
+const story = reportView(withTicket, draft([["topics", ["T1"]], ["highlights", ["H1", "T1"]], ["highlights", ["H2", "H3"]]], "Para", "Next."));
+assert.deepEqual(story.overview, {
+  heading: "👋 今日の概要",
+  summary: "Opening.",
+  points: { heading: "今日のポイント", items: [{ icon: "✅", text: "Point 1" }] },
+});
+assert.deepEqual(story.sections.map((s) => [s.heading, s.entries.map((e) => e.title)]), [
+  ["✨ ハイライト", ["Head 2", "Head 3"]],
+  ["💬 議論・調整", ["Head 1"]],
+]);
+// Merged links: High has 7, the topic repeats High's first URL. Mixed statuses show no icon.
+assert.deepEqual(story.sections[0].entries[0], { title: "Head 2", icon: null, status: null, summary: "Para", links: urls(3), more: 4 });
+assert.deepEqual(story.closing, { heading: "⏭ 次の焦点", text: "Next." });
+assert.deepEqual(story.members?.entries.map((e) => e.title), ["Zed", "Aki"]);
+const storyReport = renderDailyReport(withTicket, draft([["highlights", ["H1"]], ["highlights", ["H2", "H3"]]], "Para <b>", "Next."));
+assert.match(
+  storyReport.markdown,
+  /## 👋 今日の概要\n\nOpening\.\n\n\*\*今日のポイント\*\*\n- ✅ Point 1\n\n## ✨ ハイライト\n\n### ✅ Head 1\n\nPara \\<b\\> \[1\]/,
+);
+assert.match(storyReport.markdown, /\n## ⏭ 次の焦点\n\nNext\.\n\n## 👥 メンバーアクティビティ\n\n- \*\*Zed\*\*/);
+assert.match(storyReport.markdown, /\n## 📊 今日のKPI\n\n\| 指標 \| 件数 \|/);
+assert.ok(storyReport.html.includes("Para &lt;b&gt;"));
+assert.ok(storyReport.html.includes("border-left:3px solid #5E6AD2"));
+// An empty day ignores the draft.
+assert.equal(reportView({ ...withTicket, quality: { status: "empty" } }, draft(highlightsOnly)).overview?.summary, "A & B moved.");
 
 console.log("daily-report checks passed");

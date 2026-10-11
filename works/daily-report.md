@@ -94,23 +94,61 @@ Phase 0 사용자 결정: LLM에 섹션 압축과 흐름 연결까지 맡긴다.
 만들 것
 
 - Agent `DailyReportWriter`(`flue/src/agents/daily-report-writer.ts`), `thinkingLevel: "low"`, 제출 Tool 1개.
-  - 입력: `core_json`에서 evidence·entities·tags를 뺀 것(item_key, title, summary, status, importance, 배열 이름) + overview + metrics. 토큰 절약.
-  - 출력(초안): `{ opening, sections: [{ heading, paragraphs: [{ text, item_keys }] }], closing }`. 섹션 구성(제목, 몇 개로 나눌지)도 모델이 정함.
-  - Tool 검사: `item_keys`가 highlights / progress_roadmap / topics의 `item_key`에 있음, 문단마다 근거 1개 이상, highlights는 전부 한 번 이상 언급. 압축이 목적이라 나머지 항목은 빠져도 됨(빠진 항목 수는 `validation_json`에 남김).
-  - 렌더: Phase 0 함수가 이 구조를 받아 문단마다 근거 링크(그 문단 `item_keys`의 evidence)를 붙이고, 뒤에 멤버·숫자 섹션을 그대로 붙임.
+  - 입력: `core_json`의 highlights / progress_roadmap / topics(title, summary, status, importance, 배열 이름) + overview. evidence·entities·tags·멤버는 뺌. 항목은 짧은 id(`H1`, `P1`, `T1`, 배열 안 중요도 순)로 줌: `item_key`는 배열 안에서만 유일해서 배열끼리 겹칠 수 있음.
+  - 출력(v3, 지금): `{ opening, points: [{ text, item_ids }] (1~3개), entries: [{ section, headline, text, item_ids }], closing }`. 섹션 틀(하이라이트 → 진행·예정 → 논의·조정 → 다음 초점)은 코드가 고정하고, 모델은 섹션마다 "결과를 말하는 한 줄 제목 + 1~2문장"을 씀. `points`는 개요 아래 "今日のポイント" 상자.
+    - 경과: v1은 섹션 안에 문단을 넣는 중첩 구조 → run p1-1에서 반려 2회로 실패. v2는 `paragraphs: [{ heading, text, item_ids }]`(모델이 주제 제목을 짓고 같은 heading을 코드가 묶음) → 성공했지만 주제 제목만으로는 무엇이 핵심인지 안 보이고 묶기 실수가 있었음. 사용자가 Finalizer 전에 섹션 강조를 먼저 하자고 해서 v3(`sample/merged.md`를 참고, 그대로 따르지는 않음).
+  - Tool 검사: `item_ids`가 입력에 있음(points 포함), 근거 1개 이상과 points 1~3개(스키마), entry마다 자기 `section`의 항목을 하나 이상 인용(다른 섹션 항목을 같이 묶는 건 허용), highlights는 전부 entries에서 인용(points만으로는 안 됨), 본문의 `#숫자`가 Core 문장에 있는 번호. 나머지 항목은 빠져도 됨(`stats.unused`).
+  - 렌더: 섹션 제목·이모지, 상태 아이콘(✅ 완료 / 🚧 진행 중 / ⛔ 막힘 / 📅 예정: 인용한 항목의 `status`가 모두 같을 때만), 근거 링크(entry의 `item_ids` evidence를 합쳐 앞 3개 + 나머지 개수)는 코드. 하이라이트는 왼쪽 테두리 블록 + 굵은 제목, 진행·논의는 "아이콘 **제목** 문장" 한 줄, 진행 섹션은 막힘을 맨 위로. 멤버·숫자 섹션은 그대로. 초안 없는 코드 렌더도 같은 틀(`daily-report-code-v2`).
+  - 하지 않은 것: 진척률·로드맵 기간·예정 날짜(`core_json`에 없음. Interpreter의 `progress.next_step`은 `resolveStructuring`에서 떨어짐, 쓰게 하면 지어냄), 원문 인용(evidence에 본문이 없음, 휴대폰 길이), Fun Corner. 숫자 한 줄 요약은 사용자가 상단에 안 넣기로 함.
 - Worker `POST /report/generate` `{ dailyCoreId, dryRun: true }`: 현재 generation의 `core_json`을 읽어 Agent 실행, 저장 없이 응답(`subject`, `markdown`, `html`, usage, 반려 이유). 현재 generation이 없으면 409.
+
+나중에 검토: `DailyReportFinalizer`(사용자, 2026-10-11)
+
+- Writer 결과를 보고, 흐름과 문장을 더 자연스럽게 다듬는 Agent를 뒤에 하나 더 붙일 수 있음.
+- 붙인다면 같은 `ReportDraft` 구조를 받아 `opening` / `points[].text` / `headline` / `text` / `closing`만 고치고 `section`과 `item_ids`는 그대로 둔다. 검사(`draftProblems`)와 렌더를 그대로 다시 쓰고, Tool에서 entry 수와 entry별 `section` / `item_ids`가 Writer와 같은지만 더 본다. 문장이 바뀌어도 근거 링크가 entry와 어긋나지 않음.
+- 판단은 Phase 1 사용자 확인에서. Writer 지시문만 고쳐서 될 문제인지(예: 문단 묶기, 연결 문장)와 호출 1회 추가 비용(Writer 기준 약 $0.005)을 같이 본다.
 
 에이전트 확인
 
-- [ ] 반려 없이 1회 제출(반려 상한은 Core와 같은 `MAX_REJECTIONS`).
-- [ ] 시간·토큰·비용 기록. 목표: Core 1회($0.057) 이하.
-- [ ] 리포트 문장에 `core_json`에 없는 티켓 번호·사람 이름이 없다(코드로 대조: `#\d+`, people).
+- [x] 반려 없이 1회 제출(반려 상한은 Core와 같은 `MAX_REJECTIONS`).
+- [x] 시간·토큰·비용 기록. 목표: Core 1회($0.057) 이하.
+- [x] 리포트 문장에 `core_json`에 없는 티켓 번호·사람 이름이 없다(코드로 대조: `#\d+`, people).
 
 사용자 확인
 
 - [ ] Phase 0 코드 렌더와 나란히 보고 나아졌다. 아니면 LLM 없이 간다.
+  - 사용자(2026-10-11, v2를 보고): Core 문장을 부드럽게 바꾼 것은 의미가 있다. Finalizer로 넘기기 전에 섹션을 더 강조해서 잘 읽히고 주요 부분이 잘 보이게. → v3. 섹션 틀은 코드 고정, 상단은 "今日のポイント" 최대 3줄만(숫자 한 줄 요약은 안 넣음).
+- [ ] Writer 지시문을 고칠지, Finalizer를 붙일지, 이대로 Phase 2로 갈지.
 
 확인 기록
+
+- 2026-10-11 에이전트: 구현과 확인.
+  - 코드: Agent `DailyReportWriter`(`flue/src/agents/daily-report-writer.ts`, `daily-report-writer-v2`, `thinkingLevel: "low"`), `daily-report.ts`에 `ReportDraft` / `writerInput` / `draftEvidence` / `draftProblems` / `draftStats` / `draftSections`와 초안 렌더, Worker `POST /report/generate`(`dryRun: true`만, 활동 없는 날은 모델 없이 코드 렌더), migration `v6`(`FlueDailyReportWriterAgent`). Supabase REST 헬퍼를 `/core/generate` 안에서 꺼내 두 엔드포인트가 같이 씀. `daily-report.run.ts`에 저장된 응답의 초안으로 렌더하는 인자 추가.
+  - 검사: `daily-report.check.ts`(id 부여, 입력 모양, 검사 5종, 통계, 문단 링크 합치기, 초안 렌더, 활동 없는 날은 초안 무시), `daily-core.check.ts` 통과, `tsc` 오류 없음. 초안 없는 렌더가 Phase 0 파일과 바이트 단위로 같음.
+  - 에러 경로(모델 없음): 토큰 없음 401, uuid 아님 400, `dryRun` 없음 400, 없는 daily core 404.
+  - run p1-1(v1, 중첩 구조): 실패. 9.8초 동안 2회 제출이 모두 스키마에서 반려되어 상한에서 멈춤. 마지막 제출은 `closing`을 마지막 섹션 안에 넣었고 앞 두 섹션의 `paragraphs`가 빈 배열. 첫 반려 이유는 Worker 로그에 안 남음. 실패 응답에 usage가 없어 비용은 모름(2회 제출, 수 센트 이하로 추정). 원인을 이중 중첩 구조로 보고 평평한 구조(v2)로 바꿈.
+  - run p1-2(v2): 로컬 Worker, generation 5, 4.6초, 입력 2,211 / 출력 738 토큰, **$0.005**(Core 1회 $0.057의 약 9%). 반려 0.
+    - 12개 항목 모두 인용(빠진 항목 0). 섹션 5개 × 문단 1개씩. 지시는 "2-4개 주제"였는데 5개(Tool 검사 아님).
+    - 티켓 번호 12개 모두 Core 문장에 있음(Tool 검사), 사람 이름 0.
+    - 길이: markdown 10,262 → 7,373자, HTML 22,174 → 15,400자. 휴대폰 폭 3,401 → 2,704px(−20%). 이벤트 부분(개요~멤버 앞)은 1,904 → 1,207px(−37%). 멤버 섹션은 그대로라 비중이 35% → 44%.
+  - 보인 점(사용자 판단용)
+    - 문장이 Core 요약을 거의 옮겨 적음(예: "完了反映" 문단은 H4 요약과 거의 같음). 압축은 됐지만 연결 문장("あわせて" 정도)이 약하고, 한 섹션에 문단 하나라 섹션 구분의 의미가 약함.
+    - 묶기 실수: 진행 항목 #22935와 PR #555가 "運用面の共有"(모듈 작성·Codex)에 들어감.
+    - 항목을 많이 묶은 문단은 링크가 많아짐("周辺課題の整理"는 5개 항목, `[1]~[5] +15`). 어느 링크가 어느 사실인지 알 수 없음.
+  - 사용자 확인용 출력: `works/out/daily-report-p1.md`, `works/out/daily-report-p1.html`(Phase 0은 `daily-report-p0.*`), 응답 원문 `works/out/daily-report-p1.json`.
+- 2026-10-11 에이전트: v3(섹션 강조) 구현과 확인.
+  - 코드: `ReportDraft`를 `{ opening, points, entries, closing }`로, `draftProblems`에 "entry가 자기 섹션 항목을 인용" 검사 추가, heading 묶기(`draftSections`)와 그 검사는 삭제. 렌더는 고정 섹션 + 레이아웃 3종(block / list / members), 상태 아이콘, 링크 상한 5 → 3(멤버 포함), 진행 섹션 막힘 우선. `REPORT_FORMAT_VERSION = daily-report-code-v2`, `daily-report-writer-v3`. 지시문의 제목 예시는 이 데이터의 티켓이 아닌 일반 예시로(다른 날 그대로 베끼지 않게).
+  - 검사: `daily-report.check.ts`(섹션 고정 순서와 레이아웃, 아이콘·상태, 막힘 우선, 섹션 인용 검사, points가 highlights 인용을 대신하지 않음, points 0개·4개는 스키마 실패, 초안 순서와 무관하게 섹션 배치, 섞인 상태는 아이콘 없음) 통과, `tsc` 오류 없음. v2 초안(`daily-report-p1.json`)은 새 구조로 렌더 안 됨(옛 파일은 그대로 둠).
+  - run p1-3(v3): 로컬 Worker, generation 5, 7.6초, 입력 2,424 / 출력 1,299 토큰, **$0.0077**(v2의 약 1.5배, Core의 약 13%). 반려 0. 12개 항목 모두 인용, points 3, entries 하이라이트 4 / 진행 2 / 논의 6(항목 1개 = entry 1개). 사람 이름 0, 티켓 번호는 Tool 검사 통과.
+    - 좋아진 점: 제목이 결과를 말함("#23163 実装完了、動作確認へ進行", "#22506 出力項目設定の保持を実装"). #22935와 PR #555가 진행 섹션으로 감(v2의 묶기 실수가 고정 섹션 + 검사로 사라짐). 링크가 entry마다 최대 3개라 어느 링크가 어느 일인지 보임.
+    - 길이: 압축이 거의 없어짐. 본문(제목 + 문장) 1,232자 vs 인용한 Core summary 합 1,048자. 휴대폰 폭 3,630px(같은 방식으로 다시 잰 값: Phase 0 3,494, v2 2,728, 새 틀의 코드 렌더 3,505). 이벤트 부분(하이라이트~멤버 앞) 1,837px로 v2(1,069)보다 길고 Phase 0(1,763)과 비슷. 논의 섹션이 786px로 가장 김.
+  - 보인 점(사용자 판단용)
+    - 문장은 여전히 Core summary를 다듬은 수준(H1은 거의 같음). "1항목 1entry" 지시 때문에 v2의 압축(5문단)이 사라짐. 줄이려면 논의 섹션만 "중요한 것 2~3개만 entry, 나머지는 빼기" 같은 지시가 필요하고, 그러면 `stats.unused`가 늘어남.
+    - points의 아이콘이 Core `status`를 따라서 "#23163が実装完了し確認へ"에 🚧(Core가 in_progress). 사실과 어긋나진 않지만 "完了"와 아이콘이 다르게 읽힐 수 있음.
+    - 세 번째 point "完了反映とレビュー調整を進行"은 두 항목을 묶어 내용이 흐림(아이콘도 없음).
+  - 사용자 확인용 출력: `works/out/daily-report-p1v3.md` / `.html`, 응답 원문 `daily-report-p1v3.json`, 같은 틀의 코드 렌더 `daily-report-p0v2.*`.
+  - 사용자 요청으로 섹션 제목 변경(코드 상수만, 모델 재실행 없이 저장된 v3 초안으로 다시 렌더): メンバー → 👥 メンバーアクティビティ, 数字 → 📊 今日のKPI(ko: 멤버 활동 / 오늘의 KPI, en: Member activity / Today's KPIs). 처음엔 メンバー別の動き / 今日の数字로 바꿨으나 사용자가 이쪽을 고름.
+  - KPI 섹션을 표로(사용자 요청, 모델 재실행 없음): 열은 指標 / 件数(언어별 상수). 출처가 2개 이상인 값(Slack 채널별)은 합계 행 아래에 작은 회색 내역 행(markdown은 `└ #dev_lead`). 내역에서 0인 출처는 뺌. 3열(내역 열)은 휴대폰 폭에서 채널 이름이 줄바꿈되어 안 씀.
 
 ---
 

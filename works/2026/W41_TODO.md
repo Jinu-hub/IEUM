@@ -28,7 +28,8 @@ Daily Core E2E(Phase 0~4) 완료 이후 할 일. 한 일은 `W41.md`, E2E 경과
 - [ ] Daily Report: Daily Core를 받아 리포트를 만든다. 다음 할 일. `daily_core_data.current_generation_no`가 가리키는 `daily_core_generations.core_json`을 직접 읽는다(projection 없이).
   - Phase별 계획과 확인 기록: `works/daily-report.md`. 테스트 데이터는 run 21(generation 5), Core는 다시 만들지 않음.
   - [x] Phase 0 형식: 코드 렌더(LLM 0회)로 markdown / html을 만들어 보고, LLM이 필요한지 정한다. 사용자 결정(2026-10-11): LLM에 섹션 압축·흐름 연결까지 맡김, 멤버 섹션은 그대로, 활동 없는 날도 보냄.
-  - [ ] Phase 1 Report Agent: 오프닝, highlights / progress / topics 압축·연결, 마무리. 멤버·숫자 섹션은 코드 렌더 그대로. 출력은 문단마다 근거 `item_keys`, 링크·HTML은 코드가 붙임. 활동 없는 날은 모델 안 부름.
+  - [ ] Phase 1 Report Agent: 오프닝, highlights / progress / topics 압축·연결, 마무리. 멤버·숫자 섹션은 코드 렌더 그대로. 출력은 문단마다 근거 `item_ids`, 링크·HTML은 코드가 붙임. 활동 없는 날은 모델 안 부름. v2 구현·에이전트 확인 끝(2026-10-11, $0.005 / 4.6초). 사용자 요청으로 v3(고정 섹션 + 결과 제목 + 今日のポイント, $0.0077 / 7.6초), 사용자 확인 대기. 길이가 Phase 0 수준으로 돌아와서 논의 섹션을 줄일지 볼 것.
+    - 결과에 따라 뒤에 `DailyReportFinalizer`(문장·흐름 다듬기)를 붙일 수 있음(사용자). 같은 초안 구조를 받아 문장만 고치고 `item_ids`는 유지.
   - [ ] Phase 2 `daily_reports` 테이블: LLM을 쓰기로 해서 진행(Phase 1에서 LLM을 접으면 건너뜀).
   - [ ] Phase 3 메일 연결: `processTarget`이 수집 → `/core/generate` → 리포트 → `sendMails`. Vercel 즉시 발송의 함수 시간 확인.
   - [ ] Phase 4 배포·정리: Worker 배포, `TestAgent` 제거(4-3과 같이).

@@ -4,6 +4,7 @@ import { Hono, type MiddlewareHandler } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { CORE_INTERPRETER_PROMPT_VERSION, CoreInterpreter } from "./agents/core-interpreter.ts";
 import { CORE_STRUCTURER_PROMPT_VERSION, CoreStructurer } from "./agents/core-structurer.ts";
+import { DAILY_REPORT_WRITER_PROMPT_VERSION, DailyReportWriter } from "./agents/daily-report-writer.ts";
 import { TestAgent } from "./agents/test-agent.ts";
 import {
   buildAgentInput,
@@ -19,8 +20,18 @@ import {
   type Structuring,
   structurerInput,
 } from "./daily-core.ts";
+import {
+  type DailyCoreJson,
+  draftEvidence,
+  draftStats,
+  REPORT_FORMAT_VERSION,
+  type ReportDraft,
+  renderDailyReport,
+  writerInput,
+} from "./daily-report.ts";
 
 const DAILY_CORE_MODEL = "openai/gpt-5.4-mini";
+const REPORT_MODEL = "openai/gpt-5.4-mini";
 // v2: both calls at thinkingLevel "low" (v1 used the default "medium").
 const PIPELINE_VERSION = "flue-two-call-v2";
 const MAX_REJECTIONS = 2;
@@ -92,34 +103,11 @@ async function runAgent<T>(
   };
 }
 
-const app = new Hono<Env>();
-
-const requireToken: MiddlewareHandler<Env> = async (c, next) => {
-  const token = c.env.FLUE_API_TOKEN;
-  if (!token) return c.text("FLUE_API_TOKEN is not set", 500);
-  return bearerAuth<Env>({ token })(c, next);
-};
-
-app.get("/", (c) => c.text("hello"));
-
-app.use("/agents/*", requireToken);
-app.use("/core/*", requireToken);
-
-app.route("/agents/test", createAgentRouter(TestAgent));
-
-// Generates a Daily Core and saves it as the next generation. `model` overrides the default model.
-// Call 1 (CoreInterpreter) merges the day into core items, Call 2 (CoreStructurer) places them.
-app.post("/core/generate", async (c) => {
-  const { dailyCoreId, model = DAILY_CORE_MODEL } = await c.req.json<{ dailyCoreId?: string; model?: string }>();
-  if (!dailyCoreId || !/^[0-9a-f-]{36}$/i.test(dailyCoreId)) {
-    return c.json({ error: "dailyCoreId must be a uuid" }, 400);
-  }
-
-  const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = c.env;
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return c.text("Supabase secrets are not set", 500);
-  // ponytail: sequential REST writes, no transaction. A crash mid-way leaves the generation `processing`;
-  // move the writes into one Postgres function (RPC) when projections are added.
-  const db = async <T,>(path: string, init: { method?: string; body?: unknown } = {}) => {
+// ponytail: sequential REST writes, no transaction. A crash mid-way leaves a row `processing`;
+// move the writes into one Postgres function (RPC) when projections are added.
+function supabase({ SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY }: Env["Bindings"]) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
+  return async <T,>(path: string, init: { method?: string; body?: unknown } = {}) => {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       method: init.method ?? "GET",
       headers: {
@@ -133,6 +121,33 @@ app.post("/core/generate", async (c) => {
     if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
     return (await res.json()) as T[];
   };
+}
+
+const isUuid = (id: unknown): id is string => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id);
+
+const app = new Hono<Env>();
+
+const requireToken: MiddlewareHandler<Env> = async (c, next) => {
+  const token = c.env.FLUE_API_TOKEN;
+  if (!token) return c.text("FLUE_API_TOKEN is not set", 500);
+  return bearerAuth<Env>({ token })(c, next);
+};
+
+app.get("/", (c) => c.text("hello"));
+
+app.use("/agents/*", requireToken);
+app.use("/core/*", requireToken);
+app.use("/report/*", requireToken);
+
+app.route("/agents/test", createAgentRouter(TestAgent));
+
+// Generates a Daily Core and saves it as the next generation. `model` overrides the default model.
+// Call 1 (CoreInterpreter) merges the day into core items, Call 2 (CoreStructurer) places them.
+app.post("/core/generate", async (c) => {
+  const { dailyCoreId, model = DAILY_CORE_MODEL } = await c.req.json<{ dailyCoreId?: string; model?: string }>();
+  if (!isUuid(dailyCoreId)) return c.json({ error: "dailyCoreId must be a uuid" }, 400);
+  const db = supabase(c.env);
+  if (!db) return c.text("Supabase secrets are not set", 500);
   const coreRow = `daily_core_data?daily_core_id=eq.${dailyCoreId}`;
 
   const [core] = await db<CoreMeta & { workspace_id: string; last_generation_no: number }>(coreRow);
@@ -282,6 +297,65 @@ app.post("/core/generate", async (c) => {
       method: "PATCH",
       body: { last_error_code: "generation_failed", last_error_message: message, updated_at: finishedAt },
     });
+    return c.json({ dailyCoreId, generationNo, status: "failed", error: message }, 500);
+  }
+});
+
+// Writes the Daily Report from the current Daily Core generation. Only `dryRun: true` until
+// daily_reports exists. Days without activity get the code-rendered report and no model call.
+app.post("/report/generate", async (c) => {
+  const { dailyCoreId, model = REPORT_MODEL, dryRun } = await c.req.json<{
+    dailyCoreId?: string;
+    model?: string;
+    dryRun?: boolean;
+  }>();
+  if (!isUuid(dailyCoreId)) return c.json({ error: "dailyCoreId must be a uuid" }, 400);
+  if (dryRun !== true) return c.json({ error: "only dryRun: true is supported until daily_reports exists" }, 400);
+  const db = supabase(c.env);
+  if (!db) return c.text("Supabase secrets are not set", 500);
+
+  const [core] = await db<{ current_generation_no: number | null }>(
+    `daily_core_data?daily_core_id=eq.${dailyCoreId}&select=current_generation_no`,
+  );
+  if (!core) return c.json({ error: "daily core not found" }, 404);
+  if (core.current_generation_no === null) return c.json({ error: "daily core has no current generation" }, 409);
+  const generationNo = core.current_generation_no;
+  const [generation] = await db<{ core_json: DailyCoreJson }>(
+    `daily_core_generations?daily_core_id=eq.${dailyCoreId}&generation_no=eq.${generationNo}&select=core_json`,
+  );
+  if (!generation?.core_json) return c.json({ error: `generation ${generationNo} has no core_json` }, 409);
+  const coreJson = generation.core_json;
+
+  const startedAt = Date.now();
+  if (coreJson.quality.status === "empty") {
+    return c.json({ dailyCoreId, generationNo, status: "succeeded", formatVersion: REPORT_FORMAT_VERSION, ...renderDailyReport(coreJson) });
+  }
+
+  const evidence = draftEvidence(coreJson);
+  try {
+    const writer = await runAgent<ReportDraft>(
+      DailyReportWriter,
+      "draft",
+      writerInput(coreJson),
+      { ...evidence, language: coreJson.meta.language, model },
+      [],
+    );
+    return c.json({
+      dailyCoreId,
+      generationNo,
+      status: "succeeded",
+      formatVersion: REPORT_FORMAT_VERSION,
+      promptVersion: DAILY_REPORT_WRITER_PROMPT_VERSION,
+      model,
+      elapsedMs: Date.now() - startedAt,
+      usage: writer.usage,
+      calls: { writer: writer.metrics },
+      stats: draftStats(writer.output, evidence),
+      draft: writer.output,
+      ...renderDailyReport(coreJson, writer.output),
+    });
+  } catch (error) {
+    const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
     return c.json({ dailyCoreId, generationNo, status: "failed", error: message }, 500);
   }
 });

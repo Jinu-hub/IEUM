@@ -1,21 +1,28 @@
+import * as v from "valibot";
 import type { buildCoreJson } from "./daily-core.ts";
 
 export type DailyCoreJson = ReturnType<typeof buildCoreJson>;
 type CoreItem = DailyCoreJson["highlights"][number];
 
-export const REPORT_FORMAT_VERSION = "daily-report-code-v1";
+export const REPORT_FORMAT_VERSION = "daily-report-code-v2";
 
-// Items with more evidence than this show the first links and a count of the rest.
-const MAX_LINKS = 5;
+// Entries with more evidence than this show the first links and a count of the rest.
+const MAX_LINKS = 3;
+
+const ICON = { completed: "✅", in_progress: "🚧", blocked: "⛔", planned: "📅" } as const;
+type Status = keyof typeof ICON;
 
 const LABELS = {
   ja: {
-    overview: "今日の概要",
-    highlights: "ハイライト",
-    progress_roadmap: "進捗",
-    topics: "トピック",
-    member_activity: "メンバー",
-    metrics: "数字",
+    overview: "👋 今日の概要",
+    points: "今日のポイント",
+    highlights: "✨ ハイライト",
+    progress_roadmap: "🔄 進捗・予定",
+    topics: "💬 議論・調整",
+    closing: "⏭ 次の焦点",
+    member_activity: "👥 メンバーアクティビティ",
+    metrics: "📊 今日のKPI",
+    metric_columns: ["指標", "件数"],
     empty: "この日の活動はありませんでした。",
     status: { completed: "完了", in_progress: "進行中", blocked: "ブロック", planned: "予定" },
     metric: {
@@ -28,12 +35,15 @@ const LABELS = {
     },
   },
   ko: {
-    overview: "오늘의 요약",
-    highlights: "하이라이트",
-    progress_roadmap: "진행 상황",
-    topics: "토픽",
-    member_activity: "멤버",
-    metrics: "숫자",
+    overview: "👋 오늘의 요약",
+    points: "오늘의 포인트",
+    highlights: "✨ 하이라이트",
+    progress_roadmap: "🔄 진행·예정",
+    topics: "💬 논의·조정",
+    closing: "⏭ 다음 초점",
+    member_activity: "👥 멤버 활동",
+    metrics: "📊 오늘의 KPI",
+    metric_columns: ["지표", "건수"],
     empty: "이날은 활동이 없었습니다.",
     status: { completed: "완료", in_progress: "진행 중", blocked: "막힘", planned: "예정" },
     metric: {
@@ -46,12 +56,15 @@ const LABELS = {
     },
   },
   en: {
-    overview: "Overview",
-    highlights: "Highlights",
-    progress_roadmap: "Progress",
-    topics: "Topics",
-    member_activity: "Members",
-    metrics: "Numbers",
+    overview: "👋 Overview",
+    points: "Key points",
+    highlights: "✨ Highlights",
+    progress_roadmap: "🔄 Progress & next",
+    topics: "💬 Discussions",
+    closing: "⏭ Next focus",
+    member_activity: "👥 Member activity",
+    metrics: "📊 Today's KPIs",
+    metric_columns: ["Metric", "Count"],
     empty: "No activity on this day.",
     status: { completed: "Done", in_progress: "In progress", blocked: "Blocked", planned: "Planned" },
     metric: {
@@ -66,36 +79,174 @@ const LABELS = {
 } as const;
 type Labels = (typeof LABELS)[keyof typeof LABELS];
 
-const SECTIONS = ["highlights", "progress_roadmap", "topics", "member_activity"] as const;
+const EVENT_SECTIONS = ["highlights", "progress_roadmap", "topics"] as const;
+type EventSection = (typeof EVENT_SECTIONS)[number];
+// The writer sees event items under short ids: item_key is unique only within its array.
+const ID_PREFIX: Record<EventSection, string> = { highlights: "H", progress_roadmap: "P", topics: "T" };
+const sectionOf = (id: string) => EVENT_SECTIONS.find((section) => id.startsWith(ID_PREFIX[section]));
 
-export type ReportEntry = { title: string; status: string | null; summary: string; links: string[]; more: number };
-export type ReportSection = { key: (typeof SECTIONS)[number]; heading: string; entries: ReportEntry[] };
+const byImportance = (items: CoreItem[]) => [...items].sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0));
+
+export function eventItems(core: DailyCoreJson) {
+  return EVENT_SECTIONS.flatMap((section) =>
+    byImportance(core[section]).map((item, i) => ({ id: `${ID_PREFIX[section]}${i + 1}`, section, item })),
+  );
+}
+
+// Writer output, and the shape a later finalizer would rewrite: text changes, item_ids stay.
+// Code fixes the section frame and the model fills it. Flat on purpose: with paragraphs nested in
+// sections, the model left sections empty and put closing inside the last one (run p1-1).
+const ItemIds = v.pipe(v.array(v.string()), v.minLength(1), v.description("ids of the items this is written from, e.g. H1, T3."));
+export const ReportDraft = v.object({
+  opening: v.pipe(v.string(), v.minLength(1)),
+  points: v.pipe(v.array(v.object({ text: v.pipe(v.string(), v.minLength(1)), item_ids: ItemIds })), v.minLength(1), v.maxLength(3)),
+  entries: v.pipe(
+    v.array(
+      v.object({
+        section: v.picklist(EVENT_SECTIONS),
+        headline: v.pipe(v.string(), v.minLength(1)),
+        text: v.pipe(v.string(), v.minLength(1)),
+        item_ids: ItemIds,
+      }),
+    ),
+    v.minLength(1),
+  ),
+  closing: v.string(),
+});
+export type ReportDraft = v.InferOutput<typeof ReportDraft>;
+
+export function writerInput(core: DailyCoreJson) {
+  return JSON.stringify({
+    target: core.meta.target_display_name,
+    date: core.meta.core_date,
+    overview: core.overview.summary,
+    items: eventItems(core).map(({ id, section, item }) => ({
+      id,
+      section,
+      title: item.title,
+      summary: item.summary,
+      status: item.status,
+      importance: item.importance,
+    })),
+  });
+}
+
+const TICKET = /#\d{3,}/g;
+export type DraftEvidence = { ids: string[]; required: string[]; tickets: string[] };
+
+export function draftEvidence(core: DailyCoreJson): DraftEvidence {
+  const items = eventItems(core);
+  const text = [
+    core.overview.summary,
+    ...[...EVENT_SECTIONS, "member_activity" as const].flatMap((s) => core[s].flatMap((i) => [i.title, i.summary])),
+  ].join("\n");
+  return {
+    ids: items.map((i) => i.id),
+    required: items.filter((i) => i.section === "highlights").map((i) => i.id),
+    tickets: [...new Set(text.match(TICKET) ?? [])],
+  };
+}
+
+const draftText = (draft: ReportDraft) =>
+  [draft.opening, ...draft.points.map((p) => p.text), ...draft.entries.flatMap((e) => [e.headline, e.text]), draft.closing].join("\n");
+
+export function draftProblems(draft: ReportDraft, { ids, required, tickets }: DraftEvidence) {
+  const known = new Set(ids);
+  const cited = new Set([...draft.points, ...draft.entries].flatMap((e) => e.item_ids));
+  const used = new Set(draft.entries.flatMap((e) => e.item_ids));
+  const problems: string[] = [];
+  const unknown = [...cited].filter((id) => !known.has(id));
+  if (unknown.length) problems.push(`unknown item_ids ${unknown.join(", ")}; use only ids from the input items`);
+  const misplaced = draft.entries.filter((e) => !e.item_ids.some((id) => known.has(id) && sectionOf(id) === e.section));
+  if (misplaced.length) {
+    problems.push(
+      `entries citing no item of their section: ${misplaced.map((e) => `"${e.headline}" (${e.section})`).join(", ")}; ` +
+        "set section to where its main item belongs (H = highlights, P = progress_roadmap, T = topics)",
+    );
+  }
+  const missing = required.filter((id) => !used.has(id));
+  if (missing.length) problems.push(`highlights not covered: ${missing.join(", ")}; cite each highlight in some entry`);
+  const invented = [...new Set(draftText(draft).match(TICKET) ?? [])].filter((t) => !tickets.includes(t));
+  if (invented.length) problems.push(`ticket numbers not in the input: ${invented.join(", ")}; use only numbers written in the items`);
+  return problems;
+}
+
+export function draftStats(draft: ReportDraft, { ids }: DraftEvidence) {
+  const used = new Set(draft.entries.flatMap((e) => e.item_ids));
+  return {
+    items: ids.length,
+    items_used: ids.filter((id) => used.has(id)).length,
+    unused: ids.filter((id) => !used.has(id)),
+    points: draft.points.length,
+    entries: Object.fromEntries(EVENT_SECTIONS.map((s) => [s, draft.entries.filter((e) => e.section === s).length])),
+    chars: draftText(draft).length,
+  };
+}
+
+export type ReportEntry = { title: string; icon: string | null; status: string | null; summary: string; links: string[]; more: number };
+// block: entries with their own heading; list: one line each; members: name, then summary.
+export type ReportSection = { heading: string; layout: "block" | "list" | "members"; entries: ReportEntry[] };
 export type ReportMetric = { label: string; value: number; parts: { name: string; value: number }[] };
 export type ReportView = {
   title: string;
   date: string;
-  overview: { heading: string; summary: string } | null;
+  overview: { heading: string; summary: string; points: { heading: string; items: { icon: string | null; text: string }[] } | null } | null;
   sections: ReportSection[];
-  metrics: { heading: string; rows: ReportMetric[] };
+  closing: { heading: string; text: string } | null;
+  members: ReportSection | null;
+  metrics: { heading: string; columns: readonly [string, string]; rows: ReportMetric[] };
   empty: string | null;
 };
 
+const LAYOUT = { highlights: "block", progress_roadmap: "list", topics: "list" } as const;
+
 const isHttp = (url: string | null): url is string => !!url && /^https?:\/\//.test(url);
 
-function entry(item: CoreItem, labels: Labels): ReportEntry {
-  const urls = [...new Set(item.evidence.map((e) => e.url).filter(isHttp))];
-  const status = item.status && item.status in labels.status ? labels.status[item.status as keyof Labels["status"]] : null;
-  return { title: item.title, status, summary: item.summary, links: urls.slice(0, MAX_LINKS), more: Math.max(0, urls.length - MAX_LINKS) };
+function links(items: CoreItem[]) {
+  const urls = [...new Set(items.flatMap((item) => item.evidence.map((e) => e.url)).filter(isHttp))];
+  return { links: urls.slice(0, MAX_LINKS), more: Math.max(0, urls.length - MAX_LINKS) };
 }
 
-export function reportView(core: DailyCoreJson): ReportView {
+// A merged entry shows a status only when every cited item has it.
+function commonStatus(items: CoreItem[]): Status | null {
+  const statuses = new Set(items.map((item) => item.status));
+  const [only] = statuses;
+  return statuses.size === 1 && only && only in ICON ? (only as Status) : null;
+}
+
+function entry(title: string, summary: string, items: CoreItem[], labels: Labels): ReportEntry {
+  const status = commonStatus(items);
+  return { title, icon: status && ICON[status], status: status && labels.status[status], summary, ...links(items) };
+}
+
+const blockedFirst = (entries: ReportEntry[]) =>
+  [...entries].sort((a, b) => Number(b.icon === ICON.blocked) - Number(a.icon === ICON.blocked));
+
+// Without a draft the event arrays are listed as Core wrote them; with a draft its entries fill the
+// same sections. Members always come from Core, in the Structurer's order: sorting people by
+// importance reads as a ranking in a team mail.
+export function reportView(core: DailyCoreJson, draft?: ReportDraft): ReportView {
   const labels = LABELS[core.meta.language as keyof typeof LABELS] ?? LABELS.en;
-  // Event sections lead with the most important items. Members keep the Structurer's order:
-  // sorting people by importance reads as a ranking in a team mail.
-  const sections = SECTIONS.map((key) => {
-    const items = key === "member_activity" ? core[key] : [...core[key]].sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0));
-    return { key, heading: labels[key], entries: items.map((item) => entry(item, labels)) };
-  }).filter((section) => section.entries.length);
+  const story = draft && core.quality.status !== "empty" ? draft : undefined;
+  const byId = new Map(eventItems(core).map(({ id, item }) => [id, item]));
+  const cite = (ids: string[]) => ids.flatMap((id) => byId.get(id) ?? []);
+
+  const sections = EVENT_SECTIONS.map((key): ReportSection => {
+    const entries = story
+      ? story.entries.filter((e) => e.section === key).map((e) => entry(e.headline, e.text, cite(e.item_ids), labels))
+      : byImportance(core[key]).map((item) => entry(item.title, item.summary, [item], labels));
+    return { heading: labels[key], layout: LAYOUT[key], entries: key === "progress_roadmap" ? blockedFirst(entries) : entries };
+  });
+  const summary = story ? story.opening : core.overview.summary;
+  const points = (story?.points ?? []).map((p) => {
+    const status = commonStatus(cite(p.item_ids));
+    return { icon: status && ICON[status], text: p.text };
+  });
+  const members: ReportSection = {
+    heading: labels.member_activity,
+    layout: "members",
+    entries: core.member_activity.map((item) => entry(item.title, item.summary, [item], labels)),
+  };
 
   const rows = new Map<string, ReportMetric>();
   for (const metric of core.metrics) {
@@ -109,32 +260,69 @@ export function reportView(core: DailyCoreJson): ReportView {
   return {
     title: `${core.meta.target_display_name} Daily Report`,
     date: core.meta.core_date,
-    overview: core.overview.summary.trim() ? { heading: labels.overview, summary: core.overview.summary } : null,
-    sections,
-    metrics: { heading: labels.metrics, rows: [...rows.values()].filter((row) => row.value > 0) },
+    overview: summary.trim()
+      ? { heading: labels.overview, summary, points: points.length ? { heading: labels.points, items: points } : null }
+      : null,
+    sections: sections.filter((section) => section.entries.length),
+    closing: story?.closing.trim() ? { heading: labels.closing, text: story.closing } : null,
+    members: members.entries.length ? members : null,
+    metrics: {
+      heading: labels.metrics,
+      columns: labels.metric_columns,
+      rows: [...rows.values()]
+        .filter((row) => row.value > 0)
+        .map((row) => ({ ...row, parts: row.parts.length > 1 ? row.parts.filter((p) => p.value > 0) : [] })),
+    },
     empty: core.quality.status === "empty" ? labels.empty : null,
   };
 }
 
-const metricText = ({ label, value, parts }: ReportMetric) =>
-  `${label}: ${value}` + (parts.length > 1 ? ` (${parts.map((p) => `${p.name} ${p.value}`).join(", ")})` : "");
+// A total row, then one row per source when it came from more than one (Slack channels).
+const metricRows = (rows: ReportMetric[]) =>
+  rows.flatMap(({ label, value, parts }) => [
+    { label, value, part: false },
+    ...parts.map((p) => ({ label: p.name, value: p.value, part: true })),
+  ]);
+
+const iconText = (icon: string | null) => (icon ? `${icon} ` : "");
 
 function markdown(view: ReportView) {
   // `_` stays: names like D_G_S are common and an underscore inside a word is not emphasis.
   const md = (text: string) => text.replace(/([\\`*[\]<>])/g, "\\$1");
+  const withLinks = (e: ReportEntry) => {
+    const links = [...e.links.map((url, i) => `[${i + 1}](${url})`), ...(e.more ? [`+${e.more}`] : [])].join(" ");
+    return `${md(e.summary)}${links ? ` ${links}` : ""}`;
+  };
   const lines = [`# ${md(view.title)}`, "", view.date, ""];
   if (view.empty) lines.push(md(view.empty), "");
-  if (view.overview) lines.push(`## ${view.overview.heading}`, "", md(view.overview.summary), "");
-  for (const section of view.sections) {
-    lines.push(`## ${section.heading}`, "");
-    for (const e of section.entries) {
-      const links = [...e.links.map((url, i) => `[${i + 1}](${url})`), ...(e.more ? [`+${e.more}`] : [])].join(" ");
-      lines.push(`- **${md(e.title)}**${e.status ? ` (${e.status})` : ""}`, `  ${md(e.summary)}${links ? ` ${links}` : ""}`);
-    }
-    lines.push("");
+  if (view.overview) {
+    const { heading, summary, points } = view.overview;
+    lines.push(`## ${heading}`, "", md(summary), "");
+    if (points) lines.push(`**${md(points.heading)}**`, ...points.items.map((p) => `- ${iconText(p.icon)}${md(p.text)}`), "");
   }
+  const section = ({ heading, layout, entries }: ReportSection) => {
+    lines.push(`## ${md(heading)}`, "");
+    for (const e of entries) {
+      if (layout === "block") lines.push(`### ${iconText(e.icon)}${md(e.title)}`, "", withLinks(e), "");
+      else if (layout === "list") lines.push(`- ${iconText(e.icon)}**${md(e.title)}** ${withLinks(e)}`);
+      else lines.push(`- **${md(e.title)}**${e.status ? ` (${e.status})` : ""}`, `  ${withLinks(e)}`);
+    }
+    if (layout !== "block") lines.push("");
+  };
+  view.sections.forEach(section);
+  if (view.closing) lines.push(`## ${view.closing.heading}`, "", md(view.closing.text), "");
+  if (view.members) section(view.members);
   if (view.metrics.rows.length) {
-    lines.push(`## ${view.metrics.heading}`, "", ...view.metrics.rows.map((row) => `- ${metricText(row)}`), "");
+    const [name, count] = view.metrics.columns;
+    const cell = (text: string) => md(text).replace(/\|/g, "\\|");
+    lines.push(
+      `## ${view.metrics.heading}`,
+      "",
+      `| ${name} | ${count} |`,
+      "| --- | ---: |",
+      ...metricRows(view.metrics.rows).map((r) => `| ${r.part ? `└ ${cell(r.label)}` : cell(r.label)} | ${r.value} |`),
+      "",
+    );
   }
   return lines.join("\n");
 }
@@ -146,34 +334,75 @@ const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans','Apple
 
 function html(view: ReportView) {
   const h2 = (text: string) =>
-    `<h2 style="margin:28px 0 8px;font-size:16px;color:#0D0E10;border-bottom:1px solid #E1E4E8;padding-bottom:6px">${esc(text)}</h2>`;
+    `<h2 style="margin:28px 0 10px;font-size:16px;color:#0D0E10;border-bottom:1px solid #E1E4E8;padding-bottom:6px">${esc(text)}</h2>`;
   const p = (text: string, style = "") => `<p style="margin:0 0 12px;line-height:1.7;${style}">${esc(text)}</p>`;
+  const withLinks = (e: ReportEntry) => {
+    const links = [
+      ...e.links.map((url, i) => `<a href="${esc(url)}" style="color:#5E6AD2;text-decoration:none">[${i + 1}]</a>`),
+      ...(e.more ? [`+${e.more}`] : []),
+    ].join(" ");
+    return `${esc(e.summary)}${links ? ` <span style="font-size:12px;color:#6C6F7E">${links}</span>` : ""}`;
+  };
   const body: string[] = [
     `<h1 style="margin:0;font-size:20px;color:#0D0E10">${esc(view.title)}</h1>`,
     `<p style="margin:4px 0 0;color:#6C6F7E;font-size:13px">${esc(view.date)}</p>`,
   ];
   if (view.empty) body.push(p(view.empty, "margin-top:24px"));
-  if (view.overview) body.push(h2(view.overview.heading), p(view.overview.summary));
-  for (const section of view.sections) {
-    body.push(h2(section.heading));
-    for (const e of section.entries) {
-      const status = e.status
-        ? ` <span style="font-size:11px;font-weight:normal;color:#5E6AD2;border:1px solid #5E6AD2;border-radius:8px;padding:0 6px">${esc(e.status)}</span>`
-        : "";
-      const links = [
-        ...e.links.map((url, i) => `<a href="${esc(url)}" style="color:#5E6AD2;text-decoration:none">[${i + 1}]</a>`),
-        ...(e.more ? [`+${e.more}`] : []),
-      ].join(" ");
+  if (view.overview) {
+    const { heading, summary, points } = view.overview;
+    body.push(h2(heading), p(summary));
+    if (points) {
       body.push(
-        `<div style="margin:0 0 14px">`,
-        `<div style="font-weight:bold;line-height:1.5">${esc(e.title)}${status}</div>`,
-        `<div style="line-height:1.7">${esc(e.summary)}${links ? ` <span style="font-size:12px;color:#6C6F7E">${links}</span>` : ""}</div>`,
+        `<div style="margin:0 0 12px;padding:10px 14px;border:1px solid #E1E4E8;border-radius:8px">`,
+        `<div style="margin-bottom:4px;font-size:12px;font-weight:bold;color:#5E6AD2">${esc(points.heading)}</div>`,
+        ...points.items.map((item) => `<div style="line-height:1.7">${iconText(item.icon)}${esc(item.text)}</div>`),
         `</div>`,
       );
     }
   }
+  const section = ({ heading, layout, entries }: ReportSection) => {
+    body.push(h2(heading));
+    for (const e of entries) {
+      if (layout === "block") {
+        body.push(
+          `<div style="margin:0 0 16px;padding-left:12px;border-left:3px solid #5E6AD2">`,
+          `<div style="margin-bottom:2px;font-size:15px;font-weight:bold;line-height:1.5">${iconText(e.icon)}${esc(e.title)}</div>`,
+          `<div style="line-height:1.7">${withLinks(e)}</div>`,
+          `</div>`,
+        );
+      } else if (layout === "list") {
+        body.push(`<div style="margin:0 0 10px;line-height:1.7">${iconText(e.icon)}<strong>${esc(e.title)}</strong> ${withLinks(e)}</div>`);
+      } else {
+        const status = e.status
+          ? ` <span style="font-size:11px;font-weight:normal;color:#5E6AD2;border:1px solid #5E6AD2;border-radius:8px;padding:0 6px">${esc(e.status)}</span>`
+          : "";
+        body.push(
+          `<div style="margin:0 0 14px">`,
+          `<div style="font-weight:bold;line-height:1.5">${esc(e.title)}${status}</div>`,
+          `<div style="line-height:1.7">${withLinks(e)}</div>`,
+          `</div>`,
+        );
+      }
+    }
+  };
+  view.sections.forEach(section);
+  if (view.closing) body.push(h2(view.closing.heading), p(view.closing.text));
+  if (view.members) section(view.members);
   if (view.metrics.rows.length) {
-    body.push(h2(view.metrics.heading), ...view.metrics.rows.map((row) => p(metricText(row), "margin-bottom:4px")));
+    const [name, count] = view.metrics.columns;
+    const th = "padding:6px 8px;border-bottom:2px solid #E1E4E8;font-size:12px;color:#6C6F7E";
+    const td = "padding:6px 8px;border-bottom:1px solid #E1E4E8";
+    body.push(
+      h2(view.metrics.heading),
+      `<table style="width:100%;border-collapse:collapse;font-size:14px">`,
+      `<tr><th style="${th};text-align:left">${esc(name)}</th><th style="${th};text-align:right">${esc(count)}</th></tr>`,
+      ...metricRows(view.metrics.rows).map((r) =>
+        r.part
+          ? `<tr><td style="${td};padding-left:24px;font-size:12px;color:#6C6F7E">${esc(r.label)}</td><td style="${td};text-align:right;font-size:12px;color:#6C6F7E">${r.value}</td></tr>`
+          : `<tr><td style="${td}">${esc(r.label)}</td><td style="${td};text-align:right;font-weight:bold">${r.value}</td></tr>`,
+      ),
+      `</table>`,
+    );
   }
   return [
     `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>`,
@@ -184,7 +413,7 @@ function html(view: ReportView) {
   ].join("\n");
 }
 
-export function renderDailyReport(core: DailyCoreJson) {
-  const view = reportView(core);
+export function renderDailyReport(core: DailyCoreJson, draft?: ReportDraft) {
+  const view = reportView(core, draft);
   return { subject: `${view.title} ${view.date}`, markdown: markdown(view), html: html(view) };
 }
