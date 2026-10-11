@@ -533,9 +533,19 @@ import {
       archivedAt: timestamp("archived_at", { withTimezone: true }),
       period: period("period").notNull().default("weekly"),
       periodKey: text("period_key").notNull().default("current"),
+      // No FK: daily-core/schema.ts imports this file, so referencing its tables here would be circular.
+      dailyCoreId: uuid("daily_core_id"),
+      dailyReportId: uuid("daily_report_id"),
+      // An explicit resend (DAILY_MAIL_FORCE=1); not counted by the one-mail-per-day index.
+      forced: boolean("forced").notNull().default(false),
     },
     (table) => [
       index("idx_editions_ws_target_sent").on(table.workspaceId, table.targetId, table.sentAt),
+      // One daily mail per daily core: a row is inserted as `sending` before the provider call, so a second
+      // sender hits this index instead of sending. `failed` rows drop out so the day can be retried.
+      uniqueIndex("uq_editions_daily_core_sent")
+        .on(table.dailyCoreId)
+        .where(sql`${table.status} in ('sending', 'delivered', 'partial') and ${table.forced} = false`),
       // GIN index for JSONB queries - created via SQL migration
       // CREATE INDEX idx_newsletter_editions_stats_gin ON newsletter_editions USING GIN (stats_json);
   

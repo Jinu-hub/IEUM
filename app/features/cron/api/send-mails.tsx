@@ -4,7 +4,7 @@ import resendClient from "~/core/lib/resend-client.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import type { CreateContentsInput } from "~/core/lib/types";
 import { generatePeriodKey } from "~/core/processes/lib/utils";
-import { saveNewsletterEditions } from "~/features/contents/db/mutations";
+import { claimDailyEdition, finishEdition } from "~/features/contents/db/mutations";
 import { getUniquePeriodKey } from "~/features/contents/db/queries";
 import { getMailingListMembers, getUserEmail, getWorkspaceOwner } from "~/features/settings/db/queries";
 import { recordRuns } from "./run-record";
@@ -111,7 +111,8 @@ export async function getTargetEmails(
  * @param contents 콘텐츠
  * @param planType 플랜 타입
  * @param maxMembers 최대 멤버 수
- * @returns 
+ * @param daily 보낼 Daily Report와 강제 재발송 여부
+ * @returns 메일이 나갔으면 true. 받는 사람이 없거나, 같은 daily core의 메일이 이미 있어 건너뛰었거나, 발송이 실패하면 false
  */
 export async function sendMails(
   input: CreateContentsInput, 
@@ -120,71 +121,77 @@ export async function sendMails(
   slackResult: any, 
   contents: { finalContents: string, htmlContents: string },
   planType: Database["public"]["Enums"]["plan_type"],
-  maxMembers: number = 0
-) {
+  maxMembers: number,
+  daily: { dailyCoreId: string; dailyReportId: string; forced: boolean }
+): Promise<boolean> {
 
     const { toEmail, bccEmails, isCut, originalCount } = await getTargetEmails(input.workspaceId, mailingListId, slackResult, planType, maxMembers) || { toEmail: undefined, bccEmails: undefined, isCut: false, originalCount: 0 };
     
     if (!toEmail) {
       logger.error('To email not found', { workspaceId: input.workspaceId, mailingListId });
-      return;
+      return false;
     }
-
-    //to: "jinu35@ymail.ne.jp",
-    const sendResult = await resendClient.emails.send({
-      from: "IEUM <info@mail.nexone.ink>",
-      to: "takefree.withu@gmail.com",
-      bcc: 'son@digitalsheep.co.jp',
-      subject: subject,
-      html: contents.htmlContents,
-    });
-
-    let status;
-    let failureReason;
-    if (sendResult.error) {
-      logger.error('Failed to send email', { error: sendResult.error, toEmail });
-      status = 'failed';
-      failureReason = sendResult.error.message;
-    } else {
-      logger.info('Email sent successfully', { emailId: sendResult.data?.id, toEmail });
-      // bccEmails가 잘렸으면 status를 'partial'로 설정
-      status = isCut ? 'partial' : 'delivered';
-      failureReason = null;
-    }
-
-    const count = 1 + (bccEmails?.length || 0);
 
     const statsJson: any = {
-      count: count,
+      count: 1 + (bccEmails?.length || 0),
       original_count: 1 + originalCount,
       to: toEmail,
       bcc: bccEmails,
       range: input.range,
     };
 
-    if (!recordRuns()) return;
+    // 발송 전에 edition을 sending으로 넣어 그 날의 발송권을 잡는다. 이미 있으면(다른 실행이 보냈거나 보내는 중) 보내지 않는다.
+    const edition = recordRuns()
+      ? await claimDailyEdition(adminClient, {
+          workspaceId: input.workspaceId,
+          runId: input.runId,
+          targetId: input.targetId,
+          subject,
+          htmlBody: contents.htmlContents,
+          textBody: contents.finalContents,
+          statsJson,
+          periodKey: await getUniquePeriodKey(adminClient, input.workspaceId, generatePeriodKey(input.period, input.from), 'newsletter_editions'),
+          ...daily,
+        })
+      : undefined;
+    if (edition === null) {
+      logger.warn('Daily mail already sent or sending, skipping', { dailyCoreId: daily.dailyCoreId });
+      return false;
+    }
 
-    const period = input.period;
-    const basePeriodKey = generatePeriodKey(period, input.from);
-    const periodKey = await getUniquePeriodKey(adminClient, input.workspaceId, basePeriodKey, 'newsletter_editions');
+    // A throw here would leave the claimed edition `sending` and block the day, so it is recorded as a failure.
+    let sendResult: { data: { id: string } | null; error: { message: string } | null };
+    try {
+      //to: "jinu35@ymail.ne.jp",
+      sendResult = await resendClient.emails.send({
+        from: "IEUM <info@mail.nexone.ink>",
+        to: "takefree.withu@gmail.com",
+        bcc: 'son@digitalsheep.co.jp',
+        subject: subject,
+        html: contents.htmlContents,
+      });
+    } catch (error) {
+      sendResult = { data: null, error: { message: error instanceof Error ? error.message : String(error) } };
+    }
 
-    await saveNewsletterEditions(adminClient, { 
-      workspaceId: input.workspaceId,
-      runId: input.runId,
-      targetId: input.targetId,
-      subject: subject,
-      htmlBody: contents.htmlContents,
-      textBody: contents.finalContents,
-      statsJson: statsJson,
-      sentAt: new Date().toISOString(),
-      status: status,
-      providerMessageId: sendResult.data?.id || '',
-      failureReason: failureReason,
-      period: period,
-      periodKey: periodKey,
-    });
-    
+    if (sendResult.error) {
+      logger.error('Failed to send email', { error: sendResult.error, toEmail });
+    } else {
+      logger.info('Email sent successfully', { emailId: sendResult.data?.id, toEmail });
+    }
 
+    if (edition) {
+      await finishEdition(adminClient, {
+        editionId: edition.edition_id,
+        // bccEmails가 잘렸으면 status를 'partial'로 설정
+        status: sendResult.error ? 'failed' : isCut ? 'partial' : 'delivered',
+        providerMessageId: sendResult.data?.id || '',
+        failureReason: sendResult.error?.message ?? null,
+        sentAt: new Date().toISOString(),
+      });
+    }
+
+    return !sendResult.error;
 }
 
 

@@ -193,6 +193,26 @@ export async function getSentEmailMetadata(client: SupabaseClient<Database>,
   return data;
 }
 
+/** The edition that counts as this daily core's mail (same condition as `uq_editions_daily_core_sent`). */
+export async function getSentDailyEdition(
+  client: SupabaseClient<Database>,
+  { dailyCoreId }: { dailyCoreId: string },
+) {
+  const { data, error } = await client
+    .from('newsletter_editions')
+    .select('edition_id, status, sent_at')
+    .eq('daily_core_id', dailyCoreId)
+    .in('status', ['sending', 'delivered', 'partial'])
+    .eq('forced', false)
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.log('getSentDailyEdition error', error);
+    throw error;
+  }
+  return data;
+}
+
 /**
  * periodKeyが既に存在する場合、ユニークな番号を付けた新しいkeyを返します
  * 例: "2025-W47" が存在する場合 "2025-W47_1" を返す

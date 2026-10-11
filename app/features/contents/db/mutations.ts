@@ -192,40 +192,52 @@ export const updateNewsletterRunStep = async (client: SupabaseClient<Database>,
 }
 
 
-export const saveNewsletterEditions = async (client: SupabaseClient<Database>, 
-    { workspaceId, runId, targetId, subject, htmlBody, textBody, statsJson, sentAt, status, providerMessageId, failureReason, period, periodKey }: 
+/**
+ * Inserts a `sending` edition before the provider call. Returns null when the daily core already has a
+ * sending / delivered / partial edition (unique index `uq_editions_daily_core_sent`), so the caller must not send.
+ */
+export const claimDailyEdition = async (client: SupabaseClient<Database>,
+    { workspaceId, runId, targetId, subject, htmlBody, textBody, statsJson, periodKey, dailyCoreId, dailyReportId, forced }:
     { workspaceId: string, runId: string, targetId: string, subject: string, htmlBody: string, textBody: string
-        , statsJson: any, sentAt: string, status: string, providerMessageId: string, failureReason: string | null
-        , period: string, periodKey: string }) => {
-    try {
-        const sentAtValue = sentAt ?? new Date().toISOString();
-        const { data: newsletterEditions, error } = await client
-            .from('newsletter_editions')
-            .insert({
-                workspace_id: workspaceId,
-                target_id: targetId,
-                run_id: runId,
-                subject: subject,
-                html_body: htmlBody,
-                text_body: textBody,
-                stats_json: statsJson,
-                sent_at: sentAtValue,
-                status: status as Database["public"]["Enums"]["mail_status"],
-                provider_message_id: providerMessageId,
-                failure_reason: failureReason,
-                period: period as Database["public"]["Enums"]["period"],
-                period_key: periodKey,
-            })
-            .select()
-            .single();
-        if (error) {
-            console.error('saveNewsletterEditions error', error);
-            throw error
-        }
-        return newsletterEditions;
-    } catch (error) {
-        console.error('saveNewsletterEditions error', error);
-        throw error
+        , statsJson: any, periodKey: string, dailyCoreId: string, dailyReportId: string, forced: boolean }) => {
+    const { data, error } = await client
+        .from('newsletter_editions')
+        .insert({
+            workspace_id: workspaceId,
+            target_id: targetId,
+            run_id: runId,
+            subject,
+            html_body: htmlBody,
+            text_body: textBody,
+            stats_json: statsJson,
+            status: 'sending',
+            period: 'daily',
+            period_key: periodKey,
+            daily_core_id: dailyCoreId,
+            daily_report_id: dailyReportId,
+            forced,
+        })
+        .select('edition_id')
+        .single();
+    if (error?.code === '23505') return null;
+    if (error) {
+        console.error('claimDailyEdition error', error);
+        throw error;
+    }
+    return data;
+}
+
+export const finishEdition = async (client: SupabaseClient<Database>,
+    { editionId, status, providerMessageId, failureReason, sentAt }:
+    { editionId: string, status: Database["public"]["Enums"]["mail_status"], providerMessageId: string
+        , failureReason: string | null, sentAt: string }) => {
+    const { error } = await client
+        .from('newsletter_editions')
+        .update({ status, provider_message_id: providerMessageId, failure_reason: failureReason, sent_at: sentAt })
+        .eq('edition_id', editionId);
+    if (error) {
+        console.error('finishEdition error', error);
+        throw error;
     }
 }
 

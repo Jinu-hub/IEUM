@@ -247,7 +247,7 @@ LLM을 쓰면 필요(비용이 들고 실행마다 달라서 결과를 남겨야
 - 확인할 것: 즉시 발송은 클라이언트가 Vercel `POST /api/cron/send-now/run`을 동기로 부름(Railway worker 전환은 아직 주석). Core 42~150초 + 리포트가 Vercel 함수 시간 안에 들어가는지. 넘으면 Worker가 Core 뒤에 리포트까지 이어서 하고 Vercel은 결과만 받는 방식으로 바꾼다.
 - 보낼 리포트는 그 실행에서 `/report/generate`가 돌려준 `reportId`의 HTML. "가장 큰 `report_no`의 succeeded"를 다시 찾지 않음.
 
-이번 Phase에서 안 하는 것: 메일 1회 발송 보장(사용자, 2026-10-11)
+이번 Phase에서 안 하는 것: 메일 1회 발송 보장(사용자, 2026-10-11) → Phase 3 뒤 별도로 구현함(아래 "메일 1회 발송 보장")
 
 - 메일은 daily core(Target × 날짜)당 1번이어야 함. 리포트는 다시 만들면 행이 쌓이지만 메일은 하나. 지금은 `sendMails`가 보낸 뒤에 `newsletter_editions`에 쓰고, `getUniquePeriodKey`가 `_1`, `_2`를 붙여 중복을 허용함.
 - Phase 3 뒤 별도 작업, Phase 4 배포 전 필수(TODO 2). Phase 3 동안은 수신자가 테스트 주소라 중복이 나가도 됨(테스트 날짜 고정이라 즉시 발송마다 같은 core로 나감).
@@ -257,13 +257,13 @@ LLM을 쓰면 필요(비용이 들고 실행마다 달라서 결과를 남겨야
 에이전트 확인
 
 - [x] 로컬 앱 + 로컬 Worker로 즉시 발송 1회: 메일 도착, `newsletter_editions` 행(`period = daily`, html / text 본문), Core generation 1 증가, (Phase 2를 했으면) `daily_reports` 행.
-- [ ] Core 실패 경로(잘못된 모델명 등)에서 메일이 안 나가고 run이 에러로 닫힌다.
+- [x] Core 실패 경로(잘못된 모델명 등)에서 메일이 안 나가고 run이 에러로 닫힌다.
 - [x] 전체 소요 시간 기록.
 
 사용자 확인
 
-- [ ] 받은 메일을 Gmail(웹·모바일)에서 열어 본다. 링크가 Slack / GitHub로 열린다.
-  - 사용자(2026-10-11): 메일 도착 확인. 링크 열림은 아직.
+- [x] 받은 메일을 Gmail(웹·모바일)에서 열어 본다. 링크가 Slack / GitHub로 열린다.
+  - 사용자(2026-10-11): 메일 도착, 링크 정상 작동.
 
 확인 기록
 
@@ -280,6 +280,42 @@ LLM을 쓰면 필요(비용이 들고 실행마다 달라서 결과를 남겨야
     - 시간: 전체 52.4초(run 시작 → 끝). 수집 약 10초, Core 30.1초, 리포트 10.5초(Writer 5.9 + Finalizer 4.6, report 4의 19.5초보다 짧음), 메일 약 1.4초.
     - 비용: $0.059(Core 약 $0.041 + 리포트 $0.018), 토큰 30,621.
   - Vercel 함수 시간: 로컬은 제한이 없어 확인 못 함. 배포(Phase 4)에서 즉시 발송 경로가 50~60초 걸린다는 전제로 Vercel 플랜의 함수 최대 시간을 확인. 넘으면 계획대로 Worker가 Core 뒤에 리포트까지 이어서 하는 방식으로.
+- 2026-10-11 에이전트: Core 실패 경로. 앱에서 모델명을 바꿀 수 없어서 로컬 Worker를 끈 채로 즉시 발송(사용자). 모델 호출 0.
+  - run `a05c47e5…` `failed`, run step `failed`(`error_summary = "fetch failed"`). 로그는 수집 성공(128개, source 4) → `target_processing_error: fetch failed`.
+  - generation 9 / report 5 그대로, `newsletter_editions` 새 행 없음, 메일 안 옴.
+  - 보인 점(동작은 맞음, 기록만)
+    - 오류 문구가 "fetch failed"뿐이라 어느 호출이 왜 실패했는지 모름. `callFlue`가 연결 실패를 감싸지 않음. 경로와 주소를 붙이면 됨.
+    - 실패 run의 `finished_at`이 null, step이 `collect_data`에 머묾. 이번 변경 전부터의 동작(`updateNewsletterRunError`가 끝난 시각을 안 쓰고, step은 성공 때만 갱신). 지금은 Core·리포트 실패도 `collect_data` 실패로 보임. step enum 정리(TODO 3-4)와 같이 봄.
+  - Phase 3 확인 모두 통과.
+
+---
+
+## 메일 1회 발송 보장 (Phase 3 뒤, Phase 4 전)
+
+만든 것
+
+- migration `0045`: `newsletter_editions`에 `daily_core_id`, `daily_report_id`, `forced`(기본 false). unique 부분 인덱스 `uq_editions_daily_core_sent (daily_core_id) where status in (sending, delivered, partial) and forced = false`.
+  - FK는 안 걺: `daily-core/schema.ts`가 `features/schema.ts`를 import해서 반대로 참조하면 순환 import.
+- `processTarget`: 수집 전에 `getDailyCoreData` → `getSentDailyEdition`으로 이미 보낸 날짜면 run을 닫고 끝(수집·모델 호출 없음). 다른 건너뛰기(구독 없음, 한도 초과)와 같은 `closeRun`이라 run은 `failed`로 보임.
+- `sendMails`: 발송 전에 `claimDailyEdition`으로 `sending` 행을 넣음. 인덱스 충돌(23505)이면 보내지 않고 false. 보낸 뒤 `finishEdition`으로 `delivered` / `partial` / `failed`. Resend가 throw해도 `failed`로 남김(`sending`으로 남으면 그날이 영구히 막힘).
+  - 사전 확인만으로는 Cron과 즉시 발송이 동시에 오면 둘 다 통과함. DB 인덱스가 최종 판정.
+- Slack 알림과 사용량 카운터는 메일이 실제로 나갔을 때만(전에는 메일보다 먼저 Slack에 "Newsletter sent").
+- `DAILY_MAIL_FORCE=1`(테스트용): 사전 확인을 건너뛰고 `forced = true`로 기록, 인덱스 대상에서 빠짐. `CRON_RECORD=0`이면 edition을 안 쓰므로 제한도 꺼짐.
+- `saveNewsletterEditions`는 호출처가 없어져 삭제.
+
+알고 있는 한계
+
+- 발송 중에 프로세스가 죽으면 edition이 `sending`으로 남아 그날이 막힘. 그때는 행을 `failed`로 바꾸면 다시 보낼 수 있음. 오래된 `sending`을 자동으로 풀지는 않음.
+- 사전 확인을 통과하고 발송권에서 진 실행은 Core·리포트 비용을 이미 쓴 뒤임(메일은 안 나감).
+
+확인 기록
+
+- 2026-10-11 에이전트: 구현과 확인.
+  - migration `0045` 적용, `database.types.ts` 갱신(9줄). 앱 `tsc`는 기존 무관 오류 1개뿐.
+  - 오늘 보낸 edition `70c6e09f…`에 `daily_core_id` / `daily_report_id`(report 5)를 채움. 새 컬럼이 비어 있으면 가드가 이 발송을 못 봄.
+  - DB 인덱스(Supabase REST로 직접 insert): 같은 daily core의 두 번째 `sending` 행 → 409 / 23505, `failed` 행 → 201, `forced` 행 → 201. 테스트 행 2개 삭제.
+  - 즉시 발송(사용자): run `b79114d2…`가 "Daily mail for 2026-10-09 already delivered (edition 70c6e09f…)"로 바로 닫힘. `collected_at` 그대로(수집 안 함), generation 9 그대로, edition 1개 그대로, 메일 안 옴, 비용 0.
+  - 확인 못 한 것: `DAILY_MAIL_FORCE=1`로 실제 재발송(약 $0.06). 인덱스가 `forced` 행을 받는 것은 위에서 확인.
 
 ---
 
@@ -287,7 +323,7 @@ LLM을 쓰면 필요(비용이 들고 실행마다 달라서 결과를 남겨야
 
 만들 것
 
-- 선행: 메일 1회 발송 보장(Phase 3 참고). 실제 수신자로 바뀌기 전에 있어야 함.
+- 선행: 메일 1회 발송 보장(위). 끝남(2026-10-11).
 - Worker 배포, Vercel에 `FLUE_BASE_URL`.
 - `TestAgent` 제거(TODO 4-3): `flue/src/agents/test-agent.ts`, `/agents/test` 라우트, `createContents`의 `askTestAgent`. Durable Object 클래스 삭제는 migration `deleted_classes`(Core 분리 Phase 3과 같은 방법).
 

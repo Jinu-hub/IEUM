@@ -1132,8 +1132,11 @@ export type Database = {
         Row: {
           archive_url: string | null
           archived_at: string | null
+          daily_core_id: string | null
+          daily_report_id: string | null
           edition_id: string
           failure_reason: string | null
+          forced: boolean
           html_body: string
           is_archived: boolean
           period: Database["public"]["Enums"]["period"]
@@ -1151,8 +1154,11 @@ export type Database = {
         Insert: {
           archive_url?: string | null
           archived_at?: string | null
+          daily_core_id?: string | null
+          daily_report_id?: string | null
           edition_id?: string
           failure_reason?: string | null
+          forced?: boolean
           html_body: string
           is_archived?: boolean
           period?: Database["public"]["Enums"]["period"]
@@ -1170,8 +1176,11 @@ export type Database = {
         Update: {
           archive_url?: string | null
           archived_at?: string | null
+          daily_core_id?: string | null
+          daily_report_id?: string | null
           edition_id?: string
           failure_reason?: string | null
+          forced?: boolean
           html_body?: string
           is_archived?: boolean
           period?: Database["public"]["Enums"]["period"]

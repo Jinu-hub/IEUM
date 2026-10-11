@@ -7,10 +7,12 @@ import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import type { CreateContentsInput } from "~/core/lib/types";
 import { incrementUsageCounter, saveRunLogEvent, updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
+import { getSentDailyEdition } from "~/features/contents/db/queries";
 import { sendMails } from "~/features/cron/api/send-mails";
 import { getUserSubscriptionPlanType } from "~/features/settings/db/queries";
 import { getWorkspaceOwnerUserId } from "~/features/users/queries";
 import { saveDailyCoreCollection } from "~/features/daily-core/collect";
+import { getDailyCoreData } from "~/features/daily-core/db/queries";
 import { generateDailyReport } from "~/features/daily-core/flue";
 import { fetchDaysFor } from "~/features/daily-core/normalize";
 import { collectTargetSources } from "./collect-sources";
@@ -129,6 +131,20 @@ export async function processTarget(
       return;
     }
 
+    // One mail per daily core. Checked before collecting so a sent day costs no fetch or model call;
+    // sendMails claims the day again in the DB for runs that race past this check.
+    const forced = process.env.DAILY_MAIL_FORCE === "1";
+    if (recordRuns() && !forced) {
+      const existing = await getDailyCoreData(adminClient, { targetId: target.target_id, coreDate: DAILY_CORE_TEST_DATE });
+      const sent = existing && (await getSentDailyEdition(adminClient, { dailyCoreId: existing.daily_core_id }));
+      if (sent) {
+        const reason = `Daily mail for ${DAILY_CORE_TEST_DATE} already ${sent.status} (edition ${sent.edition_id})`;
+        await noteRun(target, runMapping, 'warn', 'target_processing_skipped', `Target processing skipped: ${reason}`);
+        await closeRun(runMapping, reason);
+        return;
+      }
+    }
+
     const runStartedAt = Date.now();
     if (recordRuns()) {
       await updateNewsletterRun(adminClient, {
@@ -187,23 +203,28 @@ export async function processTarget(
       });
     }
 
-    // slack 통지 메시지 전송 (이미 보유한 integrationsInfo·matchedChannels 전달하여 중복 조회 방지)
-    await sendSlackNotification(
-      input,
-      target.display_name,
-      content,
-      { integrationsInfo, matchedChannels: matchedSources.matchedChannels }
-    );
-
     // 이메일 전송
-    await sendMails(
+    const sent = await sendMails(
       input,
       report.subject,
       target.mailing_list_id || '',
       fetchedData.slackResult,
       content,
       planType as Database["public"]["Enums"]["plan_type"],
-      limitCheck.maxMembers
+      limitCheck.maxMembers,
+      { dailyCoreId: dailyCore.dailyCoreId, dailyReportId: report.reportId, forced }
+    );
+    if (!sent) {
+      await noteRun(target, runMapping, 'warn', 'mail_not_sent', `Daily mail not sent for report ${report.reportNo} (no recipient, already sent, or provider error)`);
+      return;
+    }
+
+    // slack 통지 메시지 전송 (메일이 실제로 나간 뒤에만. 이미 보유한 integrationsInfo·matchedChannels 전달하여 중복 조회 방지)
+    await sendSlackNotification(
+      input,
+      target.display_name,
+      content,
+      { integrationsInfo, matchedChannels: matchedSources.matchedChannels }
     );
 
     if (recordRuns()) {

@@ -316,6 +316,13 @@
       "when": 1791703631447,
       "tag": "0044_wakeful_stick",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1791707508046,
+      "tag": "0045_mixed_omega_red",
+      "breakpoints": true
     }
   ]
 }

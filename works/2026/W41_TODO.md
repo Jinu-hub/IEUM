@@ -37,8 +37,10 @@ Daily Core E2E(Phase 0~4) 완료 이후 할 일. 한 일은 `W41.md`, E2E 경과
     - [x] 근거 없는 `next_step`: `core-interpreter-v8`("null이 보통", 추측·조건부 금지). Core run 24에서 16개 중 8개만 채워지고 조건부·"記載なし"류 없음.
   - [x] Phase 2 `daily_reports` 테이블: migration `0044`, `/report/generate` 저장(`dryRun` 제거). 에이전트 확인 끝(2026-10-11, report 1~4), 사용자가 행 확인 후 Phase 3로.
     - [ ] failed 행의 `error_message`에 원인이 안 남음("[flue] Agent run failed"뿐). Core도 같은 `runAgent`. 필요해지면 Flue 이벤트에서 원인을 꺼냄.
-  - [ ] Phase 3 메일 연결: `processTarget`이 수집 → `/core/generate` → 리포트 → `sendMails`. 즉시 발송 1회 성공(2026-10-11, 52초, $0.059). 남은 것: Core 실패 경로 확인, Gmail에서 링크 열림(사용자). Vercel 함수 시간은 Phase 4 배포에서 확인.
-  - [ ] 메일 1회 발송 보장: daily core(Target × 날짜)당 메일 1번. Phase 3 뒤 별도 작업, **Phase 4 배포 전 필수**(사용자, 2026-10-11). 지금은 `getUniquePeriodKey`가 `_1`, `_2`를 붙여 중복 발송을 허용하고, edition에 보낸 리포트가 안 남음.
+  - [x] Phase 3 메일 연결: `processTarget`이 수집 → `/core/generate` → 리포트 → `sendMails`. 즉시 발송 1회 성공(2026-10-11, 52초, $0.059), Worker를 끈 실패 경로에서 메일 없이 run `failed`, 링크 정상(사용자). Vercel 함수 시간은 Phase 4 배포에서 확인.
+    - [ ] 실패 문구: Worker 연결 실패가 "fetch failed"로만 남음. `flue.ts`의 `callFlue`에서 경로·주소를 붙여 감쌈.
+    - [ ] 실패 run 기록: `finished_at`이 null, step이 `collect_data`에 머묾(이전부터의 동작). step enum 정리(3-4)와 같이.
+  - [x] 메일 1회 발송 보장: daily core(Target × 날짜)당 메일 1번. Phase 3 뒤 별도 작업, **Phase 4 배포 전 필수**(사용자, 2026-10-11). 구현·확인 끝(2026-10-11, migration `0045`, 이미 보낸 날짜의 즉시 발송이 수집 전에 건너뜀). `DAILY_MAIL_FORCE=1` 실제 재발송은 안 해 봄.
     - `newsletter_editions`에 `daily_core_id` / `daily_report_id` 추가, `status`가 `sending` / `delivered` / `partial`인 행에만 `daily_core_id` unique 부분 인덱스.
     - `sendMails` 순서 변경: Resend 호출 전에 `sending` 행 insert(충돌하면 건너뜀) → 발송 → `delivered` / `failed`로 갱신. `failed`는 인덱스에서 빠져 재시도 가능.
     - 이미 보낸 날짜면 `processTarget`이 Core·리포트 생성 전에 건너뜀.

@@ -9,8 +9,9 @@
 | `FLUE_API_TOKEN` | 설정함 | 앱이 Flue Worker(`/core/*`, `/report/*`, `/agents/*`)를 호출할 때 보내는 Bearer 토큰. `flue/.dev.vars`와 같은 값 |
 | `FLUE_BASE_URL` | 안 함 | Flue Worker 기본 주소(경로 없이). 메일 경로가 `/core/generate` → `/report/generate`를 부름. 없으면 `http://localhost:8787`. 배포(Daily Report Phase 4)에서 `https://ieum-flue.jinu30dev.workers.dev` |
 | `FLUE_AGENT_URL` | 설정함 | 예전 메일 경로(`createContents` → `TestAgent`)용. Daily Report Phase 3부터 호출처 없음, Phase 4에서 `TestAgent`와 함께 지움 |
-| `SLACK_NOTIFY` | 안 함 | `0`이면 발송 후 팀 Slack 채널 알림("Newsletter sent")을 올리지 않음. 테스트용. 없으면 올림 |
-| `CRON_RECORD` | 안 함 | `0`이면 런·로그·에디션·사용량을 DB에 쓰지 않음. 없으면 기록함 |
+| `DAILY_MAIL_FORCE` | 안 함 | `1`이면 이미 보낸 날짜도 다시 생성·발송(테스트용). edition은 `forced = true`로 남고 하루 1통 제한에서 빠짐. 없으면 이미 보낸 날짜는 건너뜀 |
+| `SLACK_NOTIFY` | 설정함(`0`) | `0`이면 발송 후 팀 Slack 채널 알림("Newsletter sent")을 올리지 않음. 테스트용. 없으면 올림 |
+| `CRON_RECORD` | 안 함 | `0`이면 런·로그·에디션·사용량을 DB에 쓰지 않음. 없으면 기록함. 하루 1통 제한은 edition 행으로 판단하므로 `0`이면 제한도 꺼짐 |
 
 ## `flue/.dev.vars` (로컬 Flue Worker)
 
