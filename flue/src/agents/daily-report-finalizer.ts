@@ -10,53 +10,16 @@ import {
 } from "@flue/runtime";
 import * as v from "valibot";
 import { draftProblems, labelProblems, ReportDraft, structureProblems } from "../daily-report.ts";
+import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../prompts.ts";
 
 // v2: v1 read "do not contradict the status icon" as "write the status" (【進行中】 on every
 // headline) and left texts as they were (run p1-4).
-export const DAILY_REPORT_FINALIZER_PROMPT_VERSION = "daily-report-finalizer-v2";
-
-const SUBMIT = "submit_report";
-
-const InitialData = v.object({
-  before: ReportDraft,
-  ids: v.array(v.string()),
-  required: v.array(v.string()),
-  tickets: v.array(v.string()),
-  quotes: v.record(v.string(), v.array(v.string())),
-  language: v.string(),
-  model: v.string(),
-});
-type InitialData = v.InferOutput<typeof InitialData>;
-
-export function DailyReportFinalizer() {
-  const { before, language, model, ...evidence }: InitialData = useInitialData();
-  useModel(model, { thinkingLevel: "low" });
-  const write = useDataWriter("draft", { schema: ReportDraft });
-
-  useTool({
-    name: SUBMIT,
-    description: "Submit the edited report. Call exactly once. Errors list what to fix.",
-    input: ReportDraft,
-    run({ data }) {
-      const problems = [...structureProblems(before, data), ...labelProblems(data), ...draftProblems(data, evidence)];
-      if (problems.length) throw new Error(problems.join("\n"));
-      write(data);
-      return { output: "accepted", terminate: true };
-    },
-  });
-
-  useAgentFinish(({ response, append }) => {
-    if (response.toolCalls.some((call) => call.tool === SUBMIT && !call.isError)) return;
-    append({
-      kind: "signal",
-      type: "missing_submission",
-      body: `Call ${SUBMIT} with the edited report. Do not answer in plain text.`,
-    });
-  });
-
-  useResponseFinish(({ response }) => ({ usage: response.usage, toolCalls: response.toolCalls }));
-
-  return `You are the editor of a daily team email report. A writer drafted it from that day's items, but the
+export const DAILY_REPORT_FINALIZER_PROMPT: AgentPrompt = {
+  agentKey: "daily-report-finalizer",
+  version: "daily-report-finalizer-v2",
+  model: "openai/gpt-5.4-mini",
+  thinkingLevel: DEFAULT_THINKING_LEVEL,
+  instructions: `You are the editor of a daily team email report. A writer drafted it from that day's items, but the
 draft restates the item summaries one by one. Rewrite the wording so it reads like one report by someone who
 followed the day, without changing what it says or how it is organized.
 
@@ -88,7 +51,53 @@ Rules:
 - Use only facts in the items each part cites. Never add people, numbers, dates, ticket numbers, or outcomes.
 - Keep ticket and PR numbers exactly as written (#23163, PR #555).
 - Do not write per-person summaries.
-- Plain sentences only: no markdown, HTML, URLs, bullets, or emoji.
+- Plain sentences only: no markdown, HTML, URLs, bullets, or emoji.`,
+};
+
+const SUBMIT = "submit_report";
+
+const InitialData = v.object({
+  before: ReportDraft,
+  ids: v.array(v.string()),
+  required: v.array(v.string()),
+  tickets: v.array(v.string()),
+  quotes: v.record(v.string(), v.array(v.string())),
+  language: v.string(),
+  model: v.string(),
+  thinkingLevel: ThinkingLevel,
+  instructions: v.string(),
+});
+type InitialData = v.InferOutput<typeof InitialData>;
+
+export function DailyReportFinalizer() {
+  const { before, language, model, thinkingLevel, instructions, ...evidence }: InitialData = useInitialData();
+  useModel(model, { thinkingLevel });
+  const write = useDataWriter("draft", { schema: ReportDraft });
+
+  useTool({
+    name: SUBMIT,
+    description: "Submit the edited report. Call exactly once. Errors list what to fix.",
+    input: ReportDraft,
+    run({ data }) {
+      const problems = [...structureProblems(before, data), ...labelProblems(data), ...draftProblems(data, evidence)];
+      if (problems.length) throw new Error(problems.join("\n"));
+      write(data);
+      return { output: "accepted", terminate: true };
+    },
+  });
+
+  useAgentFinish(({ response, append }) => {
+    if (response.toolCalls.some((call) => call.tool === SUBMIT && !call.isError)) return;
+    append({
+      kind: "signal",
+      type: "missing_submission",
+      body: `Call ${SUBMIT} with the edited report. Do not answer in plain text.`,
+    });
+  });
+
+  useResponseFinish(({ response }) => ({ usage: response.usage, toolCalls: response.toolCalls }));
+
+  return `${instructions.trim()}
 - Write every human-readable text in language: ${language}.
 - Finish by calling ${SUBMIT} once. Do not reply in plain text.`;
 }

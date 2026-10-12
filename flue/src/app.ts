@@ -3,10 +3,10 @@ import { createAgentRouter } from "@flue/runtime/routing";
 import { Hono, type MiddlewareHandler } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import * as v from "valibot";
-import { CORE_INTERPRETER_PROMPT_VERSION, CoreInterpreter } from "./agents/core-interpreter.ts";
-import { CORE_STRUCTURER_PROMPT_VERSION, CoreStructurer } from "./agents/core-structurer.ts";
-import { DAILY_REPORT_FINALIZER_PROMPT_VERSION, DailyReportFinalizer } from "./agents/daily-report-finalizer.ts";
-import { DAILY_REPORT_WRITER_PROMPT_VERSION, DailyReportWriter } from "./agents/daily-report-writer.ts";
+import { CORE_INTERPRETER_PROMPT, CoreInterpreter } from "./agents/core-interpreter.ts";
+import { CORE_STRUCTURER_PROMPT, CoreStructurer } from "./agents/core-structurer.ts";
+import { DAILY_REPORT_FINALIZER_PROMPT, DailyReportFinalizer } from "./agents/daily-report-finalizer.ts";
+import { DAILY_REPORT_WRITER_PROMPT, DailyReportWriter } from "./agents/daily-report-writer.ts";
 import { TestAgent } from "./agents/test-agent.ts";
 import {
   buildAgentInput,
@@ -34,18 +34,16 @@ import {
   revisionStats,
   writerInput,
 } from "./daily-report.ts";
+import { type PromptEnv, promptData, resolvePrompts } from "./prompts.ts";
 
-const DAILY_CORE_MODEL = "openai/gpt-5.4-mini";
-const REPORT_MODEL = "openai/gpt-5.4-mini";
 // v2: both calls at thinkingLevel "low" (v1 used the default "medium").
 const PIPELINE_VERSION = "flue-two-call-v2";
 const MAX_REJECTIONS = 2;
-const PROMPT_VERSION = `${CORE_INTERPRETER_PROMPT_VERSION}+${CORE_STRUCTURER_PROMPT_VERSION}`;
 // Classifications are free text until a taxonomy exists.
 const TAXONOMY_VERSION = "free-text";
 
 type Env = {
-  Bindings: {
+  Bindings: PromptEnv & {
     FLUE_API_TOKEN?: string;
     SUPABASE_URL?: string;
     SUPABASE_SERVICE_ROLE_KEY?: string;
@@ -71,7 +69,7 @@ async function runAgent<T>(
   agent: Parameters<typeof init>[0],
   key: string,
   body: string,
-  initialData: unknown,
+  initialData: Record<string, unknown> & { model: string },
   conversations: string[],
 ) {
   const handle = init(agent);
@@ -101,10 +99,21 @@ async function runAgent<T>(
     usage: (reply.metadata?.usage ?? {}) as Usage,
     metrics: {
       conversation_id: handle.id,
+      model: initialData.model,
       elapsed_ms: Date.now() - startedAt,
       tool_calls: reply.metadata?.toolCalls ?? [],
       rejections,
     },
+  };
+}
+
+// A row has one model_provider/model_name; calls on different models join with "+" like prompt_version.
+function modelColumns(models: string[]) {
+  const unique = [...new Set(models)].map((model) => model.split("/"));
+  if (!unique.length) return { model_provider: null, model_name: null };
+  return {
+    model_provider: unique.map(([provider]) => provider).join("+"),
+    model_name: unique.map(([, ...name]) => name.join("/")).join("+"),
   };
 }
 
@@ -146,10 +155,10 @@ app.use("/report/*", requireToken);
 
 app.route("/agents/test", createAgentRouter(TestAgent));
 
-// Generates a Daily Core and saves it as the next generation. `model` overrides the default model.
+// Generates a Daily Core and saves it as the next generation. `model` overrides each agent's model.
 // Call 1 (CoreInterpreter) merges the day into core items, Call 2 (CoreStructurer) places them.
 app.post("/core/generate", async (c) => {
-  const { dailyCoreId, model = DAILY_CORE_MODEL } = await c.req.json<{ dailyCoreId?: string; model?: string }>();
+  const { dailyCoreId, model } = await c.req.json<{ dailyCoreId?: string; model?: string }>();
   if (!isUuid(dailyCoreId)) return c.json({ error: "dailyCoreId must be a uuid" }, 400);
   const db = supabase(c.env);
   if (!db) return c.text("Supabase secrets are not set", 500);
@@ -173,7 +182,9 @@ app.post("/core/generate", async (c) => {
 
   const generationNo = core.last_generation_no + 1;
   const startedAt = new Date();
-  const [modelProvider, ...modelName] = model.split("/");
+  const [interpreterPrompt, structurerPrompt] = await resolvePrompts(c.env, [CORE_INTERPRETER_PROMPT, CORE_STRUCTURER_PROMPT]);
+  const interpreter = promptData(interpreterPrompt, model);
+  const structurer = promptData(structurerPrompt, model);
   const [generation] = await db<{ generation_id: string }>("daily_core_generations", {
     method: "POST",
     body: {
@@ -186,10 +197,9 @@ app.post("/core/generate", async (c) => {
       input_source_data_ids: rows.map((row) => row.source_data_id),
       schema_version: CORE_SCHEMA_VERSION,
       taxonomy_version: TAXONOMY_VERSION,
-      prompt_version: PROMPT_VERSION,
+      prompt_version: `${interpreterPrompt.version}+${structurerPrompt.version}`,
       pipeline_version: PIPELINE_VERSION,
-      model_provider: modelProvider,
-      model_name: modelName.join("/"),
+      ...modelColumns([interpreter.model, structurer.model]),
       input_stats_json: inputStats,
       started_at: startedAt.toISOString(),
     },
@@ -212,7 +222,7 @@ app.post("/core/generate", async (c) => {
         botRefs: input.botRefs,
         authors: input.authors,
         language: core.language,
-        model,
+        ...interpreter,
       },
       conversations,
     );
@@ -226,7 +236,7 @@ app.post("/core/generate", async (c) => {
         authors: input.authors,
         people: input.people,
         language: core.language,
-        model,
+        ...structurer,
       },
       conversations,
     );
@@ -312,7 +322,7 @@ app.post("/core/generate", async (c) => {
 // editing (tone and the like) goes. A given `draft` (a saved writer output for the same
 // generation) replaces the writer call.
 app.post("/report/generate", async (c) => {
-  const { dailyCoreId, model = REPORT_MODEL, finalize = true, draft } = await c.req.json<{
+  const { dailyCoreId, model, finalize = true, draft } = await c.req.json<{
     dailyCoreId?: string;
     model?: string;
     finalize?: boolean;
@@ -383,26 +393,35 @@ app.post("/report/generate", async (c) => {
   }
 
   const conversations: string[] = [];
-  const [modelProvider, ...modelName] = model.split("/");
+  const [writerPrompt, finalizerPrompt] = await resolvePrompts(c.env, [DAILY_REPORT_WRITER_PROMPT, DAILY_REPORT_FINALIZER_PROMPT]);
+  const writerData = promptData(writerPrompt, model);
+  const finalizerData = promptData(finalizerPrompt, model);
+  const models = [...(given ? [] : [writerData.model]), ...(finalize ? [finalizerData.model] : [])];
   try {
     const writer = given
       ? null
-      : await runAgent<ReportDraft>(DailyReportWriter, "draft", writerInput(coreJson), { ...evidence, language, model }, conversations);
+      : await runAgent<ReportDraft>(
+          DailyReportWriter,
+          "draft",
+          writerInput(coreJson),
+          { ...evidence, language, ...writerData },
+          conversations,
+        );
     const written = given?.output ?? writer!.output;
     const finalizer = finalize
       ? await runAgent<ReportDraft>(
           DailyReportFinalizer,
           "draft",
           finalizerInput(coreJson, written),
-          { before: written, ...evidence, language, model },
+          { before: written, ...evidence, language, ...finalizerData },
           conversations,
         )
       : null;
     const final = finalizer?.output ?? written;
     const rendered = renderDailyReport(coreJson, final);
     const promptVersion = [
-      writer ? DAILY_REPORT_WRITER_PROMPT_VERSION : "given-draft",
-      ...(finalizer ? [DAILY_REPORT_FINALIZER_PROMPT_VERSION] : []),
+      writer ? writerPrompt.version : "given-draft",
+      ...(finalizer ? [finalizerPrompt.version] : []),
     ].join("+");
     const usage = {
       ...sumUsage(writer?.usage, finalizer?.usage),
@@ -412,7 +431,6 @@ app.post("/report/generate", async (c) => {
     const stats = { ...draftStats(final, evidence), ...(finalizer && { revision: revisionStats(written, final) }) };
     const finishedAt = new Date();
     const elapsedMs = finishedAt.getTime() - startedAt.getTime();
-    const modelUsed = conversations.length > 0;
     await db(reportRow, {
       method: "PATCH",
       body: {
@@ -421,8 +439,7 @@ app.post("/report/generate", async (c) => {
         agent_conversation_id: conversations[0] ?? null,
         agent_output_json: { draft: final, ...(finalizer && { writer_draft: written }) },
         prompt_version: promptVersion,
-        model_provider: modelUsed ? modelProvider : null,
-        model_name: modelUsed ? modelName.join("/") : null,
+        ...modelColumns(models),
         token_usage_json: usage,
         processing_metrics_json: { elapsed_ms: elapsedMs, calls },
         validation_json: { stats },
@@ -434,7 +451,7 @@ app.post("/report/generate", async (c) => {
       status: "succeeded",
       formatVersion: REPORT_FORMAT_VERSION,
       promptVersion,
-      model,
+      models,
       elapsedMs,
       usage,
       calls,
@@ -451,8 +468,7 @@ app.post("/report/generate", async (c) => {
       body: {
         report_status: "failed",
         agent_conversation_id: conversations[0] ?? null,
-        model_provider: modelProvider,
-        model_name: modelName.join("/"),
+        ...modelColumns(models),
         error_code: "report_failed",
         error_message: message,
         processing_metrics_json: { elapsed_ms: finishedAt.getTime() - startedAt.getTime(), conversations },

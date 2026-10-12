@@ -4,6 +4,8 @@
   "compatibility_date": "2026-10-06",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  // Prompt DB release to read; local .dev.vars overrides it with "dev".
+  "vars": { "PROMPT_ENVIRONMENT": "production" },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["FlueTestAgentAgent"] },
     { "tag": "v2", "new_sqlite_classes": ["FlueDailyCoreAgent"] },

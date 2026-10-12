@@ -20,6 +20,14 @@ W41_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W42.md`.
 
 - [ ] metrics projection: `core_json`의 metrics를 `daily_core_metrics`에 저장한다. metrics는 merge에서 코드로 계산하므로 Agent 분리와 상관없이 언제든 할 수 있음. items와 같은 이유로 보류(읽는 코드 없음), 할 때 items와 함께.
 
+### 1-4. 프롬프트 DB 연결 확인
+
+소스는 2026-10-12에 고침(`W42.md`). 조회는 아직 한 번도 안 돌려 봄.
+
+- [ ] 프롬프트 DB에 데이터 넣기: `services`에 `ieum`, `agents`에 `core-interpreter` / `core-structurer` / `daily-report-writer` / `daily-report-finalizer`(`owner_service = 'ieum'`, 기본값이 `market_memory`), `prompt_templates`에 지금 코드 기본값 지시문을 v1로(언어·제출 두 줄은 빼고), `prompt_releases`에 `default` 행.
+- [ ] 로컬에서 `/core/generate`, `/report/generate`를 돌려 `prompt_version`이 `@v1(default)` 꼴로 남는지, 결과가 코드 기본값일 때와 같은 꼴인지 확인. `dev` 행을 추가해 그쪽이 먼저 잡히는지도.
+- [ ] 배포: `PROMPTS_SUPABASE_URL`, `PROMPTS_SUPABASE_KEY`를 `wrangler secret put`(따옴표 없이) 후 배포.
+
 ## 2. Daily Report 후속
 
 Daily Report 계획(Phase 0~4)은 W41에 끝남(`W41_TODO.md`의 "끝난 것"). 경과는 `works/daily-report.md`.

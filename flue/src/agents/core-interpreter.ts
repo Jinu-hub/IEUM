@@ -10,57 +10,18 @@ import {
 } from "@flue/runtime";
 import * as v from "valibot";
 import { dropUnwrittenActors, Interpretation, interpretationProblems } from "../daily-core.ts";
+import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../prompts.ts";
 
 // v6: asks for progress.next_step (v5 left it empty on every item; the report uses it).
 // v7: next_step is a required top-level field; v6 still left progress null on every item (run 22).
 // v8: null is the normal next_step. v7 said "set on every item" and got guesses such as
 // "continue if needed (owner not stated)" (run 23).
-export const CORE_INTERPRETER_PROMPT_VERSION = "core-interpreter-v8";
-
-const SUBMIT = "submit_interpretation";
-
-const InitialData = v.object({
-  refs: v.array(v.string()),
-  contextRefs: v.array(v.string()),
-  botRefs: v.array(v.string()),
-  authors: v.record(v.string(), v.string()),
-  language: v.string(),
-  model: v.string(),
-});
-type InitialData = v.InferOutput<typeof InitialData>;
-
-export function CoreInterpreter() {
-  const { language, model, ...evidence }: InitialData = useInitialData();
-  useModel(model, { thinkingLevel: "low" });
-  const write = useDataWriter("interpretation", { schema: Interpretation });
-  const writeDroppedActors = useDataWriter("droppedActors", { schema: v.array(v.string()) });
-
-  useTool({
-    name: SUBMIT,
-    description: "Submit the interpreted core items. Call exactly once. Errors list what to fix.",
-    input: Interpretation,
-    run({ data }) {
-      const problems = interpretationProblems(data, evidence);
-      if (problems.length) throw new Error(problems.join("\n"));
-      const { output, dropped } = dropUnwrittenActors(data, evidence.authors);
-      write(output);
-      writeDroppedActors(dropped);
-      return { output: "accepted", terminate: true };
-    },
-  });
-
-  useAgentFinish(({ response, append }) => {
-    if (response.toolCalls.some((call) => call.tool === SUBMIT && !call.isError)) return;
-    append({
-      kind: "signal",
-      type: "missing_submission",
-      body: `Call ${SUBMIT} with the core items. Do not answer in plain text.`,
-    });
-  });
-
-  useResponseFinish(({ response }) => ({ usage: response.usage, toolCalls: response.toolCalls }));
-
-  return `You read one team's activity on one local day and turn it into core items: one item per event.
+export const CORE_INTERPRETER_PROMPT: AgentPrompt = {
+  agentKey: "core-interpreter",
+  version: "core-interpreter-v8",
+  model: "openai/gpt-5.4-mini",
+  thinkingLevel: DEFAULT_THINKING_LEVEL,
+  instructions: `You read one team's activity on one local day and turn it into core items: one item per event.
 A later step decides which items become highlights, topics, or progress, so here you only find and merge events.
 
 Input: messages and repository events grouped by source. Each line is
@@ -98,7 +59,55 @@ Rules:
   Small matters count: each ticket or task someone reports progress on (done, in progress, next) is an item, even at importance 1.
   Every name in "People who wrote today" must be a member actor of at least one item.
 - overview_candidate.summary: 2-4 sentences about the whole day.
-- If the day has no meaningful activity, return no items and say so in the overview.
+- If the day has no meaningful activity, return no items and say so in the overview.`,
+};
+
+const SUBMIT = "submit_interpretation";
+
+const InitialData = v.object({
+  refs: v.array(v.string()),
+  contextRefs: v.array(v.string()),
+  botRefs: v.array(v.string()),
+  authors: v.record(v.string(), v.string()),
+  language: v.string(),
+  model: v.string(),
+  thinkingLevel: ThinkingLevel,
+  instructions: v.string(),
+});
+type InitialData = v.InferOutput<typeof InitialData>;
+
+export function CoreInterpreter() {
+  const { language, model, thinkingLevel, instructions, ...evidence }: InitialData = useInitialData();
+  useModel(model, { thinkingLevel });
+  const write = useDataWriter("interpretation", { schema: Interpretation });
+  const writeDroppedActors = useDataWriter("droppedActors", { schema: v.array(v.string()) });
+
+  useTool({
+    name: SUBMIT,
+    description: "Submit the interpreted core items. Call exactly once. Errors list what to fix.",
+    input: Interpretation,
+    run({ data }) {
+      const problems = interpretationProblems(data, evidence);
+      if (problems.length) throw new Error(problems.join("\n"));
+      const { output, dropped } = dropUnwrittenActors(data, evidence.authors);
+      write(output);
+      writeDroppedActors(dropped);
+      return { output: "accepted", terminate: true };
+    },
+  });
+
+  useAgentFinish(({ response, append }) => {
+    if (response.toolCalls.some((call) => call.tool === SUBMIT && !call.isError)) return;
+    append({
+      kind: "signal",
+      type: "missing_submission",
+      body: `Call ${SUBMIT} with the core items. Do not answer in plain text.`,
+    });
+  });
+
+  useResponseFinish(({ response }) => ({ usage: response.usage, toolCalls: response.toolCalls }));
+
+  return `${instructions.trim()}
 - Write every human-readable text in language: ${language}.
 - Finish by calling ${SUBMIT} once. Do not reply in plain text.`;
 }

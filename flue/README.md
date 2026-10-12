@@ -72,15 +72,25 @@ flowchart TD
 | 반려하는 문제(`draftProblems`) | 모르는 item id, 자기 섹션 item을 인용하지 않은 entry, 인용 안 된 highlight, 입력에 없는 티켓 번호, highlights 밖의 인용, 그 entry의 item이 내놓지 않은 인용 id | 왼쪽 전부 + 구조 변경(개수·순서·섹션·`item_ids`·`quote_ids`, `structureProblems`), 제목·포인트 앞의 상태 라벨(【進行中】 등, `labelProblems`) |
 | 결과 | `useDataWriter("draft")` | `useDataWriter("draft")` |
 
-모델 기본값은 `app.ts`의 `DAILY_CORE_MODEL`, `REPORT_MODEL`이고(둘 다 `openai/gpt-5.4-mini`), 추론 강도는 각 Agent의 `useModel(..., { thinkingLevel: "low" })`에 있습니다. 버전은 행에 기록됩니다.
+### 지시문·모델·추론 강도
+
+Agent마다 지시문 본문, 모델, `thinkingLevel`, 버전을 프롬프트 DB(별도 Supabase, `PROMPTS_SUPABASE_URL` / `PROMPTS_SUPABASE_KEY`)에서 가져옵니다. 조회는 `src/prompts.ts`의 `resolvePrompts`가 라우트마다 한 번 합니다.
+
+- `prompt_releases`에서 `service_key = 'ieum'`, `agent_key`(`core-interpreter`, `core-structurer`, `daily-report-writer`, `daily-report-finalizer`)의 행을 찾음. `environment`는 `PROMPT_ENVIRONMENT`(배포 `production`은 `wrangler.jsonc`의 `vars`, 로컬 `dev`는 `.dev.vars`) 행을 먼저, 없으면 `default` 행.
+- 그 행의 `active_prompt_id`가 가리키는 `prompt_templates`에서 `template`(지시문 본문), `default_provider` + `default_model`(합쳐서 `openai/gpt-5.4-mini` 꼴), `thinking_level`(null이면 `low`), `version`을 씀. `temperature`, `api_mode`, `default_params`, `input_schema`, `output_schema`는 쓰지 않음.
+- 행이 없거나 프롬프트 DB가 설정되지 않았거나 조회가 실패(5초 타임아웃 포함)하면 Agent 파일의 코드 기본값(`CORE_INTERPRETER_PROMPT` 등)을 씀. 실패 이유는 Worker 로그에 경고로 남음.
+- DB `template`에는 고정 문장만 넣음. 언어 지정과 제출 Tool 호출 두 줄은 실행 값이 필요해서 Agent가 본문 끝에 붙임. 코드 기본값의 `instructions`도 같은 범위.
+- 요청 본문의 `model`을 주면 그 요청의 모든 호출이 그 모델을 씀.
+
+호출마다 쓴 모델은 `processing_metrics_json.calls.*.model`에, 행의 `model_provider`/`model_name`에는 쓴 모델들이 기록됩니다(서로 다르면 `prompt_version`처럼 `+`로 이음).
 
 | 버전 | 위치 | 기록되는 곳 |
 |---|---|---|
 | 파이프라인 `PIPELINE_VERSION` | `app.ts` | generation |
-| Core 지시문 `CORE_INTERPRETER_PROMPT_VERSION` + `CORE_STRUCTURER_PROMPT_VERSION` | 각 Agent 파일 | generation `prompt_version` |
+| Core 지시문 (interpreter + structurer) | 프롬프트 DB면 `core-interpreter@v9(default)` 꼴, 코드 기본값이면 `core-interpreter-v8` 꼴 | generation `prompt_version` |
 | `core_json` 스키마 `CORE_SCHEMA_VERSION` | `daily-core.ts` | generation |
 | 리포트 렌더 `REPORT_FORMAT_VERSION` | `daily-report.ts` | report `format_version` |
-| 리포트 지시문 `DAILY_REPORT_WRITER_PROMPT_VERSION` + `DAILY_REPORT_FINALIZER_PROMPT_VERSION` | 각 Agent 파일 | report `prompt_version`(저장된 초안을 받았으면 `given-draft`) |
+| 리포트 지시문 (writer + finalizer) | Core 지시문과 같은 꼴 | report `prompt_version`(저장된 초안을 받았으면 writer 자리에 `given-draft`) |
 
 반려는 재제출마다 모델이 JSON 전체를 다시 내므로 비용이 큽니다. 그래서 `runAgent`가 스트림의 반려(`tool-output-error`, 스키마 실패 포함)를 세다가 `MAX_REJECTIONS`(2)에 이르면 `handle.abort()`로 멈춥니다. 이 경우 generation이나 report는 `failed`가 됩니다.
 
@@ -96,7 +106,8 @@ flowchart TD
 | `src/daily-report.ts` | `core_json` → Daily Report. Writer 입력·인용 후보·초안 스키마·검사, 렌더(제목, markdown, 메일 HTML. 초안이 있으면 이벤트 섹션을 초안으로 대신함) |
 | `src/daily-report.check.ts` | 리포트 규칙·렌더의 assert 테스트 |
 | `src/daily-report.run.ts` | 저장된 `core_json`(또는 `/core/generate` 응답)을 `.md` / `.html`로 렌더 |
-| `src/agents/*.ts` | Agent 지시문과 제출 Tool 연결 |
+| `src/agents/*.ts` | Agent 지시문 코드 기본값과 제출 Tool 연결 |
+| `src/prompts.ts` | 프롬프트 DB에서 Agent별 지시문·모델·추론 강도 조회(`resolvePrompts`) |
 | `wrangler.jsonc` | Worker 설정과 Durable Object migration(Agent 추가·삭제마다 한 줄) |
 
 ## 사용하는 Flue 기능
@@ -104,7 +115,7 @@ flowchart TD
 | 기능 | 쓰는 곳 |
 |---|---|
 | `"use agent"` + Agent 함수 | Agent 하나가 Durable Object 클래스 하나(`Flue<Name>Agent`)가 됨 |
-| `useModel(model, { thinkingLevel })` | 모델과 추론 강도 |
+| `useModel(model, { thinkingLevel })` | 모델과 추론 강도(둘 다 `initialData`로 받음) |
 | `useInitialData` | 검사에 필요한 데이터(ref 목록, 작성자 표, 리포트 item id·인용 id, Finalizer의 원래 초안 등) 전달 |
 | `useTool` (Valibot 스키마) | 제출 Tool. 스키마 검증 실패는 `run`까지 오지 않고 바로 반려됨 |
 | `useDataWriter` | 검사를 통과한 결과를 구조화 데이터로 꺼냄 |
@@ -137,7 +148,7 @@ npx tsc --noEmit -p .                  # 타입 검사
 npm run deploy                         # vite build + wrangler deploy
 ```
 
-- 로컬 시크릿은 `.dev.vars`: `OPENAI_API_KEY`, `FLUE_API_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`. 배포용 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`도 여기 둠.
+- 로컬 시크릿은 `.dev.vars`: `OPENAI_API_KEY`, `FLUE_API_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `PROMPTS_SUPABASE_URL`, `PROMPTS_SUPABASE_KEY`, `PROMPT_ENVIRONMENT=dev`. 배포용 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`도 여기 둠.
 - 배포본 시크릿은 `wrangler secret put`으로 등록. 배포 방법은 `works/env.md`.
 - 앱이 로컬 Worker를 부르게 하려면 루트 `.env`의 `FLUE_BASE_URL`을 지우고 앱을 재시작(없으면 `http://localhost:8787`).
 - 모델 제공자 키는 Flue가 환경변수에서 찾음(`openai/...` → `OPENAI_API_KEY`). 코드에서 넘기지 않음.

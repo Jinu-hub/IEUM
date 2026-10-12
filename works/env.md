@@ -20,11 +20,16 @@
 | `FLUE_API_TOKEN` | `/core/*`, `/report/*`, `/agents/*` 접근 토큰. 없으면 500으로 막힘 |
 | `CLOUDFLARE_API_TOKEN` | 배포용 보관. Worker도 wrangler도 자동으로 읽지 않음. 배포할 때 셸 환경변수로 넣음 |
 | `CLOUDFLARE_ACCOUNT_ID` | 위와 같음 |
+| `PROMPTS_SUPABASE_URL` | 프롬프트 DB(별도 Supabase 프로젝트) 주소. 없으면 Agent 지시문은 코드 기본값 |
+| `PROMPTS_SUPABASE_KEY` | 프롬프트 DB의 Secret key(`sb_secret_...`). 테이블 RLS가 admin 전용이라 publishable 키로는 안 읽힘 |
+| `PROMPT_ENVIRONMENT` | `dev`. `wrangler.jsonc`의 `vars`(`production`)를 로컬에서 덮어씀. 이 이름의 release가 없으면 `default` |
 
 ## 배포 Worker 시크릿 (`wrangler secret put`)
 
 - `OPENAI_API_KEY`, `FLUE_API_TOKEN`: 등록함(배포 Phase 2)
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`: 등록함(배포 Phase 4). 루트 `.env` 값에서 따옴표를 빼고 올림
+- `PROMPTS_SUPABASE_URL`, `PROMPTS_SUPABASE_KEY`: 아직 안 함. 올리기 전까지 배포본은 코드 기본값 지시문을 씀
+- `PROMPT_ENVIRONMENT`는 시크릿이 아니라 `wrangler.jsonc`의 `vars`(`production`)로 배포됨
 
 시크릿은 올린 뒤 수십 초 지나야 Worker에 반영된다. 바로 호출하면 "not set"이나 이전 값으로 실패할 수 있음.
 
