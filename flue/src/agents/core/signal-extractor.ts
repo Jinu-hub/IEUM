@@ -14,7 +14,7 @@ import {
   useTool,
 } from "@flue/runtime";
 import * as v from "valibot";
-import { type AgentPrompt, ThinkingLevel } from "../prompts.ts";
+import { type AgentPrompt, ThinkingLevel } from "../../prompts.ts";
 
 export const SIGNAL_EXTRACTOR_PROMPT: AgentPrompt = {
   agentKey: "signal-extractor",

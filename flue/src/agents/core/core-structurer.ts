@@ -9,8 +9,8 @@ import {
   useTool,
 } from "@flue/runtime";
 import * as v from "valibot";
-import { Structuring, structuringProblems } from "../daily-core.ts";
-import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../prompts.ts";
+import { Structuring, structuringProblems } from "../../daily-core.ts";
+import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../prompts.ts";
 
 export const CORE_STRUCTURER_PROMPT: AgentPrompt = {
   agentKey: "core-structurer",

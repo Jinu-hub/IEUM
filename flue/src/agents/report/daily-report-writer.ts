@@ -9,8 +9,8 @@ import {
   useTool,
 } from "@flue/runtime";
 import * as v from "valibot";
-import { draftProblems, ReportDraft } from "../daily-report.ts";
-import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../prompts.ts";
+import { draftProblems, ReportDraft } from "../../daily-report.ts";
+import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../prompts.ts";
 
 // v2: flat paragraphs with headings (v1 nested paragraphs in sections; rejected twice, run p1-1).
 // v3: fixed sections; entries with a headline each, plus up to 3 key points.

@@ -56,7 +56,7 @@ flowchart TD
 
 | | `CoreInterpreter` (Call 1) | `CoreStructurer` (Call 2) |
 |---|---|---|
-| 파일 | `src/agents/core-interpreter.ts` | `src/agents/core-structurer.ts` |
+| 파일 | `src/agents/core/core-interpreter.ts` | `src/agents/core/core-structurer.ts` |
 | 입력 | 텍스트로 바꾼 하루 활동 + 오늘 글을 쓴 사람 목록 | Call 1 결과에서 추린 JSON(core item, members, people). evidence ref는 넣지 않음 |
 | 제출 Tool | `submit_interpretation` (스키마 `Interpretation`), 필요하면 이어서 `revise_interpretation` 한 번 (스키마 `Revision`) | `submit_daily_core` (스키마 `Structuring`) |
 | 반려하는 문제 | 없는 ref, 맥락 줄만 인용, 봇 줄만 인용, concept_key 중복 | 모르는 core item id, 한 core item을 여러 곳에 배치, 사람 목록에 없는 멤버, 본인 줄이 없는 멤버, 같은 사람 중복 |
@@ -64,7 +64,7 @@ flowchart TD
 | 제출 뒤 되묻는 것 | 인용 안 된 사람 줄, 중복 후보(두 item만 인용한 줄 2개 이상)(`interpretationReview`). 모델은 바뀐 item만 보내고 코드가 합침(`applyRevision`). 첫 제출도 저장해 두어 수정이 안 오면 그대로 씀 | 없음 |
 | 결과 | `useDataWriter("interpretation")` | `useDataWriter("structuring")` |
 
-`SignalExtractor`(`src/agents/signal-extractor.ts`, 선택 Call 0)는 `submit_signals`로 제출합니다. 없는 ref는 반려하고, 어느 signal에도 없는 사람 줄은 돌려줘서 `add_signals`로 그 줄만 받습니다. 결과는 `useDataWriter("signals")`, generation의 `agent_output_json.signals`. 프롬프트 DB에서 `core-interpreter` 지시문을 바꿀 때는 입력 설명 문단(`RAW_INPUT`)을 글자 그대로 두어야 합니다. 그 문단을 signal용으로 바꾸므로, 다르면 signals target의 생성이 실패합니다.
+`SignalExtractor`(`src/agents/core/signal-extractor.ts`, 선택 Call 0)는 `submit_signals`로 제출합니다. 없는 ref는 반려하고, 어느 signal에도 없는 사람 줄은 돌려줘서 `add_signals`로 그 줄만 받습니다. 결과는 `useDataWriter("signals")`, generation의 `agent_output_json.signals`. 프롬프트 DB에서 `core-interpreter` 지시문을 바꿀 때는 입력 설명 문단(`RAW_INPUT`)을 글자 그대로 두어야 합니다. 그 문단을 signal용으로 바꾸므로, 다르면 signals target의 생성이 실패합니다.
 
 target별 선택은 `targets.pipeline_options`(jsonb, 기본 `{}`)입니다. UI에는 없고 운영자가 SQL로 바꿉니다. 다만 RLS상 워크스페이스 admin도 API로 바꿀 수 있습니다.
 
@@ -72,7 +72,7 @@ target별 선택은 `targets.pipeline_options`(jsonb, 기본 `{}`)입니다. UI�
 
 | | `DailyReportWriter` | `DailyReportFinalizer` |
 |---|---|---|
-| 파일 | `src/agents/daily-report-writer.ts` | `src/agents/daily-report-finalizer.ts` |
+| 파일 | `src/agents/report/daily-report-writer.ts` | `src/agents/report/daily-report-finalizer.ts` |
 | 입력 | target, 날짜, overview, item(id, 섹션, 제목, 요약, 상태, 중요도, 담당자, 다음 단계, 인용 후보) | Writer와 같은 item + Writer 초안 |
 | 제출 Tool | `submit_report` (스키마 `ReportDraft`) | `submit_report` (스키마 `ReportDraft`) |
 | 반려하는 문제(`draftProblems`) | 모르는 item id, 자기 섹션 item을 인용하지 않은 entry, 인용 안 된 highlight, 입력에 없는 티켓 번호, highlights 밖의 인용, 그 entry의 item이 내놓지 않은 인용 id | 왼쪽 전부 + 구조 변경(개수·순서·섹션·`item_ids`·`quote_ids`, `structureProblems`), 제목·포인트 앞의 상태 라벨(【進行中】 등, `labelProblems`) |
@@ -112,8 +112,8 @@ Agent마다 지시문 본문, 모델, `thinkingLevel`, 버전을 프롬프트 DB
 | `src/daily-report.ts` | `core_json` → Daily Report. Writer 입력·인용 후보·초안 스키마·검사, 렌더(제목, markdown, 메일 HTML. 초안이 있으면 이벤트 섹션을 초안으로 대신함) |
 | `src/daily-report.check.ts` | 리포트 규칙·렌더의 assert 테스트 |
 | `src/daily-report.run.ts` | 저장된 `core_json`(또는 `/core/generate` 응답)을 `.md` / `.html`로 렌더 |
-| `src/interpreter.run.ts` | (임시, 품질 작업용) `/core/interpret`를 불러 `works/out/interpreter-test-2610/`에 결과 `.json`과 원문 줄 ↔ item 대조표 `.md` 저장 |
-| `src/agents/*.ts` | Agent 지시문 코드 기본값과 제출 Tool 연결 |
+| `src/core-agent.run.ts` | (시험용) `/core/agent`로 Core Agent 하나를 돌려 `works/out/core-agents/`에 결과 `.json`과 읽기용 `.md`(원문 줄 ↔ signal / item 대조표, Structurer는 섹션별 배치) 저장. `--from`으로 이전 Agent의 `.json`을 다음 Agent 입력으로 |
+| `src/agents/core/*.ts`, `src/agents/report/*.ts` | Agent 지시문 코드 기본값과 제출 Tool 연결 |
 | `src/prompts.ts` | 프롬프트 DB에서 Agent별 지시문·모델·추론 강도 조회(`resolvePrompts`) |
 | `wrangler.jsonc` | Worker 설정과 Durable Object migration(Agent 추가·삭제마다 한 줄) |
 
@@ -142,7 +142,7 @@ Skill, Subagent, MCP, Sandbox, 데이터 조회 Tool, Workers AI 바인딩은 �
 | `GET /` | 헬스 체크 |
 | `POST /core/generate` | 본문 `{ dailyCoreId, model? }`. 다음 generation을 만들어 저장하고 current로 함. 응답에 stats, 토큰, 호출별 시간·반려 이유, `coreJson` |
 | `POST /report/generate` | 본문 `{ dailyCoreId, model?, finalize?, draft? }`. 현재 generation으로 리포트를 만들어 `daily_reports`에 다음 `report_no`로 저장하고 `reportId`, `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. 기본으로 Finalizer까지 돌고(응답에 `writerDraft`), `finalize: false`면 Writer만. `draft`(저장된 Writer 초안)를 주면 Writer를 건너뜀. 현재 generation이 없으면 409(행 안 만듦) |
-| `POST /core/interpret` | (임시, 품질 작업용) 본문 `{ dailyCoreId, model?, signals? }`. Call 1만(target 설정이나 `signals`에 따라 Call 0 포함) 돌려 결과·stats·토큰과 모델이 본 입력 원문을 응답. `signals`는 target의 `pipeline_options.signals`를 덮어씀. Call 0을 돌렸으면 `signals`, `signalsBody`, 호출별 `calls`도. DB 기록 없음 |
+| `POST /core/agent` | (시험용) 본문 `{ dailyCoreId, agent, model?, signals?, interpretation? }`. `agent`(`extractor` / `interpreter` / `structurer`) 하나만 돌려 출력·토큰·반려와 모델이 본 입력 원문을 응답. DB 기록 없음, target의 `pipeline_options`는 안 봄. `interpreter`는 `signals`를 주면 원문 대신 그것을 읽고, `structurer`는 `interpretation`이 필요(그날 ref와 안 맞으면 400). Structurer는 `structuring`과 함께 코드 변환 뒤 `coreJson`·stats도 응답 |
 | `/agents/test/*` | `TestAgent`(한 문장 생성, DB 기록 없음) |
 
 ## 실행과 배포
@@ -152,7 +152,7 @@ npm run dev                            # 로컬 Worker, http://localhost:8787
 npx tsx src/daily-core.check.ts        # 규칙 테스트 (flue/ 에서)
 npx tsx src/daily-report.check.ts      # 리포트 규칙·렌더 테스트
 npx tsx src/daily-report.run.ts <core.json> <out> [report.json]   # 리포트 미리보기 파일
-npx tsx src/interpreter.run.ts --label <name> [--runs 3] [--id <dailyCoreId>] [--split]   # Interpreter만 실행·저장 (로컬 Worker 필요, --split은 Call 0 포함)
+npx tsx src/core-agent.run.ts --agent <extractor|interpreter|structurer> --label <name> [--runs 3] [--id <dailyCoreId>] [--from <이전 결과 .json>]   # Core Agent 하나 실행·저장 (로컬 Worker 필요)
 npx tsc --noEmit -p .                  # 타입 검사
 npm run deploy                         # vite build + wrangler deploy
 ```

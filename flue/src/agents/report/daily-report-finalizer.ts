@@ -9,8 +9,8 @@ import {
   useTool,
 } from "@flue/runtime";
 import * as v from "valibot";
-import { draftProblems, labelProblems, ReportDraft, structureProblems } from "../daily-report.ts";
-import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../prompts.ts";
+import { draftProblems, labelProblems, ReportDraft, structureProblems } from "../../daily-report.ts";
+import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../prompts.ts";
 
 // v2: v1 read "do not contradict the status icon" as "write the status" (【進行中】 on every
 // headline) and left texts as they were (run p1-4).
