@@ -1,6 +1,7 @@
 // Run: npx tsx flue/src/daily-core.check.ts
 import assert from "node:assert/strict";
 import {
+  applyRevision,
   buildAgentInput,
   buildCoreJson,
   coreStats,
@@ -9,7 +10,9 @@ import {
   evidenceProblems,
   type Interpretation,
   interpretationProblems,
+  interpretationReview,
   interpretationStats,
+  normalizeConceptKeys,
   plainSlackText,
   resolveStructuring,
   type SourceItem,
@@ -130,11 +133,7 @@ const interpreted = (refs: string[], actors: string[], key = "ticket-12"): Inter
   title: "",
   summary: "",
   importance: 3,
-  confidence: 0.8,
   roles: ["progress"],
-  tags: [],
-  classifications: { primary: "", secondary: [] },
-  entities: [],
   actors: actors.map((name) => ({ type: "member" as const, name })),
   evidence_refs: refs,
   next_step: null,
@@ -162,25 +161,58 @@ assert.match(
   /ticket-12: concept_key is used twice/,
 );
 assert.deepEqual(
+  normalizeConceptKeys(
+    interpretation(
+      ...["ticket-11-月修正依頼表", "Ticket 12", "ticket-12", "日本語"].map((key) => interpreted(["S003"], [], key)),
+    ),
+  ).core_items.map((item) => item.concept_key),
+  ["ticket-11", "ticket-12", "ticket-12-3", "item-4"],
+);
+assert.deepEqual(
+  interpretationReview(
+    interpretation(
+      { ...interpreted(["S003", "S004"], []), title: "#12 done" },
+      interpreted(["S003", "S004", "S010"], [], "b"),
+      { ...interpreted(["S007"], [], "c"), title: "PR #12 merged" },
+    ),
+    input,
+  ),
+  { uncited: ["S011", "S008"], pairs: ["ticket-12 + b: both cite S003, S004"] },
+);
+assert.deepEqual(
+  applyRevision(interpretation(interpreted(["S003"], [], "a"), interpreted(["S004"], [], "b")), {
+    upsert: [interpreted(["S003", "S004"], [], "A"), interpreted(["S005"], [], "New Item")],
+    remove: ["b"],
+  }).core_items.map((item) => [item.concept_key, item.evidence_refs]),
+  [
+    ["a", ["S003", "S004"]],
+    ["new-item", ["S005"]],
+  ],
+);
+const revised = applyRevision(interpretation(interpreted(["S003"], [], "a"), interpreted(["S004"], [], "b")), {
+  upsert: [interpreted(["S003", "S004"], [], "a"), interpreted(["S004"], [], "b")],
+  remove: ["b"],
+  overview: "new",
+});
+assert.deepEqual(
+  revised.core_items.map((item) => item.concept_key),
+  ["a"],
+);
+assert.equal(revised.overview_candidate.summary, "new");
+assert.deepEqual(
+  applyRevision(interpretation(interpreted(["S003"], [], "a")), {
+    upsert: [interpreted(["S003"], ["Aki"], "A"), { ...interpreted(["S004"], ["Aki", "Bo"], "a"), title: "last" }],
+    remove: [],
+  }).core_items,
+  [{ ...interpreted(["S003", "S004"], ["Aki", "Bo"], "a"), title: "last" }],
+);
+assert.deepEqual(
   interpretationStats(interpretation(interpreted(["S003", "S010"], ["Aki"]), interpreted(["S004"], ["Jinu Son"], "b")), input),
   { core_items: 2, human_refs: 5, human_refs_cited: 2, people: 3, people_as_actors: 2 },
 );
 
-const coreA = {
-  ...interpreted(["S003", "S010"], ["Aki"], "a"),
-  importance: 4,
-  tags: ["x"],
-  classifications: { primary: "fix", secondary: [] },
-  entities: [{ type: "ticket", name: "#12" }],
-};
-const coreB = {
-  ...interpreted(["S004", "S007", "S011"], ["Jinu Son"], "b"),
-  importance: 2,
-  confidence: 0.5,
-  tags: ["x", "y"],
-  entities: [{ type: "ticket", name: "#12" }, { type: "pr", name: "#5" }],
-  next_step: " review (Aki) ",
-};
+const coreA = { ...interpreted(["S003", "S010"], ["Aki"], "a"), importance: 4 };
+const coreB = { ...interpreted(["S004", "S007", "S011"], ["Jinu Son"], "b"), importance: 2, next_step: " review (Aki) " };
 const coreC = interpreted(["S008"], ["takamune-dsl"], "c");
 const interpretedDay = interpretation(coreA, coreB, coreC);
 const toStructurer = JSON.parse(structurerInput(interpretedDay, input.people));
@@ -225,10 +257,10 @@ assert.deepEqual(resolved.highlights[0], {
   summary: "",
   status: null,
   importance: 0.8,
-  confidence: 0.5,
-  tags: ["x", "y"],
-  classifications: { primary: "fix", secondary: [] },
-  entities: [{ type: "ticket", name: "#12" }, { type: "pr", name: "#5" }],
+  confidence: null,
+  tags: [],
+  classifications: { primary: "", secondary: [] },
+  entities: [],
   evidence_refs: ["S003", "S010", "S004", "S007", "S011"],
   owners: ["Aki", "Jinu Son"],
   next_steps: ["review (Aki)"],

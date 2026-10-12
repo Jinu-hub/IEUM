@@ -75,6 +75,33 @@ Daily Report 계획(Phase 0~4)은 W41에 끝남(`W41_TODO.md`의 "끝난 것"). 
   - `OPENAI_API_KEY` 그대로: `gpt-5.4-nano`(약 $0.016), `gpt-6-luna`(약 $0.007), 품질 쪽 `gpt-6-sol`(약 $0.13). 금액은 run 21 토큰에 레지스트리 단가를 대입한 추정. 작은 모델은 반려가 늘면 단가 이점이 사라짐(반려 상한 2회).
   - 하지 않음: OpenAI를 AI Gateway Unified Billing으로 옮기기(크레딧 충전 + 5% 수수료). Gateway 로그나 지출 한도가 필요해지면 검토.
 
+#### Interpreter 유용성 개선 (2026-10-12 시작)
+
+정확성보다 내용의 쓸모·충실함·읽기 좋은 구성을 먼저(사용자). 근거는 `W42.md` 2026-10-12.
+
+- [ ] **테스트 끝나면 반드시 원복**(사용자): `flue/.dev.vars`의 `PROMPTS_SUPABASE_URL` / `PROMPTS_SUPABASE_KEY` 주석을 풀고 로컬 Worker 재시작. 지금은 일부러 빼서 모든 Agent가 코드 기본값(지시문·모델)으로 돎. 원복 전에 최종 지시문을 프롬프트 DB에 새 버전으로 넣을지 정함(DB `core-interpreter` v1은 코드 v8 + `gpt-6-luna`).
+- [x] 기준 실행: label v1(= 프롬프트 DB v1 = 코드 v8 지시문 + `gpt-6-luna`) 2회. 인용 63/71(gen 8의 `gpt-5.4-mini`는 40/71), $0.004~0.012.
+- [x] v9 결과 확인(label v2 × 2): overview·importance·자식 티켓 합치기는 좋아짐, "記載なし"류 증가, highlight 과다, 반려 뒤 item 감소. `W42.md`.
+- [x] v10 결과 확인(label v3 × 2): "記載なし"류 0, overview 유지. 입력 마지막 절(`#dev_lead`) 누락, 개인 업무 쪼개기, 반려 뒤 item 감소. `W42.md`.
+- [x] Interpreter 스키마에서 `tags` / `classifications` / `entities` / `confidence` 빼기(`resolveStructuring`이 빈 값, `taxonomy_version: none`).
+- [x] v11 결과 확인(label v4 × 2): 지금까지 중 가장 좋음(인용 56 / 64, 반려 뒤 item 유지). 남은 반려는 `concept_key` 패턴 불일치뿐. `W42.md`.
+- [x] `concept_key` 패턴 반려를 코드 정규화로 바꿈(`normalizeConceptKeys`).
+- [x] 정규화 뒤 확인(label v5 × 2, thinkingLevel medium): 반려 0. 인용 56 / 67로 실행 간 차는 그대로, r2는 중복 item 증가. `W42.md`.
+- [x] thinkingLevel 결정: low(v6 / v7 비교. 보정 단계가 있으면 medium의 이득이 작음).
+- [x] 제출 뒤 코드 보정 단계(`interpretationReview` → `revise_interpretation`, 바뀐 item만).
+- [x] 보정 단계 확인(label v6 medium, v7 low): 최종 인용 67~70/71, 잘못 합치기 없음. 같은 key 중복 upsert 버그를 찾아 반려로 고침. `W42.md`.
+- [x] 중복 upsert 반려 확인(label v8): 중복 upsert는 안 나옴. 대신 upsert + remove 동시 지정으로 item이 되살아나는 버그, 미인용 줄 무시, overview 누락을 찾음. `W42.md`.
+- [x] 수정에서 overview도 고칠 수 있게 함(`Revision.overview`). 미인용 줄에 작성자·원문 앞부분을 붙여 되물음.
+- [x] 확인(label v9): r1 인용 70/71, S055 5점 item. r2는 중복 upsert 반려 2회로 실패 → 합치기로 바꾸고 `runAgent`가 중단돼도 받은 출력을 돌려주게 고침. `W42.md`.
+- [ ] 확인: `--label v10 --runs 2`(low). 두 실행 모두 끝까지 성공하는지, 중복 upsert가 합쳐지는지(`.md`의 upserted에 같은 key가 두 번).
+- [ ] overview: 수정에서 다시 써도 릴리스 요청(5점)이 빠지고 이름을 줄임(v6-r1, v9-r1). 지시문의 overview 규칙에 "importance 5 item은 모두", "이름은 입력에 적힌 그대로" 추가 후보.
+- [ ] 첫 제출이 보정 단계에 기대어 덜 묶는지(v9-r1 쌍 18개). 계속되면 수정 부담·비용이 커짐.
+- [ ] 남은 후보: 대기·요청·결정 필드(스키마·Report까지 바뀜). highlight 과다(8~9개)는 Structurer가 3~5개로 고르므로 보류.
+- [ ] 입력 개선(지시문이 안정된 뒤, 따로 비교. 입력이 바뀌면 지시문 비교와 원인이 섞임):
+  - GitHub Slack 앱 게시물이 빈 본문으로 저장됨: 수집기가 `text` / `files`만 가져오고 앱 게시물 내용은 `attachments` / `blocks`에 있음. 10-09 `#dev_lead` 60건 중 29건이 빈 GitHub 게시물(PR·리뷰 알림으로 보임). `app/core/integrations/slack/fetchers.ts`, `app/features/daily-core/normalize.ts`에서 attachments(title, text, fallback)·blocks 텍스트를 `content`로 펼침. 이미 수집한 날은 재수집해야 반영. 빈 GitHub 부모 + 빈 답글이 `[S046] (context) GitHub:` 빈 줄로 남는 것도 같이 사라짐.
+  - Redmine 봇 알림(10-09 `#dev_lead` 20건)은 입력에서 빠져 티켓 제목(#23116 = PERF_TUNING-151 등)과 말로 언급 안 된 티켓 갱신을 잃음. `buildAgentInput`에서 "오늘 봇이 갱신을 알린 티켓" 목록(번호·제목)을 입력 끝에 붙이고, 지시문에 "이 목록만으로 item을 만들지 말고 제목 보강에만" 추가. 봇 줄 하나가 item 하나가 되던 문제(빼게 된 이유)를 되살리지 않는지 확인.
+- [ ] 끝나면 임시 `/core/interpret`와 `interpreter.run.ts`를 정리: 평가 세트 러너(`eval.run.ts`, `evaluate: true`)로 합치거나 지움.
+
 #### 남은 품질 문제
 
 - [ ] 빠짐: 실행마다 덮는 범위가 흔들림. 지시만으로는 안정되지 않음.
@@ -113,6 +140,16 @@ Phase 1에서 남긴 것의 원문은 `works/daily-core-agent-split.md`.
     - 순서가 정해진 단계, 별도 context·모델 → 코드가 호출하는 별도 Agent(지금 방식). 개수가 입력으로 정해지는 병렬 처리도 코드에서.
     - 무엇을 몇 개 맡길지 모델이 내용을 보고 정해야 할 때만 → Subagent(예: 긴 스레드만 골라 분석). 결과가 텍스트로만 돌아와 스키마·코드 검사를 따로 붙여야 함.
   - 참고: entity(티켓·PR 번호)는 모델 전에 코드로 뽑을 수 있음(v4 실험 38개).
+
+#### 분류 전용 Agent (tags / classifications / entities)
+
+`core-interpreter-v11`부터 Interpreter가 이 값들을 안 만들고 `core_json`에는 빈 값(2026-10-12). 읽는 곳이 생기면 별도로 채운다(사용자).
+
+- [ ] 할 때: items projection(1-2)이나 검색·집계 기능처럼 이 값을 읽는 곳이 생길 때. 그 전에는 만들지 않음.
+  - entities(티켓·PR·PERF_TUNING 번호)는 Agent 말고 코드(정규식)로 원문에서 뽑음.
+  - tags / classifications는 전용 Agent(가칭 `core-tagger`): 입력은 Interpreter의 core item(title, summary, 필요하면 인용 원문)만이라 작고 싸다. Structurer와 병렬로 돌려 전체 시간이 안 늘게. 작은 모델로 충분한지 비교. 실패해도 빈 값으로 저장하고 리포트는 진행.
+  - 먼저 분류 체계(고정 목록)를 정하고 picklist로 강제(지금까지의 자유 문자열은 `primary`가 전부 development류라 쓸모 없었음). 정하면 `TAXONOMY_VERSION`을 그 이름으로.
+  - Agent 추가 시 `wrangler.jsonc` Durable Object migration 한 줄.
 
 ## 4. 순서 미정
 

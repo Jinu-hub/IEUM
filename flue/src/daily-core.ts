@@ -266,23 +266,21 @@ export function coreStats(output: DailyCoreOutput, { refs, contextRefs, botRefs,
 
 // Call 1 (CoreInterpreter): one item per event, merged across sources. core_item_id = concept_key.
 const InterpretedItem = v.object({
+  // No pattern check: normalizeConceptKeys fixes keys instead of rejecting them.
   concept_key: v.pipe(
     v.string(),
-    v.regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
     v.description("Stable kebab-case key, unique in the output, e.g. ticket-23163 or millvi-v3-subtitles."),
   ),
   title: v.string(),
   summary: v.string(),
   importance: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(5), v.description("5 = key outcome of the day")),
-  confidence: v.pipe(v.number(), v.minValue(0), v.maxValue(1)),
   roles: v.pipe(
     v.array(v.picklist(["highlight", "topic", "progress"])),
     v.description("Candidate placements. The final placement is decided later."),
   ),
   status: v.optional(v.nullable(v.picklist(["planned", "in_progress", "blocked", "completed", "unknown"]))),
-  tags: v.array(v.string()),
-  classifications: v.object({ primary: v.string(), secondary: v.array(v.string()) }),
-  entities: v.array(v.object({ type: v.string(), name: v.string(), ident: v.optional(v.string()) })),
+  // No tags, classifications, entities, or confidence: nothing reads them, and the longer output led to
+  // malformed items and rejections (interpreter test v2, v3). A separate tagger agent fills them when needed.
   actors: v.pipe(
     v.array(v.object({ type: v.picklist(["member", "team", "system", "other"]), name: v.string() })),
     v.description("Who did it. A member actor must be the author of at least one cited line."),
@@ -330,6 +328,95 @@ export function interpretationProblems(output: Interpretation, { refs, contextRe
     }
   }
   return problems;
+}
+
+// Keys with non-ASCII text (e.g. "ticket-11-月修正依頼表", interpreter test v4) become kebab-case here,
+// because a rejection makes the model resend the whole output. Run after interpretationProblems, which
+// still rejects keys the model used twice; a clash made only by this cleanup gets a suffix.
+const kebab = (key: string) =>
+  key.normalize("NFKC").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+export function normalizeConceptKeys(output: Interpretation): Interpretation {
+  const seen = new Set<string>();
+  const core_items = output.core_items.map((item, i) => {
+    let key = kebab(item.concept_key) || `item-${i + 1}`;
+    while (seen.has(key)) key = `${key}-${i + 1}`;
+    seen.add(key);
+    return { ...item, concept_key: key };
+  });
+  return { ...output, core_items };
+}
+
+// What code can point out after a submission. Prompt rules alone left coverage and merging unstable:
+// one run cites 56 of 71 human lines, the next cites 67 but splits one piece of work across items (test v4, v5).
+// Pairs are only candidates: different work may share lines.
+export function interpretationReview(output: Interpretation, { refs, contextRefs, botRefs }: InterpretationEvidence) {
+  const skip = new Set([...contextRefs, ...botRefs]);
+  const citations = new Map<string, number>();
+  for (const ref of output.core_items.flatMap((item) => [...new Set(item.evidence_refs)])) {
+    citations.set(ref, (citations.get(ref) ?? 0) + 1);
+  }
+  const uncited = refs.filter((ref) => !skip.has(ref) && !citations.has(ref));
+  // No ticket-number match: one ticket can hold several pieces of work, and naming them after a ticket
+  // merged a different person's release request into it (test v10).
+  const pairs: string[] = [];
+  output.core_items.forEach((a, i) =>
+    output.core_items.slice(i + 1).forEach((b) => {
+      // A plan or report post cited by every task in it (test v5: S119, S127 in 5 items) is not a sign.
+      const shared = a.evidence_refs.filter(
+        (ref) => !skip.has(ref) && b.evidence_refs.includes(ref) && citations.get(ref) === 2,
+      );
+      if (shared.length >= 2) pairs.push(`${a.concept_key} + ${b.concept_key}: both cite ${shared.join(", ")}`);
+    }),
+  );
+  return { uncited, pairs };
+}
+
+export const Revision = v.object({
+  upsert: v.pipe(
+    v.array(InterpretedItem),
+    v.description("New items, and changed items rewritten in full under their existing concept_key."),
+  ),
+  remove: v.pipe(v.array(v.string()), v.description("concept_keys of items merged into another item.")),
+  overview: v.optional(
+    v.pipe(v.string(), v.description("The whole overview rewritten, only when new or merged items change it.")),
+  ),
+});
+export type Revision = v.InferOutput<typeof Revision>;
+
+// Only changed items come back, so a revision costs a fraction of resending the whole output.
+// A key both upserted and removed stays removed (test v8-r1 sent two merged #23126 items in both).
+// A key sent several times (3 of 6 runs, v6-v9) merges: refs and actors from every copy, text from the
+// last. Rejecting it instead failed v9-r2 twice in a row.
+export function applyRevision(draft: Interpretation, revision: Revision): Interpretation {
+  const remove = new Set(revision.remove.map(kebab));
+  const upsert = new Map<string, Interpretation["core_items"][number]>();
+  for (const sent of revision.upsert) {
+    const item = { ...sent, concept_key: kebab(sent.concept_key) };
+    if (remove.has(item.concept_key)) continue;
+    const prev = upsert.get(item.concept_key);
+    upsert.set(
+      item.concept_key,
+      prev
+        ? {
+            ...item,
+            evidence_refs: [...new Set([...prev.evidence_refs, ...item.evidence_refs])],
+            actors: [...prev.actors, ...item.actors].filter(
+              (a, i, all) => all.findIndex((b) => b.type === a.type && b.name === a.name) === i,
+            ),
+          }
+        : item,
+    );
+  }
+  const kept = draft.core_items.filter((item) => !remove.has(item.concept_key));
+  const keys = new Set(kept.map((item) => item.concept_key));
+  return normalizeConceptKeys({
+    overview_candidate: revision.overview ? { summary: revision.overview } : draft.overview_candidate,
+    core_items: [
+      ...kept.map((item) => upsert.get(item.concept_key) ?? item),
+      ...[...upsert.values()].filter((item) => !keys.has(item.concept_key)),
+    ],
+  });
 }
 
 // A member actor must have written a cited line; others were only mentioned. Code drops them
@@ -461,12 +548,10 @@ export function resolveStructuring(
         summary,
         status: status ?? null,
         importance: lead.importance / 5,
-        confidence: Math.min(...sources.map((source) => source.confidence)),
-        tags: [...new Set(sources.flatMap((source) => source.tags))],
-        classifications: lead.classifications,
-        entities: [
-          ...new Map(sources.flatMap((source) => source.entities).map((e) => [`${e.type}|${e.name}`, e])).values(),
-        ],
+        confidence: null,
+        tags: [],
+        classifications: { primary: "", secondary: [] },
+        entities: [],
         evidence_refs: section === "member_activity" ? ownRefs(refs, title, authors) : refs,
         // A member entry is about its title person already.
         owners:

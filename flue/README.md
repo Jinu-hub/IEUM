@@ -30,7 +30,7 @@ flowchart TD
 | 3. generation 행 생성 | `app.ts` | `processing` 상태로 만들고 파이프라인·프롬프트 버전, 모델, 입력 행 id를 기록 |
 | 4. Call 1 | `CoreInterpreter` (모델) | 하루를 사건 단위 core item으로 묶음. item마다 actor와 `next_step`(근거가 있을 때만, 없으면 null) |
 | 5. Call 2 | `CoreStructurer` (모델) | core item을 highlights / topics / progress_roadmap / member_activity에 배치하고 overview를 씀 |
-| 6. 변환·병합 | `resolveStructuring`, `buildCoreJson` (코드) | core item id를 근거 ref로 바꾸고(멤버는 본인이 쓴 줄만) importance, tags, `payload.owners` / `payload.next_steps`를 core item에서 채움. ref를 원본 항목(id, 시각, url, 작성자, 200자 `excerpt`)으로 바꾸고 meta, metrics, quality를 붙임 |
+| 6. 변환·병합 | `resolveStructuring`, `buildCoreJson` (코드) | core item id를 근거 ref로 바꾸고(멤버는 본인이 쓴 줄만) importance, `payload.owners` / `payload.next_steps`를 core item에서 채움. tags / classifications / entities / confidence는 빈 값(`core-interpreter-v11`부터 모델이 안 만듦, `taxonomy_version: none`). ref를 원본 항목(id, 시각, url, 작성자, 200자 `excerpt`)으로 바꾸고 meta, metrics, quality를 붙임 |
 | 7. 저장 | `app.ts` | `core_json`, 단계별 원출력, 토큰, 시간, 반려 이유, stats를 저장하고 `succeeded`와 current를 갱신. 실패하면 `failed`로 남기고 current는 그대로 |
 
 ### Report (`/report/generate`)
@@ -57,9 +57,10 @@ flowchart TD
 |---|---|---|
 | 파일 | `src/agents/core-interpreter.ts` | `src/agents/core-structurer.ts` |
 | 입력 | 텍스트로 바꾼 하루 활동 + 오늘 글을 쓴 사람 목록 | Call 1 결과에서 추린 JSON(core item, members, people). evidence ref는 넣지 않음 |
-| 제출 Tool | `submit_interpretation` (스키마 `Interpretation`) | `submit_daily_core` (스키마 `Structuring`) |
+| 제출 Tool | `submit_interpretation` (스키마 `Interpretation`), 필요하면 이어서 `revise_interpretation` 한 번 (스키마 `Revision`) | `submit_daily_core` (스키마 `Structuring`) |
 | 반려하는 문제 | 없는 ref, 맥락 줄만 인용, 봇 줄만 인용, concept_key 중복 | 모르는 core item id, 한 core item을 여러 곳에 배치, 사람 목록에 없는 멤버, 본인 줄이 없는 멤버, 같은 사람 중복 |
-| 반려 대신 코드가 고치는 것 | 인용한 줄을 쓰지 않은 멤버 actor 제거(`dropUnwrittenActors`) | 없음 |
+| 반려 대신 코드가 고치는 것 | 인용한 줄을 쓰지 않은 멤버 actor 제거(`dropUnwrittenActors`), concept_key를 kebab-case로(`normalizeConceptKeys`) | 없음 |
+| 제출 뒤 되묻는 것 | 인용 안 된 사람 줄, 중복 후보(두 item만 인용한 줄 2개 이상)(`interpretationReview`). 모델은 바뀐 item만 보내고 코드가 합침(`applyRevision`). 첫 제출도 저장해 두어 수정이 안 오면 그대로 씀 | 없음 |
 | 결과 | `useDataWriter("interpretation")` | `useDataWriter("structuring")` |
 
 ### Report
@@ -106,6 +107,7 @@ Agent마다 지시문 본문, 모델, `thinkingLevel`, 버전을 프롬프트 DB
 | `src/daily-report.ts` | `core_json` → Daily Report. Writer 입력·인용 후보·초안 스키마·검사, 렌더(제목, markdown, 메일 HTML. 초안이 있으면 이벤트 섹션을 초안으로 대신함) |
 | `src/daily-report.check.ts` | 리포트 규칙·렌더의 assert 테스트 |
 | `src/daily-report.run.ts` | 저장된 `core_json`(또는 `/core/generate` 응답)을 `.md` / `.html`로 렌더 |
+| `src/interpreter.run.ts` | (임시, 품질 작업용) `/core/interpret`를 불러 `works/out/interpreter-test-2610/`에 결과 `.json`과 원문 줄 ↔ item 대조표 `.md` 저장 |
 | `src/agents/*.ts` | Agent 지시문 코드 기본값과 제출 Tool 연결 |
 | `src/prompts.ts` | 프롬프트 DB에서 Agent별 지시문·모델·추론 강도 조회(`resolvePrompts`) |
 | `wrangler.jsonc` | Worker 설정과 Durable Object migration(Agent 추가·삭제마다 한 줄) |
@@ -135,6 +137,7 @@ Skill, Subagent, MCP, Sandbox, 데이터 조회 Tool, Workers AI 바인딩은 �
 | `GET /` | 헬스 체크 |
 | `POST /core/generate` | 본문 `{ dailyCoreId, model? }`. 다음 generation을 만들어 저장하고 current로 함. 응답에 stats, 토큰, 호출별 시간·반려 이유, `coreJson` |
 | `POST /report/generate` | 본문 `{ dailyCoreId, model?, finalize?, draft? }`. 현재 generation으로 리포트를 만들어 `daily_reports`에 다음 `report_no`로 저장하고 `reportId`, `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. 기본으로 Finalizer까지 돌고(응답에 `writerDraft`), `finalize: false`면 Writer만. `draft`(저장된 Writer 초안)를 주면 Writer를 건너뜀. 현재 generation이 없으면 409(행 안 만듦) |
+| `POST /core/interpret` | (임시, 품질 작업용) 본문 `{ dailyCoreId, model? }`. CoreInterpreter만 돌려 결과·stats·토큰과 모델이 본 입력 원문을 응답. DB 기록 없음 |
 | `/agents/test/*` | `TestAgent`(한 문장 생성, DB 기록 없음) |
 
 ## 실행과 배포
@@ -144,6 +147,7 @@ npm run dev                            # 로컬 Worker, http://localhost:8787
 npx tsx src/daily-core.check.ts        # 규칙 테스트 (flue/ 에서)
 npx tsx src/daily-report.check.ts      # 리포트 규칙·렌더 테스트
 npx tsx src/daily-report.run.ts <core.json> <out> [report.json]   # 리포트 미리보기 파일
+npx tsx src/interpreter.run.ts --label <name> [--runs 3]          # Interpreter만 실행·저장 (로컬 Worker 필요)
 npx tsc --noEmit -p .                  # 타입 검사
 npm run deploy                         # vite build + wrangler deploy
 ```

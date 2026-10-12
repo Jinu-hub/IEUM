@@ -37,10 +37,11 @@ import {
 import { type PromptEnv, promptData, resolvePrompts } from "./prompts.ts";
 
 // v2: both calls at thinkingLevel "low" (v1 used the default "medium").
-const PIPELINE_VERSION = "flue-two-call-v2";
+// v3: Call 1 may revise once after code lists uncited lines and duplicate candidates.
+const PIPELINE_VERSION = "flue-two-call-v3";
 const MAX_REJECTIONS = 2;
-// Classifications are free text until a taxonomy exists.
-const TAXONOMY_VERSION = "free-text";
+// "none": core items carry empty tags, classifications, and entities (before core-interpreter-v11: "free-text").
+const TAXONOMY_VERSION = "none";
 
 type Env = {
   Bindings: PromptEnv & {
@@ -77,31 +78,40 @@ async function runAgent<T>(
   const startedAt = Date.now();
   // Tool call metadata keeps only isError; the stream carries why a submission was rejected.
   const rejections: string[] = [];
+  // Writes as they stream: an aborted read returns nothing, yet a write accepted before the abort
+  // (CoreInterpreter's first submission, before a failing revision) is still a valid output.
+  const streamed: Record<string, unknown[]> = {};
   const receipt = await handle.dispatch({ message: { kind: "user", body }, initialData });
   const reply = await handle
     .read(receipt, {
       onEvent: (chunk) => {
+        if (chunk.type.startsWith("data-")) (streamed[chunk.type.slice(5)] ??= []).push((chunk as { data: unknown }).data);
         if (chunk.type !== "tool-output-error") return;
-        rejections.push(chunk.errorText.slice(0, 2000));
+        // ponytail: the text echoes the whole submission, so the failing value stays visible;
+        // keep only the error lines if generation rows grow too large.
+        rejections.push(chunk.errorText.slice(0, 100_000));
         // Each retry re-emits the whole submission, so stop a model that keeps failing.
         if (rejections.length >= MAX_REJECTIONS) void handle.abort();
       },
     })
     .catch((error) => {
       if (rejections.length < MAX_REJECTIONS) throw error;
+      if (streamed[key]?.length) return null;
       throw new Error(`${key}: stopped after ${rejections.length} rejections: ${rejections.at(-1)}`);
     });
-  const output = reply.data[key]?.at(-1) as T | undefined;
-  if (!output) throw new Error(`${key}: agent finished without output: ${reply.text.slice(0, 500)}`);
+  const data = reply?.data ?? streamed;
+  const output = data[key]?.at(-1) as T | undefined;
+  if (!output) throw new Error(`${key}: agent finished without output: ${reply?.text.slice(0, 500)}`);
   return {
     output,
-    data: reply.data,
-    usage: (reply.metadata?.usage ?? {}) as Usage,
+    data,
+    // ponytail: an aborted run reports no usage; read it from the conversation if cost tracking needs it.
+    usage: (reply?.metadata?.usage ?? {}) as Usage,
     metrics: {
       conversation_id: handle.id,
       model: initialData.model,
       elapsed_ms: Date.now() - startedAt,
-      tool_calls: reply.metadata?.toolCalls ?? [],
+      tool_calls: reply?.metadata?.toolCalls ?? [],
       rejections,
     },
   };
@@ -139,6 +149,48 @@ function supabase({ SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY }: Env["Bindings"]) 
 
 const isUuid = (id: unknown): id is string => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id);
 
+type Db = NonNullable<ReturnType<typeof supabase>>;
+
+// One day's saved source rows as the interpreter's message. Null when the daily core does not exist.
+async function loadDay(db: Db, dailyCoreId: string) {
+  const coreRow = `daily_core_data?daily_core_id=eq.${dailyCoreId}`;
+  const [core] = await db<CoreMeta & { workspace_id: string; last_generation_no: number }>(coreRow);
+  if (!core) return null;
+  const rows = await db<SourceRow & { source_data_id: string }>(
+    `daily_core_source_data?daily_core_id=eq.${dailyCoreId}&select=source_data_id,source_type,source_ident,collection_status,normalized_json&order=source_type,source_ident`,
+  );
+  const input = buildAgentInput(rows, core.timezone);
+  const body = [
+    `Target: ${core.target_display_name} (${core.target_category})`,
+    `Date: ${core.core_date} (${core.timezone}, ${core.window_start_at} to ${core.window_end_at})`,
+    `People who wrote today: ${input.people.join(", ")}`,
+    "",
+    input.text,
+  ].join("\n");
+  return { coreRow, core, rows, input, body };
+}
+
+const runInterpreter = (
+  { core, input, body }: NonNullable<Awaited<ReturnType<typeof loadDay>>>,
+  interpreter: ReturnType<typeof promptData>,
+  conversations: string[],
+) =>
+  runAgent<Interpretation>(
+    CoreInterpreter,
+    "interpretation",
+    body,
+    {
+      refs: input.refs,
+      contextRefs: input.contextRefs,
+      botRefs: input.botRefs,
+      authors: input.authors,
+      texts: input.texts,
+      language: core.language,
+      ...interpreter,
+    },
+    conversations,
+  );
+
 const app = new Hono<Env>();
 
 const requireToken: MiddlewareHandler<Env> = async (c, next) => {
@@ -162,22 +214,9 @@ app.post("/core/generate", async (c) => {
   if (!isUuid(dailyCoreId)) return c.json({ error: "dailyCoreId must be a uuid" }, 400);
   const db = supabase(c.env);
   if (!db) return c.text("Supabase secrets are not set", 500);
-  const coreRow = `daily_core_data?daily_core_id=eq.${dailyCoreId}`;
-
-  const [core] = await db<CoreMeta & { workspace_id: string; last_generation_no: number }>(coreRow);
-  if (!core) return c.json({ error: "daily core not found" }, 404);
-  const rows = await db<SourceRow & { source_data_id: string }>(
-    `daily_core_source_data?daily_core_id=eq.${dailyCoreId}&select=source_data_id,source_type,source_ident,collection_status,normalized_json&order=source_type,source_ident`,
-  );
-
-  const input = buildAgentInput(rows, core.timezone);
-  const body = [
-    `Target: ${core.target_display_name} (${core.target_category})`,
-    `Date: ${core.core_date} (${core.timezone}, ${core.window_start_at} to ${core.window_end_at})`,
-    `People who wrote today: ${input.people.join(", ")}`,
-    "",
-    input.text,
-  ].join("\n");
+  const day = await loadDay(db, dailyCoreId);
+  if (!day) return c.json({ error: "daily core not found" }, 404);
+  const { coreRow, core, rows, input, body } = day;
   const inputStats = { ...input.counts, chars: body.length };
 
   const generationNo = core.last_generation_no + 1;
@@ -212,20 +251,7 @@ app.post("/core/generate", async (c) => {
 
   const conversations: string[] = [];
   try {
-    const call1 = await runAgent<Interpretation>(
-      CoreInterpreter,
-      "interpretation",
-      body,
-      {
-        refs: input.refs,
-        contextRefs: input.contextRefs,
-        botRefs: input.botRefs,
-        authors: input.authors,
-        language: core.language,
-        ...interpreter,
-      },
-      conversations,
-    );
+    const call1 = await runInterpreter(day, interpreter, conversations);
     const interpretation = call1.output;
     const call2 = await runAgent<Structuring>(
       CoreStructurer,
@@ -313,6 +339,41 @@ app.post("/core/generate", async (c) => {
       body: { last_error_code: "generation_failed", last_error_message: message, updated_at: finishedAt },
     });
     return c.json({ dailyCoreId, generationNo, status: "failed", error: message }, 500);
+  }
+});
+
+// Test only (interpreter quality work, flue/src/interpreter.run.ts): runs Call 1 on a saved day and
+// returns its output with the input it read. Writes nothing to the DB.
+app.post("/core/interpret", async (c) => {
+  const { dailyCoreId, model } = await c.req.json<{ dailyCoreId?: string; model?: string }>();
+  if (!isUuid(dailyCoreId)) return c.json({ error: "dailyCoreId must be a uuid" }, 400);
+  const db = supabase(c.env);
+  if (!db) return c.text("Supabase secrets are not set", 500);
+  const day = await loadDay(db, dailyCoreId);
+  if (!day) return c.json({ error: "daily core not found" }, 404);
+  const [prompt] = await resolvePrompts(c.env, [CORE_INTERPRETER_PROMPT]);
+  const interpreter = promptData(prompt, model);
+  const startedAt = Date.now();
+  try {
+    const call1 = await runInterpreter(day, interpreter, []);
+    return c.json({
+      status: "succeeded",
+      coreDate: day.core.core_date,
+      promptVersion: prompt.version,
+      model: interpreter.model,
+      thinkingLevel: interpreter.thinkingLevel,
+      elapsedMs: Date.now() - startedAt,
+      usage: call1.usage,
+      metrics: call1.metrics,
+      stats: interpretationStats(call1.output, day.input),
+      interpretation: call1.output,
+      droppedActors: call1.data.droppedActors?.at(-1) ?? [],
+      review: call1.data.review?.at(-1) ?? null,
+      input: { body: day.body, authors: day.input.authors },
+    });
+  } catch (error) {
+    const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
+    return c.json({ status: "failed", promptVersion: prompt.version, error: message }, 500);
   }
 });
 
