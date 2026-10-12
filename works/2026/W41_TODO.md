@@ -2,14 +2,11 @@
 
 Daily Core E2E(Phase 0~4) 완료 이후 할 일. 한 일은 `W41.md`, E2E 경과는 `works/daily-core-e2e.md`.
 
+남은 것과 끝난 것을 나눠 적는다. 섹션 번호(1-1, 3-2 등)는 다른 문서가 가리키므로 두 부분에서 같게 쓴다.
+
+# 남은 것
+
 ## 1. 지금 우선
-
-### 1-1. Agent 분리
-
-- [x] Agent 분리: 지금의 단일 Agent(`DailyCore`)를 `app/features/daily-core/dev/02-pipeline-architecture.md`의 3개 역할(Signal Extractor → Core Interpreter → Core Structurer)로 나눈다. 계약은 `app/features/daily-core/contracts/agent-io.ts`. 품질 개선(항목 간 중복 등)과도 이어진다.
-  - v1은 호출 2회: Call 1 Extraction+Interpretation, Call 2 Structuring(문서 권장). 3회 분리는 단계별 추적이 필요해지면.
-  - Call 2 출력 스키마를 정할 때 각 배열이 `daily_core_items`의 어떤 `item_type`이 될지 메모해 둔다(projection에서 씀).
-  - Phase별 계획과 확인 기록: `works/daily-core-agent-split.md`.
 
 ### 1-2. items projection
 
@@ -23,33 +20,19 @@ Daily Core E2E(Phase 0~4) 완료 이후 할 일. 한 일은 `W41.md`, E2E 경과
 
 - [ ] metrics projection: `core_json`의 metrics를 `daily_core_metrics`에 저장한다. metrics는 merge에서 코드로 계산하므로 Agent 분리와 상관없이 언제든 할 수 있음. items와 같은 이유로 보류(읽는 코드 없음), 할 때 items와 함께.
 
-## 2. Daily Report
+## 2. Daily Report 후속
 
-- [ ] Daily Report: Daily Core를 받아 리포트를 만든다. 다음 할 일. `daily_core_data.current_generation_no`가 가리키는 `daily_core_generations.core_json`을 직접 읽는다(projection 없이).
-  - Phase별 계획과 확인 기록: `works/daily-report.md`. 테스트 데이터는 run 21(generation 5), Core는 다시 만들지 않음.
-  - [x] Phase 0 형식: 코드 렌더(LLM 0회)로 markdown / html을 만들어 보고, LLM이 필요한지 정한다. 사용자 결정(2026-10-11): LLM에 섹션 압축·흐름 연결까지 맡김, 멤버 섹션은 그대로, 활동 없는 날도 보냄.
-  - [x] Phase 1 Report Agent: 오프닝, highlights / progress / topics 압축·연결, 마무리. 멤버·숫자 섹션은 코드 렌더 그대로. 출력은 문단마다 근거 `item_ids`, 링크·HTML은 코드가 붙임. 활동 없는 날은 모델 안 부름. v2 → v3(고정 섹션 + 결과 제목 + 今日のポイント) → v4(인용·담당자·다음 단계). 사용자가 Writer v4로 Phase 2 진행을 결정(2026-10-11).
-    - 결과에 따라 뒤에 `DailyReportFinalizer`(문장·흐름 다듬기)를 붙일 수 있음(사용자). 같은 초안 구조를 받아 문장만 고치고 `item_ids`는 유지.
-    - Finalizer 구현·2회 실행 끝(2026-10-11, v2 $0.0085). 오프닝·points만 나아지고 entry 대부분 그대로. 사용자 결정으로 기본으로 켬(`finalize: false`면 끔). 나중에 톤 바꾸기 같은 고도화된 편집을 맡길 자리.
-    - [x] 품질 개선 1차(사용자 선택: 인용 / Core 필드 / Writer 톤): Core가 evidence `author` / `excerpt`, item `owners` / `next_steps`를 남기고, Writer v4가 인용 id·담당자·다음 단계를 씀. Core run 22 + run p1-6($0.011). Finalizer 규칙은 Writer로 옮김.
-    - [x] 인용 정리(코드만): 멘션·링크 마크업·이모지 코드·취소선 제거, 커밋·양식 보고 줄 제외, 15~120자. run p1-7.
-    - [x] `next_steps`가 비는 문제: `next_step`을 최상위 필수 `string | null`로(`core-interpreter-v7`). Core run 23에서 모든 item에 채워짐.
-    - [x] 근거 없는 `next_step`: `core-interpreter-v8`("null이 보통", 추측·조건부 금지). Core run 24에서 16개 중 8개만 채워지고 조건부·"記載なし"류 없음.
-  - [x] Phase 2 `daily_reports` 테이블: migration `0044`, `/report/generate` 저장(`dryRun` 제거). 에이전트 확인 끝(2026-10-11, report 1~4), 사용자가 행 확인 후 Phase 3로.
-    - [ ] failed 행의 `error_message`에 원인이 안 남음("[flue] Agent run failed"뿐). Core도 같은 `runAgent`. 필요해지면 Flue 이벤트에서 원인을 꺼냄.
-  - [x] Phase 3 메일 연결: `processTarget`이 수집 → `/core/generate` → 리포트 → `sendMails`. 즉시 발송 1회 성공(2026-10-11, 52초, $0.059), Worker를 끈 실패 경로에서 메일 없이 run `failed`, 링크 정상(사용자). Vercel 함수 시간은 Phase 4 배포에서 확인.
-    - [ ] 실패 문구: Worker 연결 실패가 "fetch failed"로만 남음. `flue.ts`의 `callFlue`에서 경로·주소를 붙여 감쌈.
-    - [ ] 실패 run 기록: `finished_at`이 null, step이 `collect_data`에 머묾(이전부터의 동작). step enum 정리(3-4)와 같이.
-  - [x] 메일 1회 발송 보장: daily core(Target × 날짜)당 메일 1번. Phase 3 뒤 별도 작업, **Phase 4 배포 전 필수**(사용자, 2026-10-11). 구현·확인 끝(2026-10-11, migration `0045`, 이미 보낸 날짜의 즉시 발송이 수집 전에 건너뜀). `DAILY_MAIL_FORCE=1` 실제 재발송은 안 해 봄.
-    - `newsletter_editions`에 `daily_core_id` / `daily_report_id` 추가, `status`가 `sending` / `delivered` / `partial`인 행에만 `daily_core_id` unique 부분 인덱스.
-    - `sendMails` 순서 변경: Resend 호출 전에 `sending` 행 insert(충돌하면 건너뜀) → 발송 → `delivered` / `failed`로 갱신. `failed`는 인덱스에서 빠져 재시도 가능.
-    - 이미 보낸 날짜면 `processTarget`이 Core·리포트 생성 전에 건너뜀.
-    - 정책: Cron·즉시 발송 모두 건너뜀, 다시 보내기는 명시적 `force`(테스트용)만. 보낼 리포트는 그 실행의 `reportId`.
-  - [ ] Phase 4 배포·정리: Worker 배포, `TestAgent` 제거(4-3과 같이).
-  - [ ] 메일 HTML 디자인 고도화(사용자, 2026-10-11). 지금은 `daily-report.ts`의 인라인 스타일 문자열(Phase 0부터 "꾸밈은 나중").
-    - 참고: `sample/final.html`, React Email은 `transactional-emails/`에 별도 패키지로만 있음(Worker에서 쓸지 정함).
-    - 확인 범위: Gmail 웹·모바일, 다크 모드, 휴대폰 폭(지금 약 4화면), 머리·꼬리(브랜드, 수신 설정 링크).
-    - 렌더만 바꾸는 작업이라 모델 재실행 없이 저장된 `daily_reports.agent_output_json.draft`로 다시 렌더해서 비교. 바꾸면 `REPORT_FORMAT_VERSION` 올림.
+Daily Report 계획(Phase 0~4)은 끝남(아래 "끝난 것"). 경과는 `works/daily-report.md`.
+
+- [ ] 앱 Vercel 첫 배포: 전용 문서 `works/vercel-deploy.md`(도메인, 환경변수, Slack 토큰 조회, 함수 시간 실측).
+- [ ] GitHub 토큰이 앱 로그에 평문으로 찍힘: `app/core/integrations/github/run.ts`의 `console.log('createOctokit with token', cfg.token)`(이전부터). 토큰을 빼고, 이미 찍힌 토큰은 교체할지 정함(2026-10-11 발견).
+- [ ] 메일 HTML 디자인 고도화(사용자, 2026-10-11). 지금은 `daily-report.ts`의 인라인 스타일 문자열(Phase 0부터 "꾸밈은 나중").
+  - 참고: `sample/final.html`, React Email은 `transactional-emails/`에 별도 패키지로만 있음(Worker에서 쓸지 정함).
+  - 확인 범위: Gmail 웹·모바일, 다크 모드, 휴대폰 폭(지금 약 4화면), 머리·꼬리(브랜드, 수신 설정 링크).
+  - 렌더만 바꾸는 작업이라 모델 재실행 없이 저장된 `daily_reports.agent_output_json.draft`로 다시 렌더해서 비교. 바꾸면 `REPORT_FORMAT_VERSION` 올림.
+- [ ] 실패 문구: Worker 연결 실패가 "fetch failed"로만 남음. `flue.ts`의 `callFlue`에서 경로·주소를 붙여 감쌈(Phase 3에서 발견).
+- [ ] 실패 run 기록: `finished_at`이 null, step이 `collect_data`에 머묾(이전부터의 동작). step enum 정리(3-4)와 같이.
+- [ ] failed 리포트 행의 `error_message`에 원인이 안 남음("[flue] Agent run failed"뿐). Core도 같은 `runAgent`. 필요해지면 Flue 이벤트에서 원인을 꺼냄(Phase 2에서 발견).
 
 ## 3. 나중에 천천히
 
@@ -127,12 +110,42 @@ Phase 1에서 남긴 것의 원문은 `works/daily-core-agent-split.md`.
 
 ### 4-1. Cron 연결
 
-- [ ] Cron 연결(매일 자동 수집·생성). 붙일 때 Vercel 배포 환경의 Slack 시크릿 조회도 확인(로컬은 `.env`의 `SLACK_BOT_TOKEN`으로 대신 돌았음).
+- [ ] Cron 연결(매일 자동 수집·생성). Vercel 배포(`works/vercel-deploy.md`) 뒤에. 배포 환경의 Slack 시크릿 조회는 그 문서에서 확인(로컬은 `.env`의 `SLACK_BOT_TOKEN`으로 대신 돌았음).
 
 ### 4-2. fetch 실패 구분
 
 - [ ] fetch 실패 구분(`partial`).
 
-### 4-3. `TestAgent` 제거
+# 끝난 것
 
-- [ ] `TestAgent` 제거: 앱 `FLUE_AGENT_URL`(`/agents/test`)이 기존 메일 발송에 쓰고 있어서, 메일 경로를 바꾼 뒤에.
+## 1-1. Agent 분리
+
+- [x] Agent 분리: 지금의 단일 Agent(`DailyCore`)를 `app/features/daily-core/dev/02-pipeline-architecture.md`의 3개 역할(Signal Extractor → Core Interpreter → Core Structurer)로 나눈다. 계약은 `app/features/daily-core/contracts/agent-io.ts`. 품질 개선(항목 간 중복 등)과도 이어진다.
+  - v1은 호출 2회: Call 1 Extraction+Interpretation, Call 2 Structuring(문서 권장). 3회 분리는 단계별 추적이 필요해지면.
+  - Call 2 출력 스키마를 정할 때 각 배열이 `daily_core_items`의 어떤 `item_type`이 될지 메모해 둔다(projection에서 씀).
+  - Phase별 계획과 확인 기록: `works/daily-core-agent-split.md`.
+
+## 2. Daily Report
+
+- [x] Daily Report: Daily Core를 받아 리포트를 만든다. `daily_core_data.current_generation_no`가 가리키는 `daily_core_generations.core_json`을 직접 읽는다(projection 없이). Phase 0~4 끝(2026-10-11).
+  - Phase별 계획과 확인 기록: `works/daily-report.md`. 테스트 데이터는 run 21(generation 5), Core는 다시 만들지 않음.
+  - [x] Phase 0 형식: 코드 렌더(LLM 0회)로 markdown / html을 만들어 보고, LLM이 필요한지 정한다. 사용자 결정(2026-10-11): LLM에 섹션 압축·흐름 연결까지 맡김, 멤버 섹션은 그대로, 활동 없는 날도 보냄.
+  - [x] Phase 1 Report Agent: 오프닝, highlights / progress / topics 압축·연결, 마무리. 멤버·숫자 섹션은 코드 렌더 그대로. 출력은 문단마다 근거 `item_ids`, 링크·HTML은 코드가 붙임. 활동 없는 날은 모델 안 부름. v2 → v3(고정 섹션 + 결과 제목 + 今日のポイント) → v4(인용·담당자·다음 단계). 사용자가 Writer v4로 Phase 2 진행을 결정(2026-10-11).
+    - 결과에 따라 뒤에 `DailyReportFinalizer`(문장·흐름 다듬기)를 붙일 수 있음(사용자). 같은 초안 구조를 받아 문장만 고치고 `item_ids`는 유지.
+    - Finalizer 구현·2회 실행 끝(2026-10-11, v2 $0.0085). 오프닝·points만 나아지고 entry 대부분 그대로. 사용자 결정으로 기본으로 켬(`finalize: false`면 끔). 나중에 톤 바꾸기 같은 고도화된 편집을 맡길 자리.
+    - [x] 품질 개선 1차(사용자 선택: 인용 / Core 필드 / Writer 톤): Core가 evidence `author` / `excerpt`, item `owners` / `next_steps`를 남기고, Writer v4가 인용 id·담당자·다음 단계를 씀. Core run 22 + run p1-6($0.011). Finalizer 규칙은 Writer로 옮김.
+    - [x] 인용 정리(코드만): 멘션·링크 마크업·이모지 코드·취소선 제거, 커밋·양식 보고 줄 제외, 15~120자. run p1-7.
+    - [x] `next_steps`가 비는 문제: `next_step`을 최상위 필수 `string | null`로(`core-interpreter-v7`). Core run 23에서 모든 item에 채워짐.
+    - [x] 근거 없는 `next_step`: `core-interpreter-v8`("null이 보통", 추측·조건부 금지). Core run 24에서 16개 중 8개만 채워지고 조건부·"記載なし"류 없음.
+  - [x] Phase 2 `daily_reports` 테이블: migration `0044`, `/report/generate` 저장(`dryRun` 제거). 에이전트 확인 끝(2026-10-11, report 1~4), 사용자가 행 확인 후 Phase 3로.
+  - [x] Phase 3 메일 연결: `processTarget`이 수집 → `/core/generate` → 리포트 → `sendMails`. 즉시 발송 1회 성공(2026-10-11, 52초, $0.059), Worker를 끈 실패 경로에서 메일 없이 run `failed`, 링크 정상(사용자). Vercel 함수 시간은 `works/vercel-deploy.md`에서 확인.
+  - [x] 메일 1회 발송 보장: daily core(Target × 날짜)당 메일 1번. Phase 3 뒤 별도 작업, **Phase 4 배포 전 필수**(사용자, 2026-10-11). 구현·확인 끝(2026-10-11, migration `0045`, 이미 보낸 날짜의 즉시 발송이 수집 전에 건너뜀). `DAILY_MAIL_FORCE=1` 재발송은 Phase 4에서 확인(edition `forced = true`, `period_key = 20261009_1`).
+    - `newsletter_editions`에 `daily_core_id` / `daily_report_id` 추가, `status`가 `sending` / `delivered` / `partial`인 행에만 `daily_core_id` unique 부분 인덱스.
+    - `sendMails` 순서 변경: Resend 호출 전에 `sending` 행 insert(충돌하면 건너뜀) → 발송 → `delivered` / `failed`로 갱신. `failed`는 인덱스에서 빠져 재시도 가능.
+    - 이미 보낸 날짜면 `processTarget`이 Core·리포트 생성 전에 건너뜀.
+    - 정책: Cron·즉시 발송 모두 건너뜀, 다시 보내기는 명시적 `force`(테스트용)만. 보낼 리포트는 그 실행의 `reportId`.
+  - [x] Phase 4 Worker 배포·정리: Worker 배포(`9ffc1d15`), 배포본 단독(report 6), 로컬 앱을 배포본에 붙여 `DAILY_MAIL_FORCE=1`로 10-09 재발송(74초, $0.080, 메일 수신) → 제거 후 건너뜀, 앱 쪽 예전 경로 정리(4-3). Vercel 배포는 뺌, `TestAgent`는 남김(사용자, 2026-10-11).
+
+## 4-3. 예전 메일 경로(`TestAgent`) 정리
+
+- [x] 앱 쪽 정리(Daily Report Phase 4, 2026-10-11): `create-contents.tsx`와 `FLUE_AGENT_URL` 삭제. Worker의 `TestAgent`는 지우지 않고 배포 확인·실험용으로 남김(사용자).

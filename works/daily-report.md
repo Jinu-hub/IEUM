@@ -29,7 +29,7 @@ daily_core_data.current_generation_no → daily_core_generations.core_json
 
 이번에 안 하는 것
 
-- Weekly Report, 사람별 리포트, 웹 화면, Slack 통지 내용 변경(지금처럼 본문 앞 200자 미리보기), Cron 연결(TODO 4-1), 테스트 날짜 고정 제거(TODO 3-2), Core 품질 개선(TODO 3-3), 메일 HTML 디자인 고도화(TODO 2, 사용자 2026-10-11).
+- Weekly Report, 사람별 리포트, 웹 화면, Slack 통지 내용 변경(지금처럼 본문 앞 200자 미리보기), Cron 연결(TODO 4-1), 테스트 날짜 고정 제거(TODO 3-2), Core 품질 개선(TODO 3-3), 메일 HTML 디자인 고도화(TODO 2, 사용자 2026-10-11), 앱의 Vercel 배포(`works/vercel-deploy.md`, 사용자 2026-10-11).
 
 ---
 
@@ -244,7 +244,7 @@ LLM을 쓰면 필요(비용이 들고 실행마다 달라서 결과를 남겨야
   - 앱 환경변수: `FLUE_AGENT_URL`(`/agents/test`까지 포함된 주소) 대신 Worker 기본 주소 `FLUE_BASE_URL`. `works/env.md` 갱신.
   - Core 생성이 실패하면 메일을 보내지 않고 run을 에러로 닫는다(지금의 `closeRun`).
   - `sendMails`에 `{ finalContents: markdown, htmlContents: html }`, 제목은 리포트 `subject`, `period: daily`. Slack 통지는 그대로(markdown 앞 200자).
-- 확인할 것: 즉시 발송은 클라이언트가 Vercel `POST /api/cron/send-now/run`을 동기로 부름(Railway worker 전환은 아직 주석). Core 42~150초 + 리포트가 Vercel 함수 시간 안에 들어가는지. 넘으면 Worker가 Core 뒤에 리포트까지 이어서 하고 Vercel은 결과만 받는 방식으로 바꾼다.
+- 확인할 것: 즉시 발송은 클라이언트가 Vercel `POST /api/cron/send-now/run`을 동기로 부름(Railway worker 전환은 아직 주석). Core 42~150초 + 리포트가 Vercel 함수 시간 안에 들어가는지. 넘으면 Worker가 Core 뒤에 리포트까지 이어서 하고 Vercel은 결과만 받는 방식으로 바꾼다. → Vercel 배포를 분리하면서(2026-10-11) `works/vercel-deploy.md`로 옮김.
 - 보낼 리포트는 그 실행에서 `/report/generate`가 돌려준 `reportId`의 HTML. "가장 큰 `report_no`의 succeeded"를 다시 찾지 않음.
 
 이번 Phase에서 안 하는 것: 메일 1회 발송 보장(사용자, 2026-10-11) → Phase 3 뒤 별도로 구현함(아래 "메일 1회 발송 보장")
@@ -273,7 +273,7 @@ LLM을 쓰면 필요(비용이 들고 실행마다 달라서 결과를 남겨야
     - `processTarget`: `createContents`(TestAgent) 대신 위 함수. 실패하면 throw라 기존 `catch`(run 에러로 닫기)로 가고 메일은 안 나감. 메일 본문은 리포트 `markdown` / `html`, `period: daily`, 기간 키는 Core 날짜의 UTC 자정으로(`20261009`. 창 시작 시각으로 만들면 도쿄에서는 전날이 됨). run `metrics_json`에 daily core id, generation 번호, report id / 번호, 단계별 시간, 비용, `accurated_tokens`에 Core + 리포트 토큰 합.
     - `sendMails`: 두 번째 인자가 표시 이름 대신 제목(리포트 `subject`).
     - `SLACK_NOTIFY=0`이면 팀 Slack 채널 알림을 안 올림(사용자 결정: 테스트 때 실제 팀 채널에 "Newsletter sent"가 올라가지 않게). 루트 `.env`에 넣음.
-    - `create-contents.tsx`는 호출처가 없어졌지만 Phase 4에서 `TestAgent`와 같이 지움(계획대로). 앱 `FLUE_AGENT_URL`도 그때.
+    - `create-contents.tsx`는 호출처가 없어졌지만 Phase 4에서 `TestAgent`와 같이 지움(계획대로). 앱 `FLUE_AGENT_URL`도 그때. (Phase 4에서 `TestAgent`는 남기고 이 둘만 지움.)
   - 검사: 앱 `tsc`는 `works/out/daily-core-templates.v6.ts`의 기존 오류 1개뿐.
   - 실행(사용자가 로컬 앱에서 즉시 발송, 로컬 Worker): run `1ae9421b…` success, 메일 도착(사용자).
     - DB: `daily_core_data d36d689e…` 재수집 → generation 9 succeeded → report 5 succeeded(`core_generation_no = 9`, Writer v4 + Finalizer v2, 반려 0) → `newsletter_editions` `70c6e09f…`(`delivered`, `period = daily`, `period_key = 20261009`, 제목 "D_G_S開発チーム Daily Report 2026-10-09", HTML 20,935자 / text 8,014자).
@@ -319,21 +319,48 @@ LLM을 쓰면 필요(비용이 들고 실행마다 달라서 결과를 남겨야
 
 ---
 
-## Phase 4. 배포·정리
+## Phase 4. Worker 배포·정리 (Vercel 배포 제외)
 
-만들 것
+범위 변경(사용자, 2026-10-11): 앱은 아직 Vercel에 배포된 적이 없고, IEUM으로서 첫 배포라 도메인 확보 등 별도 작업이 많아서 **Vercel 배포는 이 계획에서 뺀다**. 전용 문서 `works/vercel-deploy.md`. Phase 4는 Worker 배포와 정리만 하고, 확인은 로컬 앱을 배포된 Worker에 붙여서 함(W41 배포 확인 Phase 3에서 `FLUE_AGENT_URL`을 배포 주소로 바꿔 시험한 것과 같은 방식).
 
-- 선행: 메일 1회 발송 보장(위). 끝남(2026-10-11).
-- Worker 배포, Vercel에 `FLUE_BASE_URL`.
-- `TestAgent` 제거(TODO 4-3): `flue/src/agents/test-agent.ts`, `/agents/test` 라우트, `createContents`의 `askTestAgent`. Durable Object 클래스 삭제는 migration `deleted_classes`(Core 분리 Phase 3과 같은 방법).
+- `TestAgent`는 **지우지 않고 남김**(사용자, 2026-10-11, 처음 계획은 제거). 호출처가 없어서 비용이 안 들고, 같은 토큰으로 막혀 있어 위험도 늘지 않음. 한 문장만 만들고 DB에 아무것도 안 남겨서 배포 직후 Worker·OpenAI 확인용으로 쓸 수 있고, 나중에 새 Flue 기능을 시험할 자리로 둠. 지우려면 migration `deleted_classes`가 필요하고 되돌릴 수 없음. 앱 쪽의 죽은 코드(`create-contents.tsx`, `FLUE_AGENT_URL`)만 정리.
+- 테스트 날짜(사용자): `DAILY_CORE_TEST_DATE = 2026-10-09`를 그대로 두고 `DAILY_MAIL_FORCE=1`로 다시 보냄. 10-09는 이미 발송돼서 그냥 누르면 가드에 막힘. 날짜 고정 제거(TODO 3-2)는 이 Phase에 넣지 않음.
+- Slack 알림(사용자): 당분간 끔(`SLACK_NOTIFY=0`, 루트 `.env`에 이미 있음).
+- 함수 시간: Vercel은 Fluid compute(300초 이상, 사용자). 로컬에서 52초라 지금 구조(Vercel → Core → 리포트 순차 호출) 유지. 실측은 Vercel 배포 문서에서.
+
+만들 것 / 할 것 (순서)
+
+1. Worker 배포: `flue/`에서 `npm run deploy`(방법은 `works/env.md`). 배포본은 Core 분리 시점(`3785a2d3…`) 이후 버전이라 `/report/generate`와 migration v6(`FlueDailyReportWriterAgent`), v7(`FlueDailyReportFinalizerAgent`)이 새로 올라감. 시크릿은 기존 4개(`OPENAI_API_KEY`, `FLUE_API_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`) 그대로.
+2. 배포본 단독 확인(메일 없음): 배포본 `/report/generate`를 `dailyCoreId = d36d689e…`로 1회 호출 → report 6(약 $0.02). 앱을 붙이기 전에 Worker 쪽 문제를 따로 거름.
+3. 로컬 앱을 배포본에 연결: 루트 `.env`에 `FLUE_BASE_URL=https://ieum-flue.jinu30dev.workers.dev`(끝 `/` 없이), `DAILY_MAIL_FORCE=1`. 앱 개발 서버 재시작(`.env`는 시작할 때만 읽음).
+4. 로컬 Worker를 끈 채로 즉시 발송 1회(사용자): 재수집 → generation 10 → report 7 → edition `forced = true`, `period_key = 20261009_1`(약 $0.06). Cloudflare 로그(`npx wrangler tail ieum-flue`) 확인.
+5. `DAILY_MAIL_FORCE` 제거 → 앱 재시작 → 다시 즉시 발송(사용자): "already delivered"로 건너뜀(비용 0). `forced` 발송이 하루 1통 판정에 안 들어가고, 원래 발송(`70c6e09f…`)이 계속 막는지 확인.
+6. 앱 쪽 정리: `app/features/cron/api/create-contents.tsx`(라우트에 없고 import하는 곳도 없음) 삭제, 이 파일을 언급하던 `PROJECT_STRUCTURE.md`·`docs/legacy-newsletter-generation.md` 수정. `flue/README.md`의 `/agents/test` 줄은 "남겨 둠"으로. Worker 쪽은 그대로라 재배포 없음.
+7. 루트 `.env`의 `FLUE_AGENT_URL` 삭제, `works/env.md` 갱신. `FLUE_BASE_URL`은 배포본 주소로 둠(배포본이 최신이고 로컬 Worker를 안 띄워도 됨). Worker 코드를 로컬에서 고치며 시험할 때만 지움.
 
 에이전트 확인
 
-- [ ] 배포본으로 즉시 발송 1회 성공, Cloudflare 로그에 error 없음.
-- [ ] `/agents/test`가 404.
+- [x] Worker 배포 성공, 바인딩에 `FlueDailyReportWriterAgent` / `FlueDailyReportFinalizerAgent`.
+- [x] 배포본 `/report/generate` 단독 1회 succeeded.
+- [x] 로컬 앱 + 배포본 Worker로 즉시 발송 1회 성공(로컬 Worker 꺼진 상태), Cloudflare 로그에 error 없음. 시간·비용 기록(로컬 Worker 때 52초 / $0.059와 비교).
+- [x] `DAILY_MAIL_FORCE` 없이 다시 누르면 건너뜀.
+- [x] `create-contents.tsx` 삭제 후 앱 타입 검사에 새 오류 없음.
 
 사용자 확인
 
-- [ ] 배포본 메일을 받아 본다.
+- [x] 배포본 Worker로 만든 메일을 받아 본다(2026-10-11, 기대 결과대로).
 
 확인 기록
+
+- 2026-10-11 Worker 배포: version `9ffc1d15-aac5-4f18-9750-f9f9a8352237`. 바인딩 5개(CoreInterpreter, CoreStructurer, DailyReportWriter, DailyReportFinalizer, TestAgent). 시크릿은 그대로.
+  - 배포 직후 토큰을 붙여 `/report/generate`를 부르자 평문 `404 Not Found`(Hono 기본 응답, 핸들러의 404는 JSON). 잠시 뒤 토큰 없이 부르면 `/report/generate` 401로 새 버전이 응답했고, 같은 호출을 다시 하니 성공. 배포 직후 잠깐 이전 버전이 응답한 것으로 봄.
+- 배포본 단독: `/report/generate`(`d36d689e…`) → report 6 `cc6f8e3b…` succeeded, generation 9, Writer v4 + Finalizer v2, 14초(`elapsedMs` 12.8초), $0.018, 반려 0. 응답 원문 `works/out/daily-report-p4-deployed.json`.
+- 로컬 앱 연결: 루트 `.env`에 `FLUE_BASE_URL`(배포본 주소, 사용자가 이미 넣어 둠) 확인, `DAILY_MAIL_FORCE=1` 추가.
+- 강제 재발송(사용자, 로컬 Worker 끄고 앱 재시작): run `b72c0e51…` success.
+  - 재수집 128항목 → generation 10 → report 7 `9ca0796a…` → edition `20362c43…`(`delivered`, `forced = true`, `period_key = 20261009_1`). 원래 발송 `70c6e09f…`(`forced = false`)는 그대로. 메일 수신(사용자).
+  - 시간: 약 74초(수집 약 10초, Core 47.9초, 리포트 13.3초, 메일 0.7초). 비용 $0.080. 로컬 Worker 때(52초 / $0.059)보다 Core가 18초, 비용이 $0.02 늘었음. Core 한 번의 차이라 모델 응답 편차로 보고, 배포본이 느리다는 결론은 내지 않음. Vercel 함수 시간은 300초 이상이라 여유 있음.
+  - Cloudflare 로그(`wrangler tail`): `/core/generate`·`/report/generate` 각 1회, 전부 `Ok`, error 없음.
+  - Slack 알림은 `SLACK_NOTIFY=0`으로 꺼짐. 수집의 Slack 시크릿 조회는 여전히 `FunctionsHttpError`, `.env`의 `SLACK_BOT_TOKEN`으로 대신 받음(`works/vercel-deploy.md` 4).
+- 하루 1통 확인 준비: 루트 `.env`에서 `DAILY_MAIL_FORCE` 지움.
+- 건너뜀(사용자, 앱 재시작 후 즉시 발송): 수집 전에 `Target processing skipped: Daily mail for 2026-10-09 already delivered (edition 70c6e09f…)`. 강제 발송 `20362c43…`이 있어도 판정은 원래 발송으로 함.
+- 정리: `TestAgent`는 남기기로 함(위 범위 변경). `create-contents.tsx` 삭제, `FLUE_AGENT_URL` 삭제, `FLUE_BASE_URL`은 배포본 주소 유지.

@@ -288,7 +288,6 @@
 │   │   ├── cron/                          # Cron jobs
 │   │   │   └── api/
 │   │   │       ├── actions.tsx
-│   │   │       ├── create-contents.tsx
 │   │   │       ├── mailer.tsx
 │   │   │       ├── send-mails.tsx
 │   │   │       └── test-api.tsx

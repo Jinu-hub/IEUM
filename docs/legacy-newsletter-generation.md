@@ -1,6 +1,6 @@
 # 이전 뉴스레터 생성 (참고)
 
-`generateContents`를 제거하기 전의 주간 리포트 경로입니다. 지금은 `createContents`가 Flue `TestAgent` 한 문장을 메일로 보냅니다. 아래는 그 전에 만들던 형식입니다. 실제 산출물 예시는 `sample/`에 있습니다.
+`generateContents`를 제거하기 전의 주간 리포트 경로입니다. 지금은 Flue Worker가 Daily Core에서 만든 Daily Report를 메일로 보냅니다(`works/daily-report.md`). 아래는 그 전에 만들던 형식입니다. 실제 산출물 예시는 `sample/`에 있습니다.
 
 입력은 최근 7일 GitHub 저장소 활동과 Slack 채널 메시지입니다. 언어는 타겟의 `en` / `ko` / `ja`입니다. 기간 문자열은 `range`(예: `2026-9-30 ~ 2026-10-7`)입니다.
 
