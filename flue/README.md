@@ -1,35 +1,57 @@
 # ieum-flue
 
-Daily Core를 생성하는 Cloudflare Worker입니다. Flue(`@flue/runtime`) 런타임 위에서 Agent 두 개를 순서대로 호출합니다. 호출 순서는 코드가 정하고, 모델은 각 단계 안에서 판단만 합니다. 수집은 앱(Vercel) 쪽이 하고, 이 Worker는 수집된 데이터를 읽어 Core를 만들고 저장합니다.
+Daily Core와 Daily Report를 만드는 Cloudflare Worker입니다. Flue(`@flue/runtime`) 런타임 위에서 Agent를 순서대로 호출합니다. 호출 순서는 코드가 정하고, 모델은 각 단계 안에서 판단만 합니다. 수집과 메일 발송은 앱 쪽이 하고, 이 Worker는 수집된 데이터를 읽어 Core를 만들고, Core에서 리포트를 만들어 저장합니다.
+
+배포 주소는 `https://ieum-flue.jinu30dev.workers.dev`입니다. 앱은 아직 로컬에서만 돌고(Vercel 배포는 `works/vercel-deploy.md`), 루트 `.env`의 `FLUE_BASE_URL`로 이 주소를 부릅니다.
 
 ## 전체 흐름
 
 ```mermaid
 flowchart TD
-  A["앱: collect.run.ts<br/>(Slack / GitHub 수집)"] --> B[("Supabase<br/>daily_core_data<br/>daily_core_source_data")]
-  C["POST /core/generate"] --> D["app.ts"]
-  B --> D
-  D --> E["buildAgentInput<br/>입력 텍스트 만들기"]
-  E --> F["Call 1: CoreInterpreter<br/>core item 목록"]
-  F --> G["Call 2: CoreStructurer<br/>배열 배치"]
-  G --> H["resolveStructuring + buildCoreJson<br/>코드로 변환·병합"]
-  H --> I[("daily_core_generations<br/>core_json 저장, current 갱신")]
+  A["앱: processTarget(즉시 발송)<br/>또는 collect.run.ts"] -->|"Slack / GitHub 수집"| B[("Supabase<br/>daily_core_data<br/>daily_core_source_data")]
+  A -->|"POST /core/generate"| C["Core: CoreInterpreter → CoreStructurer<br/>→ 코드로 변환·병합"]
+  B --> C
+  C --> D[("daily_core_generations<br/>core_json, current 갱신")]
+  A -->|"POST /report/generate"| E["Report: DailyReportWriter → DailyReportFinalizer<br/>→ 코드로 렌더"]
+  D --> E
+  E --> F[("daily_reports<br/>subject / markdown / html")]
+  E -->|"응답의 subject / html"| G["앱: sendMails<br/>newsletter_editions, Resend"]
 ```
+
+앱의 메일 경로(`processTarget`)는 수집 뒤 `app/features/daily-core/flue.ts`로 `/core/generate` → `/report/generate`를 차례로 부르고, 리포트 응답의 `subject` / `markdown` / `html`을 메일로 보냅니다. 메일은 daily core(Target × 날짜)당 1통이며, 그 판정은 앱과 DB(`newsletter_editions`)가 합니다. Worker는 메일을 모릅니다.
+
+### Core (`/core/generate`)
 
 | 단계 | 누가 | 하는 일 |
 |---|---|---|
-| 0. 수집 | 앱 `app/features/daily-core/collect.run.ts` | Slack과 GitHub를 날짜 창 기준으로 모아 정규화하고 `daily_core_source_data.normalized_json`에 저장 |
+| 0. 수집 | 앱 `processTarget` / `app/features/daily-core/collect.run.ts` | Slack과 GitHub를 날짜 창 기준으로 모아 정규화하고 `daily_core_source_data.normalized_json`에 저장 |
 | 1. 읽기 | `app.ts` | Supabase REST(service role 키)로 `daily_core_data`와 수집 행을 읽음 |
 | 2. 입력 만들기 | `buildAgentInput` (코드) | 스레드를 묶고, 날짜 창 이전의 부모는 `(context)`로 표시, 봇 알림은 뺌(답글이 있는 부모는 유지). 각 줄에 ref(`S001`…)를 붙이고, ref별 작성자 표와 사람 목록을 만듦 |
 | 3. generation 행 생성 | `app.ts` | `processing` 상태로 만들고 파이프라인·프롬프트 버전, 모델, 입력 행 id를 기록 |
-| 4. Call 1 | `CoreInterpreter` (모델) | 하루를 사건 단위 core item으로 묶음 |
+| 4. Call 1 | `CoreInterpreter` (모델) | 하루를 사건 단위 core item으로 묶음. item마다 actor와 `next_step`(근거가 있을 때만, 없으면 null) |
 | 5. Call 2 | `CoreStructurer` (모델) | core item을 highlights / topics / progress_roadmap / member_activity에 배치하고 overview를 씀 |
-| 6. 변환·병합 | `resolveStructuring`, `buildCoreJson` (코드) | core item id를 근거 ref로 바꾸고(멤버는 본인이 쓴 줄만) importance, tags 등을 core item에서 채움. ref를 원본 항목(id, 시각, url)으로 바꾸고 meta, metrics, quality를 붙임 |
+| 6. 변환·병합 | `resolveStructuring`, `buildCoreJson` (코드) | core item id를 근거 ref로 바꾸고(멤버는 본인이 쓴 줄만) importance, tags, `payload.owners` / `payload.next_steps`를 core item에서 채움. ref를 원본 항목(id, 시각, url, 작성자, 200자 `excerpt`)으로 바꾸고 meta, metrics, quality를 붙임 |
 | 7. 저장 | `app.ts` | `core_json`, 단계별 원출력, 토큰, 시간, 반려 이유, stats를 저장하고 `succeeded`와 current를 갱신. 실패하면 `failed`로 남기고 current는 그대로 |
+
+### Report (`/report/generate`)
+
+| 단계 | 누가 | 하는 일 |
+|---|---|---|
+| 1. 읽기 | `app.ts` | `daily_core_data.current_generation_no`가 가리키는 generation의 `core_json`. current가 없으면 409 |
+| 2. 입력 만들기 | `writerInput`, `draftEvidence` (코드) | 이벤트 섹션(highlights / progress_roadmap / topics)의 item에 짧은 id(`H1`, `P1`, `T1`, 섹션 안에서 중요도 순)를 붙이고 담당자·다음 단계·인용 후보를 붙임. 인용 후보는 사람이 쓴 줄의 `excerpt`에서 Slack 마크업을 지우고 15~120자, 하루 보고 양식은 뺌 |
+| 3. report 행 생성 | `app.ts` | `daily_reports`에 다음 `report_no`, `processing` |
+| 4. Writer | `DailyReportWriter` (모델) | 오프닝, 今日のポイント(최대 3줄), 섹션별 entry(제목, 본문, 근거 `item_ids`, highlights의 `quote_ids`), 마무리 |
+| 5. Finalizer | `DailyReportFinalizer` (모델) | Writer 초안의 문장만 고침. 개수·섹션·`item_ids`·`quote_ids`는 그대로. `finalize: false`면 건너뜀 |
+| 6. 렌더 | `renderDailyReport` (코드) | 섹션 틀, 상태 아이콘, 근거 링크, 인용 원문, 멤버 섹션, 숫자(今日のKPI)를 코드가 붙여 제목 / markdown / 메일 HTML을 만듦 |
+| 7. 저장 | `app.ts` | 렌더 결과, 초안(`agent_output_json.draft`, Finalizer를 거쳤으면 `writer_draft`도), 토큰, 시간, stats를 저장하고 `succeeded`. 실패하면 `failed` |
+
+활동이 없는 날(`quality.status = "empty"`)은 모델을 부르지 않고 코드 렌더만 합니다. 현재 리포트는 따로 가리키지 않고 "가장 큰 `report_no`의 succeeded"로 읽습니다.
 
 ## Agent
 
-두 Agent 모두 할 수 있는 일은 제출 Tool 하나뿐입니다. 제출 Tool의 입력 스키마가 곧 출력 계약입니다. Tool의 `run`이 코드 검사를 하고, 문제가 있으면 이유와 함께 반려합니다. 모델은 같은 대화 안에서 고쳐 다시 제출합니다.
+모든 Agent는 할 수 있는 일이 제출 Tool 하나뿐입니다. 제출 Tool의 입력 스키마가 곧 출력 계약입니다. Tool의 `run`이 코드 검사를 하고, 문제가 있으면 이유와 함께 반려합니다. 모델은 같은 대화 안에서 고쳐 다시 제출합니다. 링크·HTML·상태 아이콘·인용 원문은 모델이 쓰지 않고 코드가 붙입니다.
+
+### Core
 
 | | `CoreInterpreter` (Call 1) | `CoreStructurer` (Call 2) |
 |---|---|---|
@@ -40,19 +62,39 @@ flowchart TD
 | 반려 대신 코드가 고치는 것 | 인용한 줄을 쓰지 않은 멤버 actor 제거(`dropUnwrittenActors`) | 없음 |
 | 결과 | `useDataWriter("interpretation")` | `useDataWriter("structuring")` |
 
-모델 기본값은 `app.ts`의 `DAILY_CORE_MODEL`이고, 추론 강도는 각 Agent의 `useModel(..., { thinkingLevel })`에 있습니다. 지시문 버전은 각 Agent 파일의 `*_PROMPT_VERSION`, 파이프라인 버전은 `app.ts`의 `PIPELINE_VERSION`이며 generation 행에 기록됩니다.
+### Report
 
-반려는 재제출마다 모델이 JSON 전체를 다시 내므로 비용이 큽니다. 그래서 `runAgent`가 스트림의 반려(`tool-output-error`, 스키마 실패 포함)를 세다가 `MAX_REJECTIONS`에 이르면 `handle.abort()`로 멈춥니다. 이 경우 generation은 `failed`가 됩니다.
+| | `DailyReportWriter` | `DailyReportFinalizer` |
+|---|---|---|
+| 파일 | `src/agents/daily-report-writer.ts` | `src/agents/daily-report-finalizer.ts` |
+| 입력 | target, 날짜, overview, item(id, 섹션, 제목, 요약, 상태, 중요도, 담당자, 다음 단계, 인용 후보) | Writer와 같은 item + Writer 초안 |
+| 제출 Tool | `submit_report` (스키마 `ReportDraft`) | `submit_report` (스키마 `ReportDraft`) |
+| 반려하는 문제(`draftProblems`) | 모르는 item id, 자기 섹션 item을 인용하지 않은 entry, 인용 안 된 highlight, 입력에 없는 티켓 번호, highlights 밖의 인용, 그 entry의 item이 내놓지 않은 인용 id | 왼쪽 전부 + 구조 변경(개수·순서·섹션·`item_ids`·`quote_ids`, `structureProblems`), 제목·포인트 앞의 상태 라벨(【進行中】 등, `labelProblems`) |
+| 결과 | `useDataWriter("draft")` | `useDataWriter("draft")` |
+
+모델 기본값은 `app.ts`의 `DAILY_CORE_MODEL`, `REPORT_MODEL`이고(둘 다 `openai/gpt-5.4-mini`), 추론 강도는 각 Agent의 `useModel(..., { thinkingLevel: "low" })`에 있습니다. 버전은 행에 기록됩니다.
+
+| 버전 | 위치 | 기록되는 곳 |
+|---|---|---|
+| 파이프라인 `PIPELINE_VERSION` | `app.ts` | generation |
+| Core 지시문 `CORE_INTERPRETER_PROMPT_VERSION` + `CORE_STRUCTURER_PROMPT_VERSION` | 각 Agent 파일 | generation `prompt_version` |
+| `core_json` 스키마 `CORE_SCHEMA_VERSION` | `daily-core.ts` | generation |
+| 리포트 렌더 `REPORT_FORMAT_VERSION` | `daily-report.ts` | report `format_version` |
+| 리포트 지시문 `DAILY_REPORT_WRITER_PROMPT_VERSION` + `DAILY_REPORT_FINALIZER_PROMPT_VERSION` | 각 Agent 파일 | report `prompt_version`(저장된 초안을 받았으면 `given-draft`) |
+
+반려는 재제출마다 모델이 JSON 전체를 다시 내므로 비용이 큽니다. 그래서 `runAgent`가 스트림의 반려(`tool-output-error`, 스키마 실패 포함)를 세다가 `MAX_REJECTIONS`(2)에 이르면 `handle.abort()`로 멈춥니다. 이 경우 generation이나 report는 `failed`가 됩니다.
+
+`TestAgent`(`src/agents/test-agent.ts`)는 한 문장만 만드는 Agent입니다. 앱에서 부르는 곳은 없고, 배포 직후 확인과 새 Flue 기능 시험용으로 남겨 두었습니다.
 
 ## 파일
 
 | 파일 | 역할 |
 |---|---|
 | `src/app.ts` | Hono 라우트, 인증, Supabase 읽기·쓰기, Agent 실행 순서 |
-| `src/daily-core.ts` | 모델 바깥의 규칙: 입력 만들기, 스키마, 검사, 보정, 변환, `core_json` 병합, 지표 |
+| `src/daily-core.ts` | Core의 모델 바깥 규칙: 입력 만들기, 스키마, 검사, 보정, 변환, `core_json` 병합, 지표 |
 | `src/daily-core.check.ts` | 위 규칙의 assert 테스트. 모델 없이 돌아감 |
-| `src/daily-report.ts` | `core_json` → Daily Report(제목, markdown, 메일 HTML). Writer 입력·초안 스키마·검사, 렌더(초안이 있으면 이벤트 섹션을 대신함) |
-| `src/daily-report.check.ts` | 렌더의 assert 테스트 |
+| `src/daily-report.ts` | `core_json` → Daily Report. Writer 입력·인용 후보·초안 스키마·검사, 렌더(제목, markdown, 메일 HTML. 초안이 있으면 이벤트 섹션을 초안으로 대신함) |
+| `src/daily-report.check.ts` | 리포트 규칙·렌더의 assert 테스트 |
 | `src/daily-report.run.ts` | 저장된 `core_json`(또는 `/core/generate` 응답)을 `.md` / `.html`로 렌더 |
 | `src/agents/*.ts` | Agent 지시문과 제출 Tool 연결 |
 | `wrangler.jsonc` | Worker 설정과 Durable Object migration(Agent 추가·삭제마다 한 줄) |
@@ -63,7 +105,7 @@ flowchart TD
 |---|---|
 | `"use agent"` + Agent 함수 | Agent 하나가 Durable Object 클래스 하나(`Flue<Name>Agent`)가 됨 |
 | `useModel(model, { thinkingLevel })` | 모델과 추론 강도 |
-| `useInitialData` | 검사에 필요한 데이터(ref 목록, 작성자 표 등) 전달 |
+| `useInitialData` | 검사에 필요한 데이터(ref 목록, 작성자 표, 리포트 item id·인용 id, Finalizer의 원래 초안 등) 전달 |
 | `useTool` (Valibot 스키마) | 제출 Tool. 스키마 검증 실패는 `run`까지 오지 않고 바로 반려됨 |
 | `useDataWriter` | 검사를 통과한 결과를 구조화 데이터로 꺼냄 |
 | `useAgentFinish` | 제출 없이 끝내려 하면 제출하라는 신호를 넣음 |
@@ -75,21 +117,21 @@ Skill, Subagent, MCP, Sandbox, 데이터 조회 Tool, Workers AI 바인딩은 �
 
 ## 엔드포인트
 
+`GET /` 말고는 모두 Bearer 토큰(`FLUE_API_TOKEN`)이 필요합니다.
+
 | 경로 | 내용 |
 |---|---|
 | `GET /` | 헬스 체크 |
-| `POST /core/generate` | 본문 `{ dailyCoreId, model? }`. Bearer 토큰(`FLUE_API_TOKEN`) 필요. 응답에 stats, 토큰, 호출별 시간·반려 이유, `coreJson` |
-| `POST /report/generate` | 본문 `{ dailyCoreId, model?, finalize?, draft? }`. 현재 generation의 `core_json`으로 `DailyReportWriter` 실행, `daily_reports`에 다음 `report_no`로 저장(processing → succeeded / failed)하고 `reportId`, `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. 기본으로 뒤에 `DailyReportFinalizer`(문장만 고침, 응답에 `writerDraft`)가 돌고, `finalize: false`면 Writer만. `draft`(저장된 Writer 초안)를 주면 Writer를 건너뜀. 활동 없는 날은 모델 없이 코드 렌더. 현재 generation이 없으면 409(행 안 만듦) |
-| `/agents/test/*` | `TestAgent`(한 문장 생성, DB 기록 없음). 배포 직후 Worker와 OpenAI 호출 확인, 새 Flue 기능 시험용으로 남겨 둠. 앱에서 부르는 곳은 없음 |
-
-앱의 메일 경로(`processTarget`)는 `app/features/daily-core/flue.ts`로 `/core/generate` → `/report/generate`를 차례로 부르고, 리포트의 `subject` / `markdown` / `html`을 메일로 보낸다.
+| `POST /core/generate` | 본문 `{ dailyCoreId, model? }`. 다음 generation을 만들어 저장하고 current로 함. 응답에 stats, 토큰, 호출별 시간·반려 이유, `coreJson` |
+| `POST /report/generate` | 본문 `{ dailyCoreId, model?, finalize?, draft? }`. 현재 generation으로 리포트를 만들어 `daily_reports`에 다음 `report_no`로 저장하고 `reportId`, `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. 기본으로 Finalizer까지 돌고(응답에 `writerDraft`), `finalize: false`면 Writer만. `draft`(저장된 Writer 초안)를 주면 Writer를 건너뜀. 현재 generation이 없으면 409(행 안 만듦) |
+| `/agents/test/*` | `TestAgent`(한 문장 생성, DB 기록 없음) |
 
 ## 실행과 배포
 
 ```sh
 npm run dev                            # 로컬 Worker, http://localhost:8787
 npx tsx src/daily-core.check.ts        # 규칙 테스트 (flue/ 에서)
-npx tsx src/daily-report.check.ts      # 리포트 렌더 테스트
+npx tsx src/daily-report.check.ts      # 리포트 규칙·렌더 테스트
 npx tsx src/daily-report.run.ts <core.json> <out> [report.json]   # 리포트 미리보기 파일
 npx tsc --noEmit -p .                  # 타입 검사
 npm run deploy                         # vite build + wrangler deploy
@@ -97,12 +139,14 @@ npm run deploy                         # vite build + wrangler deploy
 
 - 로컬 시크릿은 `.dev.vars`: `OPENAI_API_KEY`, `FLUE_API_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`. 배포용 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`도 여기 둠.
 - 배포본 시크릿은 `wrangler secret put`으로 등록. 배포 방법은 `works/env.md`.
+- 앱이 로컬 Worker를 부르게 하려면 루트 `.env`의 `FLUE_BASE_URL`을 지우고 앱을 재시작(없으면 `http://localhost:8787`).
 - 모델 제공자 키는 Flue가 환경변수에서 찾음(`openai/...` → `OPENAI_API_KEY`). 코드에서 넘기지 않음.
 - Agent를 추가·삭제하면 `wrangler.jsonc` migrations에 `new_sqlite_classes` / `deleted_classes`를 한 줄 추가.
+- 배포 직후 잠깐은 이전 버전이 응답할 수 있음(라우트가 없으면 평문 `404 Not Found`).
 
 ## 아직 연결되지 않은 것
 
-- 수집부터 생성까지 매일 자동으로 도는 Cron. 지금은 수집(`collect.run.ts`)도 생성(`/core/generate`)도 수동.
+- 매일 자동으로 도는 Cron. 지금은 앱의 즉시 발송이 수집 → Core → 리포트 → 메일을 한 번에 돌리지만, 날짜는 `target-processing.ts`의 `DAILY_CORE_TEST_DATE`(`2026-10-09`)로 고정.
 - `core_json`을 `daily_core_items`, `daily_core_metrics` 테이블로 푸는 projection.
-- Daily Core를 읽어 리포트를 만드는 Daily Report.
-- Supabase 쓰기는 REST로 순서대로 함(트랜잭션 없음). 중간에 죽으면 generation이 `processing`으로 남음.
+- Supabase 쓰기는 REST로 순서대로 함(트랜잭션 없음). 중간에 죽으면 generation이나 report가 `processing`으로 남음.
+- 실패한 행의 `error_message`에는 원인이 잘 안 남음(대부분 "[flue] Agent run failed").
