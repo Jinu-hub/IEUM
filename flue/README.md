@@ -9,7 +9,7 @@ Daily Core와 Daily Report를 만드는 Cloudflare Worker입니다. Flue(`@flue/
 ```mermaid
 flowchart TD
   A["앱: processTarget(즉시 발송)<br/>또는 collect.run.ts"] -->|"Slack / GitHub 수집"| B[("Supabase<br/>daily_core_data<br/>daily_core_source_data")]
-  A -->|"POST /core/generate"| C["Core: CoreInterpreter → CoreStructurer<br/>→ 코드로 변환·병합"]
+  A -->|"POST /core/generate"| C["Core: (SignalExtractor →) CoreInterpreter → CoreStructurer<br/>→ 코드로 변환·병합"]
   B --> C
   C --> D[("daily_core_generations<br/>core_json, current 갱신")]
   A -->|"POST /report/generate"| E["Report: DailyReportWriter → DailyReportFinalizer<br/>→ 코드로 렌더"]
@@ -28,6 +28,7 @@ flowchart TD
 | 1. 읽기 | `app.ts` | Supabase REST(service role 키)로 `daily_core_data`와 수집 행을 읽음 |
 | 2. 입력 만들기 | `buildAgentInput` (코드) | 스레드를 묶고, 날짜 창 이전의 부모는 `(context)`로 표시, 봇 알림은 뺌(답글이 있는 부모는 유지). 각 줄에 ref(`S001`…)를 붙이고, ref별 작성자 표와 사람 목록을 만듦 |
 | 3. generation 행 생성 | `app.ts` | `processing` 상태로 만들고 파이프라인·프롬프트 버전, 모델, 입력 행 id를 기록 |
+| (선택) Call 0 | `SignalExtractor` (모델) | target의 `pipeline_options`가 `{"signals": true}`일 때만. 줄마다 사실 단위 signal(refs, kind, subject, fact)을 만들고, Call 1은 원문 대신 subject별로 묶은 signal 목록을 읽음(`signalsBody`, 지시문의 입력 설명 문단만 바꿈). `pipeline_version`에 `+signals` |
 | 4. Call 1 | `CoreInterpreter` (모델) | 하루를 사건 단위 core item으로 묶음. item마다 actor와 `next_step`(근거가 있을 때만, 없으면 null) |
 | 5. Call 2 | `CoreStructurer` (모델) | core item을 highlights / topics / progress_roadmap / member_activity에 배치하고 overview를 씀 |
 | 6. 변환·병합 | `resolveStructuring`, `buildCoreJson` (코드) | core item id를 근거 ref로 바꾸고(멤버는 본인이 쓴 줄만) importance, `payload.owners` / `payload.next_steps`를 core item에서 채움. tags / classifications / entities / confidence는 빈 값(`core-interpreter-v11`부터 모델이 안 만듦, `taxonomy_version: none`). ref를 원본 항목(id, 시각, url, 작성자, 200자 `excerpt`)으로 바꾸고 meta, metrics, quality를 붙임 |
@@ -63,6 +64,10 @@ flowchart TD
 | 제출 뒤 되묻는 것 | 인용 안 된 사람 줄, 중복 후보(두 item만 인용한 줄 2개 이상)(`interpretationReview`). 모델은 바뀐 item만 보내고 코드가 합침(`applyRevision`). 첫 제출도 저장해 두어 수정이 안 오면 그대로 씀 | 없음 |
 | 결과 | `useDataWriter("interpretation")` | `useDataWriter("structuring")` |
 
+`SignalExtractor`(`src/agents/signal-extractor.ts`, 선택 Call 0)는 `submit_signals`로 제출합니다. 없는 ref는 반려하고, 어느 signal에도 없는 사람 줄은 돌려줘서 `add_signals`로 그 줄만 받습니다. 결과는 `useDataWriter("signals")`, generation의 `agent_output_json.signals`. 프롬프트 DB에서 `core-interpreter` 지시문을 바꿀 때는 입력 설명 문단(`RAW_INPUT`)을 글자 그대로 두어야 합니다. 그 문단을 signal용으로 바꾸므로, 다르면 signals target의 생성이 실패합니다.
+
+target별 선택은 `targets.pipeline_options`(jsonb, 기본 `{}`)입니다. UI에는 없고 운영자가 SQL로 바꿉니다. 다만 RLS상 워크스페이스 admin도 API로 바꿀 수 있습니다.
+
 ### Report
 
 | | `DailyReportWriter` | `DailyReportFinalizer` |
@@ -77,7 +82,7 @@ flowchart TD
 
 Agent마다 지시문 본문, 모델, `thinkingLevel`, 버전을 프롬프트 DB(별도 Supabase, `PROMPTS_SUPABASE_URL` / `PROMPTS_SUPABASE_KEY`)에서 가져옵니다. 조회는 `src/prompts.ts`의 `resolvePrompts`가 라우트마다 한 번 합니다.
 
-- `prompt_releases`에서 `service_key = 'ieum'`, `agent_key`(`core-interpreter`, `core-structurer`, `daily-report-writer`, `daily-report-finalizer`)의 행을 찾음. `environment`는 `PROMPT_ENVIRONMENT`(배포 `production`은 `wrangler.jsonc`의 `vars`, 로컬 `dev`는 `.dev.vars`) 행을 먼저, 없으면 `default` 행.
+- `prompt_releases`에서 `service_key = 'ieum'`, `agent_key`(`signal-extractor`, `core-interpreter`, `core-structurer`, `daily-report-writer`, `daily-report-finalizer`)의 행을 찾음. `environment`는 `PROMPT_ENVIRONMENT`(배포 `production`은 `wrangler.jsonc`의 `vars`, 로컬 `dev`는 `.dev.vars`) 행을 먼저, 없으면 `default` 행.
 - 그 행의 `active_prompt_id`가 가리키는 `prompt_templates`에서 `template`(지시문 본문), `default_provider` + `default_model`(합쳐서 `openai/gpt-5.4-mini` 꼴), `thinking_level`(null이면 `low`), `version`을 씀. `temperature`, `api_mode`, `default_params`, `input_schema`, `output_schema`는 쓰지 않음.
 - 행이 없거나 프롬프트 DB가 설정되지 않았거나 조회가 실패(5초 타임아웃 포함)하면 Agent 파일의 코드 기본값(`CORE_INTERPRETER_PROMPT` 등)을 씀. 실패 이유는 Worker 로그에 경고로 남음.
 - DB `template`에는 고정 문장만 넣음. 언어 지정과 제출 Tool 호출 두 줄은 실행 값이 필요해서 Agent가 본문 끝에 붙임. 코드 기본값의 `instructions`도 같은 범위.
@@ -88,7 +93,7 @@ Agent마다 지시문 본문, 모델, `thinkingLevel`, 버전을 프롬프트 DB
 | 버전 | 위치 | 기록되는 곳 |
 |---|---|---|
 | 파이프라인 `PIPELINE_VERSION` | `app.ts` | generation |
-| Core 지시문 (interpreter + structurer) | 프롬프트 DB면 `core-interpreter@v9(default)` 꼴, 코드 기본값이면 `core-interpreter-v8` 꼴 | generation `prompt_version` |
+| Core 지시문 ((extractor +) interpreter + structurer) | 프롬프트 DB면 `core-interpreter@v9(default)` 꼴, 코드 기본값이면 `core-interpreter-v8` 꼴 | generation `prompt_version` |
 | `core_json` 스키마 `CORE_SCHEMA_VERSION` | `daily-core.ts` | generation |
 | 리포트 렌더 `REPORT_FORMAT_VERSION` | `daily-report.ts` | report `format_version` |
 | 리포트 지시문 (writer + finalizer) | Core 지시문과 같은 꼴 | report `prompt_version`(저장된 초안을 받았으면 writer 자리에 `given-draft`) |
@@ -137,7 +142,7 @@ Skill, Subagent, MCP, Sandbox, 데이터 조회 Tool, Workers AI 바인딩은 �
 | `GET /` | 헬스 체크 |
 | `POST /core/generate` | 본문 `{ dailyCoreId, model? }`. 다음 generation을 만들어 저장하고 current로 함. 응답에 stats, 토큰, 호출별 시간·반려 이유, `coreJson` |
 | `POST /report/generate` | 본문 `{ dailyCoreId, model?, finalize?, draft? }`. 현재 generation으로 리포트를 만들어 `daily_reports`에 다음 `report_no`로 저장하고 `reportId`, `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. 기본으로 Finalizer까지 돌고(응답에 `writerDraft`), `finalize: false`면 Writer만. `draft`(저장된 Writer 초안)를 주면 Writer를 건너뜀. 현재 generation이 없으면 409(행 안 만듦) |
-| `POST /core/interpret` | (임시, 품질 작업용) 본문 `{ dailyCoreId, model? }`. CoreInterpreter만 돌려 결과·stats·토큰과 모델이 본 입력 원문을 응답. DB 기록 없음 |
+| `POST /core/interpret` | (임시, 품질 작업용) 본문 `{ dailyCoreId, model?, signals? }`. Call 1만(target 설정이나 `signals`에 따라 Call 0 포함) 돌려 결과·stats·토큰과 모델이 본 입력 원문을 응답. `signals`는 target의 `pipeline_options.signals`를 덮어씀. Call 0을 돌렸으면 `signals`, `signalsBody`, 호출별 `calls`도. DB 기록 없음 |
 | `/agents/test/*` | `TestAgent`(한 문장 생성, DB 기록 없음) |
 
 ## 실행과 배포
@@ -147,7 +152,7 @@ npm run dev                            # 로컬 Worker, http://localhost:8787
 npx tsx src/daily-core.check.ts        # 규칙 테스트 (flue/ 에서)
 npx tsx src/daily-report.check.ts      # 리포트 규칙·렌더 테스트
 npx tsx src/daily-report.run.ts <core.json> <out> [report.json]   # 리포트 미리보기 파일
-npx tsx src/interpreter.run.ts --label <name> [--runs 3]          # Interpreter만 실행·저장 (로컬 Worker 필요)
+npx tsx src/interpreter.run.ts --label <name> [--runs 3] [--id <dailyCoreId>] [--split]   # Interpreter만 실행·저장 (로컬 Worker 필요, --split은 Call 0 포함)
 npx tsc --noEmit -p .                  # 타입 검사
 npm run deploy                         # vite build + wrangler deploy
 ```

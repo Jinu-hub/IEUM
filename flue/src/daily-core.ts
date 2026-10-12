@@ -273,7 +273,8 @@ const InterpretedItem = v.object({
   ),
   title: v.string(),
   summary: v.string(),
-  importance: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(5), v.description("5 = key outcome of the day")),
+  // No integer check: normalizeConceptKeys rounds it (a 3.5 made the model resend everything, split test).
+  importance: v.pipe(v.number(), v.minValue(1), v.maxValue(5), v.description("Integer 1-5. 5 = key outcome of the day")),
   roles: v.pipe(
     v.array(v.picklist(["highlight", "topic", "progress"])),
     v.description("Candidate placements. The final placement is decided later."),
@@ -333,6 +334,7 @@ export function interpretationProblems(output: Interpretation, { refs, contextRe
 // Keys with non-ASCII text (e.g. "ticket-11-月修正依頼表", interpreter test v4) become kebab-case here,
 // because a rejection makes the model resend the whole output. Run after interpretationProblems, which
 // still rejects keys the model used twice; a clash made only by this cleanup gets a suffix.
+// Rounds importance for the same reason.
 const kebab = (key: string) =>
   key.normalize("NFKC").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -342,7 +344,7 @@ export function normalizeConceptKeys(output: Interpretation): Interpretation {
     let key = kebab(item.concept_key) || `item-${i + 1}`;
     while (seen.has(key)) key = `${key}-${i + 1}`;
     seen.add(key);
-    return { ...item, concept_key: key };
+    return { ...item, concept_key: key, importance: Math.round(item.importance) };
   });
   return { ...output, core_items };
 }

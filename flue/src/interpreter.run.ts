@@ -1,5 +1,7 @@
 // Runs only the core interpreter (/core/interpret, no DB writes) and saves each run for side-by-side review.
 // Run (in flue/): npx tsx src/interpreter.run.ts --label v8 [--runs 3] [--id <dailyCoreId>] [--model <provider/model>]
+// --split runs SignalExtractor before CoreInterpreter; without it the extractor is off, whatever the
+// target's pipeline_options say.
 // Needs the local Worker (npm run dev). FLUE_BASE_URL overrides http://localhost:8787.
 // Writes works/out/interpreter-test-2610/<date>-input.txt and <date>-<label>-r<n>.json / .md;
 // run numbers continue after the files already there, so reruns never overwrite.
@@ -17,6 +19,7 @@ const { values: args } = parseArgs({
     runs: { type: "string", default: "1" },
     id: { type: "string", default: DEFAULT_DAY },
     model: { type: "string" },
+    split: { type: "boolean", default: false },
   },
 });
 if (!args.label || !/^[\w.-]+$/.test(args.label)) throw new Error("--label <name> is required ([A-Za-z0-9_.-])");
@@ -50,6 +53,9 @@ type Result = {
   review?: { uncited: string[]; pairs: string[]; upserted?: string[]; removed?: string[]; overviewRewritten?: boolean } | null;
   metrics: { rejections: string[] };
   input: { body: string; authors: Record<string, string> };
+  signals?: { kind: string }[];
+  signalsBody?: string;
+  calls?: Record<string, { elapsed_ms: number; usage: { cost?: { total?: number } } }>;
 };
 
 const refOf = (line: string) => line.match(/^\s*(?:↳ )?\[([^\]]+)\]/)?.[1];
@@ -72,6 +78,11 @@ function review(r: Result, label: string) {
     `items ${stats.core_items} | human lines cited ${stats.human_refs_cited}/${stats.human_refs} | members as actors ${stats.people_as_actors}/${stats.people} | ${(r.elapsedMs / 1000).toFixed(0)}s | output ${usage.output ?? "?"} tokens | $${usage.cost?.total?.toFixed(4) ?? "?"}`,
     rv
       ? `first submission: uncited ${rv.uncited.length}, pairs ${rv.pairs.length}${rv.upserted ? ` -> revision upserted ${rv.upserted.length} (${rv.upserted.join(", ")}), removed ${rv.removed?.length ?? 0} (${rv.removed?.join(", ")}), overview ${rv.overviewRewritten ? "rewritten" : "kept"}` : rv.uncited.length || rv.pairs.length ? " -> no revision" : ""}`
+      : "",
+    r.signals
+      ? `signals ${r.signals.length} (ack ${r.signals.filter((s) => s.kind === "ack").length}) | ${Object.entries(r.calls ?? {})
+          .map(([name, call]) => `${name} ${(call.elapsed_ms / 1000).toFixed(0)}s $${call.usage.cost?.total?.toFixed(4) ?? "?"}`)
+          .join(" | ")}`
       : "",
     ...(rv?.pairs ?? []).map((pair) => `- pair: ${pair}`),
     r.droppedActors.length ? `dropped actors: ${r.droppedActors.join("; ")}` : "",
@@ -98,6 +109,7 @@ function review(r: Result, label: string) {
     "",
     ...uncited.map((line) => `- ${line.trim()}`),
     "",
+    ...(r.signalsBody ? ["## Signals (interpreter input)", "", "```", r.signalsBody, "```", ""] : []),
     "## Input with citations",
     "",
     "```",
@@ -118,7 +130,7 @@ for (let i = 0; i < runs; i++) {
   const res = await fetch(`${base}/core/interpret`, {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.FLUE_API_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ dailyCoreId: args.id, model: args.model }),
+    body: JSON.stringify({ dailyCoreId: args.id, model: args.model, signals: args.split }),
   });
   const text = await res.text();
   let result: Result;

@@ -7,6 +7,14 @@ import { CORE_INTERPRETER_PROMPT, CoreInterpreter } from "./agents/core-interpre
 import { CORE_STRUCTURER_PROMPT, CoreStructurer } from "./agents/core-structurer.ts";
 import { DAILY_REPORT_FINALIZER_PROMPT, DailyReportFinalizer } from "./agents/daily-report-finalizer.ts";
 import { DAILY_REPORT_WRITER_PROMPT, DailyReportWriter } from "./agents/daily-report-writer.ts";
+import {
+  SIGNAL_EXTRACTOR_PROMPT,
+  refTimes,
+  type Signal,
+  SignalExtractor,
+  signalsBody,
+  splitInterpreterInstructions,
+} from "./agents/signal-extractor.ts";
 import { TestAgent } from "./agents/test-agent.ts";
 import {
   buildAgentInput,
@@ -38,6 +46,7 @@ import { type PromptEnv, promptData, resolvePrompts } from "./prompts.ts";
 
 // v2: both calls at thinkingLevel "low" (v1 used the default "medium").
 // v3: Call 1 may revise once after code lists uncited lines and duplicate candidates.
+// "+signals" is appended when SignalExtractor ran before Call 1 (target pipeline_options).
 const PIPELINE_VERSION = "flue-two-call-v3";
 const MAX_REJECTIONS = 2;
 // "none": core items carry empty tags, classifications, and entities (before core-interpreter-v11: "free-text").
@@ -159,6 +168,8 @@ async function loadDay(db: Db, dailyCoreId: string) {
   const rows = await db<SourceRow & { source_data_id: string }>(
     `daily_core_source_data?daily_core_id=eq.${dailyCoreId}&select=source_data_id,source_type,source_ident,collection_status,normalized_json&order=source_type,source_ident`,
   );
+  // select=* rather than the column, so a database without the pipeline_options migration still runs.
+  const [target] = await db<{ pipeline_options?: { signals?: unknown } | null }>(`targets?target_id=eq.${core.target_id}`);
   const input = buildAgentInput(rows, core.timezone);
   const body = [
     `Target: ${core.target_display_name} (${core.target_category})`,
@@ -167,18 +178,17 @@ async function loadDay(db: Db, dailyCoreId: string) {
     "",
     input.text,
   ].join("\n");
-  return { coreRow, core, rows, input, body };
+  return { coreRow, core, rows, input, body, signals: target?.pipeline_options?.signals === true };
 }
 
-const runInterpreter = (
-  { core, input, body }: NonNullable<Awaited<ReturnType<typeof loadDay>>>,
-  interpreter: ReturnType<typeof promptData>,
-  conversations: string[],
-) =>
+type Day = NonNullable<Awaited<ReturnType<typeof loadDay>>>;
+type PromptData = ReturnType<typeof promptData>;
+
+const runInterpreter = ({ core, input, body }: Day, interpreter: PromptData, conversations: string[], message = body) =>
   runAgent<Interpretation>(
     CoreInterpreter,
     "interpretation",
-    body,
+    message,
     {
       refs: input.refs,
       contextRefs: input.contextRefs,
@@ -190,6 +200,37 @@ const runInterpreter = (
     },
     conversations,
   );
+
+// Call 1. Given an extractor prompt, SignalExtractor runs first and CoreInterpreter reads its signals
+// grouped by subject instead of the raw lines.
+async function interpret(day: Day, interpreter: PromptData, extractor: PromptData | null, conversations: string[]) {
+  if (!extractor) return { call1: await runInterpreter(day, interpreter, conversations), call0: null };
+  const { input, core, body } = day;
+  const call0 = await runAgent<Signal[]>(
+    SignalExtractor,
+    "signals",
+    body,
+    {
+      refs: input.refs,
+      contextRefs: input.contextRefs,
+      botRefs: input.botRefs,
+      authors: input.authors,
+      texts: input.texts,
+      language: core.language,
+      ...extractor,
+    },
+    conversations,
+  );
+  const header = body.split("\n").slice(0, 3).join("\n");
+  const message = signalsBody(header, call0.output, input.authors, refTimes(body));
+  const call1 = await runInterpreter(
+    day,
+    { ...interpreter, instructions: splitInterpreterInstructions(interpreter.instructions) },
+    conversations,
+    message,
+  );
+  return { call1, call0: { ...call0, message } };
+}
 
 const app = new Hono<Env>();
 
@@ -209,6 +250,7 @@ app.route("/agents/test", createAgentRouter(TestAgent));
 
 // Generates a Daily Core and saves it as the next generation. `model` overrides each agent's model.
 // Call 1 (CoreInterpreter) merges the day into core items, Call 2 (CoreStructurer) places them.
+// Targets with pipeline_options.signals run SignalExtractor before Call 1.
 app.post("/core/generate", async (c) => {
   const { dailyCoreId, model } = await c.req.json<{ dailyCoreId?: string; model?: string }>();
   if (!isUuid(dailyCoreId)) return c.json({ error: "dailyCoreId must be a uuid" }, 400);
@@ -221,9 +263,14 @@ app.post("/core/generate", async (c) => {
 
   const generationNo = core.last_generation_no + 1;
   const startedAt = new Date();
-  const [interpreterPrompt, structurerPrompt] = await resolvePrompts(c.env, [CORE_INTERPRETER_PROMPT, CORE_STRUCTURER_PROMPT]);
+  const [interpreterPrompt, structurerPrompt, extractorPrompt] = await resolvePrompts(c.env, [
+    CORE_INTERPRETER_PROMPT,
+    CORE_STRUCTURER_PROMPT,
+    SIGNAL_EXTRACTOR_PROMPT,
+  ]);
   const interpreter = promptData(interpreterPrompt, model);
   const structurer = promptData(structurerPrompt, model);
+  const extractor = day.signals ? promptData(extractorPrompt, model) : null;
   const [generation] = await db<{ generation_id: string }>("daily_core_generations", {
     method: "POST",
     body: {
@@ -236,9 +283,11 @@ app.post("/core/generate", async (c) => {
       input_source_data_ids: rows.map((row) => row.source_data_id),
       schema_version: CORE_SCHEMA_VERSION,
       taxonomy_version: TAXONOMY_VERSION,
-      prompt_version: `${interpreterPrompt.version}+${structurerPrompt.version}`,
-      pipeline_version: PIPELINE_VERSION,
-      ...modelColumns([interpreter.model, structurer.model]),
+      prompt_version: [...(extractor ? [extractorPrompt.version] : []), interpreterPrompt.version, structurerPrompt.version].join(
+        "+",
+      ),
+      pipeline_version: extractor ? `${PIPELINE_VERSION}+signals` : PIPELINE_VERSION,
+      ...modelColumns([...(extractor ? [extractor.model] : []), interpreter.model, structurer.model]),
       input_stats_json: inputStats,
       started_at: startedAt.toISOString(),
     },
@@ -251,7 +300,7 @@ app.post("/core/generate", async (c) => {
 
   const conversations: string[] = [];
   try {
-    const call1 = await runInterpreter(day, interpreter, conversations);
+    const { call0, call1 } = await interpret(day, interpreter, extractor, conversations);
     const interpretation = call1.output;
     const call2 = await runAgent<Structuring>(
       CoreStructurer,
@@ -280,7 +329,11 @@ app.post("/core/generate", async (c) => {
       interpretation: interpretationStats(interpretation, input),
       unplaced_core_items: interpretation.core_items.map((item) => item.concept_key).filter((key) => !placed.has(key)),
     };
-    const usage = { ...sumUsage(call1.usage, call2.usage), calls: { interpretation: call1.usage, structuring: call2.usage } };
+    const usage = {
+      ...sumUsage(sumUsage(call0?.usage, call1.usage), call2.usage),
+      calls: { ...(call0 && { extractor: call0.usage }), interpretation: call1.usage, structuring: call2.usage },
+    };
+    const calls = { ...(call0 && { extractor: call0.metrics }), interpretation: call1.metrics, structuring: call2.metrics };
     const finishedAt = new Date().toISOString();
     await db(generationRow, {
       method: "PATCH",
@@ -288,13 +341,15 @@ app.post("/core/generate", async (c) => {
         generation_status: "succeeded",
         quality_status: coreJson.quality.status,
         agent_conversation_id: conversations[0],
-        agent_output_json: { interpretation, structuring, dropped_actors: call1.data.droppedActors?.at(-1) ?? [] },
+        agent_output_json: {
+          ...(call0 && { signals: call0.output }),
+          interpretation,
+          structuring,
+          dropped_actors: call1.data.droppedActors?.at(-1) ?? [],
+        },
         core_json: coreJson,
         token_usage_json: usage,
-        processing_metrics_json: {
-          elapsed_ms: Date.now() - startedAt.getTime(),
-          calls: { interpretation: call1.metrics, structuring: call2.metrics },
-        },
+        processing_metrics_json: { elapsed_ms: Date.now() - startedAt.getTime(), calls },
         validation_json: { evidence_problems: evidenceProblems(output, input), stats },
         finished_at: finishedAt,
       },
@@ -316,7 +371,7 @@ app.post("/core/generate", async (c) => {
       status: "succeeded",
       elapsedMs: Date.now() - startedAt.getTime(),
       usage,
-      calls: { interpretation: call1.metrics, structuring: call2.metrics },
+      calls,
       stats,
       coreJson,
     });
@@ -343,28 +398,39 @@ app.post("/core/generate", async (c) => {
 });
 
 // Test only (interpreter quality work, flue/src/interpreter.run.ts): runs Call 1 on a saved day and
-// returns its output with the input it read. Writes nothing to the DB.
+// returns its output with the input it read. Writes nothing to the DB. `signals` overrides the
+// target's pipeline_options.signals.
 app.post("/core/interpret", async (c) => {
-  const { dailyCoreId, model } = await c.req.json<{ dailyCoreId?: string; model?: string }>();
+  const { dailyCoreId, model, signals } = await c.req.json<{ dailyCoreId?: string; model?: string; signals?: boolean }>();
   if (!isUuid(dailyCoreId)) return c.json({ error: "dailyCoreId must be a uuid" }, 400);
   const db = supabase(c.env);
   if (!db) return c.text("Supabase secrets are not set", 500);
   const day = await loadDay(db, dailyCoreId);
   if (!day) return c.json({ error: "daily core not found" }, 404);
-  const [prompt] = await resolvePrompts(c.env, [CORE_INTERPRETER_PROMPT]);
+  const [prompt, extractorPrompt] = await resolvePrompts(c.env, [CORE_INTERPRETER_PROMPT, SIGNAL_EXTRACTOR_PROMPT]);
   const interpreter = promptData(prompt, model);
+  const extractor = (signals ?? day.signals) ? promptData(extractorPrompt, model) : null;
+  const promptVersion = [...(extractor ? [extractorPrompt.version] : []), prompt.version].join("+");
   const startedAt = Date.now();
   try {
-    const call1 = await runInterpreter(day, interpreter, []);
+    const { call0, call1 } = await interpret(day, interpreter, extractor, []);
     return c.json({
       status: "succeeded",
       coreDate: day.core.core_date,
-      promptVersion: prompt.version,
+      promptVersion,
       model: interpreter.model,
       thinkingLevel: interpreter.thinkingLevel,
       elapsedMs: Date.now() - startedAt,
-      usage: call1.usage,
-      metrics: call1.metrics,
+      usage: sumUsage(call0?.usage, call1.usage),
+      metrics: { ...call1.metrics, rejections: [...(call0?.metrics.rejections ?? []), ...call1.metrics.rejections] },
+      ...(call0 && {
+        calls: {
+          extractor: { ...call0.metrics, usage: call0.usage },
+          interpretation: { ...call1.metrics, usage: call1.usage },
+        },
+        signals: call0.output,
+        signalsBody: call0.message,
+      }),
       stats: interpretationStats(call1.output, day.input),
       interpretation: call1.output,
       droppedActors: call1.data.droppedActors?.at(-1) ?? [],
@@ -373,7 +439,7 @@ app.post("/core/interpret", async (c) => {
     });
   } catch (error) {
     const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
-    return c.json({ status: "failed", promptVersion: prompt.version, error: message }, 500);
+    return c.json({ status: "failed", promptVersion, error: message }, 500);
   }
 });
 

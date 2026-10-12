@@ -1,0 +1,1 @@
+ALTER TABLE "targets" ADD COLUMN "pipeline_options" jsonb DEFAULT '{}'::jsonb NOT NULL;

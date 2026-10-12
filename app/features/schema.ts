@@ -294,6 +294,9 @@ import {
        lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
        lastRunId: uuid("last_run_id").references(() => newsletterRuns.runId, { onDelete: "set null" }),
        previewThumbUrl: text("preview_thumb_url"),
+       // Flue Daily Core pipeline options, set by operators only (not shown in the UI).
+       // { "signals": true } runs SignalExtractor before CoreInterpreter. {} = default pipeline.
+       pipelineOptions: jsonb("pipeline_options").notNull().default(sql`'{}'::jsonb`),
        createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
        updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
      },
