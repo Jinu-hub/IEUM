@@ -20,6 +20,7 @@ import {
   structurerInput,
   structuringProblems,
 } from "./daily-core.ts";
+import { sharedIdentifiers } from "./agents/core/signal-extractor.ts";
 
 const item = (ref: string, id: string, at: string, content: string, extra: Partial<SourceItem> = {}) => ({
   source_ref: ref,
@@ -354,5 +355,19 @@ assert.deepEqual(
 );
 assert.equal(json.quality.status, "ready");
 assert.equal(buildCoreJson(meta, [{ ...sources[0], normalized_json: [sources[0].normalized_json[0]] }], core(["S001"]), []).quality.status, "empty");
+
+// Shared identifiers: generic shapes in two or more lines; a URL's fragment and query are dropped.
+assert.deepEqual(
+  sharedIdentifiers(
+    [
+      "[S001] 09:00 A: see #123 and <https://x.io/issues/9#note-1|9>",
+      "  ↳ [S002] 09:10 B: #123 done, https://x.io/issues/9?x=1",
+      "[S003] 10:00 C (commit): ABC-12 and #12 / ABC-12 and #12",
+      "[S004] 10:05 D: ABC-12, #dev_cs_d1",
+    ].join("\n"),
+  ),
+  ["- #123: S001, S002", "- https://x.io/issues/9: S001, S002", "- ABC-12: S003, S004"],
+);
+assert.deepEqual(sharedIdentifiers("[S001] 09:00 A: <https://x.io/issues/77|77>\n[S002] 18:00 B: #77 done"), ["- #77: S001, S002"]);
 
 console.log("daily-core checks passed");

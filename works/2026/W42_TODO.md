@@ -102,7 +102,8 @@ Daily Report 계획(Phase 0~4)은 W41에 끝남(`W41_TODO.md`의 "끝난 것"). 
   - Redmine 봇 알림(10-09 `#dev_lead` 20건)은 입력에서 빠져 티켓 제목(#23116 = PERF_TUNING-151 등)과 말로 언급 안 된 티켓 갱신을 잃음. `buildAgentInput`에서 "오늘 봇이 갱신을 알린 티켓" 목록(번호·제목)을 입력 끝에 붙이고, 지시문에 "이 목록만으로 item을 만들지 말고 제목 보강에만" 추가. 봇 줄 하나가 item 하나가 되던 문제(빼게 된 이유)를 되살리지 않는지 확인.
 - [ ] `targets.pipeline_options` 마이그레이션(`sql/migrations/0046_open_starbolt.sql`) 적용: `npm run db:migrate`(typegen 포함). 적용 전에는 모든 target이 Extractor 없이 돎(Worker는 컬럼이 없어도 실패하지 않음).
 - [ ] 다른 날짜로 Extractor 유무 비교: `core-agent.run.ts --agent interpreter --id <id>`와, `--agent extractor --id <id>` 결과를 `--agent interpreter --from <extractor .json>`으로. 결과를 보고 target별 기본값을 정함(사용자).
-- [ ] 프롬프트 DB에 `signal-extractor` Agent·지시문 넣을지. 넣지 않으면 코드 기본값(`signal-extractor-v2`). DB의 `core-interpreter` 지시문은 입력 설명 문단(`RAW_INPUT`)이 코드와 글자 그대로여야 signals target이 돎.
+- [ ] 프롬프트 DB에 `signal-extractor` Agent·지시문 넣을지. 넣지 않으면 코드 기본값(`signal-extractor-v5`).
+- [ ] 간접 호칭(「全さん」「宋さん」 등)을 입력의 사람 이름과 잇는 별도 도구(사용자). 지금 Extractor는 이름을 입력 그대로 씀. DB의 `core-interpreter` 지시문은 입력 설명 문단(`RAW_INPUT`)이 코드와 글자 그대로여야 signals target이 돎.
 - [ ] 끝나면 시험용 `/core/agent`와 `core-agent.run.ts`(2026-10-12에 `/core/interpret` + `interpreter.run.ts`를 대체)를 평가 세트 러너(`eval.run.ts`, `evaluate: true`)와 합칠지 정함.
 
 #### 남은 품질 문제

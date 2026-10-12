@@ -28,7 +28,7 @@ flowchart TD
 | 1. 읽기 | `app.ts` | Supabase REST(service role 키)로 `daily_core_data`와 수집 행을 읽음 |
 | 2. 입력 만들기 | `buildAgentInput` (코드) | 스레드를 묶고, 날짜 창 이전의 부모는 `(context)`로 표시, 봇 알림은 뺌(답글이 있는 부모는 유지). 각 줄에 ref(`S001`…)를 붙이고, ref별 작성자 표와 사람 목록을 만듦 |
 | 3. generation 행 생성 | `app.ts` | `processing` 상태로 만들고 파이프라인·프롬프트 버전, 모델, 입력 행 id를 기록 |
-| (선택) Call 0 | `SignalExtractor` (모델) | target의 `pipeline_options`가 `{"signals": true}`일 때만. 줄마다 사실 단위 signal(refs, kind, subject, fact)을 만들고, Call 1은 원문 대신 subject별로 묶은 signal 목록을 읽음(`signalsBody`, 지시문의 입력 설명 문단만 바꿈). `pipeline_version`에 `+signals` |
+| (선택) Call 0 | `SignalExtractor` (모델) | target의 `pipeline_options`가 `{"signals": true}`일 때만. 한 일에 관한 모든 출처 줄을 한 subject 아래 시간순 signal(refs, kind, subject, fact, quote?)로 모으고, Call 1은 원문 대신 그 목록을 읽음(`signalsBody`, 지시문의 입력 설명 문단만 바꿈). quote는 인용한 줄에 실제로 있을 때만 넘김. `pipeline_version`에 `+signals` |
 | 4. Call 1 | `CoreInterpreter` (모델) | 하루를 사건 단위 core item으로 묶음. item마다 actor와 `next_step`(근거가 있을 때만, 없으면 null) |
 | 5. Call 2 | `CoreStructurer` (모델) | core item을 highlights / topics / progress_roadmap / member_activity에 배치하고 overview를 씀 |
 | 6. 변환·병합 | `resolveStructuring`, `buildCoreJson` (코드) | core item id를 근거 ref로 바꾸고(멤버는 본인이 쓴 줄만) importance, `payload.owners` / `payload.next_steps`를 core item에서 채움. tags / classifications / entities / confidence는 빈 값(`core-interpreter-v11`부터 모델이 안 만듦, `taxonomy_version: none`). ref를 원본 항목(id, 시각, url, 작성자, 200자 `excerpt`)으로 바꾸고 meta, metrics, quality를 붙임 |
@@ -64,7 +64,7 @@ flowchart TD
 | 제출 뒤 되묻는 것 | 인용 안 된 사람 줄, 중복 후보(두 item만 인용한 줄 2개 이상)(`interpretationReview`). 모델은 바뀐 item만 보내고 코드가 합침(`applyRevision`). 첫 제출도 저장해 두어 수정이 안 오면 그대로 씀 | 없음 |
 | 결과 | `useDataWriter("interpretation")` | `useDataWriter("structuring")` |
 
-`SignalExtractor`(`src/agents/core/signal-extractor.ts`, 선택 Call 0)는 `submit_signals`로 제출합니다. 없는 ref는 반려하고, 어느 signal에도 없는 사람 줄은 돌려줘서 `add_signals`로 그 줄만 받습니다. 결과는 `useDataWriter("signals")`, generation의 `agent_output_json.signals`. 프롬프트 DB에서 `core-interpreter` 지시문을 바꿀 때는 입력 설명 문단(`RAW_INPUT`)을 글자 그대로 두어야 합니다. 그 문단을 signal용으로 바꾸므로, 다르면 signals target의 생성이 실패합니다.
+`SignalExtractor`(`src/agents/core/signal-extractor.ts`, 선택 Call 0)는 `submit_signals`로 제출합니다. 입력은 원문 뒤에 코드가 모은 `## Shared identifiers`(여러 줄이 함께 언급한 `#123` / `ABC-123` / URL과 그 줄들, 묶음이 아닌 힌트)를 붙입니다. 없는 ref는 반려하고, 어느 signal에도 없는 사람 줄은 돌려줘서 `add_signals`로 그 줄만 받습니다. 결과는 `useDataWriter("signals")`, generation의 `agent_output_json.signals`. 프롬프트 DB에서 `core-interpreter` 지시문을 바꿀 때는 입력 설명 문단(`RAW_INPUT`)을 글자 그대로 두어야 합니다. 그 문단을 signal용으로 바꾸므로, 다르면 signals target의 생성이 실패합니다.
 
 target별 선택은 `targets.pipeline_options`(jsonb, 기본 `{}`)입니다. UI에는 없고 운영자가 SQL로 바꿉니다. 다만 RLS상 워크스페이스 admin도 API로 바꿀 수 있습니다.
 

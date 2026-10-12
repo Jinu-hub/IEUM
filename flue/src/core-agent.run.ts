@@ -30,7 +30,7 @@ if (!args.label || !/^[\w.-]+$/.test(args.label)) throw new Error("--label <name
 process.loadEnvFile(fileURLToPath(new URL("../.dev.vars", import.meta.url)));
 const base = process.env.FLUE_BASE_URL ?? "http://localhost:8787";
 
-type Signal = { refs: string[]; kind: string; subject: string; fact: string };
+type Signal = { refs: string[]; kind: string; subject: string; fact: string; quote?: string };
 type Item = {
   concept_key: string;
   title: string;
@@ -65,6 +65,7 @@ type Result = {
   usage: { output?: number; cost?: { total?: number } };
   metrics: { rejections: string[] };
   input: { body: string; authors: Record<string, string> };
+  hints?: string[];
   signals?: Signal[];
   signalsBody?: string;
   interpretation?: Interpretation;
@@ -117,12 +118,20 @@ const labelsBy = <T>(list: T[], refs: (x: T) => string[], label: (x: T) => strin
 
 function extractorBody(r: Result) {
   const signals = r.signals ?? [];
+  const squash = (text: string) => text.replace(/\s+/g, "");
+  const lineOf = new Map(r.input.body.split("\n").map((line) => [refOf(line), squash(line)]));
+  const quoted = signals.filter((s) => s.quote?.trim());
+  const notFound = quoted.filter((s) => !s.refs.some((ref) => lineOf.get(ref)?.includes(squash(s.quote!))));
   return [
-    `signals ${signals.length} (ack ${signals.filter((s) => s.kind === "ack").length}) | subjects ${new Set(signals.map((s) => s.subject.trim())).size}`,
+    `signals ${signals.length} (ack ${signals.filter((s) => s.kind === "ack").length}) | subjects ${new Set(signals.map((s) => s.subject.trim())).size} | quotes ${quoted.length} (not in cited lines ${notFound.length})`,
+    ...notFound.map((s) => `- quote not found: [${s.refs.join(", ")}] ${s.quote}`),
     "",
     "## Signals",
     "",
     ...block(r.signalsBody ?? ""),
+    `## Shared identifiers (extractor input, ${r.hints?.length ?? 0})`,
+    "",
+    ...block((r.hints ?? []).join("\n")),
     ...citations(r, labelsBy(signals, (s) => s.refs, (s) => s.subject.trim())),
   ];
 }

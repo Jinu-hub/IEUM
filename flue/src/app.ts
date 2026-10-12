@@ -6,7 +6,8 @@ import * as v from "valibot";
 import { CORE_INTERPRETER_PROMPT, CoreInterpreter } from "./agents/core/core-interpreter.ts";
 import { CORE_STRUCTURER_PROMPT, CoreStructurer } from "./agents/core/core-structurer.ts";
 import {
-  refTimes,
+  refLines,
+  sharedIdentifiers,
   Signal,
   SIGNAL_EXTRACTOR_PROMPT,
   SignalExtractor,
@@ -196,11 +197,15 @@ const lineEvidence = ({ core, input }: Day) => ({
 
 // The interpreter's message when it reads signals: the raw input's header lines, then signals by subject.
 const signalsMessage = ({ input, body }: Day, signals: Signal[]) =>
-  signalsBody(body.split("\n").slice(0, 3).join("\n"), signals, input.authors, refTimes(body));
+  signalsBody(body.split("\n").slice(0, 3).join("\n"), signals, input.authors, refLines(body));
 
-// Call 0 (optional).
+// Call 0 (optional): the raw lines, then the identifiers and links several lines share.
+const extractorMessage = ({ body }: Day) => {
+  const hints = sharedIdentifiers(body);
+  return hints.length ? `${body}\n\n## Shared identifiers\n${hints.join("\n")}` : body;
+};
 const runExtractor = (day: Day, extractor: PromptData, conversations: string[]) =>
-  runAgent<Signal[]>(SignalExtractor, "signals", day.body, { ...lineEvidence(day), ...extractor }, conversations);
+  runAgent<Signal[]>(SignalExtractor, "signals", extractorMessage(day), { ...lineEvidence(day), ...extractor }, conversations);
 
 // Call 1 on the raw lines, or on signals when given (input description swapped in the instructions).
 const runInterpreter = (day: Day, interpreter: PromptData, conversations: string[], signals?: Signal[]) =>
@@ -439,7 +444,7 @@ app.post("/core/agent", async (c) => {
   try {
     if (agent === "extractor") {
       const call = await runExtractor(day, data, []);
-      return result(call, { signals: call.output, signalsBody: signalsMessage(day, call.output) });
+      return result(call, { hints: sharedIdentifiers(day.body), signals: call.output, signalsBody: signalsMessage(day, call.output) });
     }
     if (agent === "interpreter") {
       const call = await runInterpreter(day, data, [], signals?.output);
