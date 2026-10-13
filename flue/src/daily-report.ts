@@ -124,7 +124,7 @@ export function itemQuotes(item: CoreItem, itemId: string): Quote[] {
 
 const payload = (item: CoreItem) => ({ owners: item.payload?.owners ?? [], next_steps: item.payload?.next_steps ?? [] });
 
-// Writer output, and the shape a later finalizer would rewrite: text changes, item_ids stay.
+// Writer output, and the shape the finalizer rewrites.
 // Code fixes the section frame and the model fills it. Flat on purpose: with paragraphs nested in
 // sections, the model left sections empty and put closing inside the last one (run p1-1).
 const ItemIds = v.pipe(v.array(v.string()), v.minLength(1), v.description("ids of the items this is written from, e.g. H1, T3."));
@@ -177,27 +177,19 @@ export function finalizerInput(core: DailyCoreJson, draft: ReportDraft) {
   return JSON.stringify({ target: core.meta.target_display_name, date: core.meta.core_date, items: reportItems(core), draft });
 }
 
-// A finalizer rewrites wording only. Same structure means links and icons still match the text.
-export function structureProblems(before: ReportDraft, after: ReportDraft) {
-  const same = (a: string[], b: string[]) => a.join() === b.join();
-  const problems: string[] = [];
-  if (after.points.length !== before.points.length) {
-    problems.push(`points: keep exactly ${before.points.length} points`);
-  } else {
-    const changed = after.points.flatMap((p, i) => (same(p.item_ids, before.points[i].item_ids) ? [] : [i + 1]));
-    if (changed.length) problems.push(`points ${changed.join(", ")}: keep item_ids as in the draft`);
-  }
-  if (after.entries.length !== before.entries.length) {
-    problems.push(`entries: keep all ${before.entries.length} entries in the draft order`);
-  } else {
-    const changed = after.entries.flatMap((e, i) => {
-      const b = before.entries[i];
-      return e.section === b.section && same(e.item_ids, b.item_ids) && same(e.quote_ids, b.quote_ids) ? [] : [i + 1];
-    });
-    if (changed.length) problems.push(`entries ${changed.join(", ")}: keep section, item_ids and quote_ids as in the draft`);
-  }
-  return problems;
+// A finalizer may merge, split and reorder entries and points: links, icons and quotes are rebuilt from
+// item_ids and quote_ids. Only an item the draft covered and the edit dropped loses content.
+export function coverageProblems(before: ReportDraft, after: ReportDraft) {
+  const used = new Set(after.entries.flatMap((e) => e.item_ids));
+  const dropped = [...new Set(before.entries.flatMap((e) => e.item_ids))].filter((id) => !used.has(id));
+  return dropped.length ? [`items dropped: ${dropped.join(", ")}; every item the draft covers stays in some entry`] : [];
 }
+
+// Quotes show only under highlights; a finalizer's quote_ids elsewhere are cleared instead of rejected.
+export const withoutStrayQuotes = (draft: ReportDraft): ReportDraft => ({
+  ...draft,
+  entries: draft.entries.map((e) => (e.section === "highlights" || !e.quote_ids.length ? e : { ...e, quote_ids: [] })),
+});
 
 // Icons already show the status; a leading 【進行中】 or [Done] repeats it (finalizer run p1-4).
 const LEADING_LABEL = /^\s*[【\[［(（]/;
@@ -206,10 +198,17 @@ export function labelProblems(draft: ReportDraft) {
   return labeled.length ? [`remove leading labels or brackets: ${labeled.map((t) => `"${t}"`).join(", ")}; status icons are added by code`] : [];
 }
 
+// changed: texts of the edit not found word for word in the draft (entries may be merged or reordered).
 export function revisionStats(before: ReportDraft, after: ReportDraft) {
   const texts = (d: ReportDraft) => [d.opening, ...d.points.map((p) => p.text), ...d.entries.flatMap((e) => [e.headline, e.text]), d.closing];
   const [a, b] = [texts(before), texts(after)];
-  return { texts: a.length, changed: a.filter((text, i) => text !== b[i]).length, chars_before: a.join("").length, chars_after: b.join("").length };
+  return {
+    texts_before: a.length,
+    texts_after: b.length,
+    changed: b.filter((text) => !a.includes(text)).length,
+    chars_before: a.join("").length,
+    chars_after: b.join("").length,
+  };
 }
 
 const TICKET = /#\d{3,}/g;

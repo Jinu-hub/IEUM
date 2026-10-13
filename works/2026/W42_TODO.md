@@ -40,6 +40,7 @@ Daily Report 계획(Phase 0~4)은 W41에 끝남(`W41_TODO.md`의 "끝난 것"). 
   - 렌더만 바꾸는 작업이라 모델 재실행 없이 저장된 `daily_reports.agent_output_json.draft`로 다시 렌더해서 비교. 바꾸면 `REPORT_FORMAT_VERSION` 올림.
 - [ ] 실패 문구: Worker 연결 실패가 "fetch failed"로만 남음. `flue.ts`의 `callFlue`에서 경로·주소를 붙여 감쌈(Phase 3에서 발견).
 - [ ] 실패 run 기록: `finished_at`이 null, step이 `collect_data`에 머묾(이전부터의 동작). step enum 정리(3-4)와 같이.
+- [ ] Finalizer v3(자유도 허용, 실패 시 Writer 초안 발송) 실행 확인: 합치기·나누기를 실제로 하는지, 빠진 item 반려가 잦은지, 대비책 경고(`report_finalizer_failed`)가 실행 로그에 보이는지.
 - [ ] failed 리포트 행의 `error_message`에 원인이 안 남음("[flue] Agent run failed"뿐). Core도 같은 `runAgent`. 필요해지면 Flue 이벤트에서 원인을 꺼냄(Phase 2에서 발견).
 
 ## 3. 나중에 천천히
@@ -101,7 +102,8 @@ Daily Report 계획(Phase 0~4)은 W41에 끝남(`W41_TODO.md`의 "끝난 것"). 
   - GitHub Slack 앱 게시물이 빈 본문으로 저장됨: 수집기가 `text` / `files`만 가져오고 앱 게시물 내용은 `attachments` / `blocks`에 있음. 10-09 `#dev_lead` 60건 중 29건이 빈 GitHub 게시물(PR·리뷰 알림으로 보임). `app/core/integrations/slack/fetchers.ts`, `app/features/daily-core/normalize.ts`에서 attachments(title, text, fallback)·blocks 텍스트를 `content`로 펼침. 이미 수집한 날은 재수집해야 반영. 빈 GitHub 부모 + 빈 답글이 `[S046] (context) GitHub:` 빈 줄로 남는 것도 같이 사라짐.
   - Redmine 봇 알림(10-09 `#dev_lead` 20건)은 입력에서 빠져 티켓 제목(#23116 = PERF_TUNING-151 등)과 말로 언급 안 된 티켓 갱신을 잃음. `buildAgentInput`에서 "오늘 봇이 갱신을 알린 티켓" 목록(번호·제목)을 입력 끝에 붙이고, 지시문에 "이 목록만으로 item을 만들지 말고 제목 보강에만" 추가. 봇 줄 하나가 item 하나가 되던 문제(빼게 된 이유)를 되살리지 않는지 확인.
 - [ ] `targets.pipeline_options` 마이그레이션(`sql/migrations/0046_open_starbolt.sql`) 적용: `npm run db:migrate`(typegen 포함). 적용 전에는 모든 target이 Extractor 없이 돎(Worker는 컬럼이 없어도 실패하지 않음).
-- [ ] 다른 날짜로 Extractor 유무 비교: `core-agent.run.ts --agent interpreter --id <id>`와, `--agent extractor --id <id>` 결과를 `--agent interpreter --from <extractor .json>`으로. 결과를 보고 target별 기본값을 정함(사용자).
+- [ ] 다른 날짜로 Extractor 유무 비교: `core-agent.run.ts --agent interpreter --id <id>`와, `--agent extractor --id <id>` 결과를 `--agent interpreter --from <extractor .json>`으로. 결과를 보고 target별 기본값을 정함(사용자). 10-09(71줄)는 차이가 결과까지 안 감(W42 10-13). 양이 많은 날로.
+- [ ] 원문 경로 Interpreter 실패: 첫 `submit_interpretation` 전에 수정 도구를 불러 반려 2번(10-13 raw 4회 중 1회). Finalizer처럼 실패 시 대비책이 없어 그날 Core가 실패함.
 - [ ] 프롬프트 DB에 `signal-extractor` Agent·지시문 넣을지. 넣지 않으면 코드 기본값(`signal-extractor-v5`).
 - [ ] 간접 호칭(「全さん」「宋さん」 등)을 입력의 사람 이름과 잇는 별도 도구(사용자). 지금 Extractor는 이름을 입력 그대로 씀. DB의 `core-interpreter` 지시문은 입력 설명 문단(`RAW_INPUT`)이 코드와 글자 그대로여야 signals target이 돎.
 - [ ] 끝나면 시험용 `/core/agent`와 `core-agent.run.ts`(2026-10-12에 `/core/interpret` + `interpreter.run.ts`를 대체)를 평가 세트 러너(`eval.run.ts`, `evaluate: true`)와 합칠지 정함.

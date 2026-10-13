@@ -42,9 +42,9 @@ flowchart TD
 | 2. 입력 만들기 | `writerInput`, `draftEvidence` (코드) | 이벤트 섹션(highlights / progress_roadmap / topics)의 item에 짧은 id(`H1`, `P1`, `T1`, 섹션 안에서 중요도 순)를 붙이고 담당자·다음 단계·인용 후보를 붙임. 인용 후보는 사람이 쓴 줄의 `excerpt`에서 Slack 마크업을 지우고 15~120자, 하루 보고 양식은 뺌 |
 | 3. report 행 생성 | `app.ts` | `daily_reports`에 다음 `report_no`, `processing` |
 | 4. Writer | `DailyReportWriter` (모델) | 오프닝, 今日のポイント(최대 3줄), 섹션별 entry(제목, 본문, 근거 `item_ids`, highlights의 `quote_ids`), 마무리 |
-| 5. Finalizer | `DailyReportFinalizer` (모델) | Writer 초안의 문장만 고침. 개수·섹션·`item_ids`·`quote_ids`는 그대로. `finalize: false`면 건너뜀 |
+| 5. Finalizer | `DailyReportFinalizer` (모델) | Writer 초안을 읽기 쉽게 고침. 문장뿐 아니라 entry·point를 합치고 나누고 순서를 바꿀 수 있음. Writer가 다룬 item은 빠지면 안 됨. 실패하면 Writer 초안으로 렌더하고 이유를 남김(아래 7). `finalize: false`면 건너뜀 |
 | 6. 렌더 | `renderDailyReport` (코드) | 섹션 틀, 상태 아이콘, 근거 링크, 인용 원문, 멤버 섹션, 숫자(今日のKPI)를 코드가 붙여 제목 / markdown / 메일 HTML을 만듦 |
-| 7. 저장 | `app.ts` | 렌더 결과, 초안(`agent_output_json.draft`, Finalizer를 거쳤으면 `writer_draft`도), 토큰, 시간, stats를 저장하고 `succeeded`. 실패하면 `failed` |
+| 7. 저장 | `app.ts` | 렌더 결과, 초안(`agent_output_json.draft`, Finalizer를 거쳤으면 `writer_draft`도), 토큰, 시간, stats를 저장하고 `succeeded`. Finalizer가 실패했으면 `validation_json.stats.finalizer_error`와 응답의 `finalizerError`에 이유를 남기고, 앱은 실행 로그에 `report_finalizer_failed` 경고를 씀. 그 밖의 실패는 `failed` |
 
 활동이 없는 날(`quality.status = "empty"`)은 모델을 부르지 않고 코드 렌더만 합니다. 현재 리포트는 따로 가리키지 않고 "가장 큰 `report_no`의 succeeded"로 읽습니다.
 
@@ -75,7 +75,8 @@ target별 선택은 `targets.pipeline_options`(jsonb, 기본 `{}`)입니다. UI�
 | 파일 | `src/agents/report/daily-report-writer.ts` | `src/agents/report/daily-report-finalizer.ts` |
 | 입력 | target, 날짜, overview, item(id, 섹션, 제목, 요약, 상태, 중요도, 담당자, 다음 단계, 인용 후보) | Writer와 같은 item + Writer 초안 |
 | 제출 Tool | `submit_report` (스키마 `ReportDraft`) | `submit_report` (스키마 `ReportDraft`) |
-| 반려하는 문제(`draftProblems`) | 모르는 item id, 자기 섹션 item을 인용하지 않은 entry, 인용 안 된 highlight, 입력에 없는 티켓 번호, highlights 밖의 인용, 그 entry의 item이 내놓지 않은 인용 id | 왼쪽 전부 + 구조 변경(개수·순서·섹션·`item_ids`·`quote_ids`, `structureProblems`), 제목·포인트 앞의 상태 라벨(【進行中】 등, `labelProblems`) |
+| 반려하는 문제(`draftProblems`) | 모르는 item id, 자기 섹션 item을 인용하지 않은 entry, 인용 안 된 highlight, 입력에 없는 티켓 번호, highlights 밖의 인용, 그 entry의 item이 내놓지 않은 인용 id | 왼쪽 전부 + Writer 초안의 entry가 다룬 item이 빠짐(`coverageProblems`), 제목·포인트 앞의 상태 라벨(【進行中】 등, `labelProblems`). 합치기·나누기·순서 변경은 허용 |
+| 반려 대신 코드가 고치는 것 | 없음 | highlights 밖의 인용을 비움(`withoutStrayQuotes`) |
 | 결과 | `useDataWriter("draft")` | `useDataWriter("draft")` |
 
 ### 지시문·모델·추론 강도
@@ -141,7 +142,7 @@ Skill, Subagent, MCP, Sandbox, 데이터 조회 Tool, Workers AI 바인딩은 �
 |---|---|
 | `GET /` | 헬스 체크 |
 | `POST /core/generate` | 본문 `{ dailyCoreId, model? }`. 다음 generation을 만들어 저장하고 current로 함. 응답에 stats, 토큰, 호출별 시간·반려 이유, `coreJson` |
-| `POST /report/generate` | 본문 `{ dailyCoreId, model?, finalize?, draft? }`. 현재 generation으로 리포트를 만들어 `daily_reports`에 다음 `report_no`로 저장하고 `reportId`, `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. 기본으로 Finalizer까지 돌고(응답에 `writerDraft`), `finalize: false`면 Writer만. `draft`(저장된 Writer 초안)를 주면 Writer를 건너뜀. 현재 generation이 없으면 409(행 안 만듦) |
+| `POST /report/generate` | 본문 `{ dailyCoreId, model?, finalize?, draft? }`. 현재 generation으로 리포트를 만들어 `daily_reports`에 다음 `report_no`로 저장하고 `reportId`, `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. 기본으로 Finalizer까지 돌고(응답에 `writerDraft`, Finalizer가 실패해 Writer 초안을 썼으면 `finalizerError`), `finalize: false`면 Writer만. `draft`(저장된 Writer 초안)를 주면 Writer를 건너뜀. 현재 generation이 없으면 409(행 안 만듦) |
 | `POST /core/agent` | (시험용) 본문 `{ dailyCoreId, agent, model?, signals?, interpretation? }`. `agent`(`extractor` / `interpreter` / `structurer`) 하나만 돌려 출력·토큰·반려와 모델이 본 입력 원문을 응답. DB 기록 없음, target의 `pipeline_options`는 안 봄. `interpreter`는 `signals`를 주면 원문 대신 그것을 읽고, `structurer`는 `interpretation`이 필요(그날 ref와 안 맞으면 400). Structurer는 `structuring`과 함께 코드 변환 뒤 `coreJson`·stats도 응답 |
 | `/agents/test/*` | `TestAgent`(한 문장 생성, DB 기록 없음) |
 
@@ -166,7 +167,7 @@ npm run deploy                         # vite build + wrangler deploy
 
 ## 아직 연결되지 않은 것
 
-- 매일 자동으로 도는 Cron. 지금은 앱의 즉시 발송이 수집 → Core → 리포트 → 메일을 한 번에 돌리지만, 날짜는 `target-processing.ts`의 `DAILY_CORE_TEST_DATE`(`2026-10-09`)로 고정.
+- 매일 자동으로 도는 Cron. 지금은 앱의 즉시 발송이 수집 → Core → 리포트 → 메일을 한 번에 돌리지만, 날짜는 `target-processing.ts`의 `DAILY_CORE_TEST_DATE`(테스트용 임시 고정 날짜)로 고정.
 - `core_json`을 `daily_core_items`, `daily_core_metrics` 테이블로 푸는 projection.
 - Supabase 쓰기는 REST로 순서대로 함(트랜잭션 없음). 중간에 죽으면 generation이나 report가 `processing`으로 남음.
 - 실패한 행의 `error_message`에는 원인이 잘 안 남음(대부분 "[flue] Agent run failed").

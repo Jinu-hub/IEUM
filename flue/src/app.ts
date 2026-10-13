@@ -558,6 +558,8 @@ app.post("/report/generate", async (c) => {
           conversations,
         );
     const written = given?.output ?? writer!.output;
+    // The finalizer only polishes: when it fails, the writer's draft goes out and the reason is kept.
+    let finalizerError: string | undefined;
     const finalizer = finalize
       ? await runAgent<ReportDraft>(
           DailyReportFinalizer,
@@ -565,7 +567,11 @@ app.post("/report/generate", async (c) => {
           finalizerInput(coreJson, written),
           { before: written, ...evidence, language, ...finalizerData },
           conversations,
-        )
+        ).catch((error) => {
+          finalizerError = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
+          console.warn(`report ${reportNo}: finalizer failed, sending the writer draft: ${finalizerError}`);
+          return null;
+        })
       : null;
     const final = finalizer?.output ?? written;
     const rendered = renderDailyReport(coreJson, final);
@@ -578,7 +584,11 @@ app.post("/report/generate", async (c) => {
       calls: { ...(writer && { writer: writer.usage }), ...(finalizer && { finalizer: finalizer.usage }) },
     };
     const calls = { ...(writer && { writer: writer.metrics }), ...(finalizer && { finalizer: finalizer.metrics }) };
-    const stats = { ...draftStats(final, evidence), ...(finalizer && { revision: revisionStats(written, final) }) };
+    const stats = {
+      ...draftStats(final, evidence),
+      ...(finalizer && { revision: revisionStats(written, final) }),
+      ...(finalizerError && { finalizer_error: finalizerError }),
+    };
     const finishedAt = new Date();
     const elapsedMs = finishedAt.getTime() - startedAt.getTime();
     await db(reportRow, {
@@ -606,6 +616,7 @@ app.post("/report/generate", async (c) => {
       usage,
       calls,
       stats,
+      ...(finalizerError && { finalizerError }),
       ...(finalizer && { writerDraft: written }),
       draft: final,
       ...rendered,

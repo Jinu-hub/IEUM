@@ -10,6 +10,8 @@ type ReportResult = {
   generationNo: number;
   elapsedMs?: number;
   usage?: Usage;
+  /** Set when the finalizer failed and the writer's draft was used instead. */
+  finalizerError?: string;
   subject: string;
   markdown: string;
   html: string;

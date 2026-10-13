@@ -9,12 +9,12 @@ import type { CreateContentsInput } from "~/core/lib/types";
 import { incrementUsageCounter, saveRunLogEvent, updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
 import { getSentDailyEdition } from "~/features/contents/db/queries";
 import { sendMails } from "~/features/cron/api/send-mails";
-import { getUserSubscriptionPlanType } from "~/features/settings/db/queries";
-import { getWorkspaceOwnerUserId } from "~/features/users/queries";
 import { saveDailyCoreCollection } from "~/features/daily-core/collect";
 import { getDailyCoreData } from "~/features/daily-core/db/queries";
 import { generateDailyReport } from "~/features/daily-core/flue";
 import { fetchDaysFor } from "~/features/daily-core/normalize";
+import { getUserSubscriptionPlanType } from "~/features/settings/db/queries";
+import { getWorkspaceOwnerUserId } from "~/features/users/queries";
 import { collectTargetSources } from "./collect-sources";
 import { checkEmailLimit } from "./limit-checking";
 import { recordRuns } from "./run-record";
@@ -22,7 +22,7 @@ import { sendSlackNotification } from "./send_notifications";
 import type { FetchedData, Target } from "./types";
 
 // Temporary fixed date for works/daily-core-e2e.md. Remove after the E2E run.
-const DAILY_CORE_TEST_DATE = "2026-10-09";
+const DAILY_CORE_TEST_DATE = "2026-10-13";
 
 /**
  * 날짜 범위 생성 (Daily Core 날짜 하루). period_key는 UTC 날짜로 만들어지므로 UTC 자정으로 둔다.
@@ -182,6 +182,12 @@ export async function processTarget(
       target, runMapping, 'info', 'daily_report_generated',
       `Daily report generated: report ${report.reportNo} from core generation ${core.generationNo} (core ${core.elapsedMs}ms, report ${report.elapsedMs ?? 0}ms, $${generated.cost.toFixed(4)})`
     );
+    if (report.finalizerError) {
+      await noteRun(
+        target, runMapping, 'warn', 'report_finalizer_failed',
+        `Report ${report.reportNo} uses the writer draft because the finalizer failed: ${report.finalizerError}`
+      );
+    }
     const content = { finalContents: report.markdown, htmlContents: report.html };
 
     if (recordRuns()) {

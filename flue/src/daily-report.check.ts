@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import * as v from "valibot";
 import {
+  coverageProblems,
   type DailyCoreJson,
   draftEvidence,
   draftProblems,
@@ -13,7 +14,7 @@ import {
   renderDailyReport,
   reportView,
   revisionStats,
-  structureProblems,
+  withoutStrayQuotes,
   writerInput,
 } from "./daily-report.ts";
 
@@ -237,36 +238,34 @@ const quotedReport = renderDailyReport(withQuotes, draft([allHighlights]));
 assert.match(quotedReport.markdown, /\n> \*\*Bo\*\*: the longest line of all #4242 {2}\n/);
 assert.ok(quotedReport.html.includes("<strong>Bo</strong>: the longest line of all #4242"));
 
-// Finalizer: wording may change, structure may not.
+// Finalizer: entries may be merged, split or reordered as long as every drafted item stays.
 const written = draft([["highlights", ["H1", "H2"]], ["topics", ["T1"]]], "ok", "Next.", [["H1"], ["H2"]]);
 const reworded: ReportDraft = {
   ...written,
   opening: "New opening.",
   entries: written.entries.map((e) => ({ ...e, text: `${e.text}!` })),
 };
-assert.deepEqual(structureProblems(written, reworded), []);
+assert.deepEqual(coverageProblems(written, reworded), []);
 assert.deepEqual(revisionStats(written, reworded), {
-  texts: 8,
+  texts_before: 8,
+  texts_after: 8,
   changed: 3,
   chars_before: "Opening.Point 1Point 2Head 1okHead 2okNext.".length,
   chars_after: "New opening.Point 1Point 2Head 1ok!Head 2ok!Next.".length,
 });
-assert.deepEqual(structureProblems(written, { ...reworded, points: reworded.points.slice(1) }), ["points: keep exactly 2 points"]);
-assert.deepEqual(
-  structureProblems(written, { ...reworded, points: [reworded.points[1], reworded.points[0]] }),
-  ["points 1, 2: keep item_ids as in the draft"],
-);
-assert.deepEqual(structureProblems(written, { ...reworded, entries: reworded.entries.slice(0, 1) }), [
-  "entries: keep all 2 entries in the draft order",
+const reshaped: ReportDraft = {
+  ...reworded,
+  points: reworded.points.slice(1),
+  entries: [reworded.entries[1], { ...reworded.entries[0], item_ids: ["H1"] }, { ...reworded.entries[0], item_ids: ["H2"] }],
+};
+assert.deepEqual(coverageProblems(written, reshaped), []);
+assert.equal(revisionStats(written, reshaped).texts_after, 9);
+assert.deepEqual(coverageProblems(written, { ...reworded, entries: reworded.entries.slice(0, 1) }), [
+  "items dropped: T1; every item the draft covers stays in some entry",
 ]);
-assert.deepEqual(
-  structureProblems(written, { ...reworded, entries: [reworded.entries[0], { ...reworded.entries[1], section: "progress_roadmap" }] }),
-  ["entries 2: keep section, item_ids and quote_ids as in the draft"],
-);
-assert.deepEqual(
-  structureProblems(written, { ...reworded, entries: [{ ...reworded.entries[0], quote_ids: ["H1.1"] }, reworded.entries[1]] }),
-  ["entries 1: keep section, item_ids and quote_ids as in the draft"],
-);
+const strayQuote = { ...reworded, entries: [reworded.entries[0], { ...reworded.entries[1], quote_ids: ["T1.1"] }] };
+assert.deepEqual(withoutStrayQuotes(strayQuote).entries[1].quote_ids, []);
+assert.deepEqual(withoutStrayQuotes({ ...reworded, entries: [{ ...reworded.entries[0], quote_ids: ["H1.1"] }] }).entries[0].quote_ids, ["H1.1"]);
 assert.deepEqual(labelProblems(reworded), []);
 const labeled = { ...reworded, entries: [{ ...reworded.entries[0], headline: "【進行中】#23163 done" }, reworded.entries[1]] };
 assert.match(labelProblems(labeled)[0], /remove leading labels or brackets: "【進行中】#23163 done"/);
