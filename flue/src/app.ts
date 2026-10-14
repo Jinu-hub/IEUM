@@ -27,6 +27,7 @@ import {
   Interpretation,
   interpretationProblems,
   interpretationStats,
+  placeLeftovers,
   resolveStructuring,
   type SourceRow,
   structurerInput,
@@ -238,18 +239,15 @@ const runStructurer = ({ core, input }: Day, interpretation: Interpretation, str
   );
 
 // Code after Call 2: core items placed back into the Daily Core arrays, then core_json.
-function assembleCore({ core, rows, input }: Day, interpretation: Interpretation, structuring: Structuring) {
+function assembleCore({ core, rows, input }: Day, interpretation: Interpretation, structured: Structuring) {
+  const { structuring, leftovers } = placeLeftovers(structured, interpretation);
   const output = resolveStructuring(structuring, interpretation, input.authors);
   const coreJson = buildCoreJson(core, rows, output, input.people, input);
-  const placed = new Set(
-    [...structuring.highlights, ...structuring.topics, ...structuring.progress_roadmap, ...structuring.member_activity].flatMap(
-      (item) => item.core_item_ids,
-    ),
-  );
   const stats = {
     ...coreStats(output, input),
     interpretation: interpretationStats(interpretation, input),
-    unplaced_core_items: interpretation.core_items.map((item) => item.concept_key).filter((key) => !placed.has(key)),
+    // Left out of highlights, topics and progress_roadmap by the structurer, then placed by code.
+    unplaced_core_items: leftovers,
   };
   return { output, coreJson, stats };
 }

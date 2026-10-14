@@ -22,7 +22,7 @@ import { sendSlackNotification } from "./send_notifications";
 import type { FetchedData, Target } from "./types";
 
 // Temporary fixed date for works/daily-core-e2e.md. Remove after the E2E run.
-const DAILY_CORE_TEST_DATE = "2026-10-13";
+const DAILY_CORE_TEST_DATE = "2026-10-09";
 
 /**
  * 날짜 범위 생성 (Daily Core 날짜 하루). period_key는 UTC 날짜로 만들어지므로 UTC 자정으로 둔다.

@@ -64,8 +64,11 @@ const nameKey = (name?: string) =>
 
 // Slack mrkdwn a reader should not see in a quote: emoji codes, strikethrough (struck text is
 // retracted), and link labels that are only a URL. Safe to apply twice.
+// Slack escapes these three in message text; run after its <...> markup is handled.
+const unescapeSlack = (text: string) => text.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&");
+
 export const plainSlackText = (text: string) =>
-  text
+  unescapeSlack(text)
     .replace(/~[^~\n]+~/g, "")
     .replace(/:[a-z0-9_+-]+:/g, "")
     .replace(/\S*\b[\w-]+(\.[\w-]+)+\/\S*/g, "")
@@ -101,7 +104,8 @@ export function buildAgentInput(rows: SourceRow[], timezone: string) {
     minute: "2-digit",
   });
   const day = new Intl.DateTimeFormat("en-CA", { timeZone: timezone });
-  const textOf = (item: SourceItem) => mentions([item.title, item.content].filter(Boolean).join(" / ")).replace(/\s+/g, " ");
+  const textOf = (item: SourceItem) =>
+    unescapeSlack(mentions([item.title, item.content].filter(Boolean).join(" / "))).replace(/\s+/g, " ");
   // What a report may quote: Slack text without addressing (leading mentions, cc lists in
   // parentheses) or link markup. Commit messages already show up as item titles.
   const quoteText = (item: SourceItem) =>
@@ -530,6 +534,37 @@ export function structuringProblems(output: Structuring, { coreRefs, authors, pe
     problems.push(`member_activity: ${name} has several entries; use one per person`);
   }
   return problems;
+}
+
+// The Daily Core keeps every core item for reports and other uses; what to leave out is the reader's choice.
+// Items the structurer left out of the event sections (only in member_activity, or nowhere) are added
+// as the interpreter wrote them: topics when that is their only candidate role, otherwise progress_roadmap.
+// Added by code instead of rejected, because a rejection makes the model resend the whole output.
+export function placeLeftovers(output: Structuring, { core_items }: Interpretation) {
+  const placed = new Set(EVENT_SECTIONS.flatMap((section) => output[section].flatMap((item) => item.core_item_ids)));
+  const leftovers = core_items.filter((item) => !placed.has(item.concept_key));
+  const add = (section: "topics" | "progress_roadmap", items: typeof core_items) => {
+    const keys = new Set(output[section].map((item) => item.item_key));
+    return [
+      ...output[section],
+      ...items.map(({ concept_key, title, summary, status }) => ({
+        item_key: keys.has(concept_key) ? `${concept_key}-core` : concept_key,
+        title,
+        summary,
+        status: status ?? null,
+        core_item_ids: [concept_key],
+      })),
+    ];
+  };
+  const topicOnly = (item: (typeof core_items)[number]) => item.roles.includes("topic") && !item.roles.includes("progress");
+  return {
+    structuring: {
+      ...output,
+      topics: add("topics", leftovers.filter(topicOnly)),
+      progress_roadmap: add("progress_roadmap", leftovers.filter((item) => !topicOnly(item))),
+    },
+    leftovers: leftovers.map((item) => item.concept_key),
+  };
 }
 
 // Turns placed items back into the single-agent output shape, so buildCoreJson stays as is.

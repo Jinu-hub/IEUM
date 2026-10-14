@@ -12,12 +12,17 @@ import * as v from "valibot";
 import { Structuring, structuringProblems } from "../../daily-core.ts";
 import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../prompts.ts";
 
+// v2: the Daily Core keeps every core item. v1 ("Unimportant ones may be left out", topics at most 8,
+// "Closely related core items may share one entry") dropped items such as 5-5 No342 and No.77 on 10-09,
+// left No.8 only in member_activity, and merged three people's daily work into one entry.
+// Items it still leaves out are placed by code (placeLeftovers).
 export const CORE_STRUCTURER_PROMPT: AgentPrompt = {
   agentKey: "core-structurer",
-  version: "core-structurer-v1",
+  version: "core-structurer-v2",
   model: "openai/gpt-5.4-mini",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You build a Daily Core: the structured record of one team's activity on one local day.
+Later steps write the daily report and other content from it, so it keeps every piece of work.
 The day was already read and merged into core items, one per event. You decide where each goes.
 
 Input JSON: people (everyone who wrote that day), overview_candidate, and core_items with
@@ -27,12 +32,15 @@ and members (people who did the work).
 Rules:
 - Every entry lists core_item_ids: the concept_key values it is built from.
   Write title and summary only from those core items. Never add facts.
-- Put each core item in at most one entry of highlights, topics, or progress_roadmap.
-  Never repeat a core item across or within these arrays.
+- Put each core item in exactly one entry of highlights, topics, or progress_roadmap.
+  Never repeat a core item across or within these arrays, and never leave one out:
+  importance decides the highlights and the order, not whether an item is kept.
   - highlights: the 3-5 most important outcomes or decisions of the day.
-  - topics: discussions and themes (at most 8).
+  - topics: discussions, decisions, requests, and coordination.
   - progress_roadmap: concrete work moving forward, such as tickets, PRs, and releases, with status.
-  - Closely related core items may share one entry. Unimportant ones may be left out.
+  - Core items share one entry only when they are the same work (the same ticket, a follow-up,
+    a cause and its fix), not because they share a theme or a person.
+  - Within each array, put the most important entry first.
 - member_activity: one entry per person who appears in members of some core item,
   summarizing what they did. The title is only the person's name, exactly as in people.
   Its core_item_ids are the core items listing that person in members; they may also appear in the arrays above.

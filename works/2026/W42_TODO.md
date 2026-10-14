@@ -104,7 +104,8 @@ Daily Report 계획(Phase 0~4)은 W41에 끝남(`W41_TODO.md`의 "끝난 것"). 
 - [ ] `targets.pipeline_options` 마이그레이션(`sql/migrations/0046_open_starbolt.sql`) 적용: `npm run db:migrate`(typegen 포함). 적용 전에는 모든 target이 Extractor 없이 돎(Worker는 컬럼이 없어도 실패하지 않음).
 - [ ] 다른 날짜로 Extractor 유무 비교: `core-agent.run.ts --agent interpreter --id <id>`와, `--agent extractor --id <id>` 결과를 `--agent interpreter --from <extractor .json>`으로. 결과를 보고 target별 기본값을 정함(사용자). 10-09(71줄)는 차이가 결과까지 안 감(W42 10-13). 양이 많은 날로.
 - [ ] 원문 경로 Interpreter 실패: 첫 `submit_interpretation` 전에 수정 도구를 불러 반려 2번(10-13 raw 4회 중 1회). Finalizer처럼 실패 시 대비책이 없어 그날 Core가 실패함.
-- [ ] 프롬프트 DB에 `signal-extractor` Agent·지시문 넣을지. 넣지 않으면 코드 기본값(`signal-extractor-v5`).
+- [ ] 프롬프트 DB에 `signal-extractor` Agent·지시문 넣을지. 넣지 않으면 코드 기본값(`signal-extractor-v6`).
+- [ ] 흐름 정리 확인(10-09, 10-13): `core-structurer-v2`에서 `unplaced_core_items`가 몇 개인지(코드가 넣은 수), 리포트에 No.342·No.77·No.8이 나오는지, signals 경로 Interpreter의 중요도 4~5가 원문 수준(4~6)으로 내려왔는지, `signal-extractor-v6`에 #23000 signal이 생기는지. 프롬프트 DB에 structurer 지시문이 있으면 v2로 갱신.
 - [ ] 간접 호칭(「全さん」「宋さん」 등)을 입력의 사람 이름과 잇는 별도 도구(사용자). 지금 Extractor는 이름을 입력 그대로 씀. DB의 `core-interpreter` 지시문은 입력 설명 문단(`RAW_INPUT`)이 코드와 글자 그대로여야 signals target이 돎.
 - [ ] 끝나면 시험용 `/core/agent`와 `core-agent.run.ts`(2026-10-12에 `/core/interpret` + `interpreter.run.ts`를 대체)를 평가 세트 러너(`eval.run.ts`, `evaluate: true`)와 합칠지 정함.
 

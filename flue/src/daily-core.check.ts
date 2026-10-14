@@ -13,6 +13,7 @@ import {
   interpretationReview,
   interpretationStats,
   normalizeConceptKeys,
+  placeLeftovers,
   plainSlackText,
   resolveStructuring,
   type SourceItem,
@@ -20,7 +21,7 @@ import {
   structurerInput,
   structuringProblems,
 } from "./daily-core.ts";
-import { sharedIdentifiers } from "./agents/core/signal-extractor.ts";
+import { ownDailyWork, sharedIdentifiers } from "./agents/core/signal-extractor.ts";
 
 const item = (ref: string, id: string, at: string, content: string, extra: Partial<SourceItem> = {}) => ({
   source_ref: ref,
@@ -251,6 +252,16 @@ assert.match(
   /Aki has several entries/,
 );
 
+// Left out of the event sections (b only in member_activity, c nowhere): placed by code, topic-only to topics.
+const left = placeLeftovers(
+  structuring({ highlights: [placed("A", ["a"])], topics: [placed("C", ["x"], "c")], member_activity: [placed("Jinu Son", ["b"], "jinu")] }),
+  interpretation(coreA, coreB, { ...coreC, roles: ["topic"], title: "C title", status: "blocked" }),
+);
+assert.deepEqual(left.leftovers, ["b", "c"]);
+assert.deepEqual(left.structuring.progress_roadmap, [{ item_key: "b", title: "", summary: "", status: null, core_item_ids: ["b"] }]);
+assert.deepEqual(left.structuring.topics.at(-1), { item_key: "c-core", title: "C title", summary: "", status: "blocked", core_item_ids: ["c"] });
+assert.deepEqual(placeLeftovers(good, interpretedDay).leftovers, []);
+
 const resolved = resolveStructuring(good, interpretedDay, input.authors);
 assert.deepEqual(resolved.highlights[0], {
   item_key: "k",
@@ -345,6 +356,13 @@ assert.equal(
   "thanks my desk see ok",
 );
 assert.equal(plainSlackText("v5.3.10 at 10:15 ok"), "v5.3.10 at 10:15 ok");
+assert.equal(plainSlackText("&gt; when? a -&gt; b &amp;lt;"), "> when? a -> b &lt;");
+assert.deepEqual(
+  ["Jinu Son daily work", "Aki daily work", "#12 fix"].map(
+    (subject) => ownDailyWork({ refs: ["S003"], kind: "plan", subject, fact: "" }, { S003: "Aki" }).subject,
+  ),
+  ["Aki daily work", "Aki daily work", "#12 fix"],
+);
 assert.deepEqual(
   json.metrics.map((m) => [m.key, m.value, "dimensions" in m ? m.dimensions.source_ident : null]),
   [

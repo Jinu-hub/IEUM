@@ -24,7 +24,10 @@ export const SIGNAL_EXTRACTOR_PROMPT: AgentPrompt = {
   // A v4 (subjects listed before signals, code rejecting a signal that cites two lines by one person) was
   // dropped: 2 of 4 runs failed after rejections, 1 came back with 3 signals, and subjects did not get steadier.
   // v5: v3 plus a "Shared identifiers" list from code, so the model need not find the links across the day.
-  version: "signal-extractor-v5",
+  // v6: v5 (e5-r3) dropped the second matter of a line already cited (#23000 in S020), put an answer
+  // under another subject than its question (S052/S054), and wrote No.230 as "#230". The signal input
+  // also tells the interpreter that kind is a label: with it, importance 4-5 rose from 4-6 items to 9.
+  version: "signal-extractor-v6",
   model: "openai/gpt-6-luna",
   thinkingLevel: "low",
   instructions: `
@@ -52,6 +55,7 @@ Subjects:
 - A conversation that settles one question, such as who takes which work
   next, is one subject even when it names several pieces of work. A piece
   named there gets its own subject only for its own developments.
+- An answer goes under the subject of the question it answers.
 - Tasks a person lists in a daily plan or report that have no subject of
   their own share one subject: that person's name and "daily work". A task
   that has its own subject goes there instead.
@@ -72,8 +76,9 @@ A signal is one development of one subject at one point in time:
 
 Rules:
 - Every line a person wrote today is in the refs of at least one signal.
-- A line that covers several pieces of work gives one signal per piece,
-  each under its own subject.
+- Read each line to its end. A line that covers several pieces of work
+  gives one signal per piece, each under its own subject, even when
+  another signal already cites the line.
 - A signal cites one line, or a question and its direct answer. A morning
   plan, a midday update, and an evening report are separate signals, so
   the latest state stays visible. Add a context line when the fact needs it.
@@ -87,8 +92,9 @@ Rules:
 - quote: when the fact shortens a line, copy the few words that carry its
   key detail (a deadline, a condition, advice, a reason) exactly as they
   appear in a cited line. Leave it empty when the fact already says it all.
-- Write people's names exactly as they appear in the input. Never
-  translate, complete, or change them.
+- Write people's names and identifiers exactly as they appear in the
+  input. Never   translate, complete, or change them; "No.12" stays
+  "No.12", never "#12".
 `,
 };
 
@@ -132,7 +138,7 @@ export function SignalExtractor() {
   const accept = (signals: Signal[]) => {
     const unknown = [...new Set(signals.flatMap((s) => s.refs).filter((ref) => !known.has(ref)))];
     if (unknown.length) throw new Error(`unknown refs ${unknown.join(", ")}`);
-    write(signals);
+    write(signals.map((s) => ownDailyWork(s, authors)));
     const covered = new Set(signals.flatMap((s) => s.refs));
     return refs.filter((ref) => !skip.has(ref) && !covered.has(ref));
   };
@@ -187,6 +193,15 @@ export function SignalExtractor() {
 
 SignalExtractor.initialData = InitialData;
 
+// A "<name> daily work" signal goes under the person who wrote its lines (e5-r3 put Yuuki Imai's plan
+// under "Jinu Son daily work"). Renamed by code instead of rejected, as rejections failed v4 runs.
+export function ownDailyWork(s: Signal, authors: Record<string, string>): Signal {
+  const name = s.subject.trim().match(/^(.+?)\s*daily work$/i)?.[1];
+  const writer = authors[s.refs[0]];
+  if (!name || !writer || s.refs.some((ref) => authors[ref] === name)) return s;
+  return { ...s, subject: `${writer} daily work` };
+}
+
 const RAW_INPUT = `The input contains Slack messages and repository events grouped by source.
 Each line has a source_ref. Replies appear under their thread parent.
 Older lines marked "(context, YYYY-MM-DD)" explain today's replies but are
@@ -205,7 +220,9 @@ Use a subject as an item, but merge two subjects that are the same work
 under different names, and split a subject that holds different requests
 or changes. When signals in an item report different times, the latest
 one gives the current state; earlier plans and expectations are history.
-Signals of kind ack need no item.`;
+Every subject is told by some item, small ones too. Signals of kind ack
+need no item. A signal's kind is a label from the previous step, not a
+ranking: judge importance by the rules below.`;
 
 // CoreInterpreter's instructions with the input description swapped for signals; the rest stays the same.
 // A prompt DB template for core-interpreter must keep RAW_INPUT word for word, or signal runs fail here.
