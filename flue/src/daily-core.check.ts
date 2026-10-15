@@ -16,6 +16,7 @@ import {
   placeLeftovers,
   plainSlackText,
   resolveStructuring,
+  restoreCoreIds,
   type SourceItem,
   type Structuring,
   structurerInput,
@@ -251,6 +252,15 @@ assert.match(
   sProblems(structuring({ member_activity: [placed("Aki", ["a"], "1"), placed("Aki", ["b"], "2")] }))[0],
   /Aki has several entries/,
 );
+const restored = restoreCoreIds(
+  structuring({
+    topics: [placed("T", ["ticket-12-mail-fix", "ticket-12", "ticket-1", "ticket-9-x"])],
+    member_activity: [placed("Aki", ["ticket-12-spec-change-x"], "aki")],
+  }),
+  ["ticket-1", "ticket-12", "ticket-12-spec"],
+);
+assert.deepEqual(restored.topics[0].core_item_ids, ["ticket-12", "ticket-1", "ticket-9-x"]);
+assert.deepEqual(restored.member_activity[0].core_item_ids, ["ticket-12-spec"]);
 
 // Left out of the event sections (b only in member_activity, c nowhere): placed by code, topic-only to topics.
 const left = placeLeftovers(

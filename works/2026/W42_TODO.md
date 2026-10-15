@@ -35,6 +35,7 @@ Daily Report 계획(Phase 0~4)은 W41에 끝남(`W41_TODO.md`의 "끝난 것"). 
 - [ ] 앱 Vercel 첫 배포: 전용 문서 `works/vercel-deploy.md`(도메인, 환경변수, Slack 토큰 조회, 함수 시간 실측).
 - [ ] GitHub 토큰이 앱 로그에 평문으로 찍힘: `app/core/integrations/github/run.ts`의 `console.log('createOctokit with token', cfg.token)`(이전부터). 토큰을 빼고, 이미 찍힌 토큰은 교체할지 정함(2026-10-11 발견).
 - [ ] 메일 HTML 디자인 고도화(사용자, 2026-10-11). 지금은 `daily-report.ts`의 인라인 스타일 문자열(Phase 0부터 "꾸밈은 나중").
+  - 1차 완료(10-15): 상태 배지, KPI 타일·위치, 카드 레이아웃. 10-15 톤 변경(크림·주황)까지 반영. 남음: 실제 메일 클라이언트(Gmail/Outlook) 확인, 다크 모드, 섹션 제목 이모지 대체 여부.
   - 참고: `sample/final.html`, React Email은 `transactional-emails/`에 별도 패키지로만 있음(Worker에서 쓸지 정함).
   - 확인 범위: Gmail 웹·모바일, 다크 모드, 휴대폰 폭(지금 약 4화면), 머리·꼬리(브랜드, 수신 설정 링크).
   - 렌더만 바꾸는 작업이라 모델 재실행 없이 저장된 `daily_reports.agent_output_json.draft`로 다시 렌더해서 비교. 바꾸면 `REPORT_FORMAT_VERSION` 올림.

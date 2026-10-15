@@ -277,6 +277,8 @@ export function draftStats(draft: ReportDraft, { ids }: DraftEvidence) {
 export type ReportEntry = {
   title: string;
   icon: string | null;
+  // tone picks the HTML badge color; markdown keeps the icon.
+  tone: Status | null;
   status: string | null;
   summary: string;
   links: string[];
@@ -289,7 +291,7 @@ export type ReportMetric = { label: string; value: number; parts: { name: string
 export type ReportView = {
   title: string;
   date: string;
-  overview: { heading: string; summary: string; points: { heading: string; items: { icon: string | null; text: string }[] } | null } | null;
+  overview: { heading: string; summary: string; points: { heading: string; items: { icon: string | null; tone: Status | null; status: string | null; text: string }[] } | null } | null;
   sections: ReportSection[];
   closing: { heading: string; text: string } | null;
   members: ReportSection | null;
@@ -318,6 +320,7 @@ function entry(title: string, summary: string, items: CoreItem[], labels: Labels
   return {
     title,
     icon: status && ICON[status],
+    tone: status,
     status: status && labels.status[status],
     summary,
     ...links(items),
@@ -350,7 +353,7 @@ export function reportView(core: DailyCoreJson, draft?: ReportDraft): ReportView
   const summary = story ? story.opening : core.overview.summary;
   const points = (story?.points ?? []).map((p) => {
     const status = commonStatus(cite(p.item_ids));
-    return { icon: status && ICON[status], text: p.text };
+    return { icon: status && ICON[status], tone: status, status: status && labels.status[status], text: p.text };
   });
   const members: ReportSection = {
     heading: labels.member_activity,
@@ -410,6 +413,18 @@ function markdown(view: ReportView) {
     lines.push(`## ${heading}`, "", md(summary), "");
     if (points) lines.push(`**${md(points.heading)}**`, ...points.items.map((p) => `- ${iconText(p.icon)}${md(p.text)}`), "");
   }
+  if (view.metrics.rows.length) {
+    const [name, count] = view.metrics.columns;
+    const cell = (text: string) => md(text).replace(/\|/g, "\\|");
+    lines.push(
+      `## ${view.metrics.heading}`,
+      "",
+      `| ${name} | ${count} |`,
+      "| --- | ---: |",
+      ...metricRows(view.metrics.rows).map((r) => `| ${r.part ? `└ ${cell(r.label)}` : cell(r.label)} | ${r.value} |`),
+      "",
+    );
+  }
   const section = ({ heading, layout, entries }: ReportSection) => {
     lines.push(`## ${md(heading)}`, "");
     for (const e of entries) {
@@ -425,18 +440,6 @@ function markdown(view: ReportView) {
   view.sections.forEach(section);
   if (view.closing) lines.push(`## ${view.closing.heading}`, "", md(view.closing.text), "");
   if (view.members) section(view.members);
-  if (view.metrics.rows.length) {
-    const [name, count] = view.metrics.columns;
-    const cell = (text: string) => md(text).replace(/\|/g, "\\|");
-    lines.push(
-      `## ${view.metrics.heading}`,
-      "",
-      `| ${name} | ${count} |`,
-      "| --- | ---: |",
-      ...metricRows(view.metrics.rows).map((r) => `| ${r.part ? `└ ${cell(r.label)}` : cell(r.label)} | ${r.value} |`),
-      "",
-    );
-  }
   return lines.join("\n");
 }
 
@@ -445,86 +448,129 @@ const esc = (text: string) =>
 
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans','Apple SD Gothic Neo',sans-serif";
 
+// Look: warm paper, ink text, one deep-teal accent, blue links, small letter-spaced labels, dashed rules, one dark block.
+// Inline styles only (mail clients drop <style> and web fonts); colors live here so the accent is one edit.
+const C = {
+  paper: "#F1EDE3",
+  card: "#FFFEFB",
+  line: "#DDD6C6",
+  dash: "#CFC8B6",
+  ink: "#16150F",
+  body: "#3A372F",
+  muted: "#6F6A5F",
+  accent: "#0F6B66",
+  link: "#1D5FD1",
+};
+const MONO = "'SF Mono',SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace";
+// Badge colors per status. Markdown keeps the emoji icons.
+const TONE: Record<Status, { fg: string; bg: string; line: string }> = {
+  completed: { fg: "#2F6B2F", bg: "#E4F0DF", line: "#BCD6B3" },
+  in_progress: { fg: "#FFFFFF", bg: C.ink, line: C.ink },
+  blocked: { fg: "#B3261E", bg: "#FCE9E7", line: "#F0BDB8" },
+  planned: { fg: "#6B665B", bg: "transparent", line: "#CFC9BA" },
+};
+const KPI_COLUMNS = 3;
+
 function html(view: ReportView) {
+  const badge = (tone: Status | null, label: string | null) => {
+    if (!tone || !label) return "";
+    const t = TONE[tone];
+    return `<span style="display:inline-block;margin-right:8px;padding:0 9px;border:1px solid ${t.line};border-radius:10px;background:${t.bg};color:${t.fg};font-size:11px;font-weight:bold;letter-spacing:.04em;line-height:18px;white-space:nowrap;vertical-align:middle">${esc(label)}</span>`;
+  };
   const h2 = (text: string) =>
-    `<h2 style="margin:28px 0 10px;font-size:16px;color:#0D0E10;border-bottom:1px solid #E1E4E8;padding-bottom:6px">${esc(text)}</h2>`;
-  const p = (text: string, style = "") => `<p style="margin:0 0 12px;line-height:1.7;${style}">${esc(text)}</p>`;
+    `<h2 style="margin:52px 0 16px;padding-top:14px;border-top:2px solid ${C.ink};font-size:16px;font-weight:800;letter-spacing:.04em;line-height:1.4;color:${C.ink}">${esc(text)}</h2>`;
+  const p = (text: string, style = "") => `<p style="margin:0 0 12px;line-height:1.85;color:${C.body};${style}">${esc(text)}</p>`;
   const withLinks = (e: ReportEntry) => {
     const links = [
-      ...e.links.map((url, i) => `<a href="${esc(url)}" style="color:#5E6AD2;text-decoration:none">[${i + 1}]</a>`),
+      ...e.links.map((url, i) => `<a href="${esc(url)}" style="color:${C.link};text-decoration:none">[${i + 1}]</a>`),
       ...(e.more ? [`+${e.more}`] : []),
     ].join(" ");
-    return `${esc(e.summary)}${links ? ` <span style="font-size:12px;color:#6C6F7E">${links}</span>` : ""}`;
+    return `${esc(e.summary)}${links ? ` <span style="font-family:${MONO};font-size:12px;color:${C.muted}">${links}</span>` : ""}`;
   };
   const body: string[] = [
-    `<h1 style="margin:0;font-size:20px;color:#0D0E10">${esc(view.title)}</h1>`,
-    `<p style="margin:4px 0 0;color:#6C6F7E;font-size:13px">${esc(view.date)}</p>`,
+    `<div style="width:28px;height:3px;background:${C.accent};margin-bottom:14px"></div>`,
+    `<h1 style="margin:0;font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.3;color:${C.ink}">${esc(view.title)}</h1>`,
+    `<p style="margin:8px 0 0;font-family:${MONO};font-size:12px;letter-spacing:.04em;color:${C.muted}">${esc(view.date)}</p>`,
   ];
   if (view.empty) body.push(p(view.empty, "margin-top:24px"));
   if (view.overview) {
     const { heading, summary, points } = view.overview;
-    body.push(h2(heading), p(summary));
+    body.push(h2(heading), p(summary, `font-size:16px;color:${C.ink}`));
     if (points) {
       body.push(
-        `<div style="margin:0 0 12px;padding:10px 14px;border:1px solid #E1E4E8;border-radius:8px">`,
-        `<div style="margin-bottom:4px;font-size:12px;font-weight:bold;color:#5E6AD2">${esc(points.heading)}</div>`,
-        ...points.items.map((item) => `<div style="line-height:1.7">${iconText(item.icon)}${esc(item.text)}</div>`),
+        `<div style="margin:16px 0 0;padding:6px 18px 8px;background:${C.card};border:1px solid ${C.line};border-radius:10px">`,
+        `<div style="padding:10px 0 4px;font-size:11px;font-weight:bold;letter-spacing:.12em;color:${C.accent}">${esc(points.heading)}</div>`,
+        ...points.items.map(
+          (item, i) =>
+            `<div style="padding:9px 0;${i ? `border-top:1px dashed ${C.dash};` : ""}line-height:1.7;color:${C.ink}">${badge(item.tone, item.status)}${esc(item.text)}</div>`,
+        ),
         `</div>`,
       );
     }
+  }
+  // KPI tiles: a table of KPI_COLUMNS cells per row (no flex/grid in mail clients); the wrapper's negative
+  // margin cancels the table's outer border-spacing so tiles line up with the text.
+  if (view.metrics.rows.length) {
+    const tile = (r?: ReportMetric) =>
+      r
+        ? `<td width="33%" valign="top" style="padding:12px 14px;background:${C.card};border:1px solid ${C.line};border-radius:10px"><div style="font-size:11px;letter-spacing:.04em;color:${C.muted}">${esc(r.label)}</div><div style="margin-top:4px;font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.2;color:${C.ink}">${r.value}</div>${
+            r.parts.length
+              ? `<div style="margin-top:6px;font-family:${MONO};font-size:11px;line-height:1.5;color:${C.muted}">${r.parts.map((part) => `${esc(part.name)} ${part.value}`).join(" · ")}</div>`
+              : ""
+          }</td>`
+        : `<td width="33%"></td>`;
+    const rows: string[] = [];
+    for (let i = 0; i < view.metrics.rows.length; i += KPI_COLUMNS) {
+      const cells = Array.from({ length: KPI_COLUMNS }, (_, j) => tile(view.metrics.rows[i + j]));
+      rows.push(`<tr>${cells.join("")}</tr>`);
+    }
+    body.push(
+      h2(view.metrics.heading),
+      `<div style="margin:0 -8px"><table role="presentation" width="100%" style="width:100%;border-collapse:separate;border-spacing:8px">${rows.join("")}</table></div>`,
+    );
   }
   const section = ({ heading, layout, entries }: ReportSection) => {
     body.push(h2(heading));
     for (const e of entries) {
       if (layout === "block") {
+        const status = badge(e.tone, e.status);
         body.push(
-          `<div style="margin:0 0 16px;padding-left:12px;border-left:3px solid #5E6AD2">`,
-          `<div style="margin-bottom:2px;font-size:15px;font-weight:bold;line-height:1.5">${iconText(e.icon)}${esc(e.title)}</div>`,
-          `<div style="line-height:1.7">${withLinks(e)}</div>`,
+          `<div style="margin:0 0 12px;padding:16px 18px;background:${C.card};border:1px solid ${C.line};border-left:3px solid ${C.accent};border-radius:10px">`,
+          ...(status ? [`<div style="margin-bottom:8px">${status}</div>`] : []),
+          `<div style="margin-bottom:6px;font-size:17px;font-weight:bold;letter-spacing:-.01em;line-height:1.5;color:${C.ink}">${esc(e.title)}</div>`,
+          `<div style="line-height:1.85;color:${C.body}">${withLinks(e)}</div>`,
           ...e.quotes.map(
             (q) =>
-              `<div style="margin-top:6px;padding:6px 10px;background:#F6F7F9;border-radius:6px;font-size:12px;line-height:1.6;color:#4A4D57"><strong>${esc(q.author)}</strong>: ${esc(q.text)}</div>`,
+              `<div style="margin-top:10px;padding:10px 12px;background:${C.paper};border:1px solid ${C.line};border-radius:8px;font-size:13px;line-height:1.7;color:${C.body}"><div style="margin-bottom:2px;font-size:11px;font-weight:bold;letter-spacing:.06em;color:${C.accent}">${esc(q.author)}</div>${esc(q.text)}</div>`,
           ),
           `</div>`,
         );
-      } else if (layout === "list") {
-        body.push(`<div style="margin:0 0 10px;line-height:1.7">${iconText(e.icon)}<strong>${esc(e.title)}</strong> ${withLinks(e)}</div>`);
       } else {
-        const status = e.status
-          ? ` <span style="font-size:11px;font-weight:normal;color:#5E6AD2;border:1px solid #5E6AD2;border-radius:8px;padding:0 6px">${esc(e.status)}</span>`
-          : "";
+        // list and members: title line (status badge first), summary below, dashed rule between rows.
         body.push(
-          `<div style="margin:0 0 14px">`,
-          `<div style="font-weight:bold;line-height:1.5">${esc(e.title)}${status}</div>`,
-          `<div style="line-height:1.7">${withLinks(e)}</div>`,
+          `<div style="padding:12px 0;border-bottom:1px dashed ${C.dash}">`,
+          `<div style="font-weight:bold;line-height:1.6;color:${C.ink}">${badge(e.tone, e.status)}${esc(e.title)}</div>`,
+          `<div style="margin-top:2px;line-height:1.8;color:${C.body}">${withLinks(e)}</div>`,
           `</div>`,
         );
       }
     }
   };
   view.sections.forEach(section);
-  if (view.closing) body.push(h2(view.closing.heading), p(view.closing.text));
-  if (view.members) section(view.members);
-  if (view.metrics.rows.length) {
-    const [name, count] = view.metrics.columns;
-    const th = "padding:6px 8px;border-bottom:2px solid #E1E4E8;font-size:12px;color:#6C6F7E";
-    const td = "padding:6px 8px;border-bottom:1px solid #E1E4E8";
+  // The closing is the one dark block, like a takeaway.
+  if (view.closing) {
     body.push(
-      h2(view.metrics.heading),
-      `<table style="width:100%;border-collapse:collapse;font-size:14px">`,
-      `<tr><th style="${th};text-align:left">${esc(name)}</th><th style="${th};text-align:right">${esc(count)}</th></tr>`,
-      ...metricRows(view.metrics.rows).map((r) =>
-        r.part
-          ? `<tr><td style="${td};padding-left:24px;font-size:12px;color:#6C6F7E">${esc(r.label)}</td><td style="${td};text-align:right;font-size:12px;color:#6C6F7E">${r.value}</td></tr>`
-          : `<tr><td style="${td}">${esc(r.label)}</td><td style="${td};text-align:right;font-weight:bold">${r.value}</td></tr>`,
-      ),
-      `</table>`,
+      `<div style="margin:52px 0 0;padding:20px 22px;background:${C.ink};border-radius:10px">`,
+      `<div style="margin-bottom:6px;font-size:11px;font-weight:bold;letter-spacing:.12em;color:#8FD3CB">${esc(view.closing.heading)}</div>`,
+      `<div style="font-size:15px;line-height:1.85;color:${C.paper}">${esc(view.closing.text)}</div>`,
+      `</div>`,
     );
   }
+  if (view.members) section(view.members);
   return [
-    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>`,
-    `<body style="margin:0;background:#FFFFFF">`,
-    `<div style="max-width:640px;margin:0 auto;padding:24px 16px;font-family:${FONT};font-size:14px;color:#0D0E10">`,
+    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>`,
+    `<body style="margin:0;background:${C.paper}">`,
+    `<div style="max-width:640px;margin:0 auto;padding:36px 16px 48px;font-family:${FONT};font-size:14px;color:${C.ink}">`,
     ...body,
     `</div></body></html>`,
   ].join("\n");

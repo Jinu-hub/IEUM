@@ -504,6 +504,18 @@ export type StructuringEvidence = {
 const ownRefs = (refs: string[], name: string, authors: Record<string, string>) =>
   refs.filter((ref) => authors[ref] === name);
 
+// The structurer sometimes extends a short key with a description in core_item_ids ("ticket-23000" as
+// "ticket-23000-unregistered-search-ui", 10-14) and repeated it after a rejection, so code maps an unknown id
+// back to the longest known key it starts with. Ids matching none are left for structuringProblems.
+export function restoreCoreIds(output: Structuring, keys: string[]): Structuring {
+  const known = new Set(keys);
+  const restore = (id: string) =>
+    known.has(id) ? id : (keys.filter((key) => id.startsWith(`${key}-`)).sort((a, b) => b.length - a.length)[0] ?? id);
+  const fix = <T extends { core_item_ids: string[] }>(items: T[]) =>
+    items.map((item) => ({ ...item, core_item_ids: [...new Set(item.core_item_ids.map(restore))] }));
+  return { ...output, ...Object.fromEntries(SECTIONS.map((section) => [section, fix(output[section])])) };
+}
+
 export function structuringProblems(output: Structuring, { coreRefs, authors, people }: StructuringEvidence) {
   const problems: string[] = [];
   const placements = new Map<string, string[]>();

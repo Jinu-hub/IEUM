@@ -111,7 +111,8 @@ assert.match(
   report.markdown,
   /\| 指標 \| 件数 \|\n\| --- \| ---: \|\n\| Slack メッセージ \| 5 \|\n\| └ #a \| 3 \|\n\| └ #b \| 2 \|\n\| コミット \| 4 \|\n\| 活動メンバー \| 2 \|\n/,
 );
-assert.ok(report.html.includes("<th"));
+assert.equal(report.html.match(/font-size:28px/g)?.length, 3); // one KPI tile per metric
+assert.ok(report.html.indexOf("font-size:28px") < report.html.indexOf("High summary")); // KPI sits above the sections
 assert.ok(report.html.includes("Dev &lt;Team&gt; Daily Report"));
 assert.ok(report.html.includes("A &amp; B moved."));
 assert.ok(!report.html.includes("javascript:"));
@@ -236,7 +237,7 @@ const quotedView = reportView(withQuotes, draft([allHighlights]));
 assert.deepEqual(quotedView.sections[0].entries[0].quotes, [{ author: "Bo", text: "the longest line of all #4242" }]);
 const quotedReport = renderDailyReport(withQuotes, draft([allHighlights]));
 assert.match(quotedReport.markdown, /\n> \*\*Bo\*\*: the longest line of all #4242 {2}\n/);
-assert.ok(quotedReport.html.includes("<strong>Bo</strong>: the longest line of all #4242"));
+assert.ok(quotedReport.html.includes(">Bo</div>the longest line of all #4242"));
 
 // Finalizer: entries may be merged, split or reordered as long as every drafted item stays.
 const written = draft([["highlights", ["H1", "H2"]], ["topics", ["T1"]]], "ok", "Next.", [["H1"], ["H2"]]);
@@ -279,7 +280,7 @@ const story = reportView(withTicket, draft([["topics", ["T1"]], ["highlights", [
 assert.deepEqual(story.overview, {
   heading: "👋 今日の概要",
   summary: "Opening.",
-  points: { heading: "今日のポイント", items: [{ icon: "✅", text: "Point 1" }] },
+  points: { heading: "今日のポイント", items: [{ icon: "✅", tone: "completed", status: "完了", text: "Point 1" }] },
 });
 assert.deepEqual(story.sections.map((s) => [s.heading, s.entries.map((e) => e.title)]), [
   ["✨ ハイライト", ["Head 2", "Head 3"]],
@@ -289,6 +290,7 @@ assert.deepEqual(story.sections.map((s) => [s.heading, s.entries.map((e) => e.ti
 assert.deepEqual(story.sections[0].entries[0], {
   title: "Head 2",
   icon: null,
+  tone: null,
   status: null,
   summary: "Para",
   links: urls(3),
@@ -300,12 +302,14 @@ assert.deepEqual(story.members?.entries.map((e) => e.title), ["Zed", "Aki"]);
 const storyReport = renderDailyReport(withTicket, draft([["highlights", ["H1"]], ["highlights", ["H2", "H3"]]], "Para <b>", "Next."));
 assert.match(
   storyReport.markdown,
-  /## 👋 今日の概要\n\nOpening\.\n\n\*\*今日のポイント\*\*\n- ✅ Point 1\n\n## ✨ ハイライト\n\n### ✅ Head 1\n\nPara \\<b\\> \[1\]/,
+  /## 👋 今日の概要\n\nOpening\.\n\n\*\*今日のポイント\*\*\n- ✅ Point 1\n\n## 📊 今日のKPI\n\n\| 指標 \| 件数 \|/,
 );
+assert.match(storyReport.markdown, /\n## ✨ ハイライト\n\n### ✅ Head 1\n\nPara \\<b\\> \[1\]/);
 assert.match(storyReport.markdown, /\n## ⏭ 次の焦点\n\nNext\.\n\n## 👥 メンバーアクティビティ\n\n- \*\*Zed\*\*/);
 assert.match(storyReport.markdown, /\n## 📊 今日のKPI\n\n\| 指標 \| 件数 \|/);
 assert.ok(storyReport.html.includes("Para &lt;b&gt;"));
-assert.ok(storyReport.html.includes("border-left:3px solid #5E6AD2"));
+assert.ok(storyReport.html.includes(">完了</span>")); // status badge in HTML
+assert.ok(storyReport.html.includes("border-left:3px solid #0F6B66"));
 // An empty day ignores the draft.
 assert.equal(reportView({ ...withTicket, quality: { status: "empty" } }, draft(highlightsOnly)).overview?.summary, "A & B moved.");
 

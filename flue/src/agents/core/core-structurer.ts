@@ -9,7 +9,7 @@ import {
   useTool,
 } from "@flue/runtime";
 import * as v from "valibot";
-import { Structuring, structuringProblems } from "../../daily-core.ts";
+import { restoreCoreIds, Structuring, structuringProblems } from "../../daily-core.ts";
 import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../prompts.ts";
 
 // v2: the Daily Core keeps every core item. v1 ("Unimportant ones may be left out", topics at most 8,
@@ -71,9 +71,10 @@ export function CoreStructurer() {
     description: "Submit the finished Daily Core. Call exactly once. Errors list what to fix.",
     input: Structuring,
     run({ data }) {
-      const problems = structuringProblems(data, evidence);
+      const output = restoreCoreIds(data, Object.keys(evidence.coreRefs));
+      const problems = structuringProblems(output, evidence);
       if (problems.length) throw new Error(problems.join("\n"));
-      write(data);
+      write(output);
       return { output: "accepted", terminate: true };
     },
   });
