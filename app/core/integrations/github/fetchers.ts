@@ -76,7 +76,7 @@ export async function fetchCommits(
         message: (c.commit?.message || "").split("\n")[0],
         author: authorLogin,
         html_url: c.html_url!,
-        date: c.commit?.author?.date || "",
+        date: c.commit?.committer?.date || c.commit?.author?.date || "",
         userInfo: userInfo || undefined,
       };
     })

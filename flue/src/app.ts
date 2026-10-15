@@ -331,6 +331,12 @@ app.post("/core/generate", async (c) => {
       calls: { ...(call0 && { extractor: call0.usage }), interpretation: call1.usage, structuring: call2.usage },
     };
     const calls = { ...(call0 && { extractor: call0.metrics }), interpretation: call1.metrics, structuring: call2.metrics };
+    const agentOutputs = {
+      ...(call0 && { signals: call0.output }),
+      interpretation,
+      structuring,
+      dropped_actors: call1.data.droppedActors?.at(-1) ?? [],
+    };
     const finishedAt = new Date().toISOString();
     await db(generationRow, {
       method: "PATCH",
@@ -338,12 +344,7 @@ app.post("/core/generate", async (c) => {
         generation_status: "succeeded",
         quality_status: coreJson.quality.status,
         agent_conversation_id: conversations[0],
-        agent_output_json: {
-          ...(call0 && { signals: call0.output }),
-          interpretation,
-          structuring,
-          dropped_actors: call1.data.droppedActors?.at(-1) ?? [],
-        },
+        agent_output_json: agentOutputs,
         core_json: coreJson,
         token_usage_json: usage,
         processing_metrics_json: { elapsed_ms: Date.now() - startedAt.getTime(), calls },
@@ -371,6 +372,8 @@ app.post("/core/generate", async (c) => {
       calls,
       stats,
       coreJson,
+      input: body,
+      agentOutputs,
     });
   } catch (error) {
     const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
