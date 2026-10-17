@@ -119,34 +119,31 @@ export const updateNewsletterRun = async (client: SupabaseClient<Database>,
     }
 }
 
-export const updateNewsletterRunError = async (client: SupabaseClient<Database>, 
-    { runId, runStepId, errorSummary }: 
-    { runId: string, runStepId: string, errorSummary: string }) => {
+/** Ends a run that did not succeed: `failed` for errors, `canceled` for skips (no data, already sent). */
+export const closeNewsletterRun = async (client: SupabaseClient<Database>, 
+    { runId, runStepId, status, errorSummary }: 
+    { runId: string, runStepId: string, status: 'failed' | 'canceled', errorSummary: string }) => {
     try {
+        const now = new Date().toISOString();
         const { error } = await client
             .from('newsletter_runs')
-            .update({
-                status: 'failed' as Database["public"]["Enums"]["run_status"],
-            })
+            .update({ status, finished_at: now })
             .eq('run_id', runId)
         if (error) {
-            console.error('updateNewsletterRunError error', error);
+            console.error('closeNewsletterRun error', error);
             throw error
         }
         const { error: runStepsError } = await client
             .from('newsletter_run_steps')
-            .update({
-                status: 'failed' as Database["public"]["Enums"]["step_status"],
-                error_summary: errorSummary,
-            })
+            .update({ status, error_summary: errorSummary, finished_at: now })
             .eq('run_step_id', runStepId)
         if (runStepsError) {
-            console.error('updateNewsletterRunStepError error', runStepsError);
+            console.error('closeNewsletterRunStep error', runStepsError);
             throw runStepsError
         }
         return { ok: true };
     } catch (error) {
-        console.error('updateNewsletterRunError error', error);
+        console.error('closeNewsletterRun error', error);
         throw error
     }
 }

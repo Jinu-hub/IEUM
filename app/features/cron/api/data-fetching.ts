@@ -5,9 +5,8 @@
 import { isScheduledWithinHour } from "~/core/lib/cron-utils";
 import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
-import { createNewsletterRun } from "~/features/contents/db/mutations";
 import { recordRuns } from "./run-record";
-import type { RunMapping, Target } from "./types";
+import type { Target } from "./types";
 
 /**
  * 모든 활성 타겟 조회
@@ -27,6 +26,7 @@ export async function fetchAllActiveTargets(): Promise<Target[]> {
   logger.info('Fetched all active targets', { 
     totalTargets: allTargets?.length || 0
   });
+  if (!recordRuns()) logger.info("CRON_RECORD=0, newsletter run rows are not saved");
 
   return allTargets || [];
 }
@@ -51,27 +51,3 @@ export async function fetchScheduledTargets(): Promise<Target[]> {
 
   return scheduledTargets;
 }
-
-/**
- * 모든 타겟에 대한 Newsletter run 생성 및 매핑
- */
-export async function createRunMappings(targets: Target[]): Promise<RunMapping> {
-  const runMapping: RunMapping = {};
-  if (!recordRuns()) logger.info("CRON_RECORD=0, newsletter run rows are not saved");
-
-  for (const target of targets) {
-    if (!recordRuns()) {
-      runMapping[target.target_id] = { runId: crypto.randomUUID(), runStepId: crypto.randomUUID() };
-      continue;
-    }
-    const { runId, runStepId } = await createNewsletterRun(adminClient, {
-      workspaceId: target.workspace_id,
-      trigger: 'cron',
-      logRef: null,
-    });
-    runMapping[target.target_id] = { runId, runStepId };
-  }
-
-  return runMapping;
-}
-

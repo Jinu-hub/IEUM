@@ -59,7 +59,8 @@ Daily Report 계획(Phase 0~4)은 W41에 끝남(`W41_TODO.md`의 "끝난 것"). 
   - 「10月修正依頼表No77」이 리포트에서 `#77`로 바뀜(Redmine 티켓처럼 보임).
   - 같은 내용이 highlight와 topics에 겹침(#22540, MillviV3 字幕).
 - [ ] 실패 문구: Worker 연결 실패가 "fetch failed"로만 남음. `flue.ts`의 `callFlue`에서 경로·주소를 붙여 감쌈(Phase 3에서 발견).
-- [ ] 실패 run 기록: `finished_at`이 null, step이 `collect_data`에 머묾(이전부터의 동작). step enum 정리(3-4)와 같이.
+- [ ] 실패 run 기록: step이 `collect_data`에 머묾(이전부터의 동작). step enum 정리(3-4)와 같이. `finished_at`은 10-15에 채움(`closeNewsletterRun`).
+- [ ] run 기록 시점 변경(10-15) 확인: 크론에서 구독 없는 워크스페이스의 행이 안 생기는지, 소스 없음이 `canceled`로 닫히는지, 수동 즉시 발송의 건너뛰기가 화면에 이유와 함께 보이는지.
 - [ ] failed 리포트 행의 `error_message`에 원인이 안 남음("[flue] Agent run failed"뿐). Core도 같은 `runAgent`. 필요해지면 Flue 이벤트에서 원인을 꺼냄(Phase 2에서 발견). Core 실패 때는 interpretation도 저장되지 않아 원인을 로컬 wrangler 상태에서 찾아야 했음(10-14).
 
 ## 3. 나중에 천천히

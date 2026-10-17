@@ -6,7 +6,7 @@ import type { Database } from "database.types";
 import { logger } from "~/core/lib/logger";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import type { CreateContentsInput } from "~/core/lib/types";
-import { incrementUsageCounter, saveRunLogEvent, updateNewsletterRun, updateNewsletterRunError } from "~/features/contents/db/mutations";
+import { closeNewsletterRun, createNewsletterRun, incrementUsageCounter, saveRunLogEvent, updateNewsletterRun } from "~/features/contents/db/mutations";
 import { getSentDailyEdition } from "~/features/contents/db/queries";
 import { sendMails } from "~/features/cron/api/send-mails";
 import { saveDailyCoreCollection } from "~/features/daily-core/collect";
@@ -64,9 +64,17 @@ export function createContentsInput(
   };
 }
 
+type RunIds = { runId: string; runStepId: string };
+
+/** A cron run row is made only once a target passes the checks, so skipped targets leave no row. */
+async function openRun(target: Target): Promise<RunIds> {
+  if (!recordRuns()) return { runId: crypto.randomUUID(), runStepId: crypto.randomUUID() };
+  return createNewsletterRun(adminClient, { workspaceId: target.workspace_id, trigger: 'cron', logRef: null });
+}
+
 async function noteRun(
   target: Target,
-  runMapping: { runId: string; runStepId: string },
+  runMapping: RunIds,
   level: string,
   stepName: string,
   message: string
@@ -83,53 +91,42 @@ async function noteRun(
   });
 }
 
-async function closeRun(
-  runMapping: { runId: string; runStepId: string },
-  errorSummary: string
-) {
+async function closeRun(runMapping: RunIds, status: 'failed' | 'canceled', errorSummary: string) {
   if (!recordRuns()) return;
-  await updateNewsletterRunError(adminClient, {
-    runId: runMapping.runId,
-    runStepId: runMapping.runStepId,
-    errorSummary,
-  });
+  await closeNewsletterRun(adminClient, { ...runMapping, status, errorSummary });
 }
 
 /**
  * 단일 타겟 처리 메인 로직
+ *
+ * Cron passes no run: the checks before collecting (subscription, mail limit, already sent) skip with a
+ * log line only, and the run row is made after them. A manual send passes the run it already made, so
+ * those skips close it as canceled. Skips found while collecting close as canceled; errors as failed.
  */
-export async function processTarget(
-  target: Target,
-  runMapping: { runId: string; runStepId: string }
-): Promise<void> {
+export async function processTarget(target: Target, given?: RunIds): Promise<void> {
   logger.info('--------------------------------');
   logger.info(`--- target: ${target.display_name} ---`);
   logger.info('--------------------------------');
-  await noteRun(
-    target, runMapping, 'info', 'target_processing_started',
-    `Target processing started for target: ${target.display_name}`
-  );
+  let runMapping = given;
+  const skip = async (reason: string) => {
+    const message = `Target processing skipped: ${reason}`;
+    if (!runMapping) return logger.warn(message, { targetId: target.target_id });
+    await noteRun(target, runMapping, 'warn', 'target_processing_skipped', message);
+    await closeRun(runMapping, 'canceled', reason);
+  };
 
   try {
 
     const ownerUserId = await getWorkspaceOwnerUserId(adminClient, { workspaceId: target.workspace_id });
     const planType = await getUserSubscriptionPlanType(adminClient, { userId: ownerUserId as string });
   
-    if (!planType) {
-      await noteRun(target, runMapping, 'warn', 'target_processing_skipped', 'Target processing skipped: No valid subscription found');
-      await closeRun(runMapping, 'No valid subscription found');
-      return;
-    }
+    if (!planType) return await skip('No valid subscription found');
 
     // 이메일 제한 확인
     const limitCheck = await checkEmailLimit(target.workspace_id, ownerUserId as string
       , planType as Database["public"]["Enums"]["plan_type"]);
     
-    if (!limitCheck.allowed) {
-      await noteRun(target, runMapping, 'warn', 'target_processing_skipped', 'Target processing skipped: Email limit exceeded');
-      await closeRun(runMapping, 'Email limit exceeded');
-      return;
-    }
+    if (!limitCheck.allowed) return await skip('Email limit exceeded');
 
     // One mail per daily core. Checked before collecting so a sent day costs no fetch or model call;
     // sendMails claims the day again in the DB for runs that race past this check.
@@ -137,13 +134,14 @@ export async function processTarget(
     if (recordRuns() && !forced) {
       const existing = await getDailyCoreData(adminClient, { targetId: target.target_id, coreDate: DAILY_CORE_TEST_DATE });
       const sent = existing && (await getSentDailyEdition(adminClient, { dailyCoreId: existing.daily_core_id }));
-      if (sent) {
-        const reason = `Daily mail for ${DAILY_CORE_TEST_DATE} already ${sent.status} (edition ${sent.edition_id})`;
-        await noteRun(target, runMapping, 'warn', 'target_processing_skipped', `Target processing skipped: ${reason}`);
-        await closeRun(runMapping, reason);
-        return;
-      }
+      if (sent) return await skip(`Daily mail for ${DAILY_CORE_TEST_DATE} already ${sent.status} (edition ${sent.edition_id})`);
     }
+
+    runMapping ??= await openRun(target);
+    await noteRun(
+      target, runMapping, 'info', 'target_processing_started',
+      `Target processing started for target: ${target.display_name}`
+    );
 
     const runStartedAt = Date.now();
     if (recordRuns()) {
@@ -158,11 +156,7 @@ export async function processTarget(
 
     const fetchDays = fetchDaysFor(DAILY_CORE_TEST_DATE, target.timezone ?? "UTC");
     const collected = await collectTargetSources(target, fetchDays);
-    if ("skip" in collected) {
-      await noteRun(target, runMapping, 'warn', 'target_processing_skipped', `Target processing skipped: ${collected.skip}`);
-      await closeRun(runMapping, collected.skip);
-      return;
-    }
+    if ("skip" in collected) return await skip(collected.skip);
     const { fetchedData, integrationsInfo, matchedSources } = collected;
 
     const dailyCore = await saveDailyCoreCollection(target, collected, DAILY_CORE_TEST_DATE);
@@ -248,8 +242,12 @@ export async function processTarget(
 
   } catch (error: any) {
     logger.error('Cron actions target running error', { error: error.message });
-    await noteRun(target, runMapping, 'error', 'target_processing_error', `Target processing error: ${error.message}`);
-    await closeRun(runMapping, error.message);
+    // An error before the run row exists (a check's DB read) still gets a failed row.
+    runMapping ??= await openRun(target).catch(() => undefined);
+    if (runMapping) {
+      await noteRun(target, runMapping, 'error', 'target_processing_error', `Target processing error: ${error.message}`);
+      await closeRun(runMapping, 'failed', error.message);
+    }
     throw error;
   }
 }

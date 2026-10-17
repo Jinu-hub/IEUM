@@ -36,11 +36,6 @@ export type CronActionResponse = {
 };
 
 /**
- * Run 매핑 타입
- */
-export type RunMapping = Record<string, { runId: string; runStepId: string }>;
-
-/**
  * 매칭된 소스 정보
  */
 export type MatchedSources = {

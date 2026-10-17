@@ -3,7 +3,7 @@
  */
 
 import { logger } from "~/core/lib/logger";
-import { createRunMappings, fetchAllActiveTargets, fetchScheduledTargets } from "./data-fetching";
+import { fetchAllActiveTargets, fetchScheduledTargets } from "./data-fetching";
 import { processTarget } from "./target-processing";
 import type { CronActionResponse } from "./types";
 
@@ -15,13 +15,10 @@ export async function processAllActiveTargets(): Promise<CronActionResponse> {
     // 모든 활성 타겟 조회
     const allTargets = await fetchAllActiveTargets();
 
-    // Run 매핑 생성
-    const runMapping = await createRunMappings(allTargets);
-
-    // 각 타겟 처리
+    // 각 타겟 처리 (run 행은 processTarget이 검사를 통과한 타겟에만 만듦)
     for (const target of allTargets) {
       try {
-        await processTarget(target, runMapping[target.target_id]);
+        await processTarget(target);
       } catch (error: any) {
         // processTarget 내부에서 이미 에러 로깅 및 업데이트 처리
         // 여기서는 계속 진행
@@ -69,13 +66,10 @@ export async function processScheduledTargets(): Promise<CronActionResponse> {
       };
     }
 
-    // Run 매핑 생성
-    const runMapping = await createRunMappings(scheduledTargets);
-
-    // 각 타겟 처리
+    // 각 타겟 처리 (run 행은 processTarget이 검사를 통과한 타겟에만 만듦)
     for (const target of scheduledTargets) {
       try {
-        await processTarget(target, runMapping[target.target_id]);
+        await processTarget(target);
       } catch (error: any) {
         // processTarget 내부에서 이미 에러 로깅 및 업데이트 처리
         // 여기서는 계속 진행
@@ -102,4 +96,3 @@ export async function processScheduledTargets(): Promise<CronActionResponse> {
     };
   }
 }
-
