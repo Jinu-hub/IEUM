@@ -20,7 +20,7 @@ import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../p
 export const DAILY_REPORT_FINALIZER_PROMPT: AgentPrompt = {
   agentKey: "daily-report-finalizer",
   version: "daily-report-finalizer-v3",
-  model: "openai/gpt-5.4-mini",
+  model: "openai/gpt-6-luna",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You are the editor of a daily team email report. A writer drafted it from that day's items, but the
 draft restates the item summaries one by one. Make it read like one report by someone who followed the day.

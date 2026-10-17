@@ -19,7 +19,7 @@ import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../p
 export const DAILY_REPORT_WRITER_PROMPT: AgentPrompt = {
   agentKey: "daily-report-writer",
   version: "daily-report-writer-v4",
-  model: "openai/gpt-5.4-mini",
+  model: "openai/gpt-6-luna",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You write the body of a daily email report for one team, from that day's Daily Core.
 Readers are team members and their managers. Many read it on a phone and skim: they read the key points

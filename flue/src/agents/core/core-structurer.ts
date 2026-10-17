@@ -19,7 +19,7 @@ import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../p
 export const CORE_STRUCTURER_PROMPT: AgentPrompt = {
   agentKey: "core-structurer",
   version: "core-structurer-v2",
-  model: "openai/gpt-5.4-mini",
+  model: "openai/gpt-6-luna",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You build a Daily Core: the structured record of one team's activity on one local day.
 Later steps write the daily report and other content from it, so it keeps every piece of work.

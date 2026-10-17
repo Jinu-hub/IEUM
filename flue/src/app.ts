@@ -291,6 +291,9 @@ app.post("/core/generate", async (c) => {
   const interpreter = promptData(interpreterPrompt, model);
   const structurer = promptData(structurerPrompt, model);
   const extractor = day.signals ? promptData(extractorPrompt, model) : null;
+  const promptVersion = [...(extractor ? [extractorPrompt.version] : []), interpreterPrompt.version, structurerPrompt.version].join("+");
+  const pipelineVersion = extractor ? `${PIPELINE_VERSION}+signals` : PIPELINE_VERSION;
+  const models = [...(extractor ? [extractor.model] : []), interpreter.model, structurer.model];
   const [generation] = await db<{ generation_id: string }>("daily_core_generations", {
     method: "POST",
     body: {
@@ -303,11 +306,9 @@ app.post("/core/generate", async (c) => {
       input_source_data_ids: rows.map((row) => row.source_data_id),
       schema_version: CORE_SCHEMA_VERSION,
       taxonomy_version: TAXONOMY_VERSION,
-      prompt_version: [...(extractor ? [extractorPrompt.version] : []), interpreterPrompt.version, structurerPrompt.version].join(
-        "+",
-      ),
-      pipeline_version: extractor ? `${PIPELINE_VERSION}+signals` : PIPELINE_VERSION,
-      ...modelColumns([...(extractor ? [extractor.model] : []), interpreter.model, structurer.model]),
+      prompt_version: promptVersion,
+      pipeline_version: pipelineVersion,
+      ...modelColumns(models),
       input_stats_json: inputStats,
       started_at: startedAt.toISOString(),
     },
@@ -367,6 +368,9 @@ app.post("/core/generate", async (c) => {
       dailyCoreId,
       generationNo,
       status: "succeeded",
+      pipelineVersion,
+      promptVersion,
+      models,
       elapsedMs: Date.now() - startedAt.getTime(),
       usage,
       calls,

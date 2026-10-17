@@ -1,23 +1,23 @@
 "use agent";
 
 import {
-    useAgentFinish,
-    useDataWriter,
-    useInitialData,
-    useModel,
-    usePersistentState,
-    useResponseFinish,
-    useTool,
+  useAgentFinish,
+  useDataWriter,
+  useInitialData,
+  useModel,
+  usePersistentState,
+  useResponseFinish,
+  useTool,
 } from "@flue/runtime";
 import * as v from "valibot";
 import {
-    applyRevision,
-    dropUnwrittenActors,
-    Interpretation,
-    interpretationProblems,
-    interpretationReview,
-    normalizeConceptKeys,
-    Revision,
+  applyRevision,
+  dropUnwrittenActors,
+  Interpretation,
+  interpretationProblems,
+  interpretationReview,
+  normalizeConceptKeys,
+  Revision,
 } from "../../daily-core.ts";
 import { type AgentPrompt, ThinkingLevel } from "../../prompts.ts";
 
@@ -42,7 +42,7 @@ import { type AgentPrompt, ThinkingLevel } from "../../prompts.ts";
 export const CORE_INTERPRETER_PROMPT: AgentPrompt = {
   agentKey: "core-interpreter",
   version: "core-interpreter-v12",
-  model: "openai/gpt-6-luna",
+  model: "openai/gpt-6-sol",
   thinkingLevel: "low",
   instructions: `
 You turn one team's activity on one local day into a useful daily memory.

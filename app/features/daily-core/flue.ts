@@ -10,9 +10,13 @@ type Usage = { totalTokens?: number; cost?: { total?: number } };
 
 type CoreResult = {
   generationNo: number;
+  pipelineVersion: string;
+  promptVersion: string;
+  models: string[];
   elapsedMs: number;
   usage: Usage;
-  coreJson: unknown;
+  calls: Record<string, unknown>;
+  coreJson: { meta: { target_display_name: string; core_date: string } };
   input: string;
   agentOutputs: { signals?: unknown; interpretation: unknown; structuring: unknown; dropped_actors: unknown };
 };
@@ -23,9 +27,12 @@ type ReportResult = {
   generationNo: number;
   elapsedMs?: number;
   usage?: Usage;
+  /** Missing on days without activity (rendered by code, no model call), like the fields below. */
+  promptVersion?: string;
+  models?: string[];
+  calls?: Record<string, unknown>;
   /** Set when the finalizer failed and the writer's draft was used instead. */
   finalizerError?: string;
-  /** Missing on days without activity (rendered by code, no model call). */
   draft?: unknown;
   writerDraft?: unknown;
   subject: string;
@@ -67,7 +74,21 @@ function saveRun(core: CoreResult, report: ReportResult) {
     } catch {}
   }
   const { signals, interpretation, structuring, dropped_actors } = core.agentOutputs;
+  const callNames: Record<string, string> = { interpretation: "interpreter", structuring: "structurer" };
   const files: Record<string, unknown> = {
+    "run.json": {
+      target: core.coreJson.meta.target_display_name,
+      coreDate: core.coreJson.meta.core_date,
+      generationNo: core.generationNo,
+      reportNo: report.reportNo,
+      agents: [...Object.keys(core.calls), ...Object.keys(report.calls ?? {})].map((key) => callNames[key] ?? key),
+      pipelineVersion: core.pipelineVersion,
+      promptVersion: { core: core.promptVersion, report: report.promptVersion ?? null },
+      models: { core: core.models, report: report.models ?? [] },
+      elapsedMs: { core: core.elapsedMs, report: report.elapsedMs ?? 0 },
+      cost: (core.usage.cost?.total ?? 0) + (report.usage?.cost?.total ?? 0),
+      finalizerError: report.finalizerError ?? null,
+    },
     "0.input.txt": core.input,
     ...(signals !== undefined && { "1.extractor.json": signals }),
     "2.interpreter.json": { interpretation, dropped_actors },
