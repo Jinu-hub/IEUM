@@ -41,9 +41,9 @@ flowchart TD
 | 1. 읽기 | `app.ts` | `daily_core_data.current_generation_no`가 가리키는 generation의 `core_json`. current가 없으면 409 |
 | 2. 입력 만들기 | `writerInput`, `draftEvidence` (코드) | 이벤트 섹션(highlights / progress_roadmap / topics)의 item에 짧은 id(`H1`, `P1`, `T1`, 섹션 안에서 중요도 순)를 붙이고 담당자·다음 단계·인용 후보를 붙임. 인용 후보는 사람이 쓴 줄의 `excerpt`에서 Slack 마크업을 지우고 15~120자, 하루 보고 양식은 뺌 |
 | 3. report 행 생성 | `app.ts` | `daily_reports`에 다음 `report_no`, `processing` |
-| 4. Writer | `DailyReportWriter` (모델) | 오프닝, 今日のポイント(최대 3줄), 섹션별 entry(제목, 본문, 근거 `item_ids`, highlights의 `quote_ids`), 마무리 |
+| 4. Writer | `DailyReportWriter` (모델) | 오프닝, 今日の要点(최대 3줄), 섹션별 entry(제목, 본문, 근거 `item_ids`, highlights의 `quote_ids`), 마무리 |
 | 5. Finalizer | `DailyReportFinalizer` (모델) | Writer 초안을 읽기 쉽게 고침. 문장뿐 아니라 entry·point를 합치고 나누고 순서를 바꿀 수 있음. Writer가 다룬 item은 빠지면 안 됨. 실패하면 Writer 초안으로 렌더하고 이유를 남김(아래 7). `finalize: false`면 건너뜀 |
-| 6. 렌더 | `renderDailyReport` (코드) | 섹션 틀, 상태 아이콘, 근거 링크, 인용 원문, 멤버 섹션, 숫자(今日のKPI)를 코드가 붙여 제목 / markdown / 메일 HTML을 만듦 |
+| 6. 렌더 | `renderDailyReport` (코드) | 섹션 틀, 상태 아이콘, 근거 링크, 인용 원문, 멤버 섹션, 숫자(今日の活動指標)를 코드가 붙여 제목 / markdown / 메일 HTML을 만듦 |
 | 7. 저장 | `app.ts` | 렌더 결과, 초안(`agent_output_json.draft`, Finalizer를 거쳤으면 `writer_draft`도), 토큰, 시간, stats를 저장하고 `succeeded`. Finalizer가 실패했으면 `validation_json.stats.finalizer_error`와 응답의 `finalizerError`에 이유를 남기고, 앱은 실행 로그에 `report_finalizer_failed` 경고를 씀. 그 밖의 실패는 `failed` |
 
 활동이 없는 날(`quality.status = "empty"`)은 모델을 부르지 않고 코드 렌더만 합니다. 현재 리포트는 따로 가리키지 않고 "가장 큰 `report_no`의 succeeded"로 읽습니다.

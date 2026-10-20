@@ -80,7 +80,7 @@ const view = reportView(core);
 assert.equal(view.title, "Dev <Team> Daily Report");
 assert.deepEqual(view.overview, { heading: "👋 今日の概要", summary: "A & B moved.", points: null });
 // Empty topics are dropped; sections keep the fixed order.
-assert.deepEqual(view.sections.map((s) => [s.heading, s.layout]), [["✨ ハイライト", "block"], ["🔄 進捗・予定", "list"]]);
+assert.deepEqual(view.sections.map((s) => [s.heading, s.layout]), [["✨ 注目の動き", "block"], ["🔄 進捗と今後の予定", "list"]]);
 assert.deepEqual(view.sections[0].entries.map((e) => e.title), ["High", "Mid", "Low"]);
 assert.deepEqual(view.members?.entries.map((e) => e.title), ["Zed", "Aki"]);
 assert.equal(view.members?.layout, "members");
@@ -105,7 +105,7 @@ const report = renderDailyReport(core);
 assert.equal(report.subject, "Dev <Team> Daily Report 2026-10-09");
 assert.match(report.markdown, /^# Dev \\<Team\\> Daily Report\n\n2026-10-09\n/);
 assert.match(report.markdown, /### ✅ High\n\nHigh summary \[1\]\(https:\/\/slack\.com\/archives\/C1\/p0\) .* \+4\n/);
-assert.match(report.markdown, /## 🔄 進捗・予定\n\n- \*\*Unknown status\*\* Unknown status summary\n/);
+assert.match(report.markdown, /## 🔄 進捗と今後の予定\n\n- \*\*Unknown status\*\* Unknown status summary\n/);
 assert.match(report.markdown, /- \*\*Aki\*\*\n {2}Aki summary\n/);
 assert.match(
   report.markdown,
@@ -280,11 +280,11 @@ const story = reportView(withTicket, draft([["topics", ["T1"]], ["highlights", [
 assert.deepEqual(story.overview, {
   heading: "👋 今日の概要",
   summary: "Opening.",
-  points: { heading: "今日のポイント", items: [{ icon: "✅", tone: "completed", status: "完了", text: "Point 1" }] },
+  points: { heading: "今日の要点", items: [{ icon: "✅", tone: "completed", status: "完了", text: "Point 1" }] },
 });
 assert.deepEqual(story.sections.map((s) => [s.heading, s.entries.map((e) => e.title)]), [
-  ["✨ ハイライト", ["Head 2", "Head 3"]],
-  ["💬 議論・調整", ["Head 1"]],
+  ["✨ 注目の動き", ["Head 2", "Head 3"]],
+  ["💬 議論と調整", ["Head 1"]],
 ]);
 // Merged links: High has 7, the topic repeats High's first URL. Mixed statuses show no icon.
 assert.deepEqual(story.sections[0].entries[0], {
@@ -297,16 +297,16 @@ assert.deepEqual(story.sections[0].entries[0], {
   more: 4,
   quotes: [],
 });
-assert.deepEqual(story.closing, { heading: "⏭ 次の焦点", text: "Next." });
+assert.deepEqual(story.closing, { heading: "🎯 次のフォーカス", text: "Next." });
 assert.deepEqual(story.members?.entries.map((e) => e.title), ["Zed", "Aki"]);
 const storyReport = renderDailyReport(withTicket, draft([["highlights", ["H1"]], ["highlights", ["H2", "H3"]]], "Para <b>", "Next."));
 assert.match(
   storyReport.markdown,
-  /## 👋 今日の概要\n\nOpening\.\n\n\*\*今日のポイント\*\*\n- ✅ Point 1\n\n## 📊 今日のKPI\n\n\| 指標 \| 件数 \|/,
+  /## 👋 今日の概要\n\nOpening\.\n\n\*\*今日の要点\*\*\n- ✅ Point 1\n\n## 📊 今日の活動指標\n\n\| 指標 \| 件数 \|/,
 );
-assert.match(storyReport.markdown, /\n## ✨ ハイライト\n\n### ✅ Head 1\n\nPara \\<b\\> \[1\]/);
-assert.match(storyReport.markdown, /\n## ⏭ 次の焦点\n\nNext\.\n\n## 👥 メンバーアクティビティ\n\n- \*\*Zed\*\*/);
-assert.match(storyReport.markdown, /\n## 📊 今日のKPI\n\n\| 指標 \| 件数 \|/);
+assert.match(storyReport.markdown, /\n## ✨ 注目の動き\n\n### ✅ Head 1\n\nPara \\<b\\> \[1\]/);
+assert.match(storyReport.markdown, /\n## 🎯 次のフォーカス\n\nNext\.\n\n## 👥 メンバー別の動き\n\n- \*\*Zed\*\*/);
+assert.match(storyReport.markdown, /\n## 📊 今日の活動指標\n\n\| 指標 \| 件数 \|/);
 assert.ok(storyReport.html.includes("Para &lt;b&gt;"));
 assert.ok(storyReport.html.includes(">完了</span>")); // status badge in HTML
 assert.ok(storyReport.html.includes("border-left:3px solid #0F6B66"));
