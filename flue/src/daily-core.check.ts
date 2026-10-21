@@ -358,7 +358,12 @@ const linked = buildCoreJson(
       normalized_json: [
         item("S101", "10.5", "2026-10-09T01:00:00Z", "in thread", {
           thread_ref: "9.5",
-          url: "https://slack.com/archives/C9/p105?thread_ts=9.5&cid=C9",
+          url: "https://digitalsheeplearning.slack.com/archives/C9/p105?thread_ts=9.5&cid=C9",
+          meta: { channel_id: "C9" },
+        }),
+        item("S104", "11.5", "2026-10-09T04:00:00Z", "a file link", {
+          thread_ref: "9.5",
+          url: "https://files.example/x",
           meta: { channel_id: "C9" },
         }),
       ],
@@ -374,10 +379,16 @@ const linked = buildCoreJson(
           url: `https://github.com/digitalsheep/LEAD/commit/${"a".repeat(40)}`,
           meta: { kind: "commit" },
         }),
+        item("S103", "release#1", "2026-10-09T03:00:00Z", "release", {
+          source_type: "github_repo",
+          source_ident: "LEAD",
+          url: "https://github.com/digitalsheep/LEAD/releases/tag/v1",
+          meta: { kind: "release" },
+        }),
       ],
     },
   ],
-  core(["S101", "S102"]),
+  core(["S101", "S102", "S103", "S104"]),
   [],
   { authors: {}, texts: {} },
 );
@@ -387,6 +398,11 @@ assert.deepEqual(linked.sources, {
 });
 assert.equal(linked.evidence?.S101.thread_ref, "9.5");
 assert.ok(!("url" in (linked.evidence?.S101 ?? {})) && !("url" in (linked.evidence?.S102 ?? {})));
+// Per entry, not per source: shapes the rebuild does not know keep their URL (and drop
+// thread_ref, which the kept URL already carries), even in an otherwise derivable source.
+assert.equal(linked.evidence?.S103.url, "https://github.com/digitalsheep/LEAD/releases/tag/v1");
+assert.equal(linked.evidence?.S104.url, "https://files.example/x");
+assert.ok(!("thread_ref" in (linked.evidence?.S104 ?? {})));
 // Quotable text: people's Slack lines only, without addressing or link markup.
 assert.deepEqual(input.texts, { S003: "reply to old", S004: "standalone", S011: "did #12" });
 const quotable = buildAgentInput(

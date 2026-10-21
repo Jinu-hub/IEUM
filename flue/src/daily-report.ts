@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { type buildCoreJson, plainSlackText } from "./daily-core.ts";
+import { type buildCoreJson, deriveEvidenceUrl, plainSlackText } from "./daily-core.ts";
 
 export type DailyCoreJson = ReturnType<typeof buildCoreJson>;
 type CoreItem = DailyCoreJson["highlights"][number];
@@ -103,25 +103,8 @@ type EvidenceEntry = NonNullable<DailyCoreJson["evidence"]>[string];
 type ResolvedEvidence = { url: string | null; author: string | null; excerpt: string | null; occurred_at: string };
 
 // A kept URL wins (v1 items inline it; v2 keeps it only when the link cannot be rebuilt).
-// Slack links are the archives form normalize.ts builds; GitHub ids encode their path
-// (40-hex sha = commit, pr#N, issue#N:opened/closed).
 export function evidenceUrl(core: DailyCoreJson, e: EvidenceEntry): string | null {
-  if (e.url) return e.url;
-  const source = core.sources?.[e.source_ident];
-  if (!source) return null;
-  if (source.channel_id) {
-    const base = `https://slack.com/archives/${source.channel_id}/p${e.source_item_id.replace(".", "")}`;
-    return e.thread_ref ? `${base}?thread_ts=${e.thread_ref}&cid=${source.channel_id}` : base;
-  }
-  if (source.base_url) {
-    const id = e.source_item_id;
-    if (/^[0-9a-f]{40}$/i.test(id)) return `${source.base_url}/commit/${id}`;
-    const pr = id.match(/^pr#(\d+)/);
-    if (pr) return `${source.base_url}/pull/${pr[1]}`;
-    const issue = id.match(/^issue#(\d+)/);
-    if (issue) return `${source.base_url}/issues/${issue[1]}`;
-  }
-  return null;
+  return deriveEvidenceUrl(core.sources ?? {}, e);
 }
 
 // v1 items carry their evidence inline; v2 items name refs into core.evidence.

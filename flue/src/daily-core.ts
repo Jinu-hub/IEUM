@@ -658,6 +658,29 @@ export type CoreEvidence = {
 export type CoreSource = { source_type: string; channel_id?: string; base_url?: string };
 type CorePayload = { owners?: string[]; next_steps?: string[] };
 
+type LinkEntry = { source_ident: string; source_item_id: string; thread_ref?: string | null; url?: string | null };
+// Rebuilds an evidence link from `sources`. A kept URL wins. Slack links are the archives form
+// normalize.ts builds; GitHub ids encode their path (40-hex sha = commit, pr#N, issue#N:...).
+// Returns null for shapes it does not know — callers must keep the original URL then.
+export function deriveEvidenceUrl(sources: Record<string, CoreSource>, e: LinkEntry): string | null {
+  if (e.url) return e.url;
+  const source = sources[e.source_ident];
+  if (!source) return null;
+  if (source.channel_id) {
+    const base = `https://slack.com/archives/${source.channel_id}/p${e.source_item_id.replace(".", "")}`;
+    return e.thread_ref ? `${base}?thread_ts=${e.thread_ref}&cid=${source.channel_id}` : base;
+  }
+  if (source.base_url) {
+    const id = e.source_item_id;
+    if (/^[0-9a-f]{40}$/i.test(id)) return `${source.base_url}/commit/${id}`;
+    const pr = id.match(/^pr#(\d+)/);
+    if (pr) return `${source.base_url}/pull/${pr[1]}`;
+    const issue = id.match(/^issue#(\d+)/);
+    if (issue) return `${source.base_url}/issues/${issue[1]}`;
+  }
+  return null;
+}
+
 export function buildCoreJson(
   meta: CoreMeta,
   rows: SourceRow[],
@@ -693,17 +716,22 @@ export function buildCoreJson(
   const citedInTime = [...cited]
     .flatMap((ref) => byRef.get(ref) ?? [])
     .sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
+  // Per entry, not per source: the URL is dropped only when rebuilding it from `sources`
+  // gives the same link (host aside — Slack permalinks may use the workspace domain).
+  // Anything else (a new item shape in a known source, an unknown source) keeps its URL.
+  const sameLink = (a: string, b: string) => a.replace(/^https?:\/\/[^/]+/, "") === b.replace(/^https?:\/\/[^/]+/, "");
   for (const source of citedInTime) {
     const ref = source.source_ref;
-    const derivable = source.source_ident in sources;
+    const rebuilt = deriveEvidenceUrl(sources, { ...source, url: null });
+    const keepUrl = !!source.url && (!rebuilt || !sameLink(source.url, rebuilt));
     evidence[ref] = {
       source_type: source.source_type,
       source_ident: source.source_ident,
       source_item_id: source.source_item_id,
       // thread_ref only when the link is rebuilt from it; a kept URL already carries it.
-      ...(derivable && source.thread_ref ? { thread_ref: source.thread_ref } : {}),
+      ...(!keepUrl && source.thread_ref ? { thread_ref: source.thread_ref } : {}),
       occurred_at: source.occurred_at,
-      ...(!derivable && source.url ? { url: source.url } : {}),
+      ...(keepUrl ? { url: source.url! } : {}),
       ...(authors[ref] ? { author: authors[ref] } : {}),
       ...(excerpt(texts[ref]) ? { excerpt: excerpt(texts[ref])! } : {}),
     };
