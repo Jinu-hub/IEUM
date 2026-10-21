@@ -620,7 +620,9 @@ export function resolveStructuring(
 }
 
 // Mirrors DailyCoreJson in app/features/daily-core/contracts/pipeline-result.ts.
-export const CORE_SCHEMA_VERSION = "daily-core-v1";
+// v2: items carry evidence_refs only; the evidence itself lives once in a top-level map (with a
+// per-source link base in `sources`), and empty enrichment fields are omitted instead of blank.
+export const CORE_SCHEMA_VERSION = "daily-core-v2";
 
 export type CoreMeta = {
   target_id: string;
@@ -639,15 +641,21 @@ const excerpt = (text: string | undefined) =>
   !text ? null : text.length > EXCERPT_MAX ? `${text.slice(0, EXCERPT_MAX - 1)}…` : text;
 
 // Optional fields are missing in core_json stored before generation 6.
-type CoreEvidence = {
+export type CoreEvidence = {
   source_type: string;
   source_ident: string;
   source_item_id: string;
+  // Parent ts for Slack replies; the report rebuilds the thread link from it and `sources`.
+  thread_ref?: string;
   occurred_at: string;
-  url: string | null;
-  author?: string | null;
-  excerpt?: string | null;
+  // Only when the link cannot be rebuilt from `sources` (unknown source shape); otherwise omitted.
+  url?: string;
+  author?: string;
+  excerpt?: string;
 };
+// Link bases, one per source: Slack links need the channel id, GitHub links the repo base.
+// The report derives per-item URLs from these plus source_item_id (see daily-report.ts evidenceUrl).
+export type CoreSource = { source_type: string; channel_id?: string; base_url?: string };
 type CorePayload = { owners?: string[]; next_steps?: string[] };
 
 export function buildCoreJson(
@@ -660,18 +668,68 @@ export function buildCoreJson(
   { authors, texts }: { authors: Record<string, string>; texts: Record<string, string> } = { authors: {}, texts: {} },
 ) {
   const byRef = new Map(rows.flatMap((row) => row.normalized_json).map((item) => [item.source_ref, item]));
-  const item = ({ evidence_refs, owners, next_steps, ...rest }: DailyCoreOutput["highlights"][number]) => ({
-    ...rest,
-    evidence: evidence_refs.flatMap((ref): CoreEvidence[] => {
-      const source = byRef.get(ref);
-      if (!source) return [];
-      const { source_type, source_ident, source_item_id, occurred_at, url } = source;
-      return [
-        { source_type, source_ident, source_item_id, occurred_at, url: url ?? null, author: authors[ref] ?? null, excerpt: excerpt(texts[ref]) },
-      ];
-    }),
-    payload: { owners: owners ?? [], next_steps: next_steps ?? [] } as CorePayload,
-  });
+
+  // Link base per cited source, from the normalized items (Slack keeps its channel id in meta;
+  // a GitHub base is the owner/repo prefix of any of its URLs). A source with neither keeps
+  // per-item URLs below instead.
+  const allItems = [...output.highlights, ...output.topics, ...output.progress_roadmap, ...output.member_activity];
+  const cited = new Set(allItems.flatMap((entry) => entry.evidence_refs));
+  const sources: Record<string, CoreSource> = {};
+  for (const row of rows) {
+    for (const source of row.normalized_json) {
+      if (!cited.has(source.source_ref) || sources[source.source_ident]) continue;
+      const channelId = source.meta?.channel_id;
+      const repoBase = typeof source.url === "string" ? source.url.match(/^(https:\/\/github\.com\/[^/]+\/[^/]+)\//)?.[1] : undefined;
+      if (source.source_type === "slack_channel" && typeof channelId === "string") {
+        sources[source.source_ident] = { source_type: source.source_type, channel_id: channelId };
+      } else if (source.source_type === "github_repo" && repoBase) {
+        sources[source.source_ident] = { source_type: source.source_type, base_url: repoBase };
+      }
+    }
+  }
+
+  // One entry per cited ref, in time order, at the end of the document. Items only name refs.
+  const evidence: Record<string, CoreEvidence> = {};
+  const citedInTime = [...cited]
+    .flatMap((ref) => byRef.get(ref) ?? [])
+    .sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
+  for (const source of citedInTime) {
+    const ref = source.source_ref;
+    const derivable = source.source_ident in sources;
+    evidence[ref] = {
+      source_type: source.source_type,
+      source_ident: source.source_ident,
+      source_item_id: source.source_item_id,
+      // thread_ref only when the link is rebuilt from it; a kept URL already carries it.
+      ...(derivable && source.thread_ref ? { thread_ref: source.thread_ref } : {}),
+      occurred_at: source.occurred_at,
+      ...(!derivable && source.url ? { url: source.url } : {}),
+      ...(authors[ref] ? { author: authors[ref] } : {}),
+      ...(excerpt(texts[ref]) ? { excerpt: excerpt(texts[ref])! } : {}),
+    };
+  }
+
+  const item = ({ evidence_refs, owners, next_steps, ...rest }: DailyCoreOutput["highlights"][number]) => {
+    const payload: CorePayload = {
+      ...(owners?.length ? { owners } : {}),
+      ...(next_steps?.length ? { next_steps } : {}),
+    };
+    return {
+      item_key: rest.item_key,
+      title: rest.title,
+      summary: rest.summary,
+      ...(rest.status != null ? { status: rest.status } : {}),
+      ...(rest.importance != null ? { importance: rest.importance } : {}),
+      ...(rest.confidence != null ? { confidence: rest.confidence } : {}),
+      ...(rest.tags.length ? { tags: rest.tags } : {}),
+      ...(rest.classifications.primary || rest.classifications.secondary.length
+        ? { classifications: rest.classifications }
+        : {}),
+      ...(rest.entities.length ? { entities: rest.entities } : {}),
+      evidence_refs: evidence_refs.filter((ref) => ref in evidence),
+      ...(Object.keys(payload).length ? { payload } : {}),
+    };
+  };
 
   // Context parents happened on earlier days, so they are not counted.
   const counts = new Map<string, { key: string; source_ident: string; value: number }>();
@@ -717,5 +775,8 @@ export function buildCoreJson(
       { key: "active_member_count", value: people.length, unit: "count", origin: "computed" as const, rollup_hint: "none" as const },
     ],
     quality: { status: activity > 0 ? ("ready" as const) : ("empty" as const) },
+    // Referenced evidence and link bases, at the end so the item sections read first.
+    ...(Object.keys(evidence).length ? { evidence } : {}),
+    ...(Object.keys(sources).length ? { sources } : {}),
   };
 }

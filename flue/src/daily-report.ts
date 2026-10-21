@@ -98,6 +98,44 @@ const MAX_QUOTES = 3;
 const QUOTE_CHARS = { min: 15, max: 120 };
 export type Quote = { id: string; author: string; text: string };
 
+type EvidenceEntry = NonNullable<DailyCoreJson["evidence"]>[string];
+// What quote and link rendering needs from one evidence entry, whichever core_json shape stored it.
+type ResolvedEvidence = { url: string | null; author: string | null; excerpt: string | null; occurred_at: string };
+
+// A kept URL wins (v1 items inline it; v2 keeps it only when the link cannot be rebuilt).
+// Slack links are the archives form normalize.ts builds; GitHub ids encode their path
+// (40-hex sha = commit, pr#N, issue#N:opened/closed).
+export function evidenceUrl(core: DailyCoreJson, e: EvidenceEntry): string | null {
+  if (e.url) return e.url;
+  const source = core.sources?.[e.source_ident];
+  if (!source) return null;
+  if (source.channel_id) {
+    const base = `https://slack.com/archives/${source.channel_id}/p${e.source_item_id.replace(".", "")}`;
+    return e.thread_ref ? `${base}?thread_ts=${e.thread_ref}&cid=${source.channel_id}` : base;
+  }
+  if (source.base_url) {
+    const id = e.source_item_id;
+    if (/^[0-9a-f]{40}$/i.test(id)) return `${source.base_url}/commit/${id}`;
+    const pr = id.match(/^pr#(\d+)/);
+    if (pr) return `${source.base_url}/pull/${pr[1]}`;
+    const issue = id.match(/^issue#(\d+)/);
+    if (issue) return `${source.base_url}/issues/${issue[1]}`;
+  }
+  return null;
+}
+
+// v1 items carry their evidence inline; v2 items name refs into core.evidence.
+function itemEvidence(core: DailyCoreJson, item: CoreItem): ResolvedEvidence[] {
+  const inline = (item as { evidence?: (EvidenceEntry & { author?: string | null; excerpt?: string | null })[] }).evidence;
+  if (inline) {
+    return inline.map((e) => ({ url: e.url ?? null, author: e.author ?? null, excerpt: e.excerpt ?? null, occurred_at: e.occurred_at }));
+  }
+  return item.evidence_refs.flatMap((ref) => {
+    const e = core.evidence?.[ref];
+    return e ? [{ url: evidenceUrl(core, e), author: e.author ?? null, excerpt: e.excerpt ?? null, occurred_at: e.occurred_at }] : [];
+  });
+}
+
 // Daily status posts ("【本日の作業予定】 #123 →開発 【体調】 普通", "・No.1 ⇒ 完了 ・No.2 …") are forms,
 // not something someone said.
 const isStatusForm = (text: string) =>
@@ -106,9 +144,9 @@ const isStatusForm = (text: string) =>
 // Quote candidates: lines people wrote that day (author is null for bots and context lines).
 // The longest few carry the most substance; they are offered in time order.
 // Excerpts stored before generation 8 still carry emoji codes and URL labels.
-export function itemQuotes(item: CoreItem, itemId: string): Quote[] {
+export function itemQuotes(core: DailyCoreJson, item: CoreItem, itemId: string): Quote[] {
   const seen = new Set<string>();
-  const lines = (item.evidence ?? []).flatMap((e) => {
+  const lines = itemEvidence(core, item).flatMap((e) => {
     const text = e.author && e.excerpt ? plainSlackText(e.excerpt) : "";
     if (!text || seen.has(text)) return [];
     if (text.length < QUOTE_CHARS.min || text.length > QUOTE_CHARS.max || isStatusForm(text)) return [];
@@ -160,7 +198,7 @@ const reportItems = (core: DailyCoreJson) =>
     status: item.status,
     importance: item.importance,
     ...payload(item),
-    quotes: itemQuotes(item, id),
+    quotes: itemQuotes(core, item, id),
   }));
 
 export function writerInput(core: DailyCoreJson) {
@@ -216,7 +254,7 @@ const TICKET = /#\d{3,}/g;
 export type DraftEvidence = { ids: string[]; required: string[]; tickets: string[]; quotes: Record<string, string[]> };
 
 export function draftEvidence(core: DailyCoreJson): DraftEvidence {
-  const items = eventItems(core).map(({ id, section, item }) => ({ id, section, item, quotes: itemQuotes(item, id) }));
+  const items = eventItems(core).map(({ id, section, item }) => ({ id, section, item, quotes: itemQuotes(core, item, id) }));
   const text = [
     core.overview.summary,
     ...[...EVENT_SECTIONS, "member_activity" as const].flatMap((s) => core[s].flatMap((i) => [i.title, i.summary, ...payload(i).next_steps])),
@@ -303,8 +341,8 @@ const LAYOUT = { highlights: "block", progress_roadmap: "list", topics: "list" }
 
 const isHttp = (url: string | null): url is string => !!url && /^https?:\/\//.test(url);
 
-function links(items: CoreItem[]) {
-  const urls = [...new Set(items.flatMap((item) => item.evidence.map((e) => e.url)).filter(isHttp))];
+function links(core: DailyCoreJson, items: CoreItem[]) {
+  const urls = [...new Set(items.flatMap((item) => itemEvidence(core, item).map((e) => e.url)).filter(isHttp))];
   return { links: urls.slice(0, MAX_LINKS), more: Math.max(0, urls.length - MAX_LINKS) };
 }
 
@@ -315,7 +353,7 @@ function commonStatus(items: CoreItem[]): Status | null {
   return statuses.size === 1 && only && only in ICON ? (only as Status) : null;
 }
 
-function entry(title: string, summary: string, items: CoreItem[], labels: Labels, quotes: Quote[] = []): ReportEntry {
+function entry(core: DailyCoreJson, title: string, summary: string, items: CoreItem[], labels: Labels, quotes: Quote[] = []): ReportEntry {
   const status = commonStatus(items);
   return {
     title,
@@ -323,7 +361,7 @@ function entry(title: string, summary: string, items: CoreItem[], labels: Labels
     tone: status,
     status: status && labels.status[status],
     summary,
-    ...links(items),
+    ...links(core, items),
     quotes: quotes.map(({ author, text }) => ({ author, text })),
   };
 }
@@ -339,15 +377,15 @@ export function reportView(core: DailyCoreJson, draft?: ReportDraft): ReportView
   const story = draft && core.quality.status !== "empty" ? draft : undefined;
   const events = eventItems(core);
   const byId = new Map(events.map(({ id, item }) => [id, item]));
-  const quoteById = new Map(events.flatMap(({ id, item }) => itemQuotes(item, id).map((q) => [q.id, q] as const)));
+  const quoteById = new Map(events.flatMap(({ id, item }) => itemQuotes(core, item, id).map((q) => [q.id, q] as const)));
   const cite = (ids: string[]) => ids.flatMap((id) => byId.get(id) ?? []);
 
   const sections = EVENT_SECTIONS.map((key): ReportSection => {
     const entries = story
       ? story.entries
           .filter((e) => e.section === key)
-          .map((e) => entry(e.headline, e.text, cite(e.item_ids), labels, e.quote_ids.flatMap((q) => quoteById.get(q) ?? [])))
-      : byImportance(core[key]).map((item) => entry(item.title, item.summary, [item], labels));
+          .map((e) => entry(core, e.headline, e.text, cite(e.item_ids), labels, e.quote_ids.flatMap((q) => quoteById.get(q) ?? [])))
+      : byImportance(core[key]).map((item) => entry(core, item.title, item.summary, [item], labels));
     return { heading: labels[key], layout: LAYOUT[key], entries: key === "progress_roadmap" ? blockedFirst(entries) : entries };
   });
   const summary = story ? story.opening : core.overview.summary;
@@ -358,7 +396,7 @@ export function reportView(core: DailyCoreJson, draft?: ReportDraft): ReportView
   const members: ReportSection = {
     heading: labels.member_activity,
     layout: "members",
-    entries: core.member_activity.map((item) => entry(item.title, item.summary, [item], labels)),
+    entries: core.member_activity.map((item) => entry(core, item.title, item.summary, [item], labels)),
   };
 
   const rows = new Map<string, ReportMetric>();

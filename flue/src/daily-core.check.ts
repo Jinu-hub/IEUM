@@ -318,17 +318,20 @@ const json = buildCoreJson({ ...meta, workspace_id: "w" } as typeof meta, source
   texts: { S001: "old", S003: "x".repeat(250) },
 });
 assert.deepEqual(json.meta, meta);
-assert.deepEqual(json.highlights[0].evidence, [
-  {
+assert.equal(json.schema_version, "daily-core-v2");
+// Unknown refs are dropped; cited evidence lives once in the top-level map, in time order.
+// Neither source has a derivable link base here (no channel_id in meta), so S003 keeps its URL.
+assert.deepEqual(json.highlights[0].evidence_refs, ["S001", "S003"]);
+assert.ok(!("evidence" in json.highlights[0]));
+assert.deepEqual(json.evidence, {
+  S001: {
     source_type: "slack_channel",
     source_ident: "#dev",
     source_item_id: "1.0",
     occurred_at: "2026-10-07T01:00:00Z",
-    url: null,
-    author: null,
     excerpt: "old",
   },
-  {
+  S003: {
     source_type: "slack_channel",
     source_ident: "#dev",
     source_item_id: "3.0",
@@ -337,9 +340,53 @@ assert.deepEqual(json.highlights[0].evidence, [
     author: "Aki",
     excerpt: `${"x".repeat(199)}…`,
   },
-]);
-assert.deepEqual(json.highlights[0].payload, { owners: [], next_steps: [] });
-assert.ok(!("evidence_refs" in json.highlights[0]));
+});
+assert.deepEqual(json.sources, undefined);
+// Empty enrichment fields and an empty payload are omitted, not blank.
+assert.ok(!("payload" in json.highlights[0]));
+assert.ok(!("tags" in json.highlights[0]) && !("confidence" in json.highlights[0]) && !("classifications" in json.highlights[0]));
+
+// Derivable links: Slack channel_id and the GitHub repo base are stored once in `sources`,
+// URLs and (for Slack) thread refs come from the items, kept off the evidence entries' URLs.
+const linked = buildCoreJson(
+  meta,
+  [
+    {
+      source_type: "slack_channel",
+      source_ident: "#dev",
+      collection_status: "success",
+      normalized_json: [
+        item("S101", "10.5", "2026-10-09T01:00:00Z", "in thread", {
+          thread_ref: "9.5",
+          url: "https://slack.com/archives/C9/p105?thread_ts=9.5&cid=C9",
+          meta: { channel_id: "C9" },
+        }),
+      ],
+    },
+    {
+      source_type: "github_repo",
+      source_ident: "LEAD",
+      collection_status: "success",
+      normalized_json: [
+        item("S102", "a".repeat(40), "2026-10-09T02:00:00Z", "fix", {
+          source_type: "github_repo",
+          source_ident: "LEAD",
+          url: `https://github.com/digitalsheep/LEAD/commit/${"a".repeat(40)}`,
+          meta: { kind: "commit" },
+        }),
+      ],
+    },
+  ],
+  core(["S101", "S102"]),
+  [],
+  { authors: {}, texts: {} },
+);
+assert.deepEqual(linked.sources, {
+  "#dev": { source_type: "slack_channel", channel_id: "C9" },
+  LEAD: { source_type: "github_repo", base_url: "https://github.com/digitalsheep/LEAD" },
+});
+assert.equal(linked.evidence?.S101.thread_ref, "9.5");
+assert.ok(!("url" in (linked.evidence?.S101 ?? {})) && !("url" in (linked.evidence?.S102 ?? {})));
 // Quotable text: people's Slack lines only, without addressing or link markup.
 assert.deepEqual(input.texts, { S003: "reply to old", S004: "standalone", S011: "did #12" });
 const quotable = buildAgentInput(

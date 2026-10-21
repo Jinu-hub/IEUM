@@ -7,6 +7,7 @@ import {
   draftEvidence,
   draftProblems,
   draftStats,
+  evidenceUrl,
   eventItems,
   finalizerInput,
   labelProblems,
@@ -19,24 +20,30 @@ import {
 } from "./daily-report.ts";
 
 type Item = DailyCoreJson["highlights"][number];
-const evidence = (url: string | null) => ({
+type Evidence = NonNullable<DailyCoreJson["evidence"]>[string];
+const evidence = (url: string | null): Evidence => ({
   source_type: "slack_channel",
   source_ident: "#dev",
   source_item_id: "1.0",
   occurred_at: "2026-10-09T01:00:00Z",
-  url,
+  ...(url ? { url } : {}),
 });
-const item = (title: string, importance: number, urls: (string | null)[] = [], status: Item["status"] = null): Item => ({
+// v2 shape: items name refs; the entries live once in this map (registered as items are built).
+const evidenceMap: Record<string, Evidence> = {};
+let refNo = 0;
+const addEvidence = (entries: Evidence[]) =>
+  entries.map((entry) => {
+    const ref = `S${++refNo}`;
+    evidenceMap[ref] = { ...entry, source_item_id: `${refNo}.0` };
+    return ref;
+  });
+const item = (title: string, importance: number, urls: (string | null)[] = [], status: Item["status"] | null = null): Item => ({
   item_key: title.toLowerCase(),
   title,
   summary: `${title} summary`,
-  status,
+  ...(status ? { status } : {}),
   importance,
-  confidence: 1,
-  tags: [],
-  classifications: { primary: "", secondary: [] },
-  entities: [],
-  evidence: urls.map(evidence),
+  evidence_refs: addEvidence(urls.map(evidence)),
   payload: {},
 });
 const metric = (key: string, value: number, source_ident?: string) => ({
@@ -50,7 +57,7 @@ const metric = (key: string, value: number, source_ident?: string) => ({
 
 const urls = (n: number) => Array.from({ length: n }, (_, i) => `https://slack.com/archives/C1/p${i}`);
 const core = {
-  schema_version: "daily-core-v1",
+  schema_version: "daily-core-v2",
   meta: {
     target_id: "t",
     core_date: "2026-10-09",
@@ -74,7 +81,31 @@ const core = {
     metric("active_member_count", 2),
   ],
   quality: { status: "ready" as const },
+  evidence: evidenceMap,
 } as DailyCoreJson;
+
+// URL rebuilding: a kept URL wins; Slack needs channel id (+ thread_ref), GitHub the repo base.
+const linkCore = {
+  sources: {
+    "#dev": { source_type: "slack_channel", channel_id: "C9" },
+    LEAD: { source_type: "github_repo", base_url: "https://github.com/digitalsheep/LEAD" },
+  },
+} as unknown as DailyCoreJson;
+assert.equal(
+  evidenceUrl(linkCore, { ...evidence(null), source_item_id: "1792.5", thread_ref: "1790.5" }),
+  "https://slack.com/archives/C9/p17925?thread_ts=1790.5&cid=C9",
+);
+assert.equal(
+  evidenceUrl(linkCore, { ...evidence(null), source_type: "github_repo", source_ident: "LEAD", source_item_id: "pr#551" }),
+  "https://github.com/digitalsheep/LEAD/pull/551",
+);
+assert.equal(evidenceUrl(linkCore, evidence("https://kept.example/x")), "https://kept.example/x");
+assert.equal(evidenceUrl(linkCore, { ...evidence(null), source_ident: "#unknown" }), null);
+
+// v1 core_json (evidence inline on items, no map) still renders its links.
+const v1Item = { ...item("Old", 1), evidence: [evidence("https://slack.com/archives/C1/p9")] };
+const v1 = { ...core, highlights: [v1Item] } as unknown as DailyCoreJson;
+assert.deepEqual(reportView(v1).sections[0].entries[0].links, ["https://slack.com/archives/C1/p9"]);
 
 const view = reportView(core);
 assert.equal(view.title, "Dev <Team> Daily Report");
@@ -193,10 +224,15 @@ assert.deepEqual(draftStats(draft(highlightsOnly), evidenceSets), {
 
 // Quotes: lines people wrote, longest 3 in time order, without bots, repeats, too short or too long
 // lines, or status forms.
-const said = (author: string | null, excerpt: string, at: string) => ({ ...evidence(null), occurred_at: at, author, excerpt });
+const said = (author: string | null, excerpt: string, at: string): Evidence => ({
+  ...evidence(null),
+  occurred_at: at,
+  ...(author ? { author } : {}),
+  excerpt,
+});
 const quotedItem = {
   ...item("Quoted", 2, [], "completed"),
-  evidence: [
+  evidence_refs: addEvidence([
     said("Aki", "thanks!", "2026-10-09T01:00:00Z"),
     said("Bo", "the longest line of all #4242", "2026-10-09T03:00:00Z"),
     said(null, "a bot notification that is long", "2026-10-09T02:00:00Z"),
@@ -207,7 +243,7 @@ const quotedItem = {
     said("Dee", "【本日の作業予定】 #4242 →開発", "2026-10-09T07:00:00Z"),
     said("Dee", "today: ・No.1 done ・No.2 in progress", "2026-10-09T07:30:00Z"),
     said("Eve", "a short note, but enough", "2026-10-09T08:00:00Z"),
-  ],
+  ]),
   payload: { owners: ["Aki", "Bo"], next_steps: ["release #5151 on Monday"] },
 } as Item;
 const withQuotes = { ...withTicket, highlights: [...withTicket.highlights, quotedItem] } as DailyCoreJson;
