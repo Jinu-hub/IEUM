@@ -8,7 +8,7 @@ W42_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W43.md`.
 
 ## 1. 지금 우선
 
-순서: items 채우기(1-2) → metrics 채우기(1-3) → 분류 에이전트(3-4) → 주간 리포트(1-5). 주간이 items/metrics의 첫 독자라 projection부터 한다(사용자, 2026-10-21).
+순서: metrics 채우기(1-3, 코드 완료·실측 남음) → 분류 에이전트 B안(3-4) → 주간 리포트(1-5). items(1-2)는 끝남(2026-10-23).
 
 ### 1-1. 생성 실패 막기
 
@@ -18,18 +18,10 @@ W42_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W43.md`.
 - [ ] Structurer: 같은 사람 member_activity entry 2개를 반려 말고 코드가 합침(`core_item_ids` 합집합).
 - [ ] Interpreter: 제출 전 수정 도구 호출로 반려가 쌓이면 대비책이 없어 그날 Core가 실패함. 받은 출력은 살리는 쪽으로.
 
-### 1-2. daily_core_items 채우기 (projection)
+### 1-3. daily_core_metrics 채우기 (projection) ← 다음(실측)
 
-- [ ] 마이그레이션 적용(`0047`, `npm run db:migrate`) 후 실제 `/core/generate`로 items가 쌓이는지 확인. 그 전엔 `importance`(numeric)에 소수를 넣는 INSERT가 실패하고 `validation_json.projection.error`에 남음.
-- [x] projection 코드: `coreItemRows`(flue)가 `core_json` v2를 행으로 풀고, `/core/generate`가 generation 저장 직후 Worker에서 씀. 실패해도 Core는 성공, 결과는 `validation_json.projection`.
-  - `evidence_json`: `evidence_refs`를 최상위 맵에서 풀고 링크를 재조립해 저장. 백필은 신규 generation부터.
-  - `importance` 컬럼 `numeric` 마이그레이션 생성(`0047_fair_crusher_hogan.sql`).
-  - `semantic_text`(NOT NULL): title + summary(+tags/entities 이름)를 코드로 이어 붙임.
-  - generation 저장을 RPC 하나로 묶는 건 보류(순차 REST로 충분, `app.ts`의 ponytail 메모).
-
-### 1-3. daily_core_metrics 채우기 (projection)
-
-- [ ] `core_json`의 metrics를 `daily_core_metrics`에 저장. 코드 계산값이라 items와 함께 하면 됨. `dimension_hash`는 dimensions_json 기준으로 생성.
+- [ ] `/core/generate` 1회 후 `daily_core_metrics` 행 수 = `validation_json.projection.metrics` 확인.
+- [x] `coreMetricRows` + `dimensionHash`(정렬 JSON). `/core/generate`에서 items와 같은 블록에 DELETE+INSERT. `origin: computed`, `evidence_json: {}`. 실패해도 Core 성공.
 
 ### 1-4. 프롬프트 DB 연결 확인
 
@@ -75,13 +67,14 @@ W42_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W43.md`.
 - [ ] contracts 맞추기(`DailyCoreAnalysisFields` ↔ Worker 출력), 안 쓰는 테이블·step enum 정리.
 - [ ] Skill / Subagent 필요 여부: 평가 세트로 반복 약점이 보이면 판단. 지금은 만들지 않음.
 
-#### 분류 전용 Agent (tags / entities) — projection 뒤에 구현
+#### 분류 전용 Agent (tags / entities) — B안 (Structurer 병렬 → projection에서 합쳐 INSERT)
 
-- [ ] 새 에이전트(가칭 `core-tagger`)로 `daily_core_items`의 tags / classifications를 채움. 입력은 item(title, summary)만, Structurer와 병렬 가능, 실패해도 빈 값으로 두고 진행.
-  - entities(티켓·PR 번호)는 에이전트 말고 코드(정규식)로 먼저 뽑음.
-  - 먼저 분류 체계(고정 목록)를 정하고 picklist로 강제. 정하면 `TAXONOMY_VERSION`을 그 이름으로.
-  - `semantic_text`에 tags/entities를 반영할지도 이때 정함.
-  - Agent 추가 시 `wrangler.jsonc` Durable Object migration 한 줄.
+방향(사용자, 2026-10-21·23): core_json에는 안 넣고, Structurer와 병렬로 tagger 돌린 뒤 `coreItemRows`가 tags/classifications/entities/`semantic_text`를 처음부터 채워 INSERT. UPDATE 방식(A안)은 안 씀.
+
+- [ ] B0: 분류 체계(고정 목록) 정하고 `TAXONOMY_VERSION` 이름. tags 상한·금지 규칙.
+- [ ] B1: `core-tagger` 에이전트. 입력은 Interpreter core item(`concept_key`, title, summary). 출력은 `concept_key → {tags, classifications, entities}`. 실패해도 빈 값. DO migration 1줄.
+- [ ] B2: projection 합치기 — Structurer가 묶은 entry는 tags/entities 합집합. GIN 인덱스는 값이 쌓일 때.
+- [ ] B3(선택): entities 티켓·PR은 코드 정규식으로 선추출해 tagger 힌트로.
 
 ## 4. 순서 미정
 
@@ -89,6 +82,14 @@ W42_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W43.md`.
 - [ ] 4-2. fetch 실패 구분(`partial`).
 
 # 끝난 것
+
+## 1. 지금 우선
+
+### 1-2. daily_core_items 채우기 (projection)
+
+- [x] projection 코드: `coreItemRows` + `/core/generate` 저장 직후 기록. 실패해도 Core 성공, `validation_json.projection`.
+- [x] `importance` → `numeric` 마이그레이션(`0047`) 적용 + typegen.
+- [x] 실측(2026-10-23): `/core/generate` 후 `daily_core_items`에 highlight/topic/member_activity 등 적재 확인(예: core_date 2026-10-22, generation `c8298ccb-…`).
 
 ## 3. 나중에 천천히
 

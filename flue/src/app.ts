@@ -21,6 +21,7 @@ import {
   buildAgentInput,
   buildCoreJson,
   coreItemRows,
+  coreMetricRows,
   CORE_SCHEMA_VERSION,
   type CoreMeta,
   coreStats,
@@ -328,15 +329,23 @@ app.post("/core/generate", async (c) => {
     const call2 = await runStructurer(day, interpretation, structurer, conversations);
     const structuring = call2.output;
     const { output, coreJson, stats } = assembleCore(day, interpretation, structuring);
-    // Items projection (1-2): a failed projection must not fail the Core; it is recorded below.
-    const itemRows = coreItemRows(coreJson, { generationId: generation.generation_id, workspaceId: core.workspace_id });
-    let projection: { items: number; error?: string } = { items: 0 };
+    // Items (1-2) + metrics (1-3) projection: a failed write must not fail the Core.
+    const ids = { generationId: generation.generation_id, workspaceId: core.workspace_id };
+    const itemRows = coreItemRows(coreJson, ids);
+    const metricRows = coreMetricRows(coreJson, ids);
+    let projection: { items: number; metrics: number; error?: string } = { items: 0, metrics: 0 };
     try {
       await db(`daily_core_items?generation_id=eq.${generation.generation_id}`, { method: "DELETE" });
+      await db(`daily_core_metrics?generation_id=eq.${generation.generation_id}`, { method: "DELETE" });
       if (itemRows.length) await db("daily_core_items", { method: "POST", body: itemRows });
-      projection = { items: itemRows.length };
+      if (metricRows.length) await db("daily_core_metrics", { method: "POST", body: metricRows });
+      projection = { items: itemRows.length, metrics: metricRows.length };
     } catch (error) {
-      projection = { items: 0, error: error instanceof Error ? error.message.slice(0, 500) : String(error) };
+      projection = {
+        items: 0,
+        metrics: 0,
+        error: error instanceof Error ? error.message.slice(0, 500) : String(error),
+      };
     }
     const usage = {
       ...sumUsage(sumUsage(call0?.usage, call1.usage), call2.usage),

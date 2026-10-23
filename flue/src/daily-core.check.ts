@@ -5,7 +5,9 @@ import {
   buildAgentInput,
   buildCoreJson,
   coreItemRows,
+  coreMetricRows,
   coreStats,
+  dimensionHash,
   type DailyCoreOutput,
   dropUnwrittenActors,
   evidenceProblems,
@@ -423,6 +425,26 @@ assert.deepEqual(
 );
 assert.equal(rows[0].semantic_text, "Aki");
 assert.deepEqual([rows[0].tags, rows[0].entities_json, rows[0].payload_json], [[], [], {}]);
+
+// Metrics projection (1-3): one row per core_json.metrics entry; hash is sorted JSON.
+assert.equal(dimensionHash({ source_ident: "#dev", z: 1, a: 2 }), '{"a":2,"source_ident":"#dev","z":1}');
+assert.equal(dimensionHash({}), "{}");
+assert.equal(dimensionHash({ a: 1 }), dimensionHash({ a: 1 }));
+const metricRows = coreMetricRows(json, { generationId: "g1", workspaceId: "w1" });
+assert.deepEqual(
+  metricRows.map((r) => [r.metric_key, r.metric_value, r.dimension_hash, r.origin, r.rollup_hint]),
+  [
+    ["slack_message_count", 1, '{"source_ident":"#dev"}', "computed", "sum"],
+    ["github_commit_count", 1, '{"source_ident":"LEAD"}', "computed", "sum"],
+    ["active_member_count", 1, "{}", "computed", "none"],
+  ],
+);
+assert.deepEqual(metricRows[0].dimensions_json, { source_ident: "#dev" });
+assert.deepEqual(metricRows[2].evidence_json, {});
+assert.equal(metricRows[0].unit, "count");
+assert.equal(metricRows[0].generation_id, "g1");
+assert.equal(metricRows[0].target_id, "t");
+assert.equal(metricRows[0].core_date, "2026-10-09");
 // Quotable text: people's Slack lines only, without addressing or link markup.
 assert.deepEqual(input.texts, { S003: "reply to old", S004: "standalone", S011: "did #12" });
 const quotable = buildAgentInput(

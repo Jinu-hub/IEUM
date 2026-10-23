@@ -855,3 +855,35 @@ export function coreItemRows(
   );
 }
 export type DailyCoreItemRow = ReturnType<typeof coreItemRows>[number];
+
+// Stable key for the unique (generation_id, metric_key, dimension_hash) constraint.
+// Sorted JSON so key order never flips the hash; empty dimensions → "{}".
+export function dimensionHash(dimensions: Record<string, unknown> = {}) {
+  return JSON.stringify(dimensions, Object.keys(dimensions).sort());
+}
+
+// One daily_core_metrics row per core_json.metrics entry (the 1-3 projection).
+// Values are already computed in buildCoreJson; this only flattens them for SQL rollups.
+export function coreMetricRows(
+  core: ReturnType<typeof buildCoreJson>,
+  { generationId, workspaceId }: { generationId: string; workspaceId: string },
+) {
+  return core.metrics.map((metric) => {
+    const dimensions = ("dimensions" in metric ? metric.dimensions : undefined) ?? {};
+    return {
+      generation_id: generationId,
+      workspace_id: workspaceId,
+      target_id: core.meta.target_id,
+      core_date: core.meta.core_date,
+      metric_key: metric.key,
+      metric_value: metric.value,
+      unit: metric.unit,
+      rollup_hint: metric.rollup_hint,
+      origin: metric.origin,
+      dimensions_json: dimensions,
+      dimension_hash: dimensionHash(dimensions as Record<string, unknown>),
+      evidence_json: {},
+    };
+  });
+}
+export type DailyCoreMetricRow = ReturnType<typeof coreMetricRows>[number];
