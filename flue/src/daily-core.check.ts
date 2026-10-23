@@ -4,6 +4,7 @@ import {
   applyRevision,
   buildAgentInput,
   buildCoreJson,
+  coreItemRows,
   coreStats,
   type DailyCoreOutput,
   dropUnwrittenActors,
@@ -403,6 +404,25 @@ assert.ok(!("url" in (linked.evidence?.S101 ?? {})) && !("url" in (linked.eviden
 assert.equal(linked.evidence?.S103.url, "https://github.com/digitalsheep/LEAD/releases/tag/v1");
 assert.equal(linked.evidence?.S104.url, "https://files.example/x");
 assert.ok(!("thread_ref" in (linked.evidence?.S104 ?? {})));
+
+// Items projection (1-2): one row per item, evidence resolved with its link rebuilt.
+const rows = coreItemRows(linked, { generationId: "g1", workspaceId: "w1" });
+assert.equal(rows.length, 1);
+assert.deepEqual(
+  rows.map((r) => [r.generation_id, r.workspace_id, r.target_id, r.core_date, r.item_type, r.item_key]),
+  [["g1", "w1", "t", "2026-10-09", "highlight", "x"]],
+);
+assert.deepEqual(
+  (rows[0].evidence_json as { source_item_id: string; url?: string }[]).map((e) => [e.source_item_id, e.url ?? null]),
+  [
+    ["10.5", "https://slack.com/archives/C9/p105?thread_ts=9.5&cid=C9"],
+    ["a".repeat(40), `https://github.com/digitalsheep/LEAD/commit/${"a".repeat(40)}`],
+    ["release#1", "https://github.com/digitalsheep/LEAD/releases/tag/v1"],
+    ["11.5", "https://files.example/x"],
+  ],
+);
+assert.equal(rows[0].semantic_text, "Aki");
+assert.deepEqual([rows[0].tags, rows[0].entities_json, rows[0].payload_json], [[], [], {}]);
 // Quotable text: people's Slack lines only, without addressing or link markup.
 assert.deepEqual(input.texts, { S003: "reply to old", S004: "standalone", S011: "did #12" });
 const quotable = buildAgentInput(

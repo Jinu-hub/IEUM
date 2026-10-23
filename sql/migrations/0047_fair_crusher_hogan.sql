@@ -1,0 +1,1 @@
+ALTER TABLE "daily_core_items" ALTER COLUMN "importance" SET DATA TYPE numeric;

@@ -266,7 +266,8 @@ export const dailyCoreItems = pgTable(
     title: text("title"),
     summary: text("summary").notNull(),
     status: text("status"),
-    importance: integer("importance"),
+    // Agent output is 0-1 (interpreted importance / 5), so this stays fractional.
+    importance: numeric("importance"),
     confidence: numeric("confidence"),
     tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
     classificationsJson: jsonb("classifications_json").notNull().default(sql`'{}'::jsonb`),

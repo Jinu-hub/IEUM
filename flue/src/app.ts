@@ -20,6 +20,7 @@ import { TestAgent } from "./agents/test-agent.ts";
 import {
   buildAgentInput,
   buildCoreJson,
+  coreItemRows,
   CORE_SCHEMA_VERSION,
   type CoreMeta,
   coreStats,
@@ -327,6 +328,16 @@ app.post("/core/generate", async (c) => {
     const call2 = await runStructurer(day, interpretation, structurer, conversations);
     const structuring = call2.output;
     const { output, coreJson, stats } = assembleCore(day, interpretation, structuring);
+    // Items projection (1-2): a failed projection must not fail the Core; it is recorded below.
+    const itemRows = coreItemRows(coreJson, { generationId: generation.generation_id, workspaceId: core.workspace_id });
+    let projection: { items: number; error?: string } = { items: 0 };
+    try {
+      await db(`daily_core_items?generation_id=eq.${generation.generation_id}`, { method: "DELETE" });
+      if (itemRows.length) await db("daily_core_items", { method: "POST", body: itemRows });
+      projection = { items: itemRows.length };
+    } catch (error) {
+      projection = { items: 0, error: error instanceof Error ? error.message.slice(0, 500) : String(error) };
+    }
     const usage = {
       ...sumUsage(sumUsage(call0?.usage, call1.usage), call2.usage),
       calls: { ...(call0 && { extractor: call0.usage }), interpretation: call1.usage, structuring: call2.usage },
@@ -349,7 +360,7 @@ app.post("/core/generate", async (c) => {
         core_json: coreJson,
         token_usage_json: usage,
         processing_metrics_json: { elapsed_ms: Date.now() - startedAt.getTime(), calls },
-        validation_json: { evidence_problems: evidenceProblems(output, input), stats },
+        validation_json: { evidence_problems: evidenceProblems(output, input), stats, projection },
         finished_at: finishedAt,
       },
     });

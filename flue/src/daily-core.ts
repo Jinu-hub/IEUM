@@ -808,3 +808,50 @@ export function buildCoreJson(
     ...(Object.keys(sources).length ? { sources } : {}),
   };
 }
+
+const ITEM_TYPE = {
+  highlights: "highlight",
+  topics: "topic",
+  progress_roadmap: "progress_roadmap",
+  member_activity: "member_activity",
+} as const;
+
+// One daily_core_items row per core item (the 1-2 projection). Evidence is resolved from the
+// top-level map with its link rebuilt, so a row stands alone; v1 items carry evidence inline.
+// semantic_text is title + summary (+ tags/entities when present) for later embedding.
+export function coreItemRows(
+  core: ReturnType<typeof buildCoreJson>,
+  { generationId, workspaceId }: { generationId: string; workspaceId: string },
+) {
+  const sections = Object.keys(ITEM_TYPE) as (keyof typeof ITEM_TYPE)[];
+  return sections.flatMap((section) =>
+    core[section].map((item) => {
+      const inline = (item as { evidence?: CoreEvidence[] }).evidence;
+      const evidence = inline ?? item.evidence_refs.flatMap((ref) => core.evidence?.[ref] ?? []);
+      const entityNames = (item.entities ?? []).map((e) => (e as { name?: string }).name).filter(Boolean);
+      return {
+        generation_id: generationId,
+        workspace_id: workspaceId,
+        target_id: core.meta.target_id,
+        core_date: core.meta.core_date,
+        item_type: ITEM_TYPE[section] as string,
+        item_key: item.item_key,
+        title: item.title,
+        summary: item.summary,
+        status: item.status ?? null,
+        importance: item.importance ?? null,
+        confidence: item.confidence ?? null,
+        tags: item.tags ?? [],
+        classifications_json: item.classifications ?? {},
+        entities_json: item.entities ?? [],
+        evidence_json: evidence.map((e) => {
+          const url = deriveEvidenceUrl(core.sources ?? {}, e);
+          return url && !e.url ? { ...e, url } : e;
+        }),
+        semantic_text: [item.title, item.summary, ...(item.tags ?? []), ...entityNames].filter(Boolean).join("\n"),
+        payload_json: item.payload ?? {},
+      };
+    }),
+  );
+}
+export type DailyCoreItemRow = ReturnType<typeof coreItemRows>[number];
