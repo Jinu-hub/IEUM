@@ -86,13 +86,16 @@ export function taggerInput(
   });
 }
 
+// Ticket/PR-looking free tags (no-247, 247) are not useful beside entities.
+const TICKET_LIKE_TAG = /^(?:no-?)?\d{2,}$|^pr-?\d+$/;
+
 export function sanitizeTags(raw: string[], pack: TaxonomyPack): string[] {
   const allow = new Set<string>(pack.tagAllowlist);
   const out: string[] = [];
   let free = 0;
   for (const value of raw) {
     const tag = value.trim().toLowerCase();
-    if (!tag || out.includes(tag)) continue;
+    if (!tag || out.includes(tag) || TICKET_LIKE_TAG.test(tag)) continue;
     if (allow.has(tag)) {
       out.push(tag);
     } else if (
@@ -106,6 +109,147 @@ export function sanitizeTags(raw: string[], pack: TaxonomyPack): string[] {
     if (out.length >= pack.tagRules.maxPerItem) break;
   }
   return out;
+}
+
+export type ItemEntity = ConceptTagging["entities"][number];
+
+const entityKey = (entity: ItemEntity) =>
+  entity.ident ? `${entity.type}\0id:${entity.ident}` : `${entity.type}\0name:${entity.name}`;
+
+function uniqueEntities(entities: ItemEntity[]): ItemEntity[] {
+  const seen = new Set<string>();
+  const out: ItemEntity[] = [];
+  for (const entity of entities) {
+    const key = entityKey(entity);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(entity);
+  }
+  return out;
+}
+
+// Prefer the longer display name when the same type+ident appears twice (bare No.247 vs contextual).
+function mergeEntityLists(...lists: ItemEntity[][]): ItemEntity[] {
+  const byKey = new Map<string, ItemEntity>();
+  for (const entity of lists.flat()) {
+    const key = entityKey(entity);
+    const prev = byKey.get(key);
+    if (!prev || entity.name.length > prev.name.length) byKey.set(key, entity);
+  }
+  return [...byKey.values()];
+}
+
+export function isBareRefName(name: string, ident: string): boolean {
+  const n = name.trim();
+  return (
+    n === ident ||
+    n === `#${ident}` ||
+    /^No\.?\s*\d+$/i.test(n) ||
+    /^PR\s*#?\s*\d+$/i.test(n)
+  );
+}
+
+// Label stays on the same line as the ref so title+summary joins do not leak across lines.
+function lineWithRef(texts: string[], ref: RegExp): string | null {
+  for (const text of texts) {
+    for (const line of text.split(/\n+/)) {
+      if (ref.test(line)) return line;
+      ref.lastIndex = 0;
+    }
+  }
+  return null;
+}
+
+// "管理者機能その7のNo.247を…" → "管理者機能その7 No.247". Label capped so the name stays scannable.
+export function contextualTicketName(text: string, ident: string): string | null {
+  const line = lineWithRef([text], new RegExp(`(?:No\\.?\\s*|#)\\s*${ident}\\b`, "i")) ?? text;
+  const re = new RegExp(
+    `([\\p{L}\\p{N}][\\p{L}\\p{N}\\s\\-ー・]{0,40}?)(?:の)?\\s*(?:No\\.?\\s*|#)\\s*${ident}\\b`,
+    "iu",
+  );
+  const match = re.exec(line);
+  if (!match?.[1]) return null;
+  const label = match[1].trim().replace(/\s+/g, " ");
+  if (!label || label.length > 40) return null;
+  return `${label} No.${ident}`;
+}
+
+export function contextualPrName(text: string, ident: string): string | null {
+  const line = lineWithRef([text], new RegExp(`\\bPR\\s*#?\\s*${ident}\\b`, "i")) ?? text;
+  const re = new RegExp(
+    `([\\p{L}\\p{N}][\\p{L}\\p{N}\\s\\-ー・]{0,40}?)\\s*PR\\s*#?\\s*${ident}\\b`,
+    "iu",
+  );
+  const match = re.exec(line);
+  if (!match?.[1]) return null;
+  const label = match[1].trim().replace(/\s+/g, " ");
+  if (!label || label.length > 40) return null;
+  return `${label} PR #${ident}`;
+}
+
+function bestTicketName(title: string, summary: string, ident: string): string {
+  for (const text of [title, summary]) {
+    const name = contextualTicketName(text, ident);
+    if (name) return name;
+  }
+  return `No.${ident}`;
+}
+
+function bestPrName(title: string, summary: string, ident: string): string {
+  for (const text of [title, summary]) {
+    const name = contextualPrName(text, ident);
+    if (name) return name;
+  }
+  return `PR #${ident}`;
+}
+
+// B3: ticket / PR refs from title+summary, with contextual names when the text has a work label.
+export function extractRefEntities(title: string, summary: string): ItemEntity[] {
+  const text = [title, summary].filter(Boolean).join("\n");
+  if (!text) return [];
+  const out: ItemEntity[] = [];
+  for (const match of text.matchAll(/(?:No\.?\s*|#)\s*(\d{2,})\b/gi)) {
+    const ident = match[1]!;
+    out.push({ type: "ticket", name: bestTicketName(title, summary, ident), ident });
+  }
+  for (const match of text.matchAll(/\bPR\s*#?\s*(\d+)\b/gi)) {
+    const ident = match[1]!;
+    out.push({ type: "pull_request", name: bestPrName(title, summary, ident), ident });
+  }
+  return uniqueEntities(out);
+}
+
+export function enrichRefEntityNames(entities: ItemEntity[], title: string, summary: string): ItemEntity[] {
+  return entities.map((entity) => {
+    if (!entity.ident || !isBareRefName(entity.name, entity.ident)) return entity;
+    if (entity.type === "ticket") return { ...entity, name: bestTicketName(title, summary, entity.ident) };
+    if (entity.type === "pull_request") return { ...entity, name: bestPrName(title, summary, entity.ident) };
+    return entity;
+  });
+}
+
+export function personEntities(owners: string[]): ItemEntity[] {
+  return [...new Set(owners.map((name) => name.trim()).filter(Boolean))].map((name) => ({
+    type: "person",
+    name,
+  }));
+}
+
+// Projection-time finalize: code refs + contextual names + people (event sections only).
+export function finalizeItemEntities(
+  entities: ItemEntity[],
+  {
+    title,
+    summary,
+    owners = [],
+    includePeople,
+  }: { title: string; summary: string; owners?: string[]; includePeople: boolean },
+): ItemEntity[] {
+  const withRefs = mergeEntityLists(
+    enrichRefEntityNames(entities, title, summary),
+    extractRefEntities(title, summary),
+  );
+  return includePeople ? mergeEntityLists(withRefs, personEntities(owners)) : withRefs;
 }
 
 function sanitizeEntity(
@@ -128,20 +272,15 @@ export function sanitizeTaggedItem(item: TaggedItem, pack: TaxonomyPack): Concep
       item.classifications.secondary.filter((s) => (pack.secondary as readonly string[]).includes(s)),
     ),
   ];
-  const entities = item.entities
-    .map((entity) => sanitizeEntity(entity, pack))
-    .filter((entity): entity is NonNullable<typeof entity> => !!entity);
-  const seen = new Set<string>();
-  const uniqueEntities = entities.filter((entity) => {
-    const key = `${entity.type}\0${entity.name}\0${entity.ident ?? ""}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  const entities = uniqueEntities(
+    item.entities
+      .map((entity) => sanitizeEntity(entity, pack))
+      .filter((entity): entity is NonNullable<typeof entity> => !!entity),
+  );
   return {
     tags: sanitizeTags(item.tags, pack),
     classifications: { primary, secondary },
-    entities: uniqueEntities,
+    entities,
   };
 }
 
@@ -182,17 +321,7 @@ export function mergeConceptTagging(
     parts.flatMap((part) => part.tags),
     pack,
   );
-  const entities = (() => {
-    const seen = new Set<string>();
-    const out: ConceptTagging["entities"] = [];
-    for (const entity of parts.flatMap((part) => part.entities)) {
-      const key = `${entity.type}\0${entity.name}\0${entity.ident ?? ""}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push(entity);
-    }
-    return out;
-  })();
+  const entities = mergeEntityLists(...parts.map((part) => part.entities));
   return { tags, classifications: { primary, secondary }, entities };
 }
 

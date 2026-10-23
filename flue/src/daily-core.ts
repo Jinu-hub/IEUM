@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { enrichmentForPlacement, type ItemEnrichment } from "./tagging.ts";
+import { enrichmentForPlacement, finalizeItemEntities, type ItemEnrichment } from "./tagging.ts";
 
 // Mirrors app/features/daily-core/contracts (NormalizedSourceItem, DailyCoreAnalysisFields).
 export type SourceItem = {
@@ -843,8 +843,15 @@ export function coreItemRows(
       // Prefer projection enrichment (may be empty); else whatever is already on the item.
       const tags = tagged ? tagged.tags : (item.tags ?? []);
       const classifications = tagged ? tagged.classifications : (item.classifications ?? {});
-      const entities = tagged ? tagged.entities : (item.entities ?? []);
-      const entityNames = entities.map((e) => (e as { name?: string }).name).filter(Boolean);
+      const owners = ((item.payload as { owners?: string[] } | undefined)?.owners ?? []).filter(Boolean);
+      // B3 + people: contextual ticket/PR names from title/summary; person from owners on event sections.
+      const entities = finalizeItemEntities(tagged ? tagged.entities : (item.entities ?? []), {
+        title: item.title,
+        summary: item.summary,
+        owners,
+        includePeople: section !== "member_activity",
+      });
+      const entityNames = entities.map((e) => e.name).filter(Boolean);
       return {
         generation_id: generationId,
         workspace_id: workspaceId,

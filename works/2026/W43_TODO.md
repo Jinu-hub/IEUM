@@ -69,8 +69,8 @@ W42_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W43.md`.
 - [x] B0: `work-kind-v1` 팩 + `TAXONOMIES`/`getTaxonomy`/`resolveTaxonomyVersion` 물꼬. 현장 추가는 팩 하나·레지스트리 한 줄. generation은 tagger 전까지 `taxonomy_version: "none"`.
 - [x] B1: `core-tagger` 에이전트. 입력은 Interpreter core item(`concept_key`, title, summary). 출력은 `concept_key → {tags, classifications, entities}`. 실패해도 빈 값. DO migration `v9`.
 - [x] B2: projection 합치기 — Structurer가 묶은 entry는 tags/entities 합집합·primary는 importance 우선. `pipeline_version` `flue-two-call-v4`. GIN 인덱스는 값이 쌓일 때.
-- [ ] B3(선택): entities 티켓·PR은 코드 정규식으로 선추출해 tagger 힌트로.
-- [ ] 실측: flue Worker 재시작 후 `/core/generate` → `daily_core_items` tags/classifications + generation `taxonomy_version=work-kind-v1`.
+- [x] B3: 티켓·PR 코드 추출 + 맥락 name(`管理者機能その7 No.247`). person은 owners→entities(event 섹션). tagger-v2.
+- [ ] 실측: `/core/generate` → items의 contextual ticket name + person entities + `taxonomy_version=work-kind-v1`.
 
 ## 4. 순서 미정
 

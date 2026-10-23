@@ -27,7 +27,10 @@ import {
 } from "./daily-core.ts";
 import { ownDailyWork, sharedIdentifiers } from "./agents/core/signal-extractor.ts";
 import {
+  contextualTicketName,
   enrichmentForPlacement,
+  extractRefEntities,
+  finalizeItemEntities,
   indexTagging,
   mergeConceptTagging,
   sanitizeTags,
@@ -579,5 +582,55 @@ const taggedRows = coreItemRows(linked, { generationId: "g1", workspaceId: "w1" 
 assert.deepEqual(taggedRows[0].tags, ["module", "free-tag"]);
 assert.deepEqual(taggedRows[0].classifications_json, { primary: "bugfix", secondary: ["admin"] });
 assert.equal(taggedRows[0].semantic_text, "Aki\nmodule\nfree-tag\neStudio");
+
+// B3 + people: contextual ticket names; person from owners on event sections only.
+assert.equal(
+  contextualTicketName("管理者機能その7のNo.247を修正・コミットし、次にNo.249を予定", "247"),
+  "管理者機能その7 No.247",
+);
+assert.deepEqual(extractRefEntities("fix", "管理者機能その7のNo.247を修正。次にNo.249。"), [
+  { type: "ticket", name: "管理者機能その7 No.247", ident: "247" },
+  { type: "ticket", name: "次に No.249", ident: "249" },
+]);
+assert.deepEqual(sanitizeTags(["module", "no-247", "247", "pr-12"], pack), ["module"]);
+assert.deepEqual(
+  finalizeItemEntities([{ type: "ticket", name: "No.247", ident: "247" }], {
+    title: "管理者機能その7",
+    summary: "管理者機能その7のNo.247を修正した",
+    owners: ["Suchon Kou", "Aki"],
+    includePeople: true,
+  }),
+  [
+    { type: "ticket", name: "管理者機能その7 No.247", ident: "247" },
+    { type: "person", name: "Suchon Kou" },
+    { type: "person", name: "Aki" },
+  ],
+);
+assert.deepEqual(
+  finalizeItemEntities([], {
+    title: "Suchon Kou",
+    summary: "did No.247",
+    owners: ["Suchon Kou"],
+    includePeople: false,
+  }).filter((e) => e.type === "person"),
+  [],
+);
+const withOwners = coreItemRows(
+  {
+    ...linked,
+    highlights: linked.highlights.map((item) => ({
+      ...item,
+      payload: { owners: ["Suchon Kou"] },
+      summary: "管理者機能その7のNo.247を修正",
+    })),
+  },
+  { generationId: "g1", workspaceId: "w1" },
+);
+assert.ok(withOwners[0].entities_json.some((e) => e.type === "person" && e.name === "Suchon Kou"));
+assert.ok(
+  withOwners[0].entities_json.some(
+    (e) => e.type === "ticket" && e.ident === "247" && e.name.includes("管理者機能その7"),
+  ),
+);
 
 console.log("daily-core checks passed");

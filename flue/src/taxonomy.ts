@@ -52,8 +52,9 @@ const WORK_KIND_V1 = {
     pattern: /^[a-z][a-z0-9-]{0,23}$/,
   },
   entityTypes: [
-    "ticket", // No.68, #22777 — filled by code (B3)
-    "pull_request", // PR #558 — filled by code (B3)
+    "ticket", // No.68, #22777 — code extracts + contextual name (B3)
+    "pull_request", // PR #558 — code extracts (B3)
+    "person", // highlight/topic/progress: from payload.owners (Interpreter actors)
     "project", // eStudio, MillviV3 — tagger
     "component",
     "service",

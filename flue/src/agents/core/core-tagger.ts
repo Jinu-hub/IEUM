@@ -17,7 +17,7 @@ import { DEFAULT_TAXONOMY_VERSION } from "../../taxonomy.ts";
 // daily_core_items at projection. core_json stays without tags/entities.
 export const CORE_TAGGER_PROMPT: AgentPrompt = {
   agentKey: "core-tagger",
-  version: "core-tagger-v1",
+  version: "core-tagger-v2",
   model: "openai/gpt-6-luna",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You classify each core item of one team's day for search and weekly rollups.
@@ -33,8 +33,11 @@ Rules:
 - classifications.secondary: zero or more from secondary when they clearly apply; else [].
 - tags: prefer tag_allowlist. You may add up to tag_rules.maxFree free kebab-case tags that match
   tag_rules.pattern and length. At most tag_rules.maxPerItem tags total. No Japanese in tags.
-- entities: named projects, components, or services in the title/summary. Use type from
-  entity_types. Ticket and pull_request numbers are optional (code may add them later).
+  Never put ticket or PR numbers in tags (No.247, #22777, PR 558).
+- entities: projects, components, and services named in the title/summary.
+  Ticket and pull_request are optional: if you emit them, ident is digits only and name must
+  include the work label from the text (e.g. "管理者機能その7 No.247"), never the number alone.
+  Do not emit person: code adds involved people from actors.
 - Only what the title and summary support. Do not invent work that is not written there.`,
 };
 
