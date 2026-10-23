@@ -8,7 +8,7 @@ W42_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W43.md`.
 
 ## 1. 지금 우선
 
-순서: metrics 채우기(1-3, 코드 완료·실측 남음) → 분류 에이전트 B안(3-4) → 주간 리포트(1-5). items(1-2)는 끝남(2026-10-23).
+순서: 분류 B1+B2 코드 끝(실측 남음) → 주간 리포트(1-5). items·metrics projection은 끝남(2026-10-23).
 
 ### 1-1. 생성 실패 막기
 
@@ -17,11 +17,6 @@ W42_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W43.md`.
 - [ ] Writer: highlights 밖 `quote_ids`를 반려 말고 `withoutStrayQuotes`처럼 비우고 검사.
 - [ ] Structurer: 같은 사람 member_activity entry 2개를 반려 말고 코드가 합침(`core_item_ids` 합집합).
 - [ ] Interpreter: 제출 전 수정 도구 호출로 반려가 쌓이면 대비책이 없어 그날 Core가 실패함. 받은 출력은 살리는 쪽으로.
-
-### 1-3. daily_core_metrics 채우기 (projection) ← 다음(실측)
-
-- [ ] `/core/generate` 1회 후 `daily_core_metrics` 행 수 = `validation_json.projection.metrics` 확인.
-- [x] `coreMetricRows` + `dimensionHash`(정렬 JSON). `/core/generate`에서 items와 같은 블록에 DELETE+INSERT. `origin: computed`, `evidence_json: {}`. 실패해도 Core 성공.
 
 ### 1-4. 프롬프트 DB 연결 확인
 
@@ -67,14 +62,15 @@ W42_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W43.md`.
 - [ ] contracts 맞추기(`DailyCoreAnalysisFields` ↔ Worker 출력), 안 쓰는 테이블·step enum 정리.
 - [ ] Skill / Subagent 필요 여부: 평가 세트로 반복 약점이 보이면 판단. 지금은 만들지 않음.
 
-#### 분류 전용 Agent (tags / entities) — B안 (Structurer 병렬 → projection에서 합쳐 INSERT)
+#### 분류 전용 Agent (tags / entities) — B안
 
 방향(사용자, 2026-10-21·23): core_json에는 안 넣고, Structurer와 병렬로 tagger 돌린 뒤 `coreItemRows`가 tags/classifications/entities/`semantic_text`를 처음부터 채워 INSERT. UPDATE 방식(A안)은 안 씀.
 
-- [ ] B0: 분류 체계(고정 목록) 정하고 `TAXONOMY_VERSION` 이름. tags 상한·금지 규칙.
-- [ ] B1: `core-tagger` 에이전트. 입력은 Interpreter core item(`concept_key`, title, summary). 출력은 `concept_key → {tags, classifications, entities}`. 실패해도 빈 값. DO migration 1줄.
-- [ ] B2: projection 합치기 — Structurer가 묶은 entry는 tags/entities 합집합. GIN 인덱스는 값이 쌓일 때.
+- [x] B0: `work-kind-v1` 팩 + `TAXONOMIES`/`getTaxonomy`/`resolveTaxonomyVersion` 물꼬. 현장 추가는 팩 하나·레지스트리 한 줄. generation은 tagger 전까지 `taxonomy_version: "none"`.
+- [x] B1: `core-tagger` 에이전트. 입력은 Interpreter core item(`concept_key`, title, summary). 출력은 `concept_key → {tags, classifications, entities}`. 실패해도 빈 값. DO migration `v9`.
+- [x] B2: projection 합치기 — Structurer가 묶은 entry는 tags/entities 합집합·primary는 importance 우선. `pipeline_version` `flue-two-call-v4`. GIN 인덱스는 값이 쌓일 때.
 - [ ] B3(선택): entities 티켓·PR은 코드 정규식으로 선추출해 tagger 힌트로.
+- [ ] 실측: flue Worker 재시작 후 `/core/generate` → `daily_core_items` tags/classifications + generation `taxonomy_version=work-kind-v1`.
 
 ## 4. 순서 미정
 
@@ -90,6 +86,11 @@ W42_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W43.md`.
 - [x] projection 코드: `coreItemRows` + `/core/generate` 저장 직후 기록. 실패해도 Core 성공, `validation_json.projection`.
 - [x] `importance` → `numeric` 마이그레이션(`0047`) 적용 + typegen.
 - [x] 실측(2026-10-23): `/core/generate` 후 `daily_core_items`에 highlight/topic/member_activity 등 적재 확인(예: core_date 2026-10-22, generation `c8298ccb-…`).
+
+### 1-3. daily_core_metrics 채우기 (projection)
+
+- [x] `coreMetricRows` + `dimensionHash`. `/core/generate`에서 items와 같은 블록에 저장.
+- [x] 실측(2026-10-23): `daily_core_metrics` 레코드 적재 확인.
 
 ## 3. 나중에 천천히
 

@@ -1,4 +1,5 @@
 import * as v from "valibot";
+import { enrichmentForPlacement, type ItemEnrichment } from "./tagging.ts";
 
 // Mirrors app/features/daily-core/contracts (NormalizedSourceItem, DailyCoreAnalysisFields).
 export type SourceItem = {
@@ -819,16 +820,31 @@ const ITEM_TYPE = {
 // One daily_core_items row per core item (the 1-2 projection). Evidence is resolved from the
 // top-level map with its link rebuilt, so a row stands alone; v1 items carry evidence inline.
 // semantic_text is title + summary (+ tags/entities when present) for later embedding.
+// Optional enrichment (B안): merge tagger output via structuring.core_item_ids; core_json stays empty.
 export function coreItemRows(
   core: ReturnType<typeof buildCoreJson>,
   { generationId, workspaceId }: { generationId: string; workspaceId: string },
+  enrichment?: ItemEnrichment,
 ) {
   const sections = Object.keys(ITEM_TYPE) as (keyof typeof ITEM_TYPE)[];
   return sections.flatMap((section) =>
     core[section].map((item) => {
       const inline = (item as { evidence?: CoreEvidence[] }).evidence;
       const evidence = inline ?? item.evidence_refs.flatMap((ref) => core.evidence?.[ref] ?? []);
-      const entityNames = (item.entities ?? []).map((e) => (e as { name?: string }).name).filter(Boolean);
+      const tagged = enrichment
+        ? enrichmentForPlacement(
+            enrichment.structuring,
+            section,
+            item.item_key,
+            enrichment.byConcept,
+            enrichment.importance ?? {},
+          )
+        : null;
+      // Prefer projection enrichment (may be empty); else whatever is already on the item.
+      const tags = tagged ? tagged.tags : (item.tags ?? []);
+      const classifications = tagged ? tagged.classifications : (item.classifications ?? {});
+      const entities = tagged ? tagged.entities : (item.entities ?? []);
+      const entityNames = entities.map((e) => (e as { name?: string }).name).filter(Boolean);
       return {
         generation_id: generationId,
         workspace_id: workspaceId,
@@ -841,14 +857,14 @@ export function coreItemRows(
         status: item.status ?? null,
         importance: item.importance ?? null,
         confidence: item.confidence ?? null,
-        tags: item.tags ?? [],
-        classifications_json: item.classifications ?? {},
-        entities_json: item.entities ?? [],
+        tags,
+        classifications_json: classifications,
+        entities_json: entities,
         evidence_json: evidence.map((e) => {
           const url = deriveEvidenceUrl(core.sources ?? {}, e);
           return url && !e.url ? { ...e, url } : e;
         }),
-        semantic_text: [item.title, item.summary, ...(item.tags ?? []), ...entityNames].filter(Boolean).join("\n"),
+        semantic_text: [item.title, item.summary, ...tags, ...entityNames].filter(Boolean).join("\n"),
         payload_json: item.payload ?? {},
       };
     }),

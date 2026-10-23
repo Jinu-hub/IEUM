@@ -26,6 +26,14 @@ import {
   structuringProblems,
 } from "./daily-core.ts";
 import { ownDailyWork, sharedIdentifiers } from "./agents/core/signal-extractor.ts";
+import {
+  enrichmentForPlacement,
+  indexTagging,
+  mergeConceptTagging,
+  sanitizeTags,
+  type Tagging,
+} from "./tagging.ts";
+import { getTaxonomy } from "./taxonomy.ts";
 
 const item = (ref: string, id: string, at: string, content: string, extra: Partial<SourceItem> = {}) => ({
   source_ref: ref,
@@ -502,5 +510,74 @@ assert.deepEqual(
   ["- #123: S001, S002", "- https://x.io/issues/9: S001, S002", "- ABC-12: S003, S004"],
 );
 assert.deepEqual(sharedIdentifiers("[S001] 09:00 A: <https://x.io/issues/77|77>\n[S002] 18:00 B: #77 done"), ["- #77: S001, S002"]);
+
+// Tagger sanitize + projection merge (3-4 B안): core_json stays empty; items rows get the union.
+const pack = getTaxonomy();
+assert.deepEqual(sanitizeTags(["module", "MODULE", "hotfix", "not ok!", "sql", "custom-tag", "extra-free"], pack), [
+  "module",
+  "hotfix",
+  "sql",
+  "custom-tag",
+  "extra-free",
+]);
+const rawTagging: Tagging = {
+  items: [
+    {
+      concept_key: "a",
+      classifications: { primary: "bugfix", secondary: ["admin", "nope"] },
+      tags: ["module", "free-tag", "bad tag"],
+      entities: [{ type: "project", name: "eStudio" }, { type: "ghost", name: "x" }],
+    },
+    {
+      concept_key: "b",
+      classifications: { primary: "feature", secondary: ["mail"] },
+      tags: ["api"],
+      entities: [{ type: "project", name: "eStudio" }, { type: "component", name: "import" }],
+    },
+    {
+      concept_key: "unknown",
+      classifications: { primary: "tooling", secondary: [] },
+      tags: ["ui"],
+      entities: [],
+    },
+  ],
+};
+const byConcept = indexTagging(rawTagging, ["a", "b"]);
+assert.equal(byConcept.unknown, undefined);
+assert.deepEqual(byConcept.a, {
+  tags: ["module", "free-tag"],
+  classifications: { primary: "bugfix", secondary: ["admin"] },
+  entities: [{ type: "project", name: "eStudio" }],
+});
+assert.deepEqual(mergeConceptTagging(["a", "b"], byConcept, { a: 3, b: 5 }), {
+  tags: ["module", "free-tag", "api"],
+  classifications: { primary: "feature", secondary: ["admin", "mail"] },
+  entities: [
+    { type: "project", name: "eStudio" },
+    { type: "component", name: "import" },
+  ],
+});
+const tagPlacements = {
+  highlights: [{ item_key: "ab", core_item_ids: ["a", "b"] }],
+  topics: [],
+  progress_roadmap: [],
+  member_activity: [],
+};
+assert.equal(
+  enrichmentForPlacement(tagPlacements, "highlights", "ab", byConcept, { a: 5, b: 1 }).classifications.primary,
+  "bugfix",
+);
+const taggedRows = coreItemRows(linked, { generationId: "g1", workspaceId: "w1" }, {
+  structuring: {
+    highlights: [{ item_key: "x", core_item_ids: ["a"] }],
+    topics: [],
+    progress_roadmap: [],
+    member_activity: [],
+  },
+  byConcept,
+});
+assert.deepEqual(taggedRows[0].tags, ["module", "free-tag"]);
+assert.deepEqual(taggedRows[0].classifications_json, { primary: "bugfix", secondary: ["admin"] });
+assert.equal(taggedRows[0].semantic_text, "Aki\nmodule\nfree-tag\neStudio");
 
 console.log("daily-core checks passed");

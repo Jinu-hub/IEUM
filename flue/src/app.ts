@@ -5,6 +5,7 @@ import { bearerAuth } from "hono/bearer-auth";
 import * as v from "valibot";
 import { CORE_INTERPRETER_PROMPT, CoreInterpreter } from "./agents/core/core-interpreter.ts";
 import { CORE_STRUCTURER_PROMPT, CoreStructurer } from "./agents/core/core-structurer.ts";
+import { CORE_TAGGER_PROMPT, CoreTagger } from "./agents/core/core-tagger.ts";
 import {
   refLines,
   sharedIdentifiers,
@@ -48,14 +49,17 @@ import {
   writerInput,
 } from "./daily-report.ts";
 import { promptData, type PromptEnv, resolvePrompts } from "./prompts.ts";
+import { indexTagging, taggerInput, type Tagging } from "./tagging.ts";
+import { DEFAULT_TAXONOMY_VERSION } from "./taxonomy.ts";
 
 // v2: both calls at thinkingLevel "low" (v1 used the default "medium").
 // v3: Call 1 may revise once after code lists uncited lines and duplicate candidates.
+// v4: CoreTagger runs in parallel with CoreStructurer; tags land only in items projection.
 // "+signals" is appended when SignalExtractor ran before Call 1 (target pipeline_options).
-const PIPELINE_VERSION = "flue-two-call-v3";
+const PIPELINE_VERSION = "flue-two-call-v4";
 const MAX_REJECTIONS = 2;
-// "none": core items carry empty tags, classifications, and entities (before core-interpreter-v11: "free-text").
-const TAXONOMY_VERSION = "none";
+// Written on the generation row when the tagger call fails or is skipped; success uses DEFAULT_TAXONOMY_VERSION.
+const TAXONOMY_NONE = "none";
 
 type Env = {
   Bindings: PromptEnv & {
@@ -224,7 +228,7 @@ const runInterpreter = (day: Day, interpreter: PromptData, conversations: string
     conversations,
   );
 
-// Call 2.
+// Call 2a: place core items into Daily Core arrays.
 const runStructurer = ({ core, input }: Day, interpretation: Interpretation, structurer: PromptData, conversations: string[]) =>
   runAgent<Structuring>(
     CoreStructurer,
@@ -240,7 +244,50 @@ const runStructurer = ({ core, input }: Day, interpretation: Interpretation, str
     conversations,
   );
 
-// Code after Call 2: core items placed back into the Daily Core arrays, then core_json.
+// Call 2b (parallel with structurer): classify each core item. Failure → empty tagging (Core still succeeds).
+const runTagger = async (
+  { core }: Day,
+  interpretation: Interpretation,
+  tagger: PromptData,
+  conversations: string[],
+  taxonomyVersion: string,
+) => {
+  try {
+    const result = await runAgent<Tagging>(
+      CoreTagger,
+      "tagging",
+      taggerInput(
+        interpretation.core_items.map(({ concept_key, title, summary }) => ({ concept_key, title, summary })),
+        taxonomyVersion,
+      ),
+      {
+        conceptKeys: interpretation.core_items.map((item) => item.concept_key),
+        taxonomyVersion,
+        language: core.language,
+        ...tagger,
+      },
+      conversations,
+    );
+    return { ...result, ok: true as const };
+  } catch (error) {
+    return {
+      output: { items: [] } satisfies Tagging,
+      data: {},
+      usage: {} as Usage,
+      metrics: {
+        conversation_id: conversations.at(-1) ?? "",
+        model: tagger.model,
+        elapsed_ms: 0,
+        tool_calls: [],
+        rejections: [],
+        error: (error instanceof Error ? error.message : String(error)).slice(0, 500),
+      },
+      ok: false as const,
+    };
+  }
+};
+
+// After Call 2: core items placed back into the Daily Core arrays, then core_json (still without tags).
 function assembleCore({ core, rows, input }: Day, interpretation: Interpretation, structured: Structuring) {
   const { structuring, leftovers } = placeLeftovers(structured, interpretation);
   const output = resolveStructuring(structuring, interpretation, input.authors);
@@ -251,7 +298,7 @@ function assembleCore({ core, rows, input }: Day, interpretation: Interpretation
     // Left out of highlights, topics and progress_roadmap by the structurer, then placed by code.
     unplaced_core_items: leftovers,
   };
-  return { output, coreJson, stats };
+  return { output, coreJson, stats, structuring };
 }
 
 const app = new Hono<Env>();
@@ -271,7 +318,8 @@ app.use("/report/*", requireToken);
 app.route("/agents/test", createAgentRouter(TestAgent));
 
 // Generates a Daily Core and saves it as the next generation. `model` overrides each agent's model.
-// Call 1 (CoreInterpreter) merges the day into core items, Call 2 (CoreStructurer) places them.
+// Call 1 (CoreInterpreter) merges the day into core items; Call 2 runs CoreStructurer and CoreTagger
+// in parallel. Tags/entities go into daily_core_items only (not core_json).
 // Targets with pipeline_options.signals run SignalExtractor before Call 1.
 app.post("/core/generate", async (c) => {
   const { dailyCoreId, model } = await c.req.json<{ dailyCoreId?: string; model?: string }>();
@@ -285,17 +333,30 @@ app.post("/core/generate", async (c) => {
 
   const generationNo = core.last_generation_no + 1;
   const startedAt = new Date();
-  const [interpreterPrompt, structurerPrompt, extractorPrompt] = await resolvePrompts(c.env, [
+  const taxonomyPack = DEFAULT_TAXONOMY_VERSION;
+  const [interpreterPrompt, structurerPrompt, taggerPrompt, extractorPrompt] = await resolvePrompts(c.env, [
     CORE_INTERPRETER_PROMPT,
     CORE_STRUCTURER_PROMPT,
+    CORE_TAGGER_PROMPT,
     SIGNAL_EXTRACTOR_PROMPT,
   ]);
   const interpreter = promptData(interpreterPrompt, model);
   const structurer = promptData(structurerPrompt, model);
+  const tagger = promptData(taggerPrompt, model);
   const extractor = day.signals ? promptData(extractorPrompt, model) : null;
-  const promptVersion = [...(extractor ? [extractorPrompt.version] : []), interpreterPrompt.version, structurerPrompt.version].join("+");
+  const promptVersion = [
+    ...(extractor ? [extractorPrompt.version] : []),
+    interpreterPrompt.version,
+    structurerPrompt.version,
+    taggerPrompt.version,
+  ].join("+");
   const pipelineVersion = extractor ? `${PIPELINE_VERSION}+signals` : PIPELINE_VERSION;
-  const models = [...(extractor ? [extractor.model] : []), interpreter.model, structurer.model];
+  const models = [
+    ...(extractor ? [extractor.model] : []),
+    interpreter.model,
+    structurer.model,
+    tagger.model,
+  ];
   const [generation] = await db<{ generation_id: string }>("daily_core_generations", {
     method: "POST",
     body: {
@@ -307,7 +368,8 @@ app.post("/core/generate", async (c) => {
       generation_status: "processing",
       input_source_data_ids: rows.map((row) => row.source_data_id),
       schema_version: CORE_SCHEMA_VERSION,
-      taxonomy_version: TAXONOMY_VERSION,
+      // Updated to the pack version after a successful tagger call.
+      taxonomy_version: TAXONOMY_NONE,
       prompt_version: promptVersion,
       pipeline_version: pipelineVersion,
       ...modelColumns(models),
@@ -326,20 +388,35 @@ app.post("/core/generate", async (c) => {
     const call0 = extractor ? await runExtractor(day, extractor, conversations) : null;
     const call1 = await runInterpreter(day, interpreter, conversations, call0?.output);
     const interpretation = call1.output;
-    const call2 = await runStructurer(day, interpretation, structurer, conversations);
-    const structuring = call2.output;
-    const { output, coreJson, stats } = assembleCore(day, interpretation, structuring);
+    const [call2, callTag] = await Promise.all([
+      runStructurer(day, interpretation, structurer, conversations),
+      runTagger(day, interpretation, tagger, conversations, taxonomyPack),
+    ]);
+    const { output, coreJson, stats, structuring } = assembleCore(day, interpretation, call2.output);
+    const byConcept = indexTagging(
+      callTag.output,
+      interpretation.core_items.map((item) => item.concept_key),
+      taxonomyPack,
+    );
+    const importance = Object.fromEntries(
+      interpretation.core_items.map((item) => [item.concept_key, item.importance]),
+    );
     // Items (1-2) + metrics (1-3) projection: a failed write must not fail the Core.
     const ids = { generationId: generation.generation_id, workspaceId: core.workspace_id };
-    const itemRows = coreItemRows(coreJson, ids);
+    const itemRows = coreItemRows(coreJson, ids, { structuring, byConcept, importance });
     const metricRows = coreMetricRows(coreJson, ids);
-    let projection: { items: number; metrics: number; error?: string } = { items: 0, metrics: 0 };
+    let projection: { items: number; metrics: number; tagged?: number; error?: string } = { items: 0, metrics: 0 };
     try {
       await db(`daily_core_items?generation_id=eq.${generation.generation_id}`, { method: "DELETE" });
       await db(`daily_core_metrics?generation_id=eq.${generation.generation_id}`, { method: "DELETE" });
       if (itemRows.length) await db("daily_core_items", { method: "POST", body: itemRows });
       if (metricRows.length) await db("daily_core_metrics", { method: "POST", body: metricRows });
-      projection = { items: itemRows.length, metrics: metricRows.length };
+      projection = {
+        items: itemRows.length,
+        metrics: metricRows.length,
+        tagged: itemRows.filter((row) => (row.tags as string[]).length > 0 || !!(row.classifications_json as { primary?: string })?.primary)
+          .length,
+      };
     } catch (error) {
       projection = {
         items: 0,
@@ -348,22 +425,35 @@ app.post("/core/generate", async (c) => {
       };
     }
     const usage = {
-      ...sumUsage(sumUsage(call0?.usage, call1.usage), call2.usage),
-      calls: { ...(call0 && { extractor: call0.usage }), interpretation: call1.usage, structuring: call2.usage },
+      ...sumUsage(sumUsage(sumUsage(call0?.usage, call1.usage), call2.usage), callTag.usage),
+      calls: {
+        ...(call0 && { extractor: call0.usage }),
+        interpretation: call1.usage,
+        structuring: call2.usage,
+        tagging: callTag.usage,
+      },
     };
-    const calls = { ...(call0 && { extractor: call0.metrics }), interpretation: call1.metrics, structuring: call2.metrics };
+    const calls = {
+      ...(call0 && { extractor: call0.metrics }),
+      interpretation: call1.metrics,
+      structuring: call2.metrics,
+      tagging: callTag.metrics,
+    };
     const agentOutputs = {
       ...(call0 && { signals: call0.output }),
       interpretation,
-      structuring,
+      structuring: call2.output,
+      tagging: callTag.output,
       dropped_actors: call1.data.droppedActors?.at(-1) ?? [],
     };
+    const taxonomyVersion = callTag.ok ? taxonomyPack : TAXONOMY_NONE;
     const finishedAt = new Date().toISOString();
     await db(generationRow, {
       method: "PATCH",
       body: {
         generation_status: "succeeded",
         quality_status: coreJson.quality.status,
+        taxonomy_version: taxonomyVersion,
         agent_conversation_id: conversations[0],
         agent_output_json: agentOutputs,
         core_json: coreJson,
@@ -390,6 +480,7 @@ app.post("/core/generate", async (c) => {
       status: "succeeded",
       pipelineVersion,
       promptVersion,
+      taxonomyVersion,
       models,
       elapsedMs: Date.now() - startedAt.getTime(),
       usage,
