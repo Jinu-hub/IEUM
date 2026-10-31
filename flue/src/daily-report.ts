@@ -24,10 +24,10 @@ const LABELS = {
     points: "今日の要点",
     highlights: "✨ 注目の動き",
     progress_roadmap: "🔄 進捗と今後の予定",
-    topics: "💬 議論と調整",
+    topics: "🤝 議論と調整",
     closing: "🎯 次のフォーカス",
-    member_activity: "👥 メンバー別の動き",
-    others: "その他",
+    member_activity: "🧑‍💻 メンバー別の動き",
+    others: "その他のトピック",
     metrics: "📊 今日の活動指標",
     metric_columns: ["指標", "件数"],
     empty: "この日の活動はありませんでした。",
@@ -46,10 +46,10 @@ const LABELS = {
     points: "오늘의 요점",
     highlights: "✨ 주목할 움직임",
     progress_roadmap: "🔄 진행 상황과 향후 일정",
-    topics: "💬 논의와 조정",
+    topics: "🤝 논의와 조정",
     closing: "🎯 다음 초점",
-    member_activity: "👥 멤버별 활동",
-    others: "기타",
+    member_activity: "🧑‍💻 멤버별 활동",
+    others: "그 밖의 이슈",
     metrics: "📊 오늘의 활동 지표",
     metric_columns: ["지표", "건수"],
     empty: "이날은 활동이 없었습니다.",
@@ -68,10 +68,10 @@ const LABELS = {
     points: "Today's key points",
     highlights: "✨ Notable updates",
     progress_roadmap: "🔄 Progress & upcoming plans",
-    topics: "💬 Discussions & coordination",
+    topics: "🤝 Discussions & coordination",
     closing: "🎯 Next focus",
-    member_activity: "👥 Activity by member",
-    others: "Other",
+    member_activity: "🧑‍💻 Activity by member",
+    others: "Other issues",
     metrics: "📊 Today's activity metrics",
     metric_columns: ["Metric", "Count"],
     empty: "No activity on this day.",
@@ -416,7 +416,7 @@ export function reportView(core: DailyCoreJson, draft?: ReportDraft): ReportView
   });
   if (other.length) {
     sections.push({
-      heading: `${labels.others} (${other.length})`,
+      heading: labels.others,
       layout: "list",
       collapsed: true,
       entries: byImportance(other).map((item) => entry(core, item.title, item.summary, [item], labels)),
@@ -497,8 +497,8 @@ function markdown(view: ReportView) {
       "",
     );
   }
-  const section = ({ heading, layout, entries }: ReportSection) => {
-    lines.push(`## ${md(heading)}`, "");
+  const section = ({ heading, layout, entries, collapsed }: ReportSection) => {
+    lines.push(`## ${md(heading)}${collapsed ? ` (${entries.length})` : ""}`, "");
     for (const e of entries) {
       if (layout === "block") {
         lines.push(`### ${iconText(e.icon)}${md(e.title)}`, "", withLinks(e), "");
@@ -509,8 +509,9 @@ function markdown(view: ReportView) {
     }
     if (layout !== "block") lines.push("");
   };
-  view.sections.forEach(section);
+  view.sections.filter((s) => !s.collapsed).forEach(section);
   if (view.closing) lines.push(`## ${view.closing.heading}`, "", md(view.closing.text), "");
+  view.sections.filter((s) => s.collapsed).forEach(section);
   if (view.members) section(view.members);
   return lines.join("\n");
 }
@@ -543,6 +544,27 @@ const TONE: Record<Status, { fg: string; bg: string; line: string }> = {
 };
 const KPI_COLUMNS = 3;
 
+// Heading emoji drawn as Fluent Emoji 3D (MIT) in HTML; markdown keeps the emoji. PNG because Gmail drops SVG and data: URIs.
+// ponytail: hotlinked from jsDelivr at a pinned commit; self-host if the CDN ever becomes a concern.
+const FLUENT = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets";
+const ILLUSTRATION: Record<string, string> = {
+  "👋": `${FLUENT}/Waving%20hand/Default/3D/waving_hand_3d_default.png`,
+  "✨": `${FLUENT}/Sparkles/3D/sparkles_3d.png`,
+  "🔄": `${FLUENT}/Counterclockwise%20arrows%20button/3D/counterclockwise_arrows_button_3d.png`,
+  "🤝": `${FLUENT}/Handshake/3D/handshake_3d.png`,
+  "🎯": `${FLUENT}/Bullseye/3D/bullseye_3d.png`,
+  "🧑‍💻": `${FLUENT}/Technologist/Default/3D/technologist_3d_default.png`,
+  "📊": `${FLUENT}/Bar%20chart/3D/bar_chart_3d.png`,
+};
+
+// width/height keep the layout when a client blocks images; alt is empty because the heading text stays.
+function headingHtml(text: string, size: number) {
+  const [emoji, ...rest] = text.split(" ");
+  const src = ILLUSTRATION[emoji!];
+  if (!src) return esc(text);
+  return `<img src="${src}" width="${size}" height="${size}" alt="" style="display:inline-block;margin-right:8px;border:0;vertical-align:middle">${esc(rest.join(" "))}`;
+}
+
 function html(view: ReportView) {
   const badge = (tone: Status | null, label: string | null) => {
     if (!tone || !label) return "";
@@ -550,7 +572,7 @@ function html(view: ReportView) {
     return `<span style="display:inline-block;margin-right:8px;padding:0 9px;border:1px solid ${t.line};border-radius:10px;background:${t.bg};color:${t.fg};font-size:11px;font-weight:bold;letter-spacing:.04em;line-height:18px;white-space:nowrap;vertical-align:middle">${esc(label)}</span>`;
   };
   const h2 = (text: string) =>
-    `<h2 style="margin:52px 0 16px;padding-top:14px;border-top:2px solid ${C.ink};font-size:16px;font-weight:800;letter-spacing:.04em;line-height:1.4;color:${C.ink}">${esc(text)}</h2>`;
+    `<h2 style="margin:52px 0 16px;padding-top:14px;border-top:2px solid ${C.ink};font-size:16px;font-weight:800;letter-spacing:.04em;line-height:1.4;color:${C.ink}">${headingHtml(text, 28)}</h2>`;
   const p = (text: string, style = "") => `<p style="margin:0 0 12px;line-height:1.85;color:${C.body};${style}">${esc(text)}</p>`;
   const withLinks = (e: ReportEntry) => {
     const links = [
@@ -623,12 +645,15 @@ function html(view: ReportView) {
       `</div>`,
     ].join("");
   };
+  // A quiet dashed card, a full section gap below the closing: an appendix, not part of the takeaway.
   const section = ({ heading, layout, entries, collapsed }: ReportSection) => {
     if (collapsed) {
       body.push(
-        `<details style="margin:52px 0 0;padding:0;border-top:2px solid ${C.ink}">`,
-        `<summary style="padding:14px 0 16px;cursor:pointer;font-size:16px;font-weight:800;letter-spacing:.04em;line-height:1.4;color:${C.muted};list-style-position:outside">${esc(heading)}</summary>`,
-        `<div style="padding:0 0 8px">`,
+        `<details style="margin:52px 0 0;padding:0 18px;border:1px dashed ${C.dash};border-radius:10px">`,
+        `<summary style="padding:14px 0;cursor:pointer;font-size:14px;font-weight:bold;line-height:1.5;color:${C.ink};list-style-position:inside">`,
+        `${esc(heading)}<span style="display:inline-block;margin-left:8px;padding:0 8px;border:1px solid ${C.line};border-radius:10px;background:${C.paper};font-family:${MONO};font-size:11px;line-height:18px;color:${C.muted};vertical-align:middle">${entries.length}</span>`,
+        `</summary>`,
+        `<div style="padding:0 0 4px;border-top:1px dashed ${C.dash}">`,
         ...entries.map((e) => entryHtml(e, layout)),
         `</div></details>`,
       );
@@ -637,16 +662,17 @@ function html(view: ReportView) {
     body.push(h2(heading));
     for (const e of entries) body.push(entryHtml(e, layout));
   };
-  view.sections.forEach(section);
-  // The closing is the one dark block, like a takeaway.
+  view.sections.filter((s) => !s.collapsed).forEach(section);
+  // The closing is the one dark block, like a takeaway; folded others come after it.
   if (view.closing) {
     body.push(
       `<div style="margin:52px 0 0;padding:20px 22px;background:${C.ink};border-radius:10px">`,
-      `<div style="margin-bottom:6px;font-size:11px;font-weight:bold;letter-spacing:.12em;color:#8FD3CB">${esc(view.closing.heading)}</div>`,
+      `<div style="margin-bottom:6px;font-size:11px;font-weight:bold;letter-spacing:.12em;color:#8FD3CB">${headingHtml(view.closing.heading, 22)}</div>`,
       `<div style="font-size:15px;line-height:1.85;color:${C.paper}">${esc(view.closing.text)}</div>`,
       `</div>`,
     );
   }
+  view.sections.filter((s) => s.collapsed).forEach(section);
   if (view.members) section(view.members);
   return [
     `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>`,

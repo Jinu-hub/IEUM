@@ -116,7 +116,7 @@ assert.deepEqual(
   view.sections.map((s) => [s.heading, s.layout, !!s.collapsed]),
   [
     ["✨ 注目の動き", "block", false],
-    ["その他 (1)", "list", true],
+    ["その他の課題", "list", true],
   ],
 );
 assert.deepEqual(view.sections[0].entries.map((e) => e.title), ["High", "Mid", "Low"]);
@@ -143,7 +143,7 @@ const report = renderDailyReport(core);
 assert.equal(report.subject, "Dev <Team> Daily Report 2026-10-09");
 assert.match(report.markdown, /^# Dev \\<Team\\> Daily Report\n\n2026-10-09\n/);
 assert.match(report.markdown, /### ✅ High\n\nHigh summary \[1\]\(https:\/\/slack\.com\/archives\/C1\/p0\) .* \+4\n/);
-assert.match(report.markdown, /## その他 \(1\)\n\n- \*\*Unknown status\*\* Unknown status summary\n/);
+assert.match(report.markdown, /## その他の課題 \(1\)\n\n- \*\*Unknown status\*\* Unknown status summary\n/);
 assert.match(report.markdown, /- \*\*Aki\*\*\n {2}Aki summary\n/);
 assert.match(
   report.markdown,
@@ -346,8 +346,8 @@ assert.deepEqual(story.overview, {
 });
 assert.deepEqual(story.sections.map((s) => [s.heading, s.entries.map((e) => e.title)]), [
   ["✨ 注目の動き", ["Head 2", "Head 3"]],
-  ["💬 議論と調整", ["Head 1"]],
-  ["その他 (2)", ["Unknown status", "Minor topic"]],
+  ["🤝 議論と調整", ["Head 1"]],
+  ["その他の課題", ["Unknown status", "Minor topic"]],
 ]);
 assert.equal(story.sections[2].collapsed, true);
 // Merged links: High has 7, the topic repeats High's first URL. Mixed statuses show no icon.
@@ -369,11 +369,14 @@ assert.match(
   /## 👋 今日の概要\n\nOpening\.\n\n\*\*今日の要点\*\*\n- ✅ Point 1\n\n## 📊 今日の活動指標\n\n\| 指標 \| 件数 \|/,
 );
 assert.match(storyReport.markdown, /\n## ✨ 注目の動き\n\n### ✅ Head 1\n\nPara \\<b\\> \[1\]/);
-assert.match(storyReport.markdown, /\n## 🎯 次のフォーカス\n\nNext\.\n\n## 👥 メンバー別の動き\n\n- \*\*Zed\*\*/);
+assert.match(storyReport.markdown, /\n## 🎯 次のフォーカス\n\nNext\.\n\n## その他の課題 \(2\)\n[\s\S]*\n## 🧑‍💻 メンバー別の動き\n\n- \*\*Zed\*\*/);
+assert.ok(storyReport.html.indexOf("次のフォーカス") < storyReport.html.indexOf("<details")); // folded others sit under the closing
 assert.match(storyReport.markdown, /\n## 📊 今日の活動指標\n\n\| 指標 \| 件数 \|/);
 assert.ok(storyReport.html.includes("Para &lt;b&gt;"));
 assert.ok(storyReport.html.includes(">完了</span>")); // status badge in HTML
 assert.ok(storyReport.html.includes("border-left:3px solid #0F6B66"));
+assert.match(storyReport.html, /bullseye_3d\.png" width="22"[^>]*>次のフォーカス</); // heading emoji → illustration, emoji dropped
+assert.ok(!storyReport.html.includes("📊"));
 // An empty day ignores the draft.
 assert.equal(reportView({ ...withTicket, quality: { status: "empty" } }, draft(highlightsOnly)).overview?.summary, "A & B moved.");
 
