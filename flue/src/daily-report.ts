@@ -27,7 +27,7 @@ const LABELS = {
     topics: "🤝 議論と調整",
     closing: "🎯 次のフォーカス",
     member_activity: "🧑‍💻 メンバー別の動き",
-    others: "その他のトピック",
+    others: "🗂️ その他の動き",
     metrics: "📊 今日の活動指標",
     metric_columns: ["指標", "件数"],
     empty: "この日の活動はありませんでした。",
@@ -49,7 +49,7 @@ const LABELS = {
     topics: "🤝 논의와 조정",
     closing: "🎯 다음 초점",
     member_activity: "🧑‍💻 멤버별 활동",
-    others: "그 밖의 이슈",
+    others: "🗂️ 그 밖의 움직임",
     metrics: "📊 오늘의 활동 지표",
     metric_columns: ["지표", "건수"],
     empty: "이날은 활동이 없었습니다.",
@@ -71,7 +71,7 @@ const LABELS = {
     topics: "🤝 Discussions & coordination",
     closing: "🎯 Next focus",
     member_activity: "🧑‍💻 Activity by member",
-    others: "Other issues",
+    others: "🗂️ Other updates",
     metrics: "📊 Today's activity metrics",
     metric_columns: ["Metric", "Count"],
     empty: "No activity on this day.",
@@ -430,6 +430,7 @@ export function reportView(core: DailyCoreJson, draft?: ReportDraft): ReportView
   const members: ReportSection = {
     heading: labels.member_activity,
     layout: "members",
+    collapsed: true,
     entries: core.member_activity.map((item) => entry(core, item.title, item.summary, [item], labels)),
   };
 
@@ -554,6 +555,7 @@ const ILLUSTRATION: Record<string, string> = {
   "🤝": `${FLUENT}/Handshake/3D/handshake_3d.png`,
   "🎯": `${FLUENT}/Bullseye/3D/bullseye_3d.png`,
   "🧑‍💻": `${FLUENT}/Technologist/Default/3D/technologist_3d_default.png`,
+  "🗂️": `${FLUENT}/Card%20index%20dividers/3D/card_index_dividers_3d.png`,
   "📊": `${FLUENT}/Bar%20chart/3D/bar_chart_3d.png`,
 };
 
@@ -623,7 +625,8 @@ function html(view: ReportView) {
       `<div style="margin:0 -8px"><table role="presentation" width="100%" style="width:100%;border-collapse:separate;border-spacing:8px">${rows.join("")}</table></div>`,
     );
   }
-  const entryHtml = (e: ReportEntry, layout: ReportSection["layout"]) => {
+  // rule: inside a card the divider goes on top, so the last entry does not double the card's border.
+  const entryHtml = (e: ReportEntry, layout: ReportSection["layout"], rule: "top" | "bottom" = "bottom") => {
     if (layout === "block") {
       const status = badge(e.tone, e.status);
       return [
@@ -639,22 +642,24 @@ function html(view: ReportView) {
       ].join("");
     }
     return [
-      `<div style="padding:12px 0;border-bottom:1px dashed ${C.dash}">`,
+      `<div style="padding:12px 0;border-${rule}:1px dashed ${C.dash}">`,
       `<div style="font-weight:bold;line-height:1.6;color:${C.ink}">${badge(e.tone, e.status)}${esc(e.title)}</div>`,
       `<div style="margin-top:2px;line-height:1.8;color:${C.body}">${withLinks(e)}</div>`,
       `</div>`,
     ].join("");
   };
   // A quiet dashed card, a full section gap below the closing: an appendix, not part of the takeaway.
+  // Folded cards in a row sit close together as one group.
   const section = ({ heading, layout, entries, collapsed }: ReportSection) => {
     if (collapsed) {
+      const gap = body.at(-1) === "</div></details>" ? 12 : 52;
       body.push(
-        `<details style="margin:52px 0 0;padding:0 18px;border:1px dashed ${C.dash};border-radius:10px">`,
+        `<details style="margin:${gap}px 0 0;padding:0 18px;border:1px dashed ${C.dash};border-radius:10px">`,
         `<summary style="padding:14px 0;cursor:pointer;font-size:14px;font-weight:bold;line-height:1.5;color:${C.ink};list-style-position:inside">`,
-        `${esc(heading)}<span style="display:inline-block;margin-left:8px;padding:0 8px;border:1px solid ${C.line};border-radius:10px;background:${C.paper};font-family:${MONO};font-size:11px;line-height:18px;color:${C.muted};vertical-align:middle">${entries.length}</span>`,
+        `${headingHtml(heading, 22)}<span style="display:inline-block;margin-left:8px;padding:0 8px;border:1px solid ${C.line};border-radius:10px;background:${C.paper};font-family:${MONO};font-size:11px;line-height:18px;color:${C.muted};vertical-align:middle">${entries.length}</span>`,
         `</summary>`,
-        `<div style="padding:0 0 4px;border-top:1px dashed ${C.dash}">`,
-        ...entries.map((e) => entryHtml(e, layout)),
+        `<div style="padding:0 0 4px">`,
+        ...entries.map((e) => entryHtml(e, layout, "top")),
         `</div></details>`,
       );
       return;
