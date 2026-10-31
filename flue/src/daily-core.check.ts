@@ -18,6 +18,7 @@ import {
   normalizeConceptKeys,
   placeLeftovers,
   plainSlackText,
+  refineHighlights,
   resolveStructuring,
   restoreCoreIds,
   type SourceItem,
@@ -282,6 +283,31 @@ const left = placeLeftovers(
   interpretation(coreA, coreB, { ...coreC, roles: ["topic"], title: "C title", status: "blocked" }),
 );
 assert.deepEqual(left.leftovers, ["b", "c"]);
+
+// Highlight refine (1-6 P1): keep importance ≥ 4, cap at 5; demote the rest by roles.
+const manyHighlights = structuring({
+  highlights: [
+    placed("H4a", ["a"], "h4a"),
+    placed("H2", ["b"], "h2"),
+    placed("H5", ["a"], "h5"),
+    ...["d", "e", "f", "g", "h"].map((k, i) =>
+      placed(`Hx${i}`, ["a"], `hx${i}`),
+    ),
+  ],
+});
+const dayForRefine = interpretation(
+  { ...coreA, importance: 4, concept_key: "a", roles: ["highlight", "progress"] },
+  { ...coreB, importance: 2, concept_key: "b", roles: ["topic"] },
+  { ...coreC, importance: 5, concept_key: "c", roles: ["highlight"] },
+);
+// Remap placed ids: a=4, b=2; extras all cite a (4) so preferred has many.
+const refined = refineHighlights(manyHighlights, dayForRefine);
+assert.ok(refined.structuring.highlights.length <= 5);
+assert.ok(refined.structuring.highlights.every((item) => item.core_item_ids.some((id) => id === "a")));
+assert.ok(!refined.structuring.highlights.some((item) => item.item_key === "h2"));
+assert.ok(refined.demoted.includes("h2"));
+assert.ok(refined.structuring.topics.some((item) => item.item_key === "h2" || item.item_key.startsWith("h2")));
+assert.ok(refined.demoted.length >= 1);
 assert.deepEqual(left.structuring.progress_roadmap, [{ item_key: "b", title: "", summary: "", status: null, core_item_ids: ["b"] }]);
 assert.deepEqual(left.structuring.topics.at(-1), { item_key: "c-core", title: "C title", summary: "", status: "blocked", core_item_ids: ["c"] });
 assert.deepEqual(placeLeftovers(good, interpretedDay).leftovers, []);

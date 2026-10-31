@@ -31,6 +31,7 @@ import {
   interpretationProblems,
   interpretationStats,
   placeLeftovers,
+  refineHighlights,
   resolveStructuring,
   type SourceRow,
   structurerInput,
@@ -287,9 +288,10 @@ const runTagger = async (
   }
 };
 
-// After Call 2: core items placed back into the Daily Core arrays, then core_json (still without tags).
+// After Call 2: leftovers placed, highlights refined (cap), then core_json (still without tags).
 function assembleCore({ core, rows, input }: Day, interpretation: Interpretation, structured: Structuring) {
-  const { structuring, leftovers } = placeLeftovers(structured, interpretation);
+  const { structuring: withLeftovers, leftovers } = placeLeftovers(structured, interpretation);
+  const { structuring, demoted } = refineHighlights(withLeftovers, interpretation);
   const output = resolveStructuring(structuring, interpretation, input.authors);
   const coreJson = buildCoreJson(core, rows, output, input.people, input);
   const stats = {
@@ -297,6 +299,8 @@ function assembleCore({ core, rows, input }: Day, interpretation: Interpretation
     interpretation: interpretationStats(interpretation, input),
     // Left out of highlights, topics and progress_roadmap by the structurer, then placed by code.
     unplaced_core_items: leftovers,
+    // Highlights demoted to topic/progress by refineHighlights (1-6 P1).
+    demoted_highlights: demoted,
   };
   return { output, coreJson, stats, structuring };
 }

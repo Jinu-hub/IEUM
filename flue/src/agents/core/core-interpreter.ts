@@ -41,7 +41,8 @@ import { type AgentPrompt, ThinkingLevel } from "../../prompts.ts";
 // them, and the model sends only changed items through revise_interpretation (instructions unchanged).
 export const CORE_INTERPRETER_PROMPT: AgentPrompt = {
   agentKey: "core-interpreter",
-  version: "core-interpreter-v12",
+  // v13: importance 4 narrowed — routine finishes stay at 3 so scores do not pile on 0.8 (W44 1-6).
+  version: "core-interpreter-v13",
   model: "openai/gpt-6-sol",
   thinkingLevel: "low",
   instructions: `
@@ -155,12 +156,16 @@ next_step:
 
 importance:
   Rank the practical value of knowing this matter today, from 1 to 5.
+  Most ordinary finishes and ongoing work stay at 3 or below; 4 and 5 are
+  scarce on a normal day.
   5 = changes the team's plan or needs action today: a priority or
       assignment decision, a same-day request such as a release, a blocker,
       a deadline at risk.
-  4 = work finished or handed to review, a spec change, new work handed
-      to someone.
-  3 = concrete progress on ongoing work.
+  4 = only when the team should notice it beyond the owner: a shared spec
+      or design change, a handoff that unblocks others, a release or cutover,
+      or a decision others depend on. A ticket finished for oneself is not 4.
+  3 = concrete progress or a normal completion on ongoing work (the default
+      for "done" or "moved forward" when others need not act).
   2 = routine status with little new.
   1 = small notices.
   Decisions, dependencies, deadlines, and requests can be more important

@@ -4,10 +4,16 @@ import { type buildCoreJson, deriveEvidenceUrl, plainSlackText } from "./daily-c
 export type DailyCoreJson = ReturnType<typeof buildCoreJson>;
 type CoreItem = DailyCoreJson["highlights"][number];
 
-export const REPORT_FORMAT_VERSION = "daily-report-code-v2";
+export const REPORT_FORMAT_VERSION = "daily-report-code-v3";
 
 // Entries with more evidence than this show the first links and a count of the rest.
 const MAX_LINKS = 3;
+
+// Reading tier (1-6 P2): not a new item_type. Highlights stay as Core refined them.
+// Topic/progress main = importance ≥ 0.8 (Interpreter 4–5), capped per section; the rest fold as others.
+export const REPORT_MAIN_MIN_IMPORTANCE = 0.8;
+export const REPORT_MAX_MAIN_PROGRESS = 8;
+export const REPORT_MAX_MAIN_TOPICS = 5;
 
 const ICON = { completed: "✅", in_progress: "🚧", blocked: "⛔", planned: "📅" } as const;
 type Status = keyof typeof ICON;
@@ -21,6 +27,7 @@ const LABELS = {
     topics: "💬 議論と調整",
     closing: "🎯 次のフォーカス",
     member_activity: "👥 メンバー別の動き",
+    others: "その他",
     metrics: "📊 今日の活動指標",
     metric_columns: ["指標", "件数"],
     empty: "この日の活動はありませんでした。",
@@ -42,6 +49,7 @@ const LABELS = {
     topics: "💬 논의와 조정",
     closing: "🎯 다음 초점",
     member_activity: "👥 멤버별 활동",
+    others: "기타",
     metrics: "📊 오늘의 활동 지표",
     metric_columns: ["지표", "건수"],
     empty: "이날은 활동이 없었습니다.",
@@ -63,6 +71,7 @@ const LABELS = {
     topics: "💬 Discussions & coordination",
     closing: "🎯 Next focus",
     member_activity: "👥 Activity by member",
+    others: "Other",
     metrics: "📊 Today's activity metrics",
     metric_columns: ["Metric", "Count"],
     empty: "No activity on this day.",
@@ -87,9 +96,36 @@ const sectionOf = (id: string) => EVENT_SECTIONS.find((section) => id.startsWith
 
 const byImportance = (items: CoreItem[]) => [...items].sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0));
 
+function splitSectionMain(
+  items: CoreItem[],
+  maxMain: number,
+): { main: CoreItem[]; other: CoreItem[] } {
+  const ranked = byImportance(items);
+  const eligible = ranked.filter((item) => (item.importance ?? 0) >= REPORT_MAIN_MIN_IMPORTANCE);
+  const main = eligible.slice(0, maxMain);
+  const mainKeys = new Set(main.map((item) => item.item_key));
+  return { main, other: ranked.filter((item) => !mainKeys.has(item.item_key)) };
+}
+
+// Highlights: all (already capped in Core). Topic/progress: importance floor + per-section cap.
+export function partitionReportItems(core: DailyCoreJson) {
+  const progress = splitSectionMain(core.progress_roadmap, REPORT_MAX_MAIN_PROGRESS);
+  const topics = splitSectionMain(core.topics, REPORT_MAX_MAIN_TOPICS);
+  return {
+    main: {
+      highlights: byImportance(core.highlights),
+      progress_roadmap: progress.main,
+      topics: topics.main,
+    },
+    other: [...progress.other, ...topics.other],
+  };
+}
+
+// Writer / Finalizer / draft evidence: main items only (others are rendered folded by code).
 export function eventItems(core: DailyCoreJson) {
+  const { main } = partitionReportItems(core);
   return EVENT_SECTIONS.flatMap((section) =>
-    byImportance(core[section]).map((item, i) => ({ id: `${ID_PREFIX[section]}${i + 1}`, section, item })),
+    main[section].map((item, i) => ({ id: `${ID_PREFIX[section]}${i + 1}`, section, item })),
   );
 }
 
@@ -307,7 +343,13 @@ export type ReportEntry = {
   quotes: { author: string; text: string }[];
 };
 // block: entries with their own heading; list: one line each; members: name, then summary.
-export type ReportSection = { heading: string; layout: "block" | "list" | "members"; entries: ReportEntry[] };
+export type ReportSection = {
+  heading: string;
+  layout: "block" | "list" | "members";
+  entries: ReportEntry[];
+  // Folded by default in HTML (<details>); markdown still lists under the heading.
+  collapsed?: boolean;
+};
 export type ReportMetric = { label: string; value: number; parts: { name: string; value: number }[] };
 export type ReportView = {
   title: string;
@@ -363,14 +405,23 @@ export function reportView(core: DailyCoreJson, draft?: ReportDraft): ReportView
   const quoteById = new Map(events.flatMap(({ id, item }) => itemQuotes(core, item, id).map((q) => [q.id, q] as const)));
   const cite = (ids: string[]) => ids.flatMap((id) => byId.get(id) ?? []);
 
+  const { main, other } = partitionReportItems(core);
   const sections = EVENT_SECTIONS.map((key): ReportSection => {
     const entries = story
       ? story.entries
           .filter((e) => e.section === key)
           .map((e) => entry(core, e.headline, e.text, cite(e.item_ids), labels, e.quote_ids.flatMap((q) => quoteById.get(q) ?? [])))
-      : byImportance(core[key]).map((item) => entry(core, item.title, item.summary, [item], labels));
+      : main[key].map((item) => entry(core, item.title, item.summary, [item], labels));
     return { heading: labels[key], layout: LAYOUT[key], entries: key === "progress_roadmap" ? blockedFirst(entries) : entries };
   });
+  if (other.length) {
+    sections.push({
+      heading: `${labels.others} (${other.length})`,
+      layout: "list",
+      collapsed: true,
+      entries: byImportance(other).map((item) => entry(core, item.title, item.summary, [item], labels)),
+    });
+  }
   const summary = story ? story.opening : core.overview.summary;
   const points = (story?.points ?? []).map((p) => {
     const status = commonStatus(cite(p.item_ids));
@@ -550,32 +601,41 @@ function html(view: ReportView) {
       `<div style="margin:0 -8px"><table role="presentation" width="100%" style="width:100%;border-collapse:separate;border-spacing:8px">${rows.join("")}</table></div>`,
     );
   }
-  const section = ({ heading, layout, entries }: ReportSection) => {
-    body.push(h2(heading));
-    for (const e of entries) {
-      if (layout === "block") {
-        const status = badge(e.tone, e.status);
-        body.push(
-          `<div style="margin:0 0 12px;padding:16px 18px;background:${C.card};border:1px solid ${C.line};border-left:3px solid ${C.accent};border-radius:10px">`,
-          ...(status ? [`<div style="margin-bottom:8px">${status}</div>`] : []),
-          `<div style="margin-bottom:6px;font-size:17px;font-weight:bold;letter-spacing:-.01em;line-height:1.5;color:${C.ink}">${esc(e.title)}</div>`,
-          `<div style="line-height:1.85;color:${C.body}">${withLinks(e)}</div>`,
-          ...e.quotes.map(
-            (q) =>
-              `<div style="margin-top:10px;padding:10px 12px;background:${C.paper};border:1px solid ${C.line};border-radius:8px;font-size:13px;line-height:1.7;color:${C.body}"><div style="margin-bottom:2px;font-size:11px;font-weight:bold;letter-spacing:.06em;color:${C.accent}">${esc(q.author)}</div>${esc(q.text)}</div>`,
-          ),
-          `</div>`,
-        );
-      } else {
-        // list and members: title line (status badge first), summary below, dashed rule between rows.
-        body.push(
-          `<div style="padding:12px 0;border-bottom:1px dashed ${C.dash}">`,
-          `<div style="font-weight:bold;line-height:1.6;color:${C.ink}">${badge(e.tone, e.status)}${esc(e.title)}</div>`,
-          `<div style="margin-top:2px;line-height:1.8;color:${C.body}">${withLinks(e)}</div>`,
-          `</div>`,
-        );
-      }
+  const entryHtml = (e: ReportEntry, layout: ReportSection["layout"]) => {
+    if (layout === "block") {
+      const status = badge(e.tone, e.status);
+      return [
+        `<div style="margin:0 0 12px;padding:16px 18px;background:${C.card};border:1px solid ${C.line};border-left:3px solid ${C.accent};border-radius:10px">`,
+        ...(status ? [`<div style="margin-bottom:8px">${status}</div>`] : []),
+        `<div style="margin-bottom:6px;font-size:17px;font-weight:bold;letter-spacing:-.01em;line-height:1.5;color:${C.ink}">${esc(e.title)}</div>`,
+        `<div style="line-height:1.85;color:${C.body}">${withLinks(e)}</div>`,
+        ...e.quotes.map(
+          (q) =>
+            `<div style="margin-top:10px;padding:10px 12px;background:${C.paper};border:1px solid ${C.line};border-radius:8px;font-size:13px;line-height:1.7;color:${C.body}"><div style="margin-bottom:2px;font-size:11px;font-weight:bold;letter-spacing:.06em;color:${C.accent}">${esc(q.author)}</div>${esc(q.text)}</div>`,
+        ),
+        `</div>`,
+      ].join("");
     }
+    return [
+      `<div style="padding:12px 0;border-bottom:1px dashed ${C.dash}">`,
+      `<div style="font-weight:bold;line-height:1.6;color:${C.ink}">${badge(e.tone, e.status)}${esc(e.title)}</div>`,
+      `<div style="margin-top:2px;line-height:1.8;color:${C.body}">${withLinks(e)}</div>`,
+      `</div>`,
+    ].join("");
+  };
+  const section = ({ heading, layout, entries, collapsed }: ReportSection) => {
+    if (collapsed) {
+      body.push(
+        `<details style="margin:52px 0 0;padding:0;border-top:2px solid ${C.ink}">`,
+        `<summary style="padding:14px 0 16px;cursor:pointer;font-size:16px;font-weight:800;letter-spacing:.04em;line-height:1.4;color:${C.muted};list-style-position:outside">${esc(heading)}</summary>`,
+        `<div style="padding:0 0 8px">`,
+        ...entries.map((e) => entryHtml(e, layout)),
+        `</div></details>`,
+      );
+      return;
+    }
+    body.push(h2(heading));
+    for (const e of entries) body.push(entryHtml(e, layout));
   };
   view.sections.forEach(section);
   // The closing is the one dark block, like a takeaway.

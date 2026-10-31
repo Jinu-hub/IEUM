@@ -580,6 +580,48 @@ export function placeLeftovers(output: Structuring, { core_items }: Interpretati
   };
 }
 
+// Highlight strictness (1-6 P1): Structurer may nominate many; code keeps a short list for readers.
+// Prefer Interpreter importance ≥ 4; cap at MAX_HIGHLIGHTS; demote the rest by roles (no item_type=other).
+export const MAX_HIGHLIGHTS = 5;
+export const HIGHLIGHT_MIN_IMPORTANCE = 4;
+
+export function refineHighlights(output: Structuring, { core_items }: Interpretation) {
+  const byKey = new Map(core_items.map((item) => [item.concept_key, item]));
+  const score = (item: Structuring["highlights"][number]) => {
+    const sources = item.core_item_ids.flatMap((id) => byKey.get(id) ?? []);
+    return sources.length ? Math.max(...sources.map((s) => s.importance)) : 0;
+  };
+  const ranked = [...output.highlights].sort((a, b) => score(b) - score(a) || a.item_key.localeCompare(b.item_key));
+  const preferred = ranked.filter((item) => score(item) >= HIGHLIGHT_MIN_IMPORTANCE);
+  // If nothing reaches 4, keep a thin top slice so the day still has a highlight signal.
+  const pool = preferred.length ? preferred : ranked.slice(0, Math.min(3, ranked.length));
+  const keep = pool.slice(0, MAX_HIGHLIGHTS);
+  const demote = ranked.filter((item) => !keep.includes(item));
+  const topicOnly = (item: Structuring["highlights"][number]) => {
+    const sources = item.core_item_ids.flatMap((id) => byKey.get(id) ?? []);
+    return sources.some((s) => s.roles.includes("topic") && !s.roles.includes("progress"));
+  };
+  const append = (section: "topics" | "progress_roadmap", items: typeof demote) => {
+    const keys = new Set(output[section].map((item) => item.item_key));
+    return [
+      ...output[section],
+      ...items.map((item) => ({
+        ...item,
+        item_key: keys.has(item.item_key) ? `${item.item_key}-from-highlight` : item.item_key,
+      })),
+    ];
+  };
+  return {
+    structuring: {
+      ...output,
+      highlights: keep,
+      topics: append("topics", demote.filter(topicOnly)),
+      progress_roadmap: append("progress_roadmap", demote.filter((item) => !topicOnly(item))),
+    },
+    demoted: demote.map((item) => item.item_key),
+  };
+}
+
 // Turns placed items back into the single-agent output shape, so buildCoreJson stays as is.
 export function resolveStructuring(
   output: Structuring,
