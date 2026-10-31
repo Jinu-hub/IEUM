@@ -28,6 +28,7 @@ const LABELS = {
     closing: "🎯 次のフォーカス",
     member_activity: "🧑‍💻 メンバー別の動き",
     others: "🗂️ その他の動き",
+    more_members: (n: number) => `ほか${n}名`,
     metrics: "📊 今日の活動指標",
     metric_columns: ["指標", "件数"],
     empty: "この日の活動はありませんでした。",
@@ -50,6 +51,7 @@ const LABELS = {
     closing: "🎯 다음 초점",
     member_activity: "🧑‍💻 멤버별 활동",
     others: "🗂️ 그 밖의 움직임",
+    more_members: (n: number) => `외 ${n}명`,
     metrics: "📊 오늘의 활동 지표",
     metric_columns: ["지표", "건수"],
     empty: "이날은 활동이 없었습니다.",
@@ -72,6 +74,7 @@ const LABELS = {
     closing: "🎯 Next focus",
     member_activity: "🧑‍💻 Activity by member",
     others: "🗂️ Other updates",
+    more_members: (n: number) => `+${n} more`,
     metrics: "📊 Today's activity metrics",
     metric_columns: ["Metric", "Count"],
     empty: "No activity on this day.",
@@ -349,6 +352,8 @@ export type ReportSection = {
   entries: ReportEntry[];
   // Folded by default in HTML (<details>); markdown still lists under the heading.
   collapsed?: boolean;
+  // One line shown on a folded card; when absent, HTML shows status counts.
+  preview?: string;
 };
 export type ReportMetric = { label: string; value: number; parts: { name: string; value: number }[] };
 export type ReportView = {
@@ -427,10 +432,12 @@ export function reportView(core: DailyCoreJson, draft?: ReportDraft): ReportView
     const status = commonStatus(cite(p.item_ids));
     return { icon: status && ICON[status], tone: status, status: status && labels.status[status], text: p.text };
   });
+  const names = core.member_activity.map((item) => item.title);
   const members: ReportSection = {
     heading: labels.member_activity,
     layout: "members",
     collapsed: true,
+    preview: [names.slice(0, 3).join(", "), ...(names.length > 3 ? [labels.more_members(names.length - 3)] : [])].join(" "),
     entries: core.member_activity.map((item) => entry(core, item.title, item.summary, [item], labels)),
   };
 
@@ -648,15 +655,23 @@ function html(view: ReportView) {
       `</div>`,
     ].join("");
   };
-  // A quiet dashed card, a full section gap below the closing: an appendix, not part of the takeaway.
-  // Folded cards in a row sit close together as one group.
-  const section = ({ heading, layout, entries, collapsed }: ReportSection) => {
+  // Status counts in the order the badges read, for a folded card without its own preview.
+  const statusCounts = (entries: ReportEntry[]) =>
+    (Object.keys(TONE) as Status[]).flatMap((tone) => {
+      const hit = entries.filter((e) => e.tone === tone);
+      return hit.length ? [badge(tone, `${hit[0]!.status} ${hit.length}`)] : [];
+    }).join("");
+  // Folded cards after the closing: an appendix. The summary keeps one preview line so the card says
+  // what is inside before it is opened. Muted summary color greys the native marker; the title stays ink.
+  const section = ({ heading, layout, entries, collapsed, preview }: ReportSection) => {
     if (collapsed) {
-      const gap = body.at(-1) === "</div></details>" ? 12 : 52;
+      const gap = body.at(-1) === "</div></details>" ? 20 : 52;
+      const line = preview ? esc(preview) : statusCounts(entries);
       body.push(
-        `<details style="margin:${gap}px 0 0;padding:0 18px;border:1px dashed ${C.dash};border-radius:10px">`,
-        `<summary style="padding:14px 0;cursor:pointer;font-size:14px;font-weight:bold;line-height:1.5;color:${C.ink};list-style-position:inside">`,
-        `${headingHtml(heading, 22)}<span style="display:inline-block;margin-left:8px;padding:0 8px;border:1px solid ${C.line};border-radius:10px;background:${C.paper};font-family:${MONO};font-size:11px;line-height:18px;color:${C.muted};vertical-align:middle">${entries.length}</span>`,
+        `<details style="margin:${gap}px 0 0;padding:0 18px;background:${C.card};border:1px solid ${C.line};border-radius:10px">`,
+        `<summary style="padding:14px 0;cursor:pointer;line-height:1.5;color:${C.muted};list-style-position:inside">`,
+        `<span style="font-size:14px;font-weight:bold;color:${C.ink}">${headingHtml(heading, 22)}</span><span style="margin-left:8px;font-family:${MONO};font-size:12px">${entries.length}</span>`,
+        line ? `<div style="margin:6px 0 0 46px;font-size:12px;line-height:1.6">${line}</div>` : "",
         `</summary>`,
         `<div style="padding:0 0 4px">`,
         ...entries.map((e) => entryHtml(e, layout, "top")),

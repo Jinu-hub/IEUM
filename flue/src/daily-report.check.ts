@@ -371,6 +371,7 @@ assert.match(
 assert.match(storyReport.markdown, /\n## ✨ 注目の動き\n\n### ✅ Head 1\n\nPara \\<b\\> \[1\]/);
 assert.match(storyReport.markdown, /\n## 🎯 次のフォーカス\n\nNext\.\n\n## 🗂️ その他の動き \(2\)\n[\s\S]*\n## 🧑‍💻 メンバー別の動き \(2\)\n\n- \*\*Zed\*\*/);
 assert.ok(storyReport.html.indexOf("次のフォーカス") < storyReport.html.indexOf("<details")); // folded others sit under the closing
+assert.ok(storyReport.html.includes(">Zed, Aki</div>")); // members card previews names while folded
 assert.match(storyReport.markdown, /\n## 📊 今日の活動指標\n\n\| 指標 \| 件数 \|/);
 assert.ok(storyReport.html.includes("Para &lt;b&gt;"));
 assert.ok(storyReport.html.includes(">完了</span>")); // status badge in HTML
