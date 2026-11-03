@@ -1,7 +1,7 @@
 import type { Database } from 'database.types';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { data, Link, redirect, useFetcher, useSearchParams, type LoaderFunctionArgs } from 'react-router';
+import { data, Link, redirect, useFetcher, useRevalidator, useSearchParams, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
 import {
   CheckCircleIcon,
@@ -15,6 +15,7 @@ import {
   NexCardDescription,
   NexCardHeader,
   NexCardTitle,
+  RefreshIcon,
   SlackIcon
 } from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
@@ -82,6 +83,7 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { workspace, integrationsInfo, onboardingState } = loaderData;
   const workspaceId = workspace.workspace_id;
+  const revalidator = useRevalidator();
   const isReviewMode = onboardingState?.onboarding_mode === "slack_review" ? true : false;
 
   // Force English locale in review mode
@@ -170,6 +172,9 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
   const [loadingChannels, setLoadingChannels] = useState<Record<string, boolean>>({});
   const [currentLoadingChannel, setCurrentLoadingChannel] = useState<string | null>(null);
   const membershipFetcher = useFetcher();
+  const refreshChannelsFetcher = useFetcher();
+  const isRefreshingChannels = refreshChannelsFetcher.state !== 'idle';
+  const lastRefreshDataRef = useRef<unknown>(null);
 
   // Slack integration actions
   const {
@@ -183,6 +188,32 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
     setStatus: setSlackStatus
   });
 
+  const handleRefreshChannels = () => {
+    if (!slackCredentialRef || isRefreshingChannels) return;
+    const formData = new FormData();
+    formData.append('actionType', 'refresh');
+    formData.append('workspaceId', workspaceId);
+    formData.append('credentialRef', slackCredentialRef);
+    refreshChannelsFetcher.submit(formData, {
+      method: 'POST',
+      action: `/api/settings/slack-integration/${slackCredentialRef}`,
+    });
+  };
+
+  // 채널 새로고침 응답
+  useEffect(() => {
+    if (refreshChannelsFetcher.state !== 'idle' || !refreshChannelsFetcher.data) return;
+    if (lastRefreshDataRef.current === refreshChannelsFetcher.data) return;
+    lastRefreshDataRef.current = refreshChannelsFetcher.data;
+    const response = refreshChannelsFetcher.data as { status?: string; error?: string };
+    if (response.status === 'success') {
+      setChannelMemberships({});
+      toast.success(t('refreshChannelsSuccess'));
+      revalidator.revalidate();
+    } else if (response.status === 'error') {
+      toast.error(response.error || t('refreshChannelsError'));
+    }
+  }, [refreshChannelsFetcher.state, refreshChannelsFetcher.data, revalidator, t]);
 
   // Slack fetcher 응답 처리 (커스텀 훅 사용)
   useIntegrationResponse(
@@ -607,8 +638,22 @@ export default function IntegrationsReviewScreen( { loaderData }: Route.Componen
                           {/* 접근 가능한 채널 */}
                           <div className="mt-3">
                             <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2">
-                              <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">{t("channelList")}</span>  
-                              <br />
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">{t("channelList")}</span>
+                                <NexButton
+                                  type="button"
+                                  variant="secondary"
+                                  size="sm"
+                                  loading={isRefreshingChannels}
+                                  leftIcon={<RefreshIcon className="w-3 h-3" />}
+                                  onClick={handleRefreshChannels}
+                                  disabled={!slackCredentialRef || isRefreshingChannels}
+                                  aria-label={t("refreshChannels")}
+                                  className="h-7 shrink-0 px-2.5 text-[11px] font-medium shadow-none hover:translate-y-0"
+                                >
+                                  {isRefreshingChannels ? t("refreshingChannels") : t("refreshChannels")}
+                                </NexButton>
+                              </div>
                               <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription1")}</span>
                               <br />
                               <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription2")}</span>

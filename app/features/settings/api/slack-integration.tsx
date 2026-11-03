@@ -9,7 +9,7 @@ import { type ActionFunctionArgs, data, type LoaderFunctionArgs } from "react-ro
 import { z } from "zod";
 import { logger } from "~/core/lib/logger";
 import makeServerClient from "~/core/lib/supa-client.server";
-import { updateCredentialRef } from "../db/mutations";
+import { createIntegrationStatusSuccess, updateCredentialRef } from "../db/mutations";
 import { getIntegrations } from "../db/queries";
 
 /**
@@ -17,7 +17,7 @@ import { getIntegrations } from "../db/queries";
  */
 const slackIntegrationSchema = z.object({
   workspaceId: z.string(),
-  actionType: z.enum(['connect', 'disconnect', 'check']),
+  actionType: z.enum(['connect', 'disconnect', 'check', 'refresh']),
   credentialRef: z.string().optional(),
   //config_json: z.any().optional(), // comma-separated channel IDs
 });
@@ -217,6 +217,58 @@ export async function action({ request, params }: ActionFunctionArgs) {
           return data({ status: 'error',  error: 'Failed to check Slack connection' }, { status: 500 });
         }
         return data({status: 'success', data: connectionStatus });
+      }
+
+      case 'refresh': {
+        // 기존 토큰으로 채널 목록만 다시 가져와 resource_cache_json 갱신 (OAuth 재연결 없음)
+        const { getSlackBotToken } = await import("~/core/lib/secrets-manager.server");
+        const token = await getSlackBotToken(credentialRef);
+        if (!token) {
+          return data({ status: 'error', error: 'No Slack bot token found' }, { status: 400 });
+        }
+
+        const connectionStatus = await checkSlackConnection(token);
+        if (!connectionStatus.connected) {
+          return data({
+            status: 'error',
+            error: connectionStatus.error || 'Failed to refresh Slack channels',
+          }, { status: 500 });
+        }
+
+        let existingIntegration;
+        try {
+          existingIntegration = await getIntegrations(client, { workspaceId, type: 'slack' });
+        } catch (error) {
+          logger.error('Failed to fetch Slack integration for refresh', { error: String(error) });
+          return data({ status: 'error', error: 'Slack integration not found' }, { status: 404 });
+        }
+
+        await createIntegrationStatusSuccess(client, {
+          integrationId: existingIntegration.integration_id,
+          workspaceId,
+          connectionStatus: 'connected',
+          resourceCacheJson: {
+            team: connectionStatus.team,
+            bot: connectionStatus.bot,
+            channels: connectionStatus.channels ?? [],
+          },
+        });
+
+        logger.info('Slack channels refreshed', {
+          workspaceId,
+          channelsCount: connectionStatus.channels?.length ?? 0,
+        });
+
+        return data({
+          status: 'success',
+          message: 'Slack channels refreshed',
+          data: {
+            connected: true,
+            team: connectionStatus.team,
+            bot: connectionStatus.bot,
+            channels: connectionStatus.channels,
+          },
+        });
       }
 
       case 'connect': {

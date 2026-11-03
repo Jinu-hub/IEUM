@@ -666,6 +666,10 @@ export type Translation = {
     workspace: string;
     connectedBot: string;
     channelList: string;
+    refreshChannels: string;
+    refreshingChannels: string;
+    refreshChannelsSuccess: string;
+    refreshChannelsError: string;
     collectDataTargetDescription1: string;
     collectDataTargetDescription2: string;
     loadingChannels: string;

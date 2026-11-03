@@ -1,7 +1,7 @@
 import type { Database } from 'database.types';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { data, redirect, useFetcher, useNavigate, useSearchParams, type LoaderFunctionArgs } from 'react-router';
+import { data, redirect, useFetcher, useNavigate, useRevalidator, useSearchParams, type LoaderFunctionArgs } from 'react-router';
 import { toast } from 'sonner';
 import {
   BookOpenIcon,
@@ -10,11 +10,13 @@ import {
   HashIcon,
   LockIcon,
   NexBadge,
+  NexButton,
   NexCard,
   NexCardContent,
   NexCardDescription,
   NexCardHeader,
   NexCardTitle,
+  RefreshIcon,
   SlackIcon
 } from '~/core/components/nex';
 import makeServerClient from '~/core/lib/supa-client.server';
@@ -75,6 +77,7 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   const { t: commonT } = useTranslation("common", { keyPrefix: "common" });
   const { t: onboardingT } = useTranslation("common", { keyPrefix: "onboarding" });
   const navigate = useNavigate();
+  const revalidator = useRevalidator();
   const { workspaceId, integrationsInfo, onboardingState } = loaderData;
   
   // Onboarding hook
@@ -231,6 +234,9 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
   const [loadingChannels, setLoadingChannels] = useState<Record<string, boolean>>({});
   const [currentLoadingChannel, setCurrentLoadingChannel] = useState<string | null>(null);
   const membershipFetcher = useFetcher();
+  const refreshChannelsFetcher = useFetcher();
+  const isRefreshingChannels = refreshChannelsFetcher.state !== 'idle';
+  const lastRefreshDataRef = useRef<unknown>(null);
 
   // Slack integration actions
   const {
@@ -243,6 +249,18 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
     integrationType: 'slack',
     setStatus: setSlackStatus
   });
+
+  const handleRefreshChannels = () => {
+    if (!slackCredentialRef || isRefreshingChannels) return;
+    const formData = new FormData();
+    formData.append('actionType', 'refresh');
+    formData.append('workspaceId', workspaceId);
+    formData.append('credentialRef', slackCredentialRef);
+    refreshChannelsFetcher.submit(formData, {
+      method: 'POST',
+      action: `/api/settings/slack-integration/${slackCredentialRef}`,
+    });
+  };
 
   // GitHub fetcher 응답 처리 (커스텀 훅 사용)
   useIntegrationResponse(
@@ -352,6 +370,21 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
       action: '/api/settings/slack-channel-members'
     });
   };
+
+  // 채널 새로고침 응답
+  useEffect(() => {
+    if (refreshChannelsFetcher.state !== 'idle' || !refreshChannelsFetcher.data) return;
+    if (lastRefreshDataRef.current === refreshChannelsFetcher.data) return;
+    lastRefreshDataRef.current = refreshChannelsFetcher.data;
+    const response = refreshChannelsFetcher.data as { status?: string; error?: string };
+    if (response.status === 'success') {
+      setChannelMemberships({});
+      toast.success(t('refreshChannelsSuccess'));
+      revalidator.revalidate();
+    } else if (response.status === 'error') {
+      toast.error(response.error || t('refreshChannelsError'));
+    }
+  }, [refreshChannelsFetcher.state, refreshChannelsFetcher.data, revalidator, t]);
 
   // 채널 멤버십 fetcher 상태 변화 모니터링
   useEffect(() => {
@@ -683,8 +716,22 @@ export default function IntegrationsScreen( { loaderData }: Route.ComponentProps
                           {/* 접근 가능한 채널 */}
                           <div className="mt-3">
                             <div className="text-xs text-[#8B92B5] dark:text-[#6C6F7E] mb-2">
-                              <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">{t("channelList")}</span>  
-                              <br />
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <span className="text-[#0D0E10] dark:text-[#FFFFFF] font-medium">{t("channelList")}</span>
+                                <NexButton
+                                  type="button"
+                                  variant="secondary"
+                                  size="sm"
+                                  loading={isRefreshingChannels}
+                                  leftIcon={<RefreshIcon className="w-3 h-3" />}
+                                  onClick={handleRefreshChannels}
+                                  disabled={!slackCredentialRef || isRefreshingChannels}
+                                  aria-label={t("refreshChannels")}
+                                  className="h-7 shrink-0 px-2.5 text-[11px] font-medium shadow-none hover:translate-y-0"
+                                >
+                                  {isRefreshingChannels ? t("refreshingChannels") : t("refreshChannels")}
+                                </NexButton>
+                              </div>
                               <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription1")}</span>
                               <br />
                               <span className="text-[#8B92B5] dark:text-[#6C6F7E] ml-2">{t("collectDataTargetDescription2")}</span>

@@ -268,13 +268,20 @@ export async function getGitHubTokenFromEnv(): Promise<string | null> {
 
 /**
  * Slack 토큰 조회
+ *
+ * ⚠️ PRODUCTION MUST-REMOVE: Secrets 실패/미존재 시 process.env.SLACK_BOT_TOKEN fallback.
+ * 로컬·테스트 전용이다. 실운용 전에 이 fallback을 반드시 제거하고,
+ * 토큰을 못 찾으면 null을 반환해 호출측(채널 refresh / join / 수집 등)이 실패 처리해야 한다.
+ * 실서비스에서 .env 고정 토큰으로 조용히 넘어가면 안 된다.
  */
 export async function getSlackBotToken(credentialRef?: string): Promise<string | null> {
   // "undefined" 문자열도 falsy로 처리
   if (credentialRef && credentialRef !== 'undefined') {
-    return await secretsManager.getSecret(credentialRef).then(secret => secret?.value || null);
+    const fromSecret = await secretsManager.getSecret(credentialRef).then(secret => secret?.value || null);
+    if (fromSecret) return fromSecret;
   }
-  return null;
+  // ⚠️ PRODUCTION MUST-REMOVE: 아래 env fallback (실운용에서는 return null)
+  return getSlackBotTokenFromEnv();
 }
 
 /**
