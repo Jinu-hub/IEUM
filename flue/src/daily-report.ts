@@ -552,26 +552,29 @@ const TONE: Record<Status, { fg: string; bg: string; line: string }> = {
 };
 const KPI_COLUMNS = 3;
 
-// Heading emoji drawn as Fluent Emoji 3D (MIT) in HTML; markdown keeps the emoji. PNG because Gmail drops SVG and data: URIs.
-// ponytail: hotlinked from jsDelivr at a pinned commit; self-host if the CDN ever becomes a concern.
-const FLUENT = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets";
+// Heading emoji drawn as our own illustrations (flue/assets/report-icons, 56px PNG) in HTML; markdown keeps
+// the emoji. PNG because Gmail drops SVG and data: URIs.
+// ponytail: served from the public repo's main branch via jsDelivr until the IEUM assets domain exists;
+// hosting on the sending domain clears Resend's image-domain warning. New icons show once pushed.
+const ICONS = "https://cdn.jsdelivr.net/gh/Jinu-hub/IEUM@main/flue/assets/report-icons";
 const ILLUSTRATION: Record<string, string> = {
-  "👋": `${FLUENT}/Waving%20hand/Default/3D/waving_hand_3d_default.png`,
-  "✨": `${FLUENT}/Sparkles/3D/sparkles_3d.png`,
-  "🔄": `${FLUENT}/Counterclockwise%20arrows%20button/3D/counterclockwise_arrows_button_3d.png`,
-  "🤝": `${FLUENT}/Handshake/3D/handshake_3d.png`,
-  "🎯": `${FLUENT}/Bullseye/3D/bullseye_3d.png`,
-  "🧑‍💻": `${FLUENT}/Technologist/Default/3D/technologist_3d_default.png`,
-  "🗂️": `${FLUENT}/Card%20index%20dividers/3D/card_index_dividers_3d.png`,
-  "📊": `${FLUENT}/Bar%20chart/3D/bar_chart_3d.png`,
+  "👋": `${ICONS}/overview.png`,
+  "📊": `${ICONS}/metrics.png`,
+  "✨": `${ICONS}/highlights.png`,
+  "🔄": `${ICONS}/progress.png`,
+  "🤝": `${ICONS}/topics.png`,
+  "🎯": `${ICONS}/closing.png`,
+  "🗂️": `${ICONS}/others.png`,
+  "🧑‍💻": `${ICONS}/members.png`,
 };
 
 // width/height keep the layout when a client blocks images; alt is empty because the heading text stays.
-function headingHtml(text: string, size: number) {
+// style adds to the img, e.g. a light backing on the dark closing block where the dark outlines vanish.
+function headingHtml(text: string, size: number, style = "") {
   const [emoji, ...rest] = text.split(" ");
   const src = ILLUSTRATION[emoji!];
   if (!src) return esc(text);
-  return `<img src="${src}" width="${size}" height="${size}" alt="" style="display:inline-block;margin-right:8px;border:0;vertical-align:middle">${esc(rest.join(" "))}`;
+  return `<img src="${src}" width="${size}" height="${size}" alt="" style="display:inline-block;margin-right:8px;border:0;vertical-align:middle;${style}">${esc(rest.join(" "))}`;
 }
 
 function html(view: ReportView) {
@@ -690,7 +693,7 @@ function html(view: ReportView) {
   if (view.closing) {
     body.push(
       `<div style="margin:52px 0 0;padding:20px 22px;background:${C.ink};border-radius:10px">`,
-      `<div style="margin-bottom:6px;font-size:11px;font-weight:bold;letter-spacing:.12em;color:#8FD3CB">${headingHtml(view.closing.heading, 22)}</div>`,
+      `<div style="margin-bottom:6px;font-size:11px;font-weight:bold;letter-spacing:.12em;color:#8FD3CB">${headingHtml(view.closing.heading, 22, `padding:3px;background:${C.paper};border-radius:50%`)}</div>`,
       `<div style="font-size:15px;line-height:1.85;color:${C.paper}">${esc(view.closing.text)}</div>`,
       `</div>`,
     );

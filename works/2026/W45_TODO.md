@@ -41,6 +41,7 @@ item_type에 other 추가 안 함. importance 세분화(1~10) 안 함. 장부는
 - [ ] 앱 Vercel 첫 배포(`works/vercel-deploy.md`).
 - [ ] 시크릿 노출 정리: GitHub 토큰 로그 평문(`github/run.ts`), 루트 `.env` 형식 깨진 줄. 이미 찍힌 토큰 교체 여부 결정.
 - [ ] 메일 HTML 실제 클라이언트 확인(Gmail/Outlook, 다크 모드, 모바일 폭).
+- [ ] IEUM 도메인 확정 후: 발송 도메인을 IEUM으로 이전 + 리포트 아이콘을 `assets.<IEUM 도메인>`에서 서빙(`daily-report.ts`의 `ICONS` 한 줄). 그때까지는 jsDelivr(@main)라 Resend 이미지 도메인 경고가 남음.
 - [ ] Finalizer v3 실행 확인(합치기·나누기를 하는지, 대비책 경고가 보이는지).
 - [ ] 리포트 내용: Writer의 "Minor may be left out", `#77`처럼 바뀌는 티켓 표기, highlight/topics 겹침(#22540).
 - [ ] 실패 기록 개선: Worker 연결 실패 문구에 경로·주소 포함, failed 행 `error_message`에 원인 남기기, run step이 `collect_data`에 머무는 문제.

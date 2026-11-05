@@ -376,7 +376,7 @@ assert.match(storyReport.markdown, /\n## 📊 今日の活動指標\n\n\| 指標
 assert.ok(storyReport.html.includes("Para &lt;b&gt;"));
 assert.ok(storyReport.html.includes(">完了</span>")); // status badge in HTML
 assert.ok(storyReport.html.includes("border-left:3px solid #0F6B66"));
-assert.match(storyReport.html, /bullseye_3d\.png" width="22"[^>]*>次のフォーカス</); // heading emoji → illustration, emoji dropped
+assert.match(storyReport.html, /closing\.png" width="22"[^>]*>次のフォーカス</); // heading emoji → illustration, emoji dropped
 assert.ok(!storyReport.html.includes("📊"));
 // An empty day ignores the draft.
 assert.equal(reportView({ ...withTicket, quality: { status: "empty" } }, draft(highlightsOnly)).overview?.summary, "A & B moved.");
