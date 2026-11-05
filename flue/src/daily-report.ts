@@ -663,19 +663,22 @@ function html(view: ReportView) {
     }).join("");
   // Folded cards after the closing: an appendix. The summary keeps one preview line so the card says
   // what is inside before it is opened. Muted summary color greys the native marker; the title stays ink.
+  // Gmail drops <details>/<summary> with their styles and shows everything open, so the card box and
+  // spacing live on a wrapping <div>.
   const section = ({ heading, layout, entries, collapsed, preview }: ReportSection) => {
     if (collapsed) {
-      const gap = body.at(-1) === "</div></details>" ? 20 : 52;
+      const gap = body.at(-1) === "</div></details></div>" ? 20 : 52;
       const line = preview ? esc(preview) : statusCounts(entries);
       body.push(
-        `<details style="margin:${gap}px 0 0;padding:0 18px;background:${C.card};border:1px solid ${C.line};border-radius:10px">`,
-        `<summary style="padding:14px 0;cursor:pointer;line-height:1.5;color:${C.muted};list-style-position:inside">`,
-        `<span style="font-size:14px;font-weight:bold;color:${C.ink}">${headingHtml(heading, 22)}</span><span style="margin-left:8px;font-family:${MONO};font-size:12px">${entries.length}</span>`,
-        line ? `<div style="margin:6px 0 0 46px;font-size:12px;line-height:1.6">${line}</div>` : "",
+        `<div style="margin:${gap}px 0 0;padding:14px 18px;background:${C.card};border:1px solid ${C.line};border-radius:10px">`,
+        `<details>`,
+        `<summary style="cursor:pointer;line-height:1.5;color:${C.muted};list-style-position:inside">`,
+        `<span style="font-size:14px;font-weight:bold;color:${C.ink}">${headingHtml(heading, 22)}</span><span style="margin-left:8px;font-family:${MONO};font-size:12px;color:${C.muted}">${entries.length}</span>`,
+        line ? `<div style="margin:6px 0 0 30px;font-size:12px;line-height:1.6;color:${C.muted}">${line}</div>` : "",
         `</summary>`,
-        `<div style="padding:0 0 4px">`,
+        `<div style="margin-top:14px">`,
         ...entries.map((e) => entryHtml(e, layout, "top")),
-        `</div></details>`,
+        `</div></details></div>`,
       );
       return;
     }
