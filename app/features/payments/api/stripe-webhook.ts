@@ -19,6 +19,7 @@
 import Stripe from "stripe";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import { isZeroDecimalCurrency } from "~/core/prompts/types";
+import { stripeEndsAt, stripeInvoiceSubscriptionId } from "~/features/payments/lib/stripe-subscription";
 import type { Route } from "./+types/stripe-webhook";
 
 /**
@@ -165,12 +166,8 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     return;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const subAny = subscription as any;
   const status = mapSubscriptionStatus(subscription.status) as "active" | "canceled" | "trialing" | "paused" | "expired";
-  const endsAt = subAny.current_period_end 
-    ? new Date(subAny.current_period_end * 1000).toISOString()
-    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // Default 30 days
+  const endsAt = stripeEndsAt(subscription, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
 
   // Update subscription in database
   const { error } = await adminClient
@@ -259,8 +256,8 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const invoiceAny = invoice as any;
-  const subscription = invoiceAny.subscription as string | null;
-  
+  const subscription = stripeInvoiceSubscriptionId(invoice);
+
   if (!subscription) {
     console.log("Invoice without subscription, skipping:", invoice.id);
     return;
@@ -346,10 +343,10 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     return;
   }
 
-  // Update subscription end date
-  const newEndsAt = stripeSubAny.current_period_end 
-    ? new Date(stripeSubAny.current_period_end * 1000).toISOString()
-    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // Default 30 days
+  const newEndsAt = stripeEndsAt(
+    stripeSubscription,
+    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  );
   
   await adminClient
     .from("subscriptions")
@@ -367,9 +364,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
  * Handle failed invoice payment
  */
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const invoiceAny = invoice as any;
-  const subscription = invoiceAny.subscription as string | null;
+  const subscription = stripeInvoiceSubscriptionId(invoice);
 
   if (!subscription) {
     console.log("Invoice without subscription, skipping:", invoice.id);

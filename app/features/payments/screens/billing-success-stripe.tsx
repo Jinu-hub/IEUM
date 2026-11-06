@@ -28,6 +28,7 @@ import { requireAuthentication } from "~/core/lib/guards.server";
 import adminClient from "~/core/lib/supa-admin-client.server";
 import makeServerClient from "~/core/lib/supa-client.server";
 import { CURRENCY_VALUES, isZeroDecimalCurrency } from "~/core/prompts/types";
+import { stripeEndsAt } from "~/features/payments/lib/stripe-subscription";
 import { calculatePrice, getCurrencyLocale } from "~/features/payments/lib/utils";
 
 /**
@@ -224,29 +225,11 @@ export async function loader({ request }: Route.LoaderArgs) {
       console.error("Failed to record payment:", payError);
     }
 
-    // Step 3: Create/Update subscription
     const now = new Date();
-    
-    // Get current_period_end from Stripe subscription
-    // If not available from session, fetch directly from Stripe API
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let currentPeriodEnd = (subscription as any).current_period_end;
-    
-    // If current_period_end is not available, fetch subscription directly
-    if (!currentPeriodEnd) {
-      try {
-        const fullSubscription = await stripe.subscriptions.retrieve(subscription.id);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        currentPeriodEnd = (fullSubscription as any).current_period_end;
-      } catch (e) {
-        console.error("Failed to fetch subscription details:", e);
-      }
-    }
-    
-    // Calculate ends_at - use Stripe's period end or calculate based on interval
-    const endsAt = currentPeriodEnd && currentPeriodEnd > 0
-      ? new Date(currentPeriodEnd * 1000)
-      : new Date(now.getTime() + (interval === "yearly" ? 365 : 30) * 24 * 60 * 60 * 1000);
+    const endsAt = stripeEndsAt(
+      subscription,
+      new Date(now.getTime() + (interval === "yearly" ? 365 : 30) * 24 * 60 * 60 * 1000),
+    );
 
     // Check if user already has a subscription
     const { data: existingSubscription } = await adminClient
@@ -268,7 +251,7 @@ export async function loader({ request }: Route.LoaderArgs) {
           billing_region: region,
           billing_currency: currency,
           started_at: now.toISOString(),
-          ends_at: endsAt.toISOString(),
+          ends_at: endsAt,
           trial_ends_at: null,
           latest_payment_id: payment?.payment_id || null,
           stripe_subscription_id: subscription.id,
@@ -287,7 +270,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         billing_region: region,
         billing_currency: currency,
         started_at: now.toISOString(),
-        ends_at: endsAt.toISOString(),
+        ends_at: endsAt,
         trial_ends_at: null,
         latest_payment_id: payment?.payment_id || null,
         stripe_subscription_id: subscription.id,
@@ -310,7 +293,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       currency,
       orderId,
       receiptUrl: invoice?.hosted_invoice_url || "",
-      endsAt: endsAt.toISOString(),
+      endsAt: endsAt,
     };
   } catch (error) {
     // If it's a redirect, throw it
