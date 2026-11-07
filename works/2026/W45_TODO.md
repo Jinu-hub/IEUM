@@ -26,7 +26,7 @@ W44_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W45.md`.
 
 - [x] Phase 1. `weeklyInput` — highlight + metrics. 렌더 없음. 실측 주: 11/02~11/08.
 - [x] Phase 2. 코드 렌더 — 헤더, 지표 합, 날짜별 주목. LLM 0. 11/02~11/08.
-- [ ] Phase 3. 병합 에이전트 1단 + `(날짜, item_key)` 검사.
+- [x] Phase 3. 병합 에이전트 1단 + `(날짜, item_key)` 검사. 11/02~11/08, 재실행 없음.
 - [ ] Phase 4. 이번 주의 움직임(상한 7) + 아직 열린 것. 날짜별은 접기.
 
 ## 2. Daily Report 후속

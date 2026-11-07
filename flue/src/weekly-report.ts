@@ -1,8 +1,14 @@
+import { mergeItems, type MergeGroups } from "./weekly-merge.ts";
 import type { WeeklyInput } from "./weekly-input.ts";
+
+export const WEEKLY_MAIN_CAP = 7;
+const OPEN_STATUS = new Set(["in_progress", "blocked", "planned"]);
 
 const COPY = {
   ja: {
     metrics: "📊 今週の活動指標",
+    week: "✨ 今週の動き",
+    open: "🎯 まだ開いていること",
     byDay: "✨ 日付別の注目",
     noCore: "この日のコアはありません。",
     noHighlights: "注目の動きはありません。",
@@ -20,6 +26,8 @@ const COPY = {
   },
   ko: {
     metrics: "📊 이번 주 활동 지표",
+    week: "✨ 이번 주의 움직임",
+    open: "🎯 아직 열린 것",
     byDay: "✨ 날짜별 주목",
     noCore: "이 날은 코어가 없습니다.",
     noHighlights: "주목할 움직임이 없습니다.",
@@ -37,6 +45,8 @@ const COPY = {
   },
   en: {
     metrics: "📊 This week's activity",
+    week: "✨ This week's updates",
+    open: "🎯 Still open",
     byDay: "✨ Highlights by day",
     noCore: "No core for this day.",
     noHighlights: "No highlights.",
@@ -66,8 +76,40 @@ export type WeeklyReportView = {
   activeHeading: string;
   activeByDay: { date: string; value: number }[];
   byDayHeading: string;
+  daysCollapsed: boolean;
+  movementsHeading: string | null;
+  movements: { ids: string[]; title: string; summary: string; status: string | null; dates: string[] }[] | null;
+  openHeading: string | null;
+  open: { title: string; status: string | null }[] | null;
   days: { date: string; note: string | null; entries: { title: string; summary: string; status: string | null }[] }[];
 };
+
+// Phase 4: one row per merge group. Title, status, and summary are the last day's. Cap by max importance.
+export function weeklyMovements(week: WeeklyInput, groups: MergeGroups["groups"]) {
+  const byId = new Map(mergeItems(week).map((item) => [item.id, item]));
+  const importance = new Map<string, number | null>();
+  for (const day of week.days) {
+    day.core?.highlights.forEach((item, index) => importance.set(`${day.date}#${index + 1}`, item.importance));
+  }
+  return groups
+    .map((group) => {
+      const cites = group.ids.map((id) => {
+        const item = byId.get(id);
+        if (!item) throw new Error(`unknown merge id ${id}`);
+        return { ...item, importance: importance.get(id) ?? null };
+      });
+      cites.sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+      const last = cites.at(-1)!;
+      return {
+        ids: [...group.ids],
+        cites,
+        last,
+        score: Math.max(...cites.map((cite) => cite.importance ?? -1)),
+      };
+    })
+    .sort((a, b) => b.score - a.score || a.cites[0]!.date.localeCompare(b.cites[0]!.date) || a.cites[0]!.id.localeCompare(b.cites[0]!.id))
+    .slice(0, WEEKLY_MAIN_CAP);
+}
 
 const copyOf = (language: string | null) => COPY[language as keyof typeof COPY] ?? COPY.en;
 
@@ -75,8 +117,25 @@ const statusLabel = (copy: Copy, status: string | null) =>
   status && status in copy.status ? copy.status[status as Status] : status;
 
 // Phase 2: header, summed metrics, highlights listed by day. No merge, no weekly prose.
-export function weeklyReportView(week: WeeklyInput): WeeklyReportView {
+export function weeklyReportView(week: WeeklyInput, groups?: MergeGroups["groups"]): WeeklyReportView {
   const copy = copyOf(week.language);
+  const threads = groups ? weeklyMovements(week, groups) : null;
+  const movements = threads
+    ? threads.map((thread) => ({
+        ids: thread.ids,
+        title: thread.last.title || thread.last.item_key,
+        summary: thread.last.summary,
+        status: statusLabel(copy, thread.last.status),
+        dates: thread.cites.map((cite) => cite.date),
+      }))
+    : null;
+  const open = threads
+    ? threads.flatMap((thread) =>
+        thread.last.status && OPEN_STATUS.has(thread.last.status)
+          ? [{ title: thread.last.title || thread.last.item_key, status: statusLabel(copy, thread.last.status) }]
+          : [],
+      )
+    : null;
   const name = week.target_display_name ?? week.target_id;
   const active = week.unsummed.find((row) => row.key === "active_member_count");
   return {
@@ -91,6 +150,11 @@ export function weeklyReportView(week: WeeklyInput): WeeklyReportView {
     activeHeading: copy.active,
     activeByDay: active?.by_day ?? [],
     byDayHeading: copy.byDay,
+    daysCollapsed: !!groups,
+    movementsHeading: movements ? copy.week : null,
+    movements,
+    openHeading: open?.length ? copy.open : null,
+    open,
     days: week.days.map((day) => {
       if (!day.core) return { date: day.date, note: copy.noCore, entries: [] };
       if (!day.core.highlights.length) return { date: day.date, note: copy.noHighlights, entries: [] };
@@ -128,12 +192,27 @@ export function weeklyReportProblems(week: WeeklyInput, view: WeeklyReportView) 
   return problems;
 }
 
+export function weeklyBodyProblems(week: WeeklyInput, groups: MergeGroups["groups"], view: WeeklyReportView) {
+  const problems = weeklyReportProblems(week, view);
+  const main = weeklyMovements(week, groups);
+  const shown = view.movements ?? [];
+  if (shown.length > WEEKLY_MAIN_CAP) problems.push(`movements ${shown.length} > ${WEEKLY_MAIN_CAP}`);
+  if (shown.length !== main.length) problems.push(`movements ${shown.length} != selected ${main.length}`);
+  const selected = new Set(main.map((thread) => [...thread.ids].sort().join("|")));
+  for (const movement of shown) {
+    const key = [...movement.ids].sort().join("|");
+    if (!selected.has(key)) problems.push(`movement is not a phase 3 group: ${key}`);
+  }
+  if (!view.daysCollapsed) problems.push("by-day is not collapsed");
+  return problems;
+}
+
 const mdEsc = (text: string) => text.replace(/([\\`*[\]<>])/g, "\\$1");
 const htmlEsc = (text: string) =>
   text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-export function renderWeeklyReport(week: WeeklyInput) {
-  const view = weeklyReportView(week);
+export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["groups"]) {
+  const view = weeklyReportView(week, groups);
   const lines = [`# ${mdEsc(view.title)}`, "", view.range, "", `## ${view.metricsHeading}`, ""];
   if (view.metrics.length) {
     lines.push(`| ${view.columns[0]} | ${view.columns[1]} |`, "| --- | ---: |");
@@ -145,7 +224,26 @@ export function renderWeeklyReport(week: WeeklyInput) {
     for (const row of view.activeByDay) lines.push(`- ${row.date}: ${row.value}`);
     lines.push("");
   }
-  lines.push(`## ${view.byDayHeading}`, "");
+  if (view.movements && view.movementsHeading) {
+    lines.push(`## ${view.movementsHeading}`, "");
+    for (const movement of view.movements) {
+      lines.push(
+        `### ${movement.status ? `${movement.status} · ` : ""}${mdEsc(movement.title)}`,
+        "",
+        movement.dates.join(", "),
+        "",
+        mdEsc(movement.summary),
+        "",
+      );
+    }
+  }
+  if (view.openHeading && view.open?.length) {
+    lines.push(`## ${view.openHeading}`, "");
+    for (const item of view.open) lines.push(`- ${item.status ? `${item.status} · ` : ""}${mdEsc(item.title)}`);
+    lines.push("");
+  }
+  const dayCount = view.days.reduce((sum, day) => sum + day.entries.length, 0);
+  lines.push(`## ${view.byDayHeading}${view.daysCollapsed ? ` (${dayCount})` : ""}`, "");
   for (const day of view.days) {
     lines.push(`### ${day.date}`, "");
     if (day.note) lines.push(day.note, "");
@@ -158,7 +256,7 @@ export function renderWeeklyReport(week: WeeklyInput) {
     .map((metric) => `<tr><td>${htmlEsc(metric.label)}</td><td style="text-align:right">${metric.value}</td></tr>`)
     .join("");
   const active = view.activeByDay.map((row) => `<li>${row.date}: ${row.value}</li>`).join("");
-  const days = view.days
+  const daySections = view.days
     .map((day) => {
       const entries = day.entries
         .map(
@@ -169,6 +267,18 @@ export function renderWeeklyReport(week: WeeklyInput) {
       return `<section><h2>${day.date}</h2>${day.note ? `<p class="note">${htmlEsc(day.note)}</p>` : ""}${entries}</section>`;
     })
     .join("");
+  const movementHtml = (view.movements ?? [])
+    .map(
+      (movement) =>
+        `<article><h3>${movement.status ? `<span>${htmlEsc(movement.status)}</span> ` : ""}${htmlEsc(movement.title)}</h3><p class="note">${htmlEsc(movement.dates.join(", "))}</p><p>${htmlEsc(movement.summary)}</p></article>`,
+    )
+    .join("");
+  const openHtml = (view.open ?? [])
+    .map((item) => `<li>${item.status ? `<span>${htmlEsc(item.status)}</span> ` : ""}${htmlEsc(item.title)}</li>`)
+    .join("");
+  const byDay = view.daysCollapsed
+    ? `<details><summary><h2>${htmlEsc(view.byDayHeading)} (${dayCount})</h2></summary>${daySections}</details>`
+    : `<h2>${htmlEsc(view.byDayHeading)}</h2>${daySections}`;
   const html = `<!doctype html>
 <html lang="${htmlEsc(week.language ?? "en")}">
 <meta charset="utf-8">
@@ -180,8 +290,9 @@ export function renderWeeklyReport(week: WeeklyInput) {
 <h2>${htmlEsc(view.metricsHeading)}</h2>
 <table style="border-collapse:collapse;background:#FFFEFB">${metricRows}</table>
 ${active ? `<p><strong>${htmlEsc(view.activeHeading)}</strong></p><ul>${active}</ul>` : ""}
-<h2>${htmlEsc(view.byDayHeading)}</h2>
-${days}
+${view.movementsHeading ? `<h2>${htmlEsc(view.movementsHeading)}</h2>${movementHtml}` : ""}
+${view.openHeading ? `<h2>${htmlEsc(view.openHeading)}</h2><ul>${openHtml}</ul>` : ""}
+${byDay}
 </main>
 <style>
 h2{margin:32px 0 12px;font-size:18px}

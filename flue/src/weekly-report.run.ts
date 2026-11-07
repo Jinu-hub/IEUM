@@ -1,12 +1,12 @@
-// Writes the Phase 2 review render for one week. LLM 0, no DB write.
-// Run: npx tsx flue/src/weekly-report.run.ts <targetId> <from> <to> <out>
+// Writes a weekly review render. Pass a saved merge JSON for Phase 4 (no new model call).
+// Run: npx tsx flue/src/weekly-report.run.ts <targetId> <from> <to> <out> [groups.json]
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { loadWeeklyInput, type Db } from "./weekly-input.ts";
-import { renderWeeklyReport, weeklyReportProblems } from "./weekly-report.ts";
+import { renderWeeklyReport, weeklyBodyProblems, weeklyReportProblems } from "./weekly-report.ts";
 
-const [targetId, from, to, out] = process.argv.slice(2);
-if (!targetId || !from || !to || !out) throw new Error("usage: weekly-report.run.ts <targetId> <from> <to> <out>");
+const [targetId, from, to, out, groupsFile] = process.argv.slice(2);
+if (!targetId || !from || !to || !out) throw new Error("usage: weekly-report.run.ts <targetId> <from> <to> <out> [groups.json]");
 
 const env: Record<string, string> = {};
 for (const line of readFileSync(new URL("../.dev.vars", import.meta.url), "utf8").split("\n")) {
@@ -25,8 +25,11 @@ const db: Db = async <T>(path: string) => {
 };
 
 const week = await loadWeeklyInput(db, targetId, from, to);
-const rendered = renderWeeklyReport(week);
-const problems = weeklyReportProblems(week, rendered.view);
+const groups = groupsFile
+  ? (JSON.parse(readFileSync(groupsFile, "utf8")) as { groups: { ids: string[] }[] }).groups.map((group) => ({ ids: group.ids }))
+  : undefined;
+const rendered = renderWeeklyReport(week, groups);
+const problems = groups ? weeklyBodyProblems(week, groups, rendered.view) : weeklyReportProblems(week, rendered.view);
 if (problems.length) throw new Error(problems.join("\n"));
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(`${out}.md`, rendered.markdown);
@@ -38,6 +41,8 @@ console.log(
     highlights,
     days: rendered.view.days.map((day) => ({ date: day.date, entries: day.entries.length, note: day.note })),
     metrics: rendered.view.metrics,
+    movements: rendered.view.movements?.map((item) => ({ title: item.title, status: item.status, dates: item.dates })),
+    open: rendered.view.open,
     markdown: rendered.markdown.length,
     html: rendered.html.length,
   }),

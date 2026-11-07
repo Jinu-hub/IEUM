@@ -1,6 +1,6 @@
 // Run: npx tsx flue/src/weekly-report.check.ts
 import assert from "node:assert/strict";
-import { renderWeeklyReport, weeklyReportProblems } from "./weekly-report.ts";
+import { renderWeeklyReport, weeklyBodyProblems, weeklyReportProblems } from "./weekly-report.ts";
 import type { WeeklyInput } from "./weekly-input.ts";
 
 const week: WeeklyInput = {
@@ -42,5 +42,20 @@ assert.match(rendered.markdown, /注目の動きはありません/);
 assert.match(rendered.markdown, /この日のコアはありません/);
 assert.match(rendered.html, /Alpha/);
 assert.equal(rendered.view.days[2]?.note !== null, true);
+assert.equal(rendered.view.movements, null);
+
+const grouped = renderWeeklyReport(week, [{ ids: ["2026-11-02#2"] }, { ids: ["2026-11-02#1"] }]);
+assert.deepEqual(weeklyBodyProblems(week, [{ ids: ["2026-11-02#2"] }, { ids: ["2026-11-02#1"] }], grouped.view), []);
+assert.deepEqual(
+  grouped.view.movements?.map((item) => item.title),
+  ["Alpha", "b"],
+);
+assert.deepEqual(grouped.view.open?.map((item) => item.title), ["b"]);
+assert.equal(grouped.view.daysCollapsed, true);
+assert.match(grouped.markdown, /まだ開いていること/);
+assert.match(grouped.html, /<details>/);
+const openPart = grouped.markdown.split("まだ開いていること")[1]?.split("日付別の注目")[0] ?? "";
+assert.match(openPart, /b/);
+assert.doesNotMatch(openPart, /no title/);
 
 console.log("weekly-report.check ok");
