@@ -42,7 +42,6 @@ console.log(
     days: rendered.view.days.map((day) => ({ date: day.date, entries: day.entries.length, note: day.note })),
     metrics: rendered.view.metrics,
     movements: rendered.view.movements?.map((item) => ({ title: item.title, status: item.status, dates: item.dates })),
-    open: rendered.view.open,
     markdown: rendered.markdown.length,
     html: rendered.html.length,
   }),

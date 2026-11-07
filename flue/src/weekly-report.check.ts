@@ -50,12 +50,9 @@ assert.deepEqual(
   grouped.view.movements?.map((item) => item.title),
   ["Alpha", "b"],
 );
-assert.deepEqual(grouped.view.open?.map((item) => item.title), ["b"]);
-assert.equal(grouped.view.daysCollapsed, true);
-assert.match(grouped.markdown, /まだ開いていること/);
-assert.match(grouped.html, /<details>/);
-const openPart = grouped.markdown.split("まだ開いていること")[1]?.split("日付別の注目")[0] ?? "";
-assert.match(openPart, /b/);
-assert.doesNotMatch(openPart, /no title/);
+assert.equal(grouped.view.showDays, false);
+assert.doesNotMatch(grouped.markdown, /まだ開いていること/);
+assert.doesNotMatch(grouped.markdown, /日付別の注目/);
+assert.doesNotMatch(grouped.html, /<details>/);
 
 console.log("weekly-report.check ok");

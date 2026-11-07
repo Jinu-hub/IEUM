@@ -2,13 +2,11 @@ import { mergeItems, type MergeGroups } from "./weekly-merge.ts";
 import type { WeeklyInput } from "./weekly-input.ts";
 
 export const WEEKLY_MAIN_CAP = 7;
-const OPEN_STATUS = new Set(["in_progress", "blocked", "planned"]);
 
 const COPY = {
   ja: {
     metrics: "📊 今週の活動指標",
     week: "✨ 今週の動き",
-    open: "🎯 まだ開いていること",
     byDay: "✨ 日付別の注目",
     noCore: "この日のコアはありません。",
     noHighlights: "注目の動きはありません。",
@@ -27,7 +25,6 @@ const COPY = {
   ko: {
     metrics: "📊 이번 주 활동 지표",
     week: "✨ 이번 주의 움직임",
-    open: "🎯 아직 열린 것",
     byDay: "✨ 날짜별 주목",
     noCore: "이 날은 코어가 없습니다.",
     noHighlights: "주목할 움직임이 없습니다.",
@@ -46,7 +43,6 @@ const COPY = {
   en: {
     metrics: "📊 This week's activity",
     week: "✨ This week's updates",
-    open: "🎯 Still open",
     byDay: "✨ Highlights by day",
     noCore: "No core for this day.",
     noHighlights: "No highlights.",
@@ -76,11 +72,10 @@ export type WeeklyReportView = {
   activeHeading: string;
   activeByDay: { date: string; value: number }[];
   byDayHeading: string;
-  daysCollapsed: boolean;
   movementsHeading: string | null;
   movements: { ids: string[]; title: string; summary: string; status: string | null; dates: string[] }[] | null;
-  openHeading: string | null;
-  open: { title: string; status: string | null }[] | null;
+  // By-day list is the unmerged review. The merged report does not repeat it.
+  showDays: boolean;
   days: { date: string; note: string | null; entries: { title: string; summary: string; status: string | null }[] }[];
 };
 
@@ -129,13 +124,6 @@ export function weeklyReportView(week: WeeklyInput, groups?: MergeGroups["groups
         dates: thread.cites.map((cite) => cite.date),
       }))
     : null;
-  const open = threads
-    ? threads.flatMap((thread) =>
-        thread.last.status && OPEN_STATUS.has(thread.last.status)
-          ? [{ title: thread.last.title || thread.last.item_key, status: statusLabel(copy, thread.last.status) }]
-          : [],
-      )
-    : null;
   const name = week.target_display_name ?? week.target_id;
   const active = week.unsummed.find((row) => row.key === "active_member_count");
   return {
@@ -150,11 +138,9 @@ export function weeklyReportView(week: WeeklyInput, groups?: MergeGroups["groups
     activeHeading: copy.active,
     activeByDay: active?.by_day ?? [],
     byDayHeading: copy.byDay,
-    daysCollapsed: !!groups,
+    showDays: !groups,
     movementsHeading: movements ? copy.week : null,
     movements,
-    openHeading: open?.length ? copy.open : null,
-    open,
     days: week.days.map((day) => {
       if (!day.core) return { date: day.date, note: copy.noCore, entries: [] };
       if (!day.core.highlights.length) return { date: day.date, note: copy.noHighlights, entries: [] };
@@ -203,7 +189,7 @@ export function weeklyBodyProblems(week: WeeklyInput, groups: MergeGroups["group
     const key = [...movement.ids].sort().join("|");
     if (!selected.has(key)) problems.push(`movement is not a phase 3 group: ${key}`);
   }
-  if (!view.daysCollapsed) problems.push("by-day is not collapsed");
+  if (view.showDays) problems.push("merged report repeats the by-day list");
   return problems;
 }
 
@@ -237,18 +223,14 @@ export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["grou
       );
     }
   }
-  if (view.openHeading && view.open?.length) {
-    lines.push(`## ${view.openHeading}`, "");
-    for (const item of view.open) lines.push(`- ${item.status ? `${item.status} · ` : ""}${mdEsc(item.title)}`);
-    lines.push("");
-  }
-  const dayCount = view.days.reduce((sum, day) => sum + day.entries.length, 0);
-  lines.push(`## ${view.byDayHeading}${view.daysCollapsed ? ` (${dayCount})` : ""}`, "");
-  for (const day of view.days) {
-    lines.push(`### ${day.date}`, "");
-    if (day.note) lines.push(day.note, "");
-    for (const entry of day.entries) {
-      lines.push(`#### ${entry.status ? `${entry.status} · ` : ""}${mdEsc(entry.title)}`, "", mdEsc(entry.summary), "");
+  if (view.showDays) {
+    lines.push(`## ${view.byDayHeading}`, "");
+    for (const day of view.days) {
+      lines.push(`### ${day.date}`, "");
+      if (day.note) lines.push(day.note, "");
+      for (const entry of day.entries) {
+        lines.push(`#### ${entry.status ? `${entry.status} · ` : ""}${mdEsc(entry.title)}`, "", mdEsc(entry.summary), "");
+      }
     }
   }
   const markdown = lines.join("\n");
@@ -273,12 +255,7 @@ export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["grou
         `<article><h3>${movement.status ? `<span>${htmlEsc(movement.status)}</span> ` : ""}${htmlEsc(movement.title)}</h3><p class="note">${htmlEsc(movement.dates.join(", "))}</p><p>${htmlEsc(movement.summary)}</p></article>`,
     )
     .join("");
-  const openHtml = (view.open ?? [])
-    .map((item) => `<li>${item.status ? `<span>${htmlEsc(item.status)}</span> ` : ""}${htmlEsc(item.title)}</li>`)
-    .join("");
-  const byDay = view.daysCollapsed
-    ? `<details><summary><h2>${htmlEsc(view.byDayHeading)} (${dayCount})</h2></summary>${daySections}</details>`
-    : `<h2>${htmlEsc(view.byDayHeading)}</h2>${daySections}`;
+  const byDay = view.showDays ? `<h2>${htmlEsc(view.byDayHeading)}</h2>${daySections}` : "";
   const html = `<!doctype html>
 <html lang="${htmlEsc(week.language ?? "en")}">
 <meta charset="utf-8">
@@ -291,7 +268,6 @@ export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["grou
 <table style="border-collapse:collapse;background:#FFFEFB">${metricRows}</table>
 ${active ? `<p><strong>${htmlEsc(view.activeHeading)}</strong></p><ul>${active}</ul>` : ""}
 ${view.movementsHeading ? `<h2>${htmlEsc(view.movementsHeading)}</h2>${movementHtml}` : ""}
-${view.openHeading ? `<h2>${htmlEsc(view.openHeading)}</h2><ul>${openHtml}</ul>` : ""}
 ${byDay}
 </main>
 <style>
