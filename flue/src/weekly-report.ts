@@ -1,7 +1,19 @@
 import { mergeItems, type MergeGroups } from "./weekly-merge.ts";
 import type { WeeklyInput } from "./weekly-input.ts";
 
+type WeeklyProse = { opening: string; entries: { id: string; text: string }[]; closing: string };
+
 export const WEEKLY_MAIN_CAP = 7;
+
+export function movementKey(ids: string[]) {
+  return [...ids]
+    .sort((a, b) => {
+      const [ad, an] = a.split("#");
+      const [bd, bn] = b.split("#");
+      return ad.localeCompare(bd) || Number(an) - Number(bn);
+    })
+    .join("+");
+}
 
 const COPY = {
   ja: {
@@ -197,9 +209,12 @@ const mdEsc = (text: string) => text.replace(/([\\`*[\]<>])/g, "\\$1");
 const htmlEsc = (text: string) =>
   text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["groups"]) {
+export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["groups"], prose?: WeeklyProse) {
   const view = weeklyReportView(week, groups);
-  const lines = [`# ${mdEsc(view.title)}`, "", view.range, "", `## ${view.metricsHeading}`, ""];
+  const proseById = new Map(prose?.entries.map((entry) => [entry.id, entry.text.trim()]) ?? []);
+  const lines = [`# ${mdEsc(view.title)}`, "", view.range, ""];
+  if (prose?.opening.trim()) lines.push(prose.opening.trim(), "");
+  lines.push(`## ${view.metricsHeading}`, "");
   if (view.metrics.length) {
     lines.push(`| ${view.columns[0]} | ${view.columns[1]} |`, "| --- | ---: |");
     for (const metric of view.metrics) lines.push(`| ${mdEsc(metric.label)} | ${metric.value} |`);
@@ -213,16 +228,12 @@ export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["grou
   if (view.movements && view.movementsHeading) {
     lines.push(`## ${view.movementsHeading}`, "");
     for (const movement of view.movements) {
-      lines.push(
-        `### ${movement.status ? `${movement.status} · ` : ""}${mdEsc(movement.title)}`,
-        "",
-        movement.dates.join(", "),
-        "",
-        mdEsc(movement.summary),
-        "",
-      );
+      const text = proseById.get(movementKey(movement.ids)) ?? movement.summary;
+      const status = prose ? "" : movement.status ? `${movement.status} · ` : "";
+      lines.push(`### ${status}${mdEsc(movement.title)}`, "", movement.dates.join(", "), "", mdEsc(text), "");
     }
   }
+  if (prose?.closing.trim()) lines.push(prose.closing.trim(), "");
   if (view.showDays) {
     lines.push(`## ${view.byDayHeading}`, "");
     for (const day of view.days) {
@@ -234,50 +245,97 @@ export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["grou
     }
   }
   const markdown = lines.join("\n");
-  const metricRows = view.metrics
-    .map((metric) => `<tr><td>${htmlEsc(metric.label)}</td><td style="text-align:right">${metric.value}</td></tr>`)
+  const metricCards = view.metrics
+    .map(
+      (metric) =>
+        `<div class="metric"><b>${metric.value}</b><span>${htmlEsc(metric.label)}</span></div>`,
+    )
     .join("");
-  const active = view.activeByDay.map((row) => `<li>${row.date}: ${row.value}</li>`).join("");
+  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  if (week.language === "ja") weekday.splice(0, 7, "日", "月", "火", "水", "木", "金", "土");
+  if (week.language === "ko") weekday.splice(0, 7, "일", "월", "화", "수", "목", "금", "토");
+  const activeCount = new Map(view.activeByDay.map((row) => [row.date, row.value]));
+  const active = view.activeByDay.length
+    ? `<p class="sub">${htmlEsc(view.activeHeading)}</p><div class="days">${view.days
+        .map((day) => {
+          const count = activeCount.get(day.date);
+          const label = weekday[new Date(`${day.date}T00:00:00Z`).getUTCDay()];
+          return `<div class="day${count == null ? " mute" : ""}"><span>${label}</span><b>${day.date.slice(5).replace("-", "/")}</b><em>${count ?? "–"}</em></div>`;
+        })
+        .join("")}</div>`
+    : "";
   const daySections = view.days
     .map((day) => {
       const entries = day.entries
         .map(
           (entry) =>
-            `<article><h3>${entry.status ? `<span>${htmlEsc(entry.status)}</span> ` : ""}${htmlEsc(entry.title)}</h3><p>${htmlEsc(entry.summary)}</p></article>`,
+            `<article class="card"><h3>${entry.status ? `<span class="badge">${htmlEsc(entry.status)}</span> ` : ""}${htmlEsc(entry.title)}</h3><p>${htmlEsc(entry.summary)}</p></article>`,
         )
         .join("");
       return `<section><h2>${day.date}</h2>${day.note ? `<p class="note">${htmlEsc(day.note)}</p>` : ""}${entries}</section>`;
     })
     .join("");
   const movementHtml = (view.movements ?? [])
-    .map(
-      (movement) =>
-        `<article><h3>${movement.status ? `<span>${htmlEsc(movement.status)}</span> ` : ""}${htmlEsc(movement.title)}</h3><p class="note">${htmlEsc(movement.dates.join(", "))}</p><p>${htmlEsc(movement.summary)}</p></article>`,
-    )
+    .map((movement, index) => {
+      const text = proseById.get(movementKey(movement.ids)) ?? movement.summary;
+      const status = prose || !movement.status ? "" : `<span class="badge">${htmlEsc(movement.status)}</span>`;
+      return `<article class="card"><p class="meta"><span>${String(index + 1).padStart(2, "0")}</span> ${htmlEsc(movement.dates.join(" · "))}${status}</p><h3>${htmlEsc(movement.title)}</h3><p>${htmlEsc(text)}</p></article>`;
+    })
     .join("");
-  const byDay = view.showDays ? `<h2>${htmlEsc(view.byDayHeading)}</h2>${daySections}` : "";
+  const byDay = view.showDays ? `<section><h2>${htmlEsc(view.byDayHeading)}</h2>${daySections}</section>` : "";
+  const opening = prose?.opening.trim() ? `<section class="lead"><p>${htmlEsc(prose.opening.trim())}</p></section>` : "";
+  const closing = prose?.closing.trim() ? `<section class="close"><p>${htmlEsc(prose.closing.trim())}</p></section>` : "";
   const html = `<!doctype html>
 <html lang="${htmlEsc(week.language ?? "en")}">
+<head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${htmlEsc(view.title)}</title>
-<body style="margin:0;background:#F1EDE3;color:#16150F;font:16px/1.6 -apple-system,BlinkMacSystemFont,'Hiragino Sans','Apple SD Gothic Neo',sans-serif">
-<main style="max-width:720px;margin:0 auto;padding:32px 20px 64px">
-<h1 style="margin:0;font-size:28px">${htmlEsc(view.title)}</h1>
-<p style="margin:6px 0 28px;color:#6F6A5F">${htmlEsc(view.range)}</p>
-<h2>${htmlEsc(view.metricsHeading)}</h2>
-<table style="border-collapse:collapse;background:#FFFEFB">${metricRows}</table>
-${active ? `<p><strong>${htmlEsc(view.activeHeading)}</strong></p><ul>${active}</ul>` : ""}
-${view.movementsHeading ? `<h2>${htmlEsc(view.movementsHeading)}</h2>${movementHtml}` : ""}
+</head>
+<body>
+<main>
+<header>
+<p class="kicker">Weekly Report</p>
+<h1>${htmlEsc(view.title.replace(/ Weekly Report$/, ""))}</h1>
+<p class="range">${htmlEsc(view.range)}</p>
+</header>
+${opening}
+${metricCards ? `<section><h2>${htmlEsc(view.metricsHeading)}</h2><div class="metrics">${metricCards}</div>${active}</section>` : ""}
+${view.movementsHeading ? `<section><h2>${htmlEsc(view.movementsHeading)}</h2>${movementHtml}</section>` : ""}
+${closing}
 ${byDay}
 </main>
 <style>
-h2{margin:32px 0 12px;font-size:18px}
-h3{margin:0 0 4px;font-size:16px}
-h3 span{font-size:12px;color:#0F6B66}
-article{margin:0 0 14px;padding:12px 14px;background:#FFFEFB;border:1px solid #DDD6C6;border-left:3px solid #0F6B66}
-p{margin:0}
-.note{color:#6F6A5F}
-td{padding:6px 16px;border-bottom:1px solid #DDD6C6}
+body{margin:0;background:#eef0f6;color:#1c2434;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Apple SD Gothic Neo",sans-serif}
+main{max-width:720px;margin:28px auto;background:#fff;border:1px solid #e1e4ee;border-radius:16px;overflow:hidden}
+header{padding:32px 32px 26px;background:linear-gradient(135deg,#5E6AD2,#3f4cb5);color:#fff}
+.kicker{margin:0 0 8px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
+h1{margin:0;font-size:28px;line-height:1.25}
+.range{margin:8px 0 0;opacity:.9}
+section{padding:8px 32px 28px}
+h2{margin:22px 0 14px;padding-bottom:8px;border-bottom:1px solid #e8ebf3;font-size:16px}
+.lead,.close{margin:0 32px;padding:18px 20px;border-radius:12px;background:#f6f7fb}
+.lead{margin-top:24px;border-left:4px solid #5E6AD2}
+.close{margin-bottom:28px;background:#f7f6f2}
+.lead p,.close p,.card p{margin:0}
+.metrics{display:flex;gap:10px;flex-wrap:wrap}
+.metric{flex:1;min-width:120px;padding:14px 16px;border-radius:12px;background:#f6f7fb}
+.metric b{display:block;font-size:28px;line-height:1.1;color:#3f4cb5}
+.metric span{color:#5c6578;font-size:13px}
+.sub{margin:18px 0 8px;color:#5c6578;font-size:13px}
+.days{display:flex;gap:8px}
+.day{flex:1;min-width:0;padding:8px 2px 10px;border-radius:10px;background:#f6f7fb;text-align:center}
+.day span{display:block;font-size:11px;color:#5c6578}
+.day b{display:block;margin-top:2px;font-size:12px;font-weight:600}
+.day em{display:block;margin-top:4px;font-style:normal;font-size:18px;color:#3f4cb5}
+.day.mute{opacity:.4}
+.note{color:#5c6578}
+.card{margin:0 0 12px;padding:16px 18px;border:1px solid #e8ebf3;border-radius:12px}
+.card h3{margin:6px 0 8px;font-size:16px;line-height:1.45}
+.meta{color:#5c6578;font-size:13px}
+.meta span{color:#5E6AD2;font-weight:700}
+.badge{margin-left:8px;color:#0F6B66}
+@media(max-width:640px){main{margin:0;border-radius:0}header,section{padding-left:18px;padding-right:18px}.lead,.close{margin-left:18px;margin-right:18px}}
 </style>
 </body>
 </html>`;

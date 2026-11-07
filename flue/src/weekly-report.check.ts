@@ -55,4 +55,17 @@ assert.doesNotMatch(grouped.markdown, /まだ開いていること/);
 assert.doesNotMatch(grouped.markdown, /日付別の注目/);
 assert.doesNotMatch(grouped.html, /<details>/);
 
+const written = renderWeeklyReport(week, [{ ids: ["2026-11-02#1"] }, { ids: ["2026-11-02#2"] }], {
+  opening: "今週のあらまし。",
+  entries: [
+    { id: "2026-11-02#1", text: "Alpha は終わった。" },
+    { id: "2026-11-02#2", text: "b は止まっている。" },
+  ],
+  closing: "b が残っている。",
+});
+assert.match(written.markdown, /今週のあらまし/);
+assert.match(written.markdown, /Alpha は終わった/);
+assert.doesNotMatch(written.markdown, /完了 · Alpha/);
+assert.match(written.markdown, /b が残っている/);
+
 console.log("weekly-report.check ok");

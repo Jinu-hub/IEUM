@@ -18,6 +18,7 @@ import {
 import { DAILY_REPORT_FINALIZER_PROMPT, DailyReportFinalizer } from "./agents/report/daily-report-finalizer.ts";
 import { DAILY_REPORT_WRITER_PROMPT, DailyReportWriter } from "./agents/report/daily-report-writer.ts";
 import { WEEKLY_MERGE_PROMPT, WeeklyMerge } from "./agents/report/weekly-merge.ts";
+import { WEEKLY_WRITER_PROMPT, WeeklyWriter } from "./agents/report/weekly-writer.ts";
 import { TestAgent } from "./agents/test-agent.ts";
 import {
   buildAgentInput,
@@ -52,6 +53,7 @@ import {
 } from "./daily-report.ts";
 import { promptData, type PromptEnv, resolvePrompts } from "./prompts.ts";
 import { loadWeeklyInput } from "./weekly-input.ts";
+import { weeklyWriterInput, type WeeklyDraft } from "./weekly-writer.ts";
 import { mergeInput, mergeItems, type MergeGroups } from "./weekly-merge.ts";
 import { indexTagging, taggerInput, type Tagging } from "./tagging.ts";
 import { DEFAULT_TAXONOMY_VERSION } from "./taxonomy.ts";
@@ -799,6 +801,42 @@ app.post("/weekly/merge", async (c) => {
         ids: group.ids,
         cites: group.ids.map((id) => byId.get(id)!),
       })),
+    });
+  } catch (error) {
+    const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
+    return c.json({ status: "failed", error: message }, 500);
+  }
+});
+
+// Writes the weekly opening, one paragraph per shown movement, and the closing.
+// Body: { targetId, from, to, groups: [{ ids }], model? }. groups come from /weekly/merge.
+app.post("/weekly/write", async (c) => {
+  const body = await c.req.json<{ targetId?: string; from?: string; to?: string; model?: string; groups?: { ids?: string[] }[] }>();
+  const { targetId, from, to, model, groups } = body;
+  if (!isUuid(targetId)) return c.json({ error: "targetId must be a uuid" }, 400);
+  if (!from || !to || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+    return c.json({ error: "from and to must be YYYY-MM-DD" }, 400);
+  }
+  if (!groups?.length || groups.some((group) => !group.ids?.length || group.ids.some((id) => typeof id !== "string"))) {
+    return c.json({ error: "groups must be { ids: string[] }[] from the merge" }, 400);
+  }
+  const db = supabase(c.env);
+  if (!db) return c.text("Supabase secrets are not set", 500);
+  const week = await loadWeeklyInput(db, targetId, from, to);
+  const cited = groups.map((group) => ({ ids: group.ids! }));
+  const [prompt] = await resolvePrompts(c.env, [WEEKLY_WRITER_PROMPT]);
+  const data = promptData(prompt, model);
+  const startedAt = Date.now();
+  try {
+    const call = await runAgent<WeeklyDraft>(WeeklyWriter, "report", weeklyWriterInput(week, cited), { week, groups: cited, ...data }, []);
+    return c.json({
+      status: "succeeded",
+      promptVersion: prompt.version,
+      model: data.model,
+      elapsedMs: Date.now() - startedAt,
+      usage: call.usage,
+      rejections: call.metrics.rejections,
+      report: call.output,
     });
   } catch (error) {
     const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
