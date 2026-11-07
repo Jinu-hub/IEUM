@@ -8,7 +8,7 @@ import { MergeGroups, mergeProblems } from "../../weekly-merge.ts";
 export const WEEKLY_MERGE_PROMPT: AgentPrompt = {
   agentKey: "weekly-merge",
   version: "weekly-merge-v1",
-  model: "openai/gpt-6-luna",
+  model: "openai/gpt-6-sol",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You group one week's highlights that are the same work continuing across days.
 The input is JSON: from, to, and items (id, date, item_key, title, summary, status). Items are already the day's highlights. There is no other source.

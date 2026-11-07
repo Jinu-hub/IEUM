@@ -16,9 +16,10 @@ import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../p
 // "Closely related core items may share one entry") dropped items such as 5-5 No342 and No.77 on 10-09,
 // left No.8 only in member_activity, and merged three people's daily work into one entry.
 // Items it still leaves out are placed by code (placeLeftovers).
+// v3: person names stay as in people and members. No transliteration into another script.
 export const CORE_STRUCTURER_PROMPT: AgentPrompt = {
   agentKey: "core-structurer",
-  version: "core-structurer-v2",
+  version: "core-structurer-v3",
   model: "openai/gpt-6-luna",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You build a Daily Core: the structured record of one team's activity on one local day.
@@ -41,6 +42,9 @@ Rules:
   - Core items share one entry only when they are the same work (the same ticket, a follow-up,
     a cause and its fix), not because they share a theme or a person.
   - Within each array, put the most important entry first.
+- Person names stay exactly as written in people and members. Do not translate or
+  transliterate them. If a core item summary already uses another form, use the
+  people or members spelling instead.
 - member_activity: one entry per person who appears in members of some core item,
   summarizing what they did. The title is only the person's name, exactly as in people.
   Its core_item_ids are the core items listing that person in members; they may also appear in the arrays above.
