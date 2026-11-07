@@ -6,16 +6,7 @@ W44_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W45.md`.
 
 ## 1. 지금 우선
 
-순서: **요점화(1-6)** → 주간 리포트(1-5). 분류 B안·items/metrics는 W43에서 끝. 실측(entities) 확인됨(2026-10-31).
-
-### 1-6. 요점화 (highlight 엄밀 + 리포트 others) ← 진행
-
-item_type에 other 추가 안 함. importance 세분화(1~10) 안 함. 장부는 유지, 읽는 면만 줄임.
-
-- [x] P1: `refineHighlights` — Structurer 뒤 코드로 highlight 최대 5·importance≥4 우선, 초과는 roles 따라 topic/progress 강등. `validation_json.stats`에 demoted 기록.
-- [x] P2: 리포트 main/others — topic·progress는 importance≥0.8 중 섹션별 상한, 나머지 others. Writer/Finalizer 입력은 main만. HTML `<details>` 기본 접기(+ markdown 그 외 절).
-- [x] P3: Interpreter importance 4 루브릭 좁히기(일상 완료·진행은 3). `core-interpreter-v13`.
-- [ ] P4: `/core/generate`·`/report/generate` 실측(highlight ≤5·others 접힘·0.8 과밀 완화).
+순서: 요점화(1-6) 끝(2026-11-07) → **주간 리포트(1-5)**. 분류 B안·items/metrics는 W43에서 끝. 실측(entities) 확인됨(2026-10-31).
 
 ### 1-1. 생성 실패 막기
 
@@ -31,8 +22,12 @@ item_type에 other 추가 안 함. importance 세분화(1~10) 안 함. 장부는
 
 ### 1-5. 주간 리포트 (요점화 뒤)
 
-- [ ] 주간 입력은 core_json 전체가 아니라 items/metrics 테이블에서 조회(`weeklyInput` 상당). 날짜별 highlights 중심 + metrics는 코드가 rollup.
-- [ ] 날짜 간 같은 작업을 묶는 병합 에이전트 1단 + 코드 검증(없는 `(날짜, item_key)` 인용, 중복 병합, highlights 반영 여부). 렌더는 처음엔 코드만으로.
+구성·Phase는 `works/weekly-report.md`. 한 Phase 확인 후 다음.
+
+- [ ] Phase 1. `weeklyInput` — highlight + metrics. 렌더 없음.
+- [ ] Phase 2. 코드 렌더 — 헤더, 지표 합, 날짜별 주목. LLM 0.
+- [ ] Phase 3. 병합 에이전트 1단 + `(날짜, item_key)` 검사.
+- [ ] Phase 4. 이번 주의 움직임(상한 7) + 아직 열린 것. 날짜별은 접기.
 
 ## 2. Daily Report 후속
 
@@ -78,4 +73,13 @@ item_type에 other 추가 안 함. importance 세분화(1~10) 안 함. 장부는
 
 # 끝난 것
 
-(비움 — W44에서 끝난 항목은 W44_TODO에 남김)
+### 1-6. 요점화 (highlight 엄밀 + 리포트 others)
+
+item_type에 other 추가 안 함. importance 세분화(1~10) 안 함. 장부는 유지, 읽는 면만 줄임.
+
+- [x] P1: `refineHighlights` — Structurer 뒤 코드로 highlight 최대 5·importance≥4 우선, 초과는 roles 따라 topic/progress 강등. `validation_json.stats`에 demoted 기록.
+- [x] P2: 리포트 main/others — topic·progress는 importance≥0.8 중 섹션별 상한, 나머지 others. Writer/Finalizer 입력은 main만. HTML `<details>` 기본 접기(+ markdown 그 외 절).
+- [x] P3: Interpreter importance 4 루브릭 좁히기(일상 완료·진행은 3). `core-interpreter-v13`.
+- [x] P4: `/core/generate`·`/report/generate` 실측(highlight ≤5·others 접힘·0.8 과밀 완화). 사용자 확인(2026-11-07).
+
+(W44에서 끝난 항목은 W44_TODO에 남김)
