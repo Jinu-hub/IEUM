@@ -77,7 +77,7 @@ daily_core_items (item_type = highlight) + daily_core_metrics
 
 사용자 확인
 
-- [ ] 이 재료로 주간을 만들 수 있는지. 상한 7, 날짜별 접기가 맞는지.
+- [x] 이 재료로 주간을 만들 수 있는지. 상한 7, 날짜별 접기가 맞는지. 사용자(2026-11-07): 이 재료로 Phase 3 진행. 상한 7과 접기는 Phase 4에서 본다.
 
 확인 기록
 
@@ -99,13 +99,17 @@ daily_core_items (item_type = highlight) + daily_core_metrics
 
 에이전트 확인
 
-- [ ] 검사가 통과한다. LLM은 이 Phase에서 1회.
+- [x] 검사가 통과한다. LLM은 이 Phase에서 1회.
 
 사용자 확인
 
 - [ ] 묶음이 같은 작업인지. 잘못 묶이거나 빠지면 지시를 고치고, 재실행은 사용자가 시킬 때만.
 
 확인 기록
+
+- 2026-11-07 에이전트: `weekly-merge.check.ts` 통과. `/weekly/merge` 1회, 반려 0, 3초, $0.0006. `weekly-merge-v1`. 출력 `works/out/weekly-merge-p3.md`.
+  - highlight 20이 16묶음에 한 번씩. 없는 id, 중복, 누락 없음.
+  - 2개 이상인 묶음 3개: Millvi 자막(11/02·11/05), 修正依頼(11/02·11/04·11/05), ローソン移行(11/04·11/06). 나머지는 하루짜리.
 
 ---
 

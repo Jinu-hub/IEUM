@@ -17,6 +17,7 @@ import {
 } from "./agents/core/signal-extractor.ts";
 import { DAILY_REPORT_FINALIZER_PROMPT, DailyReportFinalizer } from "./agents/report/daily-report-finalizer.ts";
 import { DAILY_REPORT_WRITER_PROMPT, DailyReportWriter } from "./agents/report/daily-report-writer.ts";
+import { WEEKLY_MERGE_PROMPT, WeeklyMerge } from "./agents/report/weekly-merge.ts";
 import { TestAgent } from "./agents/test-agent.ts";
 import {
   buildAgentInput,
@@ -50,6 +51,8 @@ import {
   writerInput,
 } from "./daily-report.ts";
 import { promptData, type PromptEnv, resolvePrompts } from "./prompts.ts";
+import { loadWeeklyInput } from "./weekly-input.ts";
+import { mergeInput, mergeItems, type MergeGroups } from "./weekly-merge.ts";
 import { indexTagging, taggerInput, type Tagging } from "./tagging.ts";
 import { DEFAULT_TAXONOMY_VERSION } from "./taxonomy.ts";
 
@@ -318,6 +321,7 @@ app.get("/", (c) => c.text("hello"));
 app.use("/agents/*", requireToken);
 app.use("/core/*", requireToken);
 app.use("/report/*", requireToken);
+app.use("/weekly/*", requireToken);
 
 app.route("/agents/test", createAgentRouter(TestAgent));
 
@@ -757,6 +761,48 @@ app.post("/report/generate", async (c) => {
       },
     });
     return c.json({ ...saved, status: "failed", error: message }, 500);
+  }
+});
+
+// Groups the week's highlights that are the same work. No weekly row is written.
+// Body: { targetId, from, to, model? }. from/to are inclusive YYYY-MM-DD.
+app.post("/weekly/merge", async (c) => {
+  const { targetId, from, to, model } = await c.req.json<{ targetId?: string; from?: string; to?: string; model?: string }>();
+  if (!isUuid(targetId)) return c.json({ error: "targetId must be a uuid" }, 400);
+  if (!from || !to || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+    return c.json({ error: "from and to must be YYYY-MM-DD" }, 400);
+  }
+  const db = supabase(c.env);
+  if (!db) return c.text("Supabase secrets are not set", 500);
+  const week = await loadWeeklyInput(db, targetId, from, to);
+  const items = mergeItems(week);
+  const [prompt] = await resolvePrompts(c.env, [WEEKLY_MERGE_PROMPT]);
+  const data = promptData(prompt, model);
+  const startedAt = Date.now();
+  try {
+    const call = await runAgent<MergeGroups>(
+      WeeklyMerge,
+      "groups",
+      mergeInput(week),
+      { ids: items.map((item) => item.id), ...data },
+      [],
+    );
+    const byId = new Map(items.map((item) => [item.id, item]));
+    return c.json({
+      status: "succeeded",
+      promptVersion: prompt.version,
+      model: data.model,
+      elapsedMs: Date.now() - startedAt,
+      usage: call.usage,
+      rejections: call.metrics.rejections,
+      groups: call.output.groups.map((group) => ({
+        ids: group.ids,
+        cites: group.ids.map((id) => byId.get(id)!),
+      })),
+    });
+  } catch (error) {
+    const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
+    return c.json({ status: "failed", error: message }, 500);
   }
 });
 
