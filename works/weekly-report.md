@@ -42,15 +42,21 @@ daily_core_items (item_type = highlight) + daily_core_metrics
 
 에이전트 확인
 
-- [ ] highlight만 오고, 날마다 개수가 Core 상한(5) 이하다.
-- [ ] metrics 키가 데일리 6개 안에서 합산된다.
-- [ ] 코어가 없는 날이 빠졌는지 표시된다.
+- [x] highlight만 오고, 날마다 개수가 Core 상한(5) 이하다.
+- [x] metrics 키가 데일리 6개 안에서 합산된다.
+- [x] 코어가 없는 날이 빠졌는지 표시된다.
 
 사용자 확인
 
 - [ ] 어느 타깃의 어느 주로 Phase 2를 볼지.
 
 확인 기록
+
+- 2026-11-07 에이전트: `weekly-input.check.ts` 통과. 실측은 `weekly-input.run.ts`로 `D_G_S開発チーム`, 2026-11-02~11-08.
+  - highlight만. 11/02·04·05·06은 각 5개이고 `core_json.highlights` 길이와 같다. 같은 세대의 topic·progress·member 행은 빠졌다. 상한 5를 넘는 날 없음.
+  - 합산은 rollup `sum`만: Slack 557, 커밋 43, PR 6. 이슈 생성·종료 행은 이 주에 없음. `active_member_count`는 rollup `none`이라 날짜별(10, 1, 14, 11, 12)로만 두고 더하지 않음. 사람 수가 날마다 겹친다. 6개 밖 키 없음. 날별 합이 `core_json.metrics`와 같다.
+  - 코어 없음: 11/07, 11/08은 `core: null`. 11/03은 성공 세대가 있으나 highlight 0(core_json도 0, Slack 1, topic 1). 없는 날과 다르다.
+  - 같은 타깃의 10/09~10/20은 현재 세대의 highlight 행이 0이다. items가 그 뒤에 생겼을 수 있어, 그 주로 Phase 2를 보면 재료가 비어 보인다.
 
 ---
 
