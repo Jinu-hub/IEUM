@@ -48,7 +48,7 @@ daily_core_items (item_type = highlight) + daily_core_metrics
 
 사용자 확인
 
-- [ ] 어느 타깃의 어느 주로 Phase 2를 볼지.
+- [x] 어느 타깃의 어느 주로 Phase 2를 볼지. `D_G_S開発チーム`, 2026-11-02~11-08 (2026-11-07).
 
 확인 기록
 
@@ -57,6 +57,7 @@ daily_core_items (item_type = highlight) + daily_core_metrics
   - 합산은 rollup `sum`만: Slack 557, 커밋 43, PR 6. 이슈 생성·종료 행은 이 주에 없음. `active_member_count`는 rollup `none`이라 날짜별(10, 1, 14, 11, 12)로만 두고 더하지 않음. 사람 수가 날마다 겹친다. 6개 밖 키 없음. 날별 합이 `core_json.metrics`와 같다.
   - 코어 없음: 11/07, 11/08은 `core: null`. 11/03은 성공 세대가 있으나 highlight 0(core_json도 0, Slack 1, topic 1). 없는 날과 다르다.
   - 같은 타깃의 10/09~10/20은 현재 세대의 highlight 행이 0이다. items가 그 뒤에 생겼을 수 있어, 그 주로 Phase 2를 보면 재료가 비어 보인다.
+  - 사용자: 11/03은 휴일, 11/07·11/08은 주말이라 데이터가 없다. 조회상 11/03은 코어가 있고 highlight 0(Slack 1은 주 합계에 포함), 주말은 코어 행이 없다.
 
 ---
 
@@ -71,14 +72,18 @@ daily_core_items (item_type = highlight) + daily_core_metrics
 
 에이전트 확인
 
-- [ ] Phase 1의 highlight가 날짜별로 빠짐없이 나온다.
-- [ ] 지표 합이 그날 metrics의 합과 같다.
+- [x] Phase 1의 highlight가 날짜별로 빠짐없이 나온다.
+- [x] 지표 합이 그날 metrics의 합과 같다.
 
 사용자 확인
 
 - [ ] 이 재료로 주간을 만들 수 있는지. 상한 7, 날짜별 접기가 맞는지.
 
 확인 기록
+
+- 2026-11-07 에이전트: `weekly-report.check.ts` 통과. `weekly-report.run.ts`가 11/02~11/08을 `works/out/weekly-report-p2.md`·`.html`에 씀. `weeklyReportProblems` 없음.
+  - highlight 20 = 11/02·04·05·06 각 5. 11/03은 「注目の動きはありません」, 11/07·11/08은 「この日のコアはありません」.
+  - 지표는 Phase 1과 같음. Slack 557, 커밋 43, PR 6. 활동 멤버는 날짜별.
 
 ---
 
