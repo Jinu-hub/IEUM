@@ -164,7 +164,7 @@ export async function sendMails(
     try {
       //to: "jinu35@ymail.ne.jp",
       sendResult = await resendClient.emails.send({
-        from: "IEUM <info@mail.nexone.ink>",
+        from: "IEUM <info@mail.linkverse.app>",
         to: "takefree.withu@gmail.com",
         bcc: 'son@digitalsheep.co.jp',
         subject: subject,
@@ -197,7 +197,7 @@ export async function sendMails(
 
 export async function sendWarmingUpEmail(toEmail: string, bccEmails: string[], subject: string, html: string) {
   const sendResult = await resendClient.emails.send({
-    from: "IEUM <info@mail.nexone.ink>",
+    from: "IEUM <info@mail.linkverse.app>",
     to: toEmail,
     bcc: bccEmails,
     subject: subject,

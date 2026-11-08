@@ -137,7 +137,7 @@ export async function action({ request }: Route.LoaderArgs) {
       
       const { error } = await resendClient.emails.send({
         // Make sure this domain is the Resend domain.
-        from: "IEUM <hello@mail.nexone.ink>",
+        from: "IEUM <hello@mail.linkverse.app>",
         to: [to],
         subject: subjectByLocale[validLocale],
         react: WelcomeEmail({

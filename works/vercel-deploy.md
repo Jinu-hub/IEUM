@@ -25,7 +25,7 @@ Daily Report 계획(`works/daily-report.md`)의 Phase 4에서 분리함(사용�
   - Slack 앱의 OAuth redirect(`SLACK_REDIRECT_URI`)와 이벤트 URL(있으면).
   - GitHub App의 callback / webhook URL(`GITHUB_WEBHOOK_SECRET`을 쓰는 경로).
   - 결제 webhook(Stripe `STRIPE_WEBHOOK_SECRET`, Toss)이 있으면 그 URL.
-- [ ] 메일 발신 도메인: 지금 `info@mail.nexone.ink`(Resend). 새 도메인으로 바꿀지 정함(바꾸면 Resend 도메인 인증·DNS).
+- [x] 메일 발신 도메인: `info@mail.linkverse.app`(Resend). IEUM 전용 도메인 확정 시 다시 이전.
 
 ## 2. 빌드 설정
 

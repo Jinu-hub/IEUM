@@ -64,7 +64,7 @@ GitHub와 Slack이 둘 다 있을 때의 순서입니다.
 
 메일 자체:
 
-- 보내는 주소: `IEUM <info@mail.nexone.ink>`
+- 보내는 주소: `IEUM <info@mail.linkverse.app>`
 - 제목: `{타겟 displayName} Weekly Newsletter`
 - 본문: `htmlContents`
 - 저장: `newsletter_editions.html_body`에 HTML, `text_body`에 마크다운, `stats_json`에 수신자·기간
