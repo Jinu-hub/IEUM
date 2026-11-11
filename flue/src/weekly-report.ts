@@ -1,6 +1,14 @@
 import { mergeItems, type MergeGroups } from "./weekly-merge.ts";
 import type { WeeklyInput } from "./weekly-input.ts";
-import type { WeeklyAreas } from "./weekly-areas.ts";
+import { topicGroups, topicItems, type WeeklyTopics } from "./weekly-topics.ts";
+
+const TOPIC_LABELS: Record<string, string> = {
+  bugfix: "🐛 Bugfix",
+  feature: "🚀 Feature",
+  coordination: "📋 Decision",
+  investigation: "🔍 Research",
+  other: "🧰 Other",
+};
 
 type WeeklyProse = { opening: string; entries: { id: string; text: string }[]; closing: string };
 
@@ -20,7 +28,7 @@ const COPY = {
   ja: {
     metrics: "📊 今週の活動指標",
     week: "✨ 今週の動き",
-    areas: "🧩 プロジェクト別の動き",
+    topics: "🧭 トピック",
     byDay: "✨ 日付別の注目",
     noCore: "この日のコアはありません。",
     noHighlights: "注目の動きはありません。",
@@ -39,7 +47,7 @@ const COPY = {
   ko: {
     metrics: "📊 이번 주 활동 지표",
     week: "✨ 이번 주의 움직임",
-    areas: "🧩 프로젝트별 움직임",
+    topics: "🧭 토픽",
     byDay: "✨ 날짜별 주목",
     noCore: "이 날은 코어가 없습니다.",
     noHighlights: "주목할 움직임이 없습니다.",
@@ -58,7 +66,7 @@ const COPY = {
   en: {
     metrics: "📊 This week's activity",
     week: "✨ This week's updates",
-    areas: "🧩 By project",
+    topics: "🧭 Topics",
     byDay: "✨ Highlights by day",
     noCore: "No core for this day.",
     noHighlights: "No highlights.",
@@ -217,16 +225,17 @@ export function renderWeeklyReport(
   week: WeeklyInput,
   groups?: MergeGroups["groups"],
   prose?: WeeklyProse,
-  areas?: WeeklyAreas["areas"],
+  topics?: WeeklyTopics["categories"],
 ) {
   const view = weeklyReportView(week, groups);
   const proseById = new Map(prose?.entries.map((entry) => [entry.id, entry.text.trim()]) ?? []);
-  const areasHeading = copyOf(week.language).areas;
-  const areaRows = (areas ?? []).map((area) => ({
-    name: area.name,
-    text: area.text.trim(),
-    dates: [...new Set(area.ids.map((id) => id.split("/")[0]!))].sort(),
-  }));
+  const topicsHeading = copyOf(week.language).topics;
+  const topicText = new Map((topics ?? []).map((entry) => [entry.key, entry.text.trim()]));
+  const topicRows = topics
+    ? topicGroups(topicItems(week))
+        .filter((group) => topicText.get(group.key))
+        .map((group) => ({ label: TOPIC_LABELS[group.key]!, count: group.items.length, text: topicText.get(group.key)! }))
+    : [];
   const lines = [`# ${mdEsc(view.title)}`, "", view.range, ""];
   if (prose?.opening.trim()) lines.push(prose.opening.trim(), "");
   lines.push(`## ${view.metricsHeading}`, "");
@@ -248,9 +257,9 @@ export function renderWeeklyReport(
       lines.push(`### ${status}${mdEsc(movement.title)}`, "", movement.dates.join(", "), "", mdEsc(text), "");
     }
   }
-  if (areaRows.length) {
-    lines.push(`## ${areasHeading}`, "");
-    for (const area of areaRows) lines.push(`### ${mdEsc(area.name)}`, "", area.dates.join(", "), "", mdEsc(area.text), "");
+  if (topicRows.length) {
+    lines.push(`## ${topicsHeading}`, "");
+    for (const row of topicRows) lines.push(`**${row.label}** (${row.count})`, mdEsc(row.text), "");
   }
   if (prose?.closing.trim()) lines.push(prose.closing.trim(), "");
   if (view.showDays) {
@@ -301,10 +310,10 @@ export function renderWeeklyReport(
       return `<article class="card"><p class="meta"><span>${String(index + 1).padStart(2, "0")}</span> ${htmlEsc(movement.dates.join(" · "))}${status}</p><h3>${htmlEsc(movement.title)}</h3><p>${htmlEsc(text)}</p></article>`;
     })
     .join("");
-  const areaHtml = areaRows
+  const topicHtml = topicRows
     .map(
-      (area) =>
-        `<article class="card"><p class="meta">${htmlEsc(area.dates.join(" · "))}</p><h3>${htmlEsc(area.name)}</h3><p>${htmlEsc(area.text)}</p></article>`,
+      (row) =>
+        `<article class="card"><h3>${htmlEsc(row.label)} <span class="count">${row.count}</span></h3><p>${htmlEsc(row.text)}</p></article>`,
     )
     .join("");
   const byDay = view.showDays ? `<section><h2>${htmlEsc(view.byDayHeading)}</h2>${daySections}</section>` : "";
@@ -327,7 +336,7 @@ export function renderWeeklyReport(
 ${opening}
 ${metricCards ? `<section><h2>${htmlEsc(view.metricsHeading)}</h2><div class="metrics">${metricCards}</div>${active}</section>` : ""}
 ${view.movementsHeading ? `<section><h2>${htmlEsc(view.movementsHeading)}</h2>${movementHtml}</section>` : ""}
-${areaHtml ? `<section><h2>${htmlEsc(areasHeading)}</h2>${areaHtml}</section>` : ""}
+${topicHtml ? `<section><h2>${htmlEsc(topicsHeading)}</h2>${topicHtml}</section>` : ""}
 ${closing}
 ${byDay}
 </main>
@@ -361,6 +370,7 @@ h2{margin:22px 0 14px;padding-bottom:8px;border-bottom:1px solid #e8ebf3;font-si
 .meta{color:#5c6578;font-size:13px}
 .meta span{color:#5E6AD2;font-weight:700}
 .badge{margin-left:8px;color:#0F6B66}
+.count{margin-left:6px;color:#5c6578;font-size:13px;font-weight:400}
 @media(max-width:640px){main{margin:0;border-radius:0}header,section{padding-left:18px;padding-right:18px}.lead,.close{margin-left:18px;margin-right:18px}}
 </style>
 </body>

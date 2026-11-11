@@ -39,7 +39,7 @@ type ItemRow = {
   summary: string;
   status: string | null;
   importance: number | string | null;
-  entities_json?: { type: string; name: string }[] | null;
+  classifications_json?: { primary?: string } | null;
 };
 
 type MetricRow = {
@@ -58,17 +58,16 @@ export type WeeklyHighlight = {
   importance: number | null;
 };
 
-// Topic and progress rows for the by-project section. entities keeps only project / component / service names.
+// Topic and progress rows for the topics section. category is the tagger's primary ("" when untagged).
 export type WeeklyOther = {
   item_type: string;
   item_key: string;
   title: string | null;
   summary: string;
   status: string | null;
-  entities: string[];
+  category: string;
 };
 
-const AREA_ENTITY_TYPES = new Set(["project", "component", "service"]);
 const OTHER_TYPES = ["topic", "progress_roadmap"];
 
 export type WeeklyMetric = {
@@ -156,9 +155,7 @@ export function assembleWeeklyInput(
         title: item.title,
         summary: item.summary,
         status: item.status,
-        entities: [
-          ...new Set((item.entities_json ?? []).filter((e) => AREA_ENTITY_TYPES.has(e.type)).map((e) => e.name)),
-        ],
+        category: item.classifications_json?.primary ?? "",
       }));
     const dayMetrics = metrics
       .filter((metric) => metric.generation_id === generation.generation_id)
@@ -251,7 +248,7 @@ export async function loadWeeklyInput(db: Db, targetId: string, from: string, to
         db<ItemRow>(
           cols(
             `daily_core_items?${inIds}&item_type=in.(highlight,${OTHER_TYPES.join(",")})`,
-            "generation_id,item_type,item_key,title,summary,status,importance,entities_json",
+            "generation_id,item_type,item_key,title,summary,status,importance,classifications_json",
           ),
         ),
         db<MetricRow>(

@@ -18,6 +18,6 @@
     { "tag": "v9", "new_sqlite_classes": ["FlueCoreTaggerAgent"] },
     { "tag": "v10", "new_sqlite_classes": ["FlueWeeklyMergeAgent"] },
     { "tag": "v11", "new_sqlite_classes": ["FlueWeeklyWriterAgent"] },
-    { "tag": "v12", "new_sqlite_classes": ["FlueWeeklyAreasAgent"] }
+    { "tag": "v12", "new_sqlite_classes": ["FlueWeeklyTopicsAgent"] }
   ]
 }

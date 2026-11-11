@@ -26,7 +26,9 @@ W45_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W46.md`.
 
 - [ ] Phase 4. 이번 주의 움직임(상한 7). 아직 열린 것·날짜별은 뺌(2026-11-07). 주간 요약·토픽은 아직. 본문은 공개본이 아님.
 - [x] 프로젝트별 움직임 섹션 `weekly-areas-v1`(topic·progress, 엔티티 이름으로 대상). 출력 `works/out/weekly-report-p6`.
-- [ ] 프로젝트별 움직임 사용자 확인: 「今週の動き」와 겹침(Millvi V3, ローソン移行), `LEAD`처럼 넓은 대상. 이름이 계속 흔들리면 target별 project 목록으로 tagger 고정 검토.
+- [x] 분류별 토픽 `weekly-topics-v1`로 교체(프로젝트별 섹션 삭제). 출력 `works/out/w-report`.
+- [ ] 분류별 토픽 사용자 확인: 분류 라벨(coordination을 Decision으로), Other 묶음, 「今週の動き」와 겹침.
+- [ ] 머지 → Writer → 토픽을 한 커맨드로 묶을지.
 
 ## 2. Daily Report 후속
 

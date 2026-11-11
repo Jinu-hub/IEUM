@@ -19,7 +19,7 @@ import { DAILY_REPORT_FINALIZER_PROMPT, DailyReportFinalizer } from "./agents/re
 import { DAILY_REPORT_WRITER_PROMPT, DailyReportWriter } from "./agents/report/daily-report-writer.ts";
 import { WEEKLY_MERGE_PROMPT, WeeklyMerge } from "./agents/report/weekly-merge.ts";
 import { WEEKLY_WRITER_PROMPT, WeeklyWriter } from "./agents/report/weekly-writer.ts";
-import { WEEKLY_AREAS_PROMPT, WeeklyAreas } from "./agents/report/weekly-areas.ts";
+import { WEEKLY_TOPICS_PROMPT, WeeklyTopics } from "./agents/report/weekly-topics.ts";
 import { TestAgent } from "./agents/test-agent.ts";
 import {
   buildAgentInput,
@@ -56,7 +56,7 @@ import { promptData, type PromptEnv, resolvePrompts } from "./prompts.ts";
 import { loadWeeklyInput } from "./weekly-input.ts";
 import { weeklyWriterInput, type WeeklyDraft } from "./weekly-writer.ts";
 import { mergeInput, mergeItems, type MergeGroups } from "./weekly-merge.ts";
-import { areaItems, areasInput, type WeeklyAreas as AreasDraft } from "./weekly-areas.ts";
+import { topicItems, topicsInput, type WeeklyTopics as TopicsDraft } from "./weekly-topics.ts";
 import { indexTagging, taggerInput, type Tagging } from "./tagging.ts";
 import { DEFAULT_TAXONOMY_VERSION } from "./taxonomy.ts";
 
@@ -846,9 +846,9 @@ app.post("/weekly/write", async (c) => {
   }
 });
 
-// Groups the week's topic / progress items by project, component, or service and writes 1-2 sentences each.
+// Code groups the week's topic / progress items by tagger category; the model writes 1-2 sentences per category.
 // Body: { targetId, from, to, model? }. Highlights are not input; they are the movements section.
-app.post("/weekly/areas", async (c) => {
+app.post("/weekly/topics", async (c) => {
   const { targetId, from, to, model } = await c.req.json<{ targetId?: string; from?: string; to?: string; model?: string }>();
   if (!isUuid(targetId)) return c.json({ error: "targetId must be a uuid" }, 400);
   if (!from || !to || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
@@ -857,13 +857,13 @@ app.post("/weekly/areas", async (c) => {
   const db = supabase(c.env);
   if (!db) return c.text("Supabase secrets are not set", 500);
   const week = await loadWeeklyInput(db, targetId, from, to);
-  const items = areaItems(week);
-  if (!items.length) return c.json({ status: "succeeded", areas: [] });
-  const [prompt] = await resolvePrompts(c.env, [WEEKLY_AREAS_PROMPT]);
+  const items = topicItems(week);
+  if (!items.length) return c.json({ status: "succeeded", categories: [] });
+  const [prompt] = await resolvePrompts(c.env, [WEEKLY_TOPICS_PROMPT]);
   const data = promptData(prompt, model);
   const startedAt = Date.now();
   try {
-    const call = await runAgent<AreasDraft>(WeeklyAreas, "areas", areasInput(week), { items, ...data }, []);
+    const call = await runAgent<TopicsDraft>(WeeklyTopics, "topics", topicsInput(week), { items, ...data }, []);
     return c.json({
       status: "succeeded",
       promptVersion: prompt.version,
@@ -871,7 +871,7 @@ app.post("/weekly/areas", async (c) => {
       elapsedMs: Date.now() - startedAt,
       usage: call.usage,
       rejections: call.metrics.rejections,
-      areas: call.output.areas,
+      categories: call.output.categories,
     });
   } catch (error) {
     const message = (error instanceof Error ? error.message : String(error)).slice(0, 2000);
