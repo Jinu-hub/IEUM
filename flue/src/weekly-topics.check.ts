@@ -57,7 +57,7 @@ assert.match(bad([{ ...ok.categories[0]!, ids: ["2026-11-02/1"] }, ...ok.categor
 assert.match(bad([{ ...ok.categories[0]!, text: "孫さんが No.999 を直した。" }, ...ok.categories.slice(1)]), /No\.999[\s\S]*孫さん/);
 
 const md = renderWeeklyReport(week, undefined, undefined, ok.categories).markdown;
-assert.match(md, /## 🧭 トピック\n\n\*\*🐛 Bugfix\*\* \(1\)\n西村さんが/);
+assert.match(md, /## 🤝 トピック\n\n\*\*🐛 Bugfix\*\* \(1\)\n西村さんが/);
 assert.ok(md.indexOf("📋 Decision") < md.indexOf("🧰 Other** (2)"));
 
 console.log("weekly-topics.check ok");

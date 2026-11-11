@@ -566,11 +566,17 @@ const ILLUSTRATION: Record<string, string> = {
   "🎯": `${ICONS}/closing.png`,
   "🗂️": `${ICONS}/others.png`,
   "🧑‍💻": `${ICONS}/members.png`,
+  // Weekly topic categories.
+  "🐛": `${ICONS}/topic-bugfix.png`,
+  "🚀": `${ICONS}/topic-feature.png`,
+  "📋": `${ICONS}/topic-decision.png`,
+  "🔍": `${ICONS}/topic-research.png`,
+  "🧰": `${ICONS}/topic-other.png`,
 };
 
 // width/height keep the layout when a client blocks images; alt is empty because the heading text stays.
 // style adds to the img, e.g. a light backing on the dark closing block where the dark outlines vanish.
-function headingHtml(text: string, size: number, style = "") {
+export function headingHtml(text: string, size: number, style = "") {
   const [emoji, ...rest] = text.split(" ");
   const src = ILLUSTRATION[emoji!];
   if (!src) return esc(text);

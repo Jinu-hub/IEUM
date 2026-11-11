@@ -1,4 +1,5 @@
 import { mergeItems, type MergeGroups } from "./weekly-merge.ts";
+import { headingHtml } from "./daily-report.ts";
 import type { WeeklyInput } from "./weekly-input.ts";
 import { topicGroups, topicItems, type WeeklyTopics } from "./weekly-topics.ts";
 
@@ -27,8 +28,8 @@ export function movementKey(ids: string[]) {
 const COPY = {
   ja: {
     metrics: "📊 今週の活動指標",
-    week: "✨ 今週の動き",
-    topics: "🧭 トピック",
+    week: "✨ 今週の注目の動き",
+    topics: "🤝 トピック",
     byDay: "✨ 日付別の注目",
     noCore: "この日のコアはありません。",
     noHighlights: "注目の動きはありません。",
@@ -46,8 +47,8 @@ const COPY = {
   },
   ko: {
     metrics: "📊 이번 주 활동 지표",
-    week: "✨ 이번 주의 움직임",
-    topics: "🧭 토픽",
+    week: "✨ 이번 주 주목할 움직임",
+    topics: "🤝 토픽",
     byDay: "✨ 날짜별 주목",
     noCore: "이 날은 코어가 없습니다.",
     noHighlights: "주목할 움직임이 없습니다.",
@@ -65,8 +66,8 @@ const COPY = {
   },
   en: {
     metrics: "📊 This week's activity",
-    week: "✨ This week's updates",
-    topics: "🧭 Topics",
+    week: "✨ This week's highlights",
+    topics: "🤝 Topics",
     byDay: "✨ Highlights by day",
     noCore: "No core for this day.",
     noHighlights: "No highlights.",
@@ -313,10 +314,10 @@ export function renderWeeklyReport(
   const topicHtml = topicRows
     .map(
       (row) =>
-        `<article class="card"><h3>${htmlEsc(row.label)} <span class="count">${row.count}</span></h3><p>${htmlEsc(row.text)}</p></article>`,
+        `<article class="card"><h3>${headingHtml(row.label, 22)} <span class="count">${row.count}</span></h3><p>${htmlEsc(row.text)}</p></article>`,
     )
     .join("");
-  const byDay = view.showDays ? `<section><h2>${htmlEsc(view.byDayHeading)}</h2>${daySections}</section>` : "";
+  const byDay = view.showDays ? `<section><h2>${headingHtml(view.byDayHeading, 28)}</h2>${daySections}</section>` : "";
   const opening = prose?.opening.trim() ? `<section class="lead"><p>${htmlEsc(prose.opening.trim())}</p></section>` : "";
   const closing = prose?.closing.trim() ? `<section class="close"><p>${htmlEsc(prose.closing.trim())}</p></section>` : "";
   const html = `<!doctype html>
@@ -334,9 +335,9 @@ export function renderWeeklyReport(
 <p class="range">${htmlEsc(view.range)}</p>
 </header>
 ${opening}
-${metricCards ? `<section><h2>${htmlEsc(view.metricsHeading)}</h2><div class="metrics">${metricCards}</div>${active}</section>` : ""}
-${view.movementsHeading ? `<section><h2>${htmlEsc(view.movementsHeading)}</h2>${movementHtml}</section>` : ""}
-${topicHtml ? `<section><h2>${htmlEsc(topicsHeading)}</h2>${topicHtml}</section>` : ""}
+${metricCards ? `<section><h2>${headingHtml(view.metricsHeading, 28)}</h2><div class="metrics">${metricCards}</div>${active}</section>` : ""}
+${view.movementsHeading ? `<section><h2>${headingHtml(view.movementsHeading, 28)}</h2>${movementHtml}</section>` : ""}
+${topicHtml ? `<section><h2>${headingHtml(topicsHeading, 28)}</h2>${topicHtml}</section>` : ""}
 ${closing}
 ${byDay}
 </main>
