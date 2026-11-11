@@ -1,5 +1,6 @@
 import { mergeItems, type MergeGroups } from "./weekly-merge.ts";
 import type { WeeklyInput } from "./weekly-input.ts";
+import type { WeeklyAreas } from "./weekly-areas.ts";
 
 type WeeklyProse = { opening: string; entries: { id: string; text: string }[]; closing: string };
 
@@ -19,6 +20,7 @@ const COPY = {
   ja: {
     metrics: "📊 今週の活動指標",
     week: "✨ 今週の動き",
+    areas: "🧩 プロジェクト別の動き",
     byDay: "✨ 日付別の注目",
     noCore: "この日のコアはありません。",
     noHighlights: "注目の動きはありません。",
@@ -37,6 +39,7 @@ const COPY = {
   ko: {
     metrics: "📊 이번 주 활동 지표",
     week: "✨ 이번 주의 움직임",
+    areas: "🧩 프로젝트별 움직임",
     byDay: "✨ 날짜별 주목",
     noCore: "이 날은 코어가 없습니다.",
     noHighlights: "주목할 움직임이 없습니다.",
@@ -55,6 +58,7 @@ const COPY = {
   en: {
     metrics: "📊 This week's activity",
     week: "✨ This week's updates",
+    areas: "🧩 By project",
     byDay: "✨ Highlights by day",
     noCore: "No core for this day.",
     noHighlights: "No highlights.",
@@ -209,9 +213,20 @@ const mdEsc = (text: string) => text.replace(/([\\`*[\]<>])/g, "\\$1");
 const htmlEsc = (text: string) =>
   text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["groups"], prose?: WeeklyProse) {
+export function renderWeeklyReport(
+  week: WeeklyInput,
+  groups?: MergeGroups["groups"],
+  prose?: WeeklyProse,
+  areas?: WeeklyAreas["areas"],
+) {
   const view = weeklyReportView(week, groups);
   const proseById = new Map(prose?.entries.map((entry) => [entry.id, entry.text.trim()]) ?? []);
+  const areasHeading = copyOf(week.language).areas;
+  const areaRows = (areas ?? []).map((area) => ({
+    name: area.name,
+    text: area.text.trim(),
+    dates: [...new Set(area.ids.map((id) => id.split("/")[0]!))].sort(),
+  }));
   const lines = [`# ${mdEsc(view.title)}`, "", view.range, ""];
   if (prose?.opening.trim()) lines.push(prose.opening.trim(), "");
   lines.push(`## ${view.metricsHeading}`, "");
@@ -232,6 +247,10 @@ export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["grou
       const status = prose ? "" : movement.status ? `${movement.status} · ` : "";
       lines.push(`### ${status}${mdEsc(movement.title)}`, "", movement.dates.join(", "), "", mdEsc(text), "");
     }
+  }
+  if (areaRows.length) {
+    lines.push(`## ${areasHeading}`, "");
+    for (const area of areaRows) lines.push(`### ${mdEsc(area.name)}`, "", area.dates.join(", "), "", mdEsc(area.text), "");
   }
   if (prose?.closing.trim()) lines.push(prose.closing.trim(), "");
   if (view.showDays) {
@@ -282,6 +301,12 @@ export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["grou
       return `<article class="card"><p class="meta"><span>${String(index + 1).padStart(2, "0")}</span> ${htmlEsc(movement.dates.join(" · "))}${status}</p><h3>${htmlEsc(movement.title)}</h3><p>${htmlEsc(text)}</p></article>`;
     })
     .join("");
+  const areaHtml = areaRows
+    .map(
+      (area) =>
+        `<article class="card"><p class="meta">${htmlEsc(area.dates.join(" · "))}</p><h3>${htmlEsc(area.name)}</h3><p>${htmlEsc(area.text)}</p></article>`,
+    )
+    .join("");
   const byDay = view.showDays ? `<section><h2>${htmlEsc(view.byDayHeading)}</h2>${daySections}</section>` : "";
   const opening = prose?.opening.trim() ? `<section class="lead"><p>${htmlEsc(prose.opening.trim())}</p></section>` : "";
   const closing = prose?.closing.trim() ? `<section class="close"><p>${htmlEsc(prose.closing.trim())}</p></section>` : "";
@@ -302,6 +327,7 @@ export function renderWeeklyReport(week: WeeklyInput, groups?: MergeGroups["grou
 ${opening}
 ${metricCards ? `<section><h2>${htmlEsc(view.metricsHeading)}</h2><div class="metrics">${metricCards}</div>${active}</section>` : ""}
 ${view.movementsHeading ? `<section><h2>${htmlEsc(view.movementsHeading)}</h2>${movementHtml}</section>` : ""}
+${areaHtml ? `<section><h2>${htmlEsc(areasHeading)}</h2>${areaHtml}</section>` : ""}
 ${closing}
 ${byDay}
 </main>

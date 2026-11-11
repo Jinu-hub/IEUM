@@ -16,6 +16,18 @@ const PERSON = /[\u4e00-\u9fff]{1,4}さん|[A-Z][a-z]+(?: [A-Z][a-z]+)+/g;
 const found = (text: string, pattern: RegExp) =>
   [...text.matchAll(new RegExp(pattern.source, pattern.flags))].map((match) => match[0]);
 
+// Ticket numbers and person names in prose that the source does not have.
+export function inventedRefs(source: string, prose: string) {
+  return [
+    [TICKET, "ticket numbers"],
+    [PERSON, "names"],
+  ].flatMap(([pattern, label]) => {
+    const allowed = new Set(found(source, pattern as RegExp));
+    const invented = [...new Set(found(prose, pattern as RegExp))].filter((token) => !allowed.has(token));
+    return invented.length ? [`${label} not in the input: ${invented.join(", ")}`] : [];
+  });
+}
+
 export function weeklyWriterInput(week: WeeklyInput, groups: MergeGroups["groups"]) {
   const movements = weeklyMovements(week, groups).map((thread) => ({
     id: movementKey(thread.ids),
@@ -56,12 +68,6 @@ export function writerProblems(draft: WeeklyDraft, week: WeeklyInput, groups: Me
     .flatMap((thread) => thread.cites.flatMap((cite) => [cite.title ?? "", cite.summary]))
     .join("\n");
   const prose = [draft.opening, draft.closing, ...draft.entries.map((entry) => entry.text)].join("\n");
-  const extra = (pattern: RegExp, label: string) => {
-    const allowed = new Set(found(source, pattern));
-    const invented = [...new Set(found(prose, pattern))].filter((token) => !allowed.has(token));
-    if (invented.length) problems.push(`${label} not in the input: ${invented.join(", ")}; copy them from the movements`);
-  };
-  extra(TICKET, "ticket numbers");
-  extra(PERSON, "names");
+  problems.push(...inventedRefs(source, prose).map((line) => `${line}; copy them from the movements`));
   return problems;
 }

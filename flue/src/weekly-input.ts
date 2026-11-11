@@ -39,6 +39,7 @@ type ItemRow = {
   summary: string;
   status: string | null;
   importance: number | string | null;
+  entities_json?: { type: string; name: string }[] | null;
 };
 
 type MetricRow = {
@@ -57,6 +58,19 @@ export type WeeklyHighlight = {
   importance: number | null;
 };
 
+// Topic and progress rows for the by-project section. entities keeps only project / component / service names.
+export type WeeklyOther = {
+  item_type: string;
+  item_key: string;
+  title: string | null;
+  summary: string;
+  status: string | null;
+  entities: string[];
+};
+
+const AREA_ENTITY_TYPES = new Set(["project", "component", "service"]);
+const OTHER_TYPES = ["topic", "progress_roadmap"];
+
 export type WeeklyMetric = {
   key: string;
   value: number;
@@ -72,6 +86,7 @@ export type WeeklyDay = {
     generation_no: number;
     quality_status: string | null;
     highlights: WeeklyHighlight[];
+    others: WeeklyOther[];
     metrics: WeeklyMetric[];
   } | null;
 };
@@ -132,6 +147,19 @@ export function assembleWeeklyInput(
         importance: num(item.importance),
       }))
       .sort((a, b) => (b.importance ?? -1) - (a.importance ?? -1) || a.item_key.localeCompare(b.item_key));
+    const others = items
+      .filter((item) => item.generation_id === generation.generation_id && OTHER_TYPES.includes(item.item_type))
+      .sort((a, b) => (num(b.importance) ?? -1) - (num(a.importance) ?? -1) || a.item_key.localeCompare(b.item_key))
+      .map((item) => ({
+        item_type: item.item_type,
+        item_key: item.item_key,
+        title: item.title,
+        summary: item.summary,
+        status: item.status,
+        entities: [
+          ...new Set((item.entities_json ?? []).filter((e) => AREA_ENTITY_TYPES.has(e.type)).map((e) => e.name)),
+        ],
+      }));
     const dayMetrics = metrics
       .filter((metric) => metric.generation_id === generation.generation_id)
       .map((metric) => ({
@@ -148,6 +176,7 @@ export function assembleWeeklyInput(
         generation_no: generation.generation_no,
         quality_status: generation.quality_status ?? core.quality_status,
         highlights,
+        others,
         metrics: dayMetrics,
       },
     };
@@ -221,8 +250,8 @@ export async function loadWeeklyInput(db: Db, targetId: string, from: string, to
     ? await Promise.all([
         db<ItemRow>(
           cols(
-            `daily_core_items?${inIds}&item_type=eq.highlight`,
-            "generation_id,item_type,item_key,title,summary,status,importance",
+            `daily_core_items?${inIds}&item_type=in.(highlight,${OTHER_TYPES.join(",")})`,
+            "generation_id,item_type,item_key,title,summary,status,importance,entities_json",
           ),
         ),
         db<MetricRow>(

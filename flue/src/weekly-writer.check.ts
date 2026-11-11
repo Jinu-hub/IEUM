@@ -22,6 +22,7 @@ const week: WeeklyInput = {
           { item_key: "a", title: "No.291", summary: "西村さんが依頼。#23243", status: "in_progress", importance: 1 },
           { item_key: "b", title: "B", summary: "Jinu Son が完了", status: "completed", importance: 0.5 },
         ],
+        others: [],
         metrics: [],
       },
     },
