@@ -17,9 +17,11 @@ import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../p
 // left No.8 only in member_activity, and merged three people's daily work into one entry.
 // Items it still leaves out are placed by code (placeLeftovers).
 // v3: person names stay as in people and members. No transliteration into another script.
+// v4: member_activity is left empty. Code writes it (scopeMemberActivity). The model paragraph
+// attributed other people's items to a person who had only cited their own (11/11, Jinu / ローソン).
 export const CORE_STRUCTURER_PROMPT: AgentPrompt = {
   agentKey: "core-structurer",
-  version: "core-structurer-v3",
+  version: "core-structurer-v4",
   model: "openai/gpt-6-luna",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You build a Daily Core: the structured record of one team's activity on one local day.
@@ -45,9 +47,8 @@ Rules:
 - Person names stay exactly as written in people and members. Do not translate or
   transliterate them. If a core item summary already uses another form, use the
   people or members spelling instead.
-- member_activity: one entry per person who appears in members of some core item,
-  summarizing what they did. The title is only the person's name, exactly as in people.
-  Its core_item_ids are the core items listing that person in members; they may also appear in the arrays above.
+- member_activity: leave this array empty. Code writes one entry per person from the
+  core items they worked on.
 - overview.summary: 2-4 sentences, refined from overview_candidate.
 - item_key: kebab-case, unique within its array.`,
 };
@@ -75,7 +76,8 @@ export function CoreStructurer() {
     description: "Submit the finished Daily Core. Call exactly once. Errors list what to fix.",
     input: Structuring,
     run({ data }) {
-      const output = restoreCoreIds(data, Object.keys(evidence.coreRefs));
+      // Member text is rebuilt in assembleCore. A draft here can fail the run or ship someone else's work.
+      const output = restoreCoreIds({ ...data, member_activity: [] }, Object.keys(evidence.coreRefs));
       const problems = structuringProblems(output, evidence);
       if (problems.length) throw new Error(problems.join("\n"));
       write(output);

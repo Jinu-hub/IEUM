@@ -21,6 +21,7 @@ import {
   refineHighlights,
   resolveStructuring,
   restoreCoreIds,
+  scopeMemberActivity,
   type SourceItem,
   type Structuring,
   structurerInput,
@@ -311,6 +312,24 @@ assert.ok(refined.demoted.length >= 1);
 assert.deepEqual(left.structuring.progress_roadmap, [{ item_key: "b", title: "", summary: "", status: null, core_item_ids: ["b"] }]);
 assert.deepEqual(left.structuring.topics.at(-1), { item_key: "c-core", title: "C title", summary: "", status: "blocked", core_item_ids: ["c"] });
 assert.deepEqual(placeLeftovers(good, interpretedDay).leftovers, []);
+
+// 11/11: the model summary named ローソン on Jinu, who only wrote the calendar item.
+const scoped = scopeMemberActivity(
+  structuring({ member_activity: [placed("Jinu Son did ローソン", ["a", "b"], "jinu")] }),
+  interpretation(
+    { ...coreA, title: "Aki の件" },
+    { ...coreB, title: "外部カレンダー削除連携" },
+    { ...coreC, title: "C の件" },
+  ),
+  input.authors,
+);
+const jinuScoped = scoped.member_activity.find((item) => item.title === "Jinu Son");
+assert.deepEqual(jinuScoped?.core_item_ids, ["b"]);
+assert.equal(jinuScoped?.summary, "外部カレンダー削除連携。");
+assert.deepEqual(
+  scoped.member_activity.map((item) => item.title),
+  ["Aki", "takamune-dsl", "Jinu Son"],
+);
 
 const resolved = resolveStructuring(good, interpretedDay, input.authors);
 assert.deepEqual(resolved.highlights[0], {

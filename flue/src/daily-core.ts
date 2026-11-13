@@ -549,6 +549,53 @@ export function structuringProblems(output: Structuring, { coreRefs, authors, pe
   return problems;
 }
 
+const memberKey = (name: string, used: Set<string>) => {
+  const base = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || name.trim() || "member";
+  let key = base;
+  let n = 2;
+  while (used.has(key)) key = `${base}-${n++}`;
+  used.add(key);
+  return key;
+};
+
+// Member paragraphs are not the model's. A summary can name work the person never touched while still
+// citing items they did (11/11: ローソン・まなプレ on Jinu, whose lines were calendar, No.293, No.268).
+// One entry per person who wrote a cited line on an item they are a member of. The text is those items'
+// titles, highest importance first. Code replaces the draft instead of rejecting the whole core.
+export function scopeMemberActivity(
+  output: Structuring,
+  { core_items }: Interpretation,
+  authors: Record<string, string>,
+): Structuring {
+  const byPerson = new Map<string, Interpretation["core_items"]>();
+  for (const item of core_items) {
+    const writers = new Set(item.evidence_refs.flatMap((ref) => (authors[ref] ? [authors[ref]] : [])));
+    for (const actor of item.actors) {
+      if (actor.type !== "member" || !writers.has(actor.name)) continue;
+      byPerson.set(actor.name, [...(byPerson.get(actor.name) ?? []), item]);
+    }
+  }
+  const used = new Set<string>();
+  const rank = (items: Interpretation["core_items"]) => Math.max(...items.map((item) => item.importance));
+  const member_activity = [...byPerson.entries()]
+    .sort((a, b) => rank(b[1]) - rank(a[1]) || a[0].localeCompare(b[0]))
+    .map(([name, items]) => {
+      const ranked = [...items].sort((a, b) => b.importance - a.importance || a.concept_key.localeCompare(b.concept_key));
+      const summary = ranked
+        .map((item) => item.title.trim().replace(/[。．.]+$/, ""))
+        .filter(Boolean)
+        .join("。");
+      return {
+        item_key: memberKey(name, used),
+        title: name,
+        summary: summary ? `${summary}。` : "",
+        status: null,
+        core_item_ids: ranked.map((item) => item.concept_key),
+      };
+    });
+  return { ...output, member_activity };
+}
+
 // The Daily Core keeps every core item for reports and other uses; what to leave out is the reader's choice.
 // Items the structurer left out of the event sections (only in member_activity, or nowhere) are added
 // as the interpreter wrote them: topics when that is their only candidate role, otherwise progress_roadmap.

@@ -36,6 +36,7 @@ import {
   placeLeftovers,
   refineHighlights,
   resolveStructuring,
+  scopeMemberActivity,
   type SourceRow,
   structurerInput,
   type Structuring,
@@ -298,7 +299,8 @@ const runTagger = async (
 // After Call 2: leftovers placed, highlights refined (cap), then core_json (still without tags).
 function assembleCore({ core, rows, input }: Day, interpretation: Interpretation, structured: Structuring) {
   const { structuring: withLeftovers, leftovers } = placeLeftovers(structured, interpretation);
-  const { structuring, demoted } = refineHighlights(withLeftovers, interpretation);
+  const { structuring: refined, demoted } = refineHighlights(withLeftovers, interpretation);
+  const structuring = scopeMemberActivity(refined, interpretation, input.authors);
   const output = resolveStructuring(structuring, interpretation, input.authors);
   const coreJson = buildCoreJson(core, rows, output, input.people, input);
   const stats = {
