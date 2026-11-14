@@ -98,7 +98,7 @@ export type WeeklyReportView = {
   activeByDay: { date: string; value: number }[];
   byDayHeading: string;
   movementsHeading: string | null;
-  movements: { ids: string[]; title: string; summary: string; status: string | null; dates: string[] }[] | null;
+  movements: { ids: string[]; title: string; summary: string; status: string | null; dates: string[]; people: string[] }[] | null;
   // By-day list is the unmerged review. The merged report does not repeat it.
   showDays: boolean;
   days: { date: string; note: string | null; entries: { title: string; summary: string; status: string | null }[] }[];
@@ -140,14 +140,30 @@ const statusLabel = (copy: Copy, status: string | null) =>
 export function weeklyReportView(week: WeeklyInput, groups?: MergeGroups["groups"]): WeeklyReportView {
   const copy = copyOf(week.language);
   const threads = groups ? weeklyMovements(week, groups) : null;
+  const ownersOf = new Map<string, string[]>();
+  for (const day of week.days) {
+    day.core?.highlights.forEach((item, index) => ownersOf.set(`${day.date}#${index + 1}`, item.owners ?? []));
+  }
   const movements = threads
-    ? threads.map((thread) => ({
-        ids: thread.ids,
-        title: thread.last.title || thread.last.item_key,
-        summary: thread.last.summary,
-        status: statusLabel(copy, thread.last.status),
-        dates: thread.cites.map((cite) => cite.date),
-      }))
+    ? threads.map((thread) => {
+        const people: string[] = [];
+        const seen = new Set<string>();
+        for (const cite of thread.cites) {
+          for (const name of ownersOf.get(cite.id) ?? []) {
+            if (seen.has(name)) continue;
+            seen.add(name);
+            people.push(name);
+          }
+        }
+        return {
+          ids: thread.ids,
+          title: thread.last.title || thread.last.item_key,
+          summary: thread.last.summary,
+          status: statusLabel(copy, thread.last.status),
+          dates: thread.cites.map((cite) => cite.date),
+          people,
+        };
+      })
     : null;
   const name = week.target_display_name ?? week.target_id;
   const active = week.unsummed.find((row) => row.key === "active_member_count");
@@ -255,7 +271,9 @@ export function renderWeeklyReport(
     for (const movement of view.movements) {
       const text = proseById.get(movementKey(movement.ids)) ?? movement.summary;
       const status = prose ? "" : movement.status ? `${movement.status} · ` : "";
-      lines.push(`### ${status}${mdEsc(movement.title)}`, "", movement.dates.join(", "), "", mdEsc(text), "");
+      lines.push(`### ${status}${mdEsc(movement.title)}`, "", movement.dates.join(", "), "");
+      if (movement.people.length) lines.push(movement.people.join(", "), "");
+      lines.push(mdEsc(text), "");
     }
   }
   if (topicRows.length) {
@@ -308,7 +326,8 @@ export function renderWeeklyReport(
     .map((movement, index) => {
       const text = proseById.get(movementKey(movement.ids)) ?? movement.summary;
       const status = prose || !movement.status ? "" : `<span class="badge">${htmlEsc(movement.status)}</span>`;
-      return `<article class="card"><p class="meta"><span>${String(index + 1).padStart(2, "0")}</span> ${htmlEsc(movement.dates.join(" · "))}${status}</p><h3>${htmlEsc(movement.title)}</h3><p>${htmlEsc(text)}</p></article>`;
+      const who = movement.people.length ? `<p class="who">${movement.people.map(htmlEsc).join(" · ")}</p>` : "";
+      return `<article class="card"><p class="meta"><span>${String(index + 1).padStart(2, "0")}</span> ${htmlEsc(movement.dates.join(" · "))}${status}</p><h3>${htmlEsc(movement.title)}</h3>${who}<p>${htmlEsc(text)}</p></article>`;
     })
     .join("");
   const topicHtml = topicRows
@@ -368,7 +387,8 @@ h2{margin:22px 0 14px;padding-bottom:8px;border-bottom:1px solid #e8ebf3;font-si
 .note{color:#5c6578}
 .card{margin:0 0 12px;padding:16px 18px;border:1px solid #e8ebf3;border-radius:12px}
 .card h3{margin:6px 0 8px;font-size:16px;line-height:1.45}
-.meta{color:#5c6578;font-size:13px}
+.meta,.who{color:#5c6578;font-size:13px}
+.who{margin:0 0 8px}
 .meta span{color:#5E6AD2;font-weight:700}
 .badge{margin-left:8px;color:#0F6B66}
 .count{margin-left:6px;color:#5c6578;font-size:13px;font-weight:400}

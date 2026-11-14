@@ -18,7 +18,7 @@ const week: WeeklyInput = {
         generation_no: 1,
         quality_status: "ready",
         highlights: [
-          { item_key: "a", title: "Alpha", summary: "did alpha", status: "completed", importance: 1 },
+          { item_key: "a", title: "Alpha", summary: "did alpha", status: "completed", importance: 1, owners: ["Yuki Kato", "Yoko"] },
           { item_key: "b", title: null, summary: "no title", status: "blocked", importance: 0.8 },
         ],
         others: [],
@@ -51,6 +51,9 @@ assert.deepEqual(
   grouped.view.movements?.map((item) => item.title),
   ["Alpha", "b"],
 );
+assert.deepEqual(grouped.view.movements?.[0]?.people, ["Yuki Kato", "Yoko"]);
+assert.match(grouped.markdown, /Yuki Kato, Yoko/);
+assert.match(grouped.html, /Yuki Kato · Yoko/);
 assert.equal(grouped.view.showDays, false);
 assert.doesNotMatch(grouped.markdown, /まだ開いていること/);
 assert.doesNotMatch(grouped.markdown, /日付別の注目/);

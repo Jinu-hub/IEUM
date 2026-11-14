@@ -40,6 +40,7 @@ type ItemRow = {
   status: string | null;
   importance: number | string | null;
   classifications_json?: { primary?: string } | null;
+  payload_json?: { owners?: string[] } | null;
 };
 
 type MetricRow = {
@@ -56,6 +57,7 @@ export type WeeklyHighlight = {
   summary: string;
   status: string | null;
   importance: number | null;
+  owners?: string[];
 };
 
 // Topic and progress rows for the topics section. category is the tagger's primary ("" when untagged).
@@ -144,6 +146,7 @@ export function assembleWeeklyInput(
         summary: item.summary,
         status: item.status,
         importance: num(item.importance),
+        owners: [...new Set((item.payload_json?.owners ?? []).map((name) => name.trim()).filter(Boolean))],
       }))
       .sort((a, b) => (b.importance ?? -1) - (a.importance ?? -1) || a.item_key.localeCompare(b.item_key));
     const others = items
@@ -248,7 +251,7 @@ export async function loadWeeklyInput(db: Db, targetId: string, from: string, to
         db<ItemRow>(
           cols(
             `daily_core_items?${inIds}&item_type=in.(highlight,${OTHER_TYPES.join(",")})`,
-            "generation_id,item_type,item_key,title,summary,status,importance,classifications_json",
+            "generation_id,item_type,item_key,title,summary,status,importance,classifications_json,payload_json",
           ),
         ),
         db<MetricRow>(
