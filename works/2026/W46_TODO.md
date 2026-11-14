@@ -6,29 +6,26 @@ W45_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W46.md`.
 
 ## 1. 지금 우선
 
-순서: 요점화(1-6) 끝(2026-11-07) → **주간 리포트(1-5)**. 분류 B안·items/metrics는 W43에서 끝. 실측(entities) 확인됨(2026-10-31).
+요점화(1-6)는 끝(2026-11-07). 지금 손대는 것은 **주간 리포트(1-5)**. 그 다음 1-1, 1-4.
+
+### 1-5. 주간 리포트
+
+Phase 1~3 끝. Phase 4 코드 본문(상한 7)은 2026-11-07에 거절. 그 자리는 Writer(`weekly-writer-v6`, `works/out/weekly-report-p5`)와 분류별 토픽. 구성은 `works/weekly-report.md`.
+
+- [ ] 분류별 토픽 남은 확인: coordination→Decision 라벨, Other 묶음, 「今週の注目の動き」와 겹침. 형태는 괜찮음(2026-11-11). 문장 품질은 나중.
 
 ### 1-1. 생성 실패 막기
 
-- [ ] Writer: highlights 밖 `quote_ids`를 반려 말고 `withoutStrayQuotes`처럼 비우고 검사.
-- [ ] Structurer: 같은 사람 member_activity entry 2개를 반려 말고 코드가 합침(`core_item_ids` 합집합).
+- [ ] Writer: highlights 밖 `quote_ids`를 반려 말고 `withoutStrayQuotes`처럼 비우고 검사. Finalizer만 비움.
+- [ ] Structurer: 같은 사람 `member_activity` 2개면 아직 반려(`structuringProblems`). 프롬프트는 빈 배열(v4)이고 문장은 `scopeMemberActivity`가 씀. 모델이 2개를 내도 합치고 통과.
 - [ ] Interpreter: 제출 전 수정 도구 호출로 반려가 쌓이면 대비책이 없어 그날 Core가 실패함. 받은 출력은 살리는 쪽으로.
+- [ ] 11/11 코어 재생성. 멤버 문장 수정(2026-11-13)은 저장본에 안 들어 있음.
 
 ### 1-4. 프롬프트 DB 연결 확인
 
 - [ ] **테스트 끝나면 반드시 원복**: `flue/.dev.vars`의 `PROMPTS_SUPABASE_URL` / `KEY` 주석 해제 + 로컬 Worker 재시작. 원복 전에 최종 지시문을 DB에 새 버전으로 넣을지 정함.
 - [ ] 프롬프트 DB 데이터 넣기(`services` ieum, `agents`에 core-tagger 포함, 코드 기본값 지시문을 v1로, `prompt_releases` default). DB의 `core-interpreter` 지시문은 입력 설명 문단(`RAW_INPUT`)이 코드와 글자 그대로여야 함.
 - [ ] 로컬에서 `/core/generate`, `/report/generate`로 `prompt_version` 확인 후 배포(`wrangler secret put`).
-
-### 1-5. 주간 리포트 (요점화 뒤)
-
-구성·Phase는 `works/weekly-report.md`. 한 Phase 확인 후 다음.
-
-- [ ] Phase 4. 이번 주의 움직임(상한 7). 아직 열린 것·날짜별은 뺌(2026-11-07). 주간 요약·토픽은 아직. 본문은 공개본이 아님.
-- [x] 프로젝트별 움직임 섹션 `weekly-areas-v1`(topic·progress, 엔티티 이름으로 대상). 출력 `works/out/weekly-report-p6`.
-- [x] 분류별 토픽 `weekly-topics-v1`로 교체(프로젝트별 섹션 삭제). 출력 `works/out/w-report`.
-- [ ] 분류별 토픽 사용자 확인: 분류 라벨(coordination을 Decision으로), Other 묶음, 「今週の動き」와 겹침.
-- [ ] 머지 → Writer → 토픽을 한 커맨드로 묶을지.
 
 ## 2. Daily Report 후속
 
@@ -55,7 +52,7 @@ W45_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W46.md`.
 - [ ] Interpreter 남은 문제: overview에서 중요 항목 빠짐, 첫 제출의 묶기 부족, 제목·key 품질.
 - [ ] 입력 개선: GitHub Slack 앱 빈 본문, Redmine 봇 티켓 목록 보강용.
 - [ ] SignalExtractor: `pipeline_options` 마이그레이션, 비교, 간접 호칭.
-- [ ] 남은 품질 문제: 범위 흔들림, member_activity, 겹침·나뉨, 사람 대응표, `medium` 재비교.
+- [ ] 남은 품질 문제: 범위 흔들림, 겹침·나뉨, 사람 대응표, `medium` 재비교. member_activity 문장이 남의 일을 넣는 건 2026-11-13에 고침(코드가 제목만 이어 붙임).
 
 ### 3-4. 구조와 스키마 정리
 
@@ -68,5 +65,11 @@ W45_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W46.md`.
 - [ ] 4-2. fetch 실패 구분(`partial`).
 
 # 끝난 것
+
+### 1-5. 주간 리포트 (이번 주)
+
+- [x] 프로젝트별 움직임 `weekly-areas-v1`. 출력 `works/out/weekly-report-p6`. 이어서 분류별 토픽으로 교체(2026-11-11).
+- [x] 분류별 토픽 `weekly-topics-v1`. 프로젝트별 섹션 삭제. 출력 `works/out/w-report`. 제목 「今週の注目の動き」(2026-11-11).
+- [x] 한 커맨드 `weekly-report.run.ts`(머지 → Writer → 토픽 → 렌더). 단계별 러너는 그대로. 중간 파일 `<out>.merge.json`, `<out>.writer.json`(2026-11-14).
 
 (W45에서 끝난 항목은 W45_TODO에 남김)
