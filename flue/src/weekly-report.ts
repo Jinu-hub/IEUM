@@ -234,6 +234,12 @@ export function weeklyBodyProblems(week: WeeklyInput, groups: MergeGroups["group
   return problems;
 }
 
+// One topic sentence per line. Split on 。！？ so No.165 and 5.3.11 stay intact.
+const topicSentences = (text: string) => {
+  const parts = text.split(/(?<=[。！？])/u).map((part) => part.trim()).filter(Boolean);
+  return parts.length ? parts : [text];
+};
+
 const mdEsc = (text: string) => text.replace(/([\\`*[\]<>])/g, "\\$1");
 const htmlEsc = (text: string) =>
   text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -278,7 +284,11 @@ export function renderWeeklyReport(
   }
   if (topicRows.length) {
     lines.push(`## ${topicsHeading}`, "");
-    for (const row of topicRows) lines.push(`**${row.label}** (${row.count})`, mdEsc(row.text), "");
+    for (const row of topicRows) {
+      lines.push(`**${row.label}** (${row.count})`);
+      for (const sentence of topicSentences(row.text)) lines.push(`・${mdEsc(sentence)}`);
+      lines.push("");
+    }
   }
   if (prose?.closing.trim()) lines.push(prose.closing.trim(), "");
   if (view.showDays) {
@@ -333,7 +343,9 @@ export function renderWeeklyReport(
   const topicHtml = topicRows
     .map(
       (row) =>
-        `<article class="card"><h3>${headingHtml(row.label, 22)} <span class="count">${row.count}</span></h3><p>${htmlEsc(row.text)}</p></article>`,
+        `<article class="card"><h3>${headingHtml(row.label, 22)} <span class="count">${row.count}</span></h3><div class="lines">${topicSentences(row.text)
+          .map((sentence) => `<p><span>・</span>${htmlEsc(sentence)}</p>`)
+          .join("")}</div></article>`,
     )
     .join("");
   const byDay = view.showDays ? `<section><h2>${headingHtml(view.byDayHeading, 28)}</h2>${daySections}</section>` : "";
@@ -373,6 +385,9 @@ h2{margin:22px 0 14px;padding-bottom:8px;border-bottom:1px solid #e8ebf3;font-si
 .lead{margin-top:24px;border-left:4px solid #5E6AD2}
 .close{margin-bottom:28px;background:#f7f6f2}
 .lead p,.close p,.card p{margin:0}
+.lines p{display:flex;gap:.45em;margin:0 0 10px}
+.lines p span{flex:none;color:#5E6AD2;font-weight:700}
+.lines p:last-child{margin:0}
 .metrics{display:flex;gap:10px;flex-wrap:wrap}
 .metric{flex:1;min-width:120px;padding:14px 16px;border-radius:12px;background:#f6f7fb}
 .metric b{display:block;font-size:28px;line-height:1.1;color:#3f4cb5}

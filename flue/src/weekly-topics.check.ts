@@ -45,7 +45,7 @@ assert.deepEqual(topicGroups(items).map((group) => [group.key, group.items.lengt
 const ok = {
   categories: [
     { key: "bugfix", ids: ["2026-11-02/2"], text: "西村さんが #23243 を直した。" },
-    { key: "coordination", ids: ["2026-11-02/1"], text: "方針が決まった。" },
+    { key: "coordination", ids: ["2026-11-02/1"], text: "方針が決まった。残りは確認中。" },
     { key: "other", ids: ["2026-11-02/3"], text: "リリース準備。" },
   ],
 };
@@ -57,7 +57,8 @@ assert.match(bad([{ ...ok.categories[0]!, ids: ["2026-11-02/1"] }, ...ok.categor
 assert.match(bad([{ ...ok.categories[0]!, text: "孫さんが No.999 を直した。" }, ...ok.categories.slice(1)]), /No\.999[\s\S]*孫さん/);
 
 const md = renderWeeklyReport(week, undefined, undefined, ok.categories).markdown;
-assert.match(md, /## 🤝 トピック\n\n\*\*🐛 Bugfix\*\* \(1\)\n西村さんが/);
+assert.match(md, /## 🤝 トピック\n\n\*\*🐛 Bugfix\*\* \(1\)\n・西村さんが/);
+assert.match(md, /・方針が決まった。\n・残りは確認中。/);
 assert.ok(md.indexOf("📋 Decision") < md.indexOf("🧰 Other** (2)"));
 
 console.log("weekly-topics.check ok");
