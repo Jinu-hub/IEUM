@@ -1,5 +1,7 @@
 # 1. 일별 처리 대상 / 데이터 범위 상세 설계
 
+생성 파이프라인과 저장 형식의 현재 값은 `flue/README.md`와 `flue/src/daily-core.ts`(`daily-core-v2`)다. 아래는 수집 범위와 날짜 창의 설계다.
+
 ## 1-1. Daily Core의 논리적 기본 단위
 
 Daily Core의 기본 단위는 다음과 같이 정의한다.

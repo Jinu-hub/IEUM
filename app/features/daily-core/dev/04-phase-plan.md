@@ -1,5 +1,7 @@
 # Daily Core Phase Plan
 
+이 Phase 계획은 구현 전에 적은 것이다. 끝난 경로는 `works/daily-core-e2e.md`, `works/daily-core-agent-split.md`, `works/daily-report.md`에 있고, 지금 동작은 `flue/README.md`가 맞다.
+
 ## Goal
 
 Daily Core를 한 번에 완성하려고 하지 않고, 구현 리스크가 낮은 순서대로 단계적으로 구축한다.

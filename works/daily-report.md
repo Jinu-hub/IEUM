@@ -1,6 +1,8 @@
 # Daily Report 계획
 
-목표: Daily Core(`core_json`)를 사람이 읽는 하루 리포트로 바꾸고, 지금의 메일 경로(`createContents` → `TestAgent` 한 문장)를 이것으로 바꾼다.
+이 파일은 데일리 리포트를 메일 경로에 붙이던 Phase 기록이다. 그 경로는 끝나 있다. 지금은 Flue가 `core_json`으로 제목·markdown·HTML을 만들고 앱이 그 메일을 보낸다(`flue/README.md`). 아래 목표에 적힌 `createContents` → `TestAgent`는 시작 시점의 경로다.
+
+목표: Daily Core(`core_json`)를 사람이 읽는 하루 리포트로 바꾸고, 그때의 메일 경로(`createContents` → `TestAgent` 한 문장)를 이것으로 바꾼다.
 
 ```text
 daily_core_data.current_generation_no → daily_core_generations.core_json

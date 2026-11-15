@@ -1,5 +1,7 @@
 # Daily Core Pipeline Architecture
 
+구현은 이 그림과 다르다. 지금 호출은 `flue/README.md`가 맞다. SignalExtractor는 `pipeline_options.signals`일 때만 돌고, CoreTagger가 Structurer와 동시에 돌며, 태그·분류·엔티티는 `core_json`이 아니라 `daily_core_items`에 들어간다. 아래는 그 전 설계다.
+
 ## Goal
 
 Daily Core 생성은 단일 Prompt가 아니라, 3개의 LLM Agent와 deterministic Pipeline merge로 구성한다.

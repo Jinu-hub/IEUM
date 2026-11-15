@@ -1,5 +1,7 @@
 # Daily Core Scope and Window
 
+구현된 수집 창과 파이프라인은 `flue/README.md`와 `app/features/daily-core/` 코드가 맞다. 아래는 그 전 범위 설계다.
+
 ## Goal
 
 Daily Core의 논리적 기본 단위와 하루치 데이터 범위를 명확히 정의한다.

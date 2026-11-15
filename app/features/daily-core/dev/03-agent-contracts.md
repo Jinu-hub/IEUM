@@ -1,5 +1,7 @@
 # Daily Core Agent Contracts
 
+구현된 Agent 계약은 `flue/src/agents/`와 `flue/README.md`가 맞다. 아래 3단 계약은 그 전 초안이다.
+
 ## Goal
 
 이 문서는 Agent 1 / 2 / 3과 Pipeline merge 사이의 입출력 계약을 정의한다.

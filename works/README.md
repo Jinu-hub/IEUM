@@ -26,4 +26,4 @@
 
 ## 그 밖
 
-형식 설명은 `docs/`, 산출물 예시는 `sample/`. 추가한 환경변수와 배포 방법은 `env.md`. 여러 주에 걸친 작업 계획과 Phase별 확인 기록은 별도 파일(`daily-core-e2e.md`, `daily-report.md`). 앱의 Vercel 배포 할 일은 `vercel-deploy.md`.
+형식 설명은 `docs/`, 산출물 예시는 `sample/`. 추가한 환경변수와 배포 방법은 `env.md`. 여러 주에 걸친 작업의 Phase 기록은 `daily-core-e2e.md`, `daily-core-agent-split.md`, `daily-report.md`, `weekly-report.md`다. 각 파일 맨 위에 지금 구현(`flue/README.md`)을 가리키는 줄이 있다. 앱의 Vercel 배포 할 일은 `vercel-deploy.md`.

@@ -1,5 +1,7 @@
 # Weekly Report 계획
 
+이 파일은 2026-11-07까지의 Phase 기록이다. 그 뒤 구현은 `flue/README.md`의 Weekly와 `works/2026/W46.md`가 맞다. 지금은 Writer(`weekly-writer-v6`)와 분류별 토픽(`weekly-topics-v1`)이 있고, `weekly-report.run.ts`가 머지 → Writer → 토픽 → 렌더를 한 번에 돌린다. 아래 「이번에 안 하는 것」의 Writer와 Phase 4의 「문장 생성 없음」은 그때의 범위다. 메일, 저장 테이블, Cron은 여전히 없다.
+
 목표: 한 주의 Daily Core를 사람이 읽는 주간 리포트로 만든다. 데일리 다섯 통의 합본이 아니라, 요점화된 하루 하이라이트를 한 주로 다시 묶는다.
 
 ```text

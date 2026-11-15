@@ -10,7 +10,7 @@ W45_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W46.md`.
 
 ### 1-5. 주간 리포트
 
-Phase 1~3 끝. Phase 4 코드 본문(상한 7)은 2026-11-07에 거절. 그 자리는 Writer(`weekly-writer-v6`, `works/out/weekly-report-p5`)와 분류별 토픽. 구성은 `works/weekly-report.md`.
+Phase 1~3 끝. Phase 4 코드 본문(상한 7)은 2026-11-07에 거절. 그 자리는 Writer(`weekly-writer-v6`, `works/out/weekly-report-p5`)와 분류별 토픽. 지금 구성은 `flue/README.md` Weekly. Phase 기록은 `works/weekly-report.md`.
 
 - [ ] 분류별 토픽 남은 확인: coordination→Decision 라벨, Other 묶음, 「今週の注目の動き」와 겹침. 형태는 괜찮음(2026-11-11). 문장 품질은 나중.
 

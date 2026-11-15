@@ -1,5 +1,7 @@
 # 3. Daily Core JSON Schema 상세 설계
 
+구현된 `core_json`은 `daily-core-v2`다(`flue/src/daily-core.ts`). tags, classifications, entities는 그 JSON에 넣지 않는다. CoreTagger가 `daily_core_items`에 쓰고, 분류 팩은 `work-kind-v1`(bugfix, feature, coordination, investigation 등)이다. 태거가 실패하면 generation의 `taxonomy_version`은 `none`이다. 아래 `daily-core-v1`과 `issue_type`은 그 전 설계다.
+
 Daily Core는 최종 사용자에게 보여주기 위한 Report가 아니라, 이후 Weekly / Monthly Report 및 기간 분석에서 재사용할 수 있는 중간 표현 데이터다.
 
 따라서 Daily Core JSON은 다음 원칙을 따른다.

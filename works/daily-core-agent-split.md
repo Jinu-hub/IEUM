@@ -1,5 +1,7 @@
 # Daily Core Agent 분리 계획
 
+이 파일은 호출을 Interpreter와 Structurer 둘로 나누던 기록이다. 그 뒤 SignalExtractor(선택), CoreTagger, 주간이 붙었다. 지금 파이프라인은 `flue/README.md`가 맞다. `02-pipeline-architecture.md`의 항상 3단인 그림은 그때의 설계다.
+
 목표: 단일 Agent(`DailyCore`, `daily-core-v3.2`)를 `02-pipeline-architecture.md`의 3개 역할로 나눈다. v1은 호출 2회.
 
 ```text

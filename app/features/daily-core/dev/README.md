@@ -1,8 +1,8 @@
 # Daily Core Dev Docs
 
-이 디렉토리는 Daily Core 기능 구현을 위한 개발 문서를 모아둔 공간이다.
+이 디렉토리의 번호 문서는 Daily Core를 짜기 전의 설계다. 구현된 파이프라인은 `flue/README.md`가 맞다. SignalExtractor는 target 옵션일 때만 돌고, CoreTagger는 Structurer와 동시에 돌며, 태그는 `daily_core_items`에만 들어간다.
 
-현재 문서는 다음 순서로 읽는 것을 권장한다.
+설계를 읽을 때는 다음 순서를 쓴다.
 
 1. `01-scope-and-window.md`
    - 처리 대상 Target 판정
@@ -26,9 +26,9 @@
    - 실제 구현 phase
    - 단계별 목표 / 산출물 / 완료 조건
 
-## Current Direction
+## 설계 당시의 방향
 
-Daily Core는 다음 원칙으로 구현한다.
+아래는 구현 전에 적어 둔 방향이다. 호출 수와 태그의 위치는 그 뒤 바뀌었다.
 
 - `1 Target x 1 Local Date = 1 Daily Core`
 - DB schema는 이미 초안 완료
@@ -37,7 +37,7 @@ Daily Core는 다음 원칙으로 구현한다.
 - 최종 저장물은 `core_json`과 projection data다
 - Agent 중간 결과는 canonical data와 분리해서 다룬다
 
-## High-level Flow
+## 설계 당시의 흐름
 
 ```text
 Target + core_date

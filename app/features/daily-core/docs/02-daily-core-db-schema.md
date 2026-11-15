@@ -1,5 +1,7 @@
 # 2. Daily Core DB 상세 설계
 
+테이블 관계의 현재 동작은 `flue/README.md`가 맞다. 아래 컬럼 설명은 설계 초안이다.
+
 Daily Core를 단순 JSONB 하나로 저장하는 방식보다는 향후 확장을 고려한 구조로 설계한다.
 
 예상되는 향후 요구는 다음과 같다.
@@ -31,7 +33,7 @@ targets
 ```
 
 > Flue 도입(2026-10) 이후 개정 (migration `0043`): 수집 데이터(정규화본) 저장 테이블 신설, `job_queue` 의존 제거, Flue 실행 추적 컬럼 추가.
-> 실행 흐름: Vercel 수집 → `daily_core_source_data` 저장 + `collection_stage = collected` → Cron → Cloudflare Worker(Flue)가 Generation 생성.
+> 실행 흐름: 앱 `processTarget`이 Slack·GitHub를 모아 `daily_core_source_data`에 저장한 뒤 Worker `/core/generate`를 부른다. Cron도 같은 함수를 쓰지만 날짜는 `target-processing.ts`의 `DAILY_CORE_TEST_DATE`로 고정되어 있다. Generation이 성공하면 `daily_core_items`와 `daily_core_metrics`를 쓴다. 앱은 아직 로컬이고 Vercel 배포는 `works/vercel-deploy.md`다.
 
 ---
 
