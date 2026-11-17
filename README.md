@@ -7,3 +7,4 @@
 - 작업 기록: [works/README.md](works/README.md).
 - 초기 설계: [docs/ieum-architecture.md](docs/ieum-architecture.md). 구현과 다르다.
 - 디렉터리 지도: [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md).
+- 에이전트 품질 개선 컨텍스트: [docs/agent-quality-context.md](docs/agent-quality-context.md). 작업 시작 지침은 [AGENTS.md](AGENTS.md).
