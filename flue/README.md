@@ -30,7 +30,7 @@ flowchart TD
 | 3. generation 행 생성 | `app.ts` | `processing` 상태로 만들고 파이프라인·프롬프트 버전, 모델, 입력 행 id를 기록 |
 | (선택) Call 0 | `SignalExtractor` (모델) | target의 `pipeline_options`가 `{"signals": true}`일 때만. 한 일에 관한 모든 출처 줄을 한 subject 아래 시간순 signal(refs, kind, subject, fact, quote?)로 모으고, Call 1은 원문 대신 그 목록을 읽음(`signalsBody`, 지시문의 입력 설명 문단만 바꿈). quote는 인용한 줄에 실제로 있을 때만 넘김. `pipeline_version`에 `+signals` |
 | 4. Call 1 | `CoreInterpreter` (모델) | 하루를 사건 단위 core item으로 묶음. item마다 actor와 `next_step`(근거가 있을 때만, 없으면 null) |
-| 5. Call 2 | `CoreStructurer` (모델) | core item을 highlights / topics / progress_roadmap에 배치하고 overview를 씀. `member_activity`는 빈 배열(`core-structurer-v4`) |
+| 5. Call 2 | `CoreStructurer` (모델) | core item을 highlights / topics / progress_roadmap에 배치하고 overview를 씀. `member_activity`는 빈 배열(`core-structurer-v1.0`) |
 | 5b. Call 2와 동시에 | `CoreTagger` (모델) | core item마다 분류·태그·엔티티. `core_json`에는 넣지 않고 `daily_core_items`에만 씀. 실패해도 Core는 성공하고, 그때 `taxonomy_version`은 `none`. 성공하면 `work-kind-v1` |
 | 6. 변환·병합 | `assembleCore` (코드) | `placeLeftovers`(이벤트 섹션에 없는 item을 topic 또는 progress로) → `refineHighlights`(중요도 4 이상, 최대 5, 나머지는 강등) → `scopeMemberActivity`(멤버 문장은 그 사람이 멤버이면서 근거를 쓴 항목의 제목만) → `resolveStructuring`, `buildCoreJson`. core item id를 근거 ref로 바꾸고 importance, `payload.owners` / `payload.next_steps`를 core item에서 채움. ref를 원본 항목(id, 시각, url, 작성자, 200자 `excerpt`)으로 바꾸고 meta, metrics, quality를 붙임 |
 | 7. 저장 | `app.ts` | `core_json`, 단계별 원출력(tagging 포함), 토큰, 시간, 반려 이유, stats를 저장하고 `succeeded`와 current를 갱신. 이어서 `daily_core_items`·`daily_core_metrics`를 다시 씀. 이 projection이 실패해도 generation은 성공이고, 이유는 `validation_json.stats.projection.error`. generation이 실패하면 `failed`로 남기고 `error_message`에 원인(2000자)을 넣고 current는 그대로 |
@@ -116,12 +116,12 @@ Agent마다 지시문 본문, 모델, `thinkingLevel`, 버전을 프롬프트 DB
 
 | 버전 | 위치 | 기록되는 곳 |
 |---|---|---|
-| 파이프라인 `PIPELINE_VERSION` | `app.ts` | generation |
-| Core 지시문 ((extractor +) interpreter + structurer + tagger) | 프롬프트 DB면 `core-interpreter@v9(default)` 꼴, 코드 기본값이면 `core-interpreter-v13` 꼴. 지금 코드 기본값은 `signal-extractor-v6`, `core-interpreter-v13`, `core-structurer-v4`, `core-tagger-v2` | generation `prompt_version` |
+| 파이프라인 `PIPELINE_VERSION` | `app.ts` (`flue-two-call-v1.0`) | generation |
+| Core 지시문 ((extractor +) interpreter + structurer + tagger) | 프롬프트 DB면 `core-interpreter@v1(default)` 꼴, 코드 기본값이면 `*-v1.0`. 지금: `signal-extractor-v1.0`, `core-interpreter-v1.0`, `core-structurer-v1.0`, `core-tagger-v1.0` | generation `prompt_version` |
 | `core_json` 스키마 `CORE_SCHEMA_VERSION` | `daily-core.ts` | generation |
-| 리포트 렌더 `REPORT_FORMAT_VERSION` | `daily-report.ts` | report `format_version` |
-| 리포트 지시문 (writer + finalizer) | Core 지시문과 같은 꼴. 코드 기본값은 `daily-report-writer-v4`, `daily-report-finalizer-v3` | report `prompt_version`(저장된 초안을 받았으면 writer 자리에 `given-draft`) |
-| 주간 지시문 | 호출마다 하나. 코드 기본값은 `weekly-merge-v1`, `weekly-writer-v6`, `weekly-topics-v1` | 응답의 `promptVersion`. 주간 결과를 저장하는 테이블은 없음 |
+| 리포트 렌더 `REPORT_FORMAT_VERSION` | `daily-report.ts` (`daily-report-code-v1.0`) | report `format_version` |
+| 리포트 지시문 (writer + finalizer) | Core 지시문과 같은 꼴. 코드 기본값: `daily-report-writer-v1.0`, `daily-report-finalizer-v1.0` | report `prompt_version`(저장된 초안을 받았으면 writer 자리에 `given-draft`) |
+| 주간 지시문 | 호출마다 하나. 코드 기본값: `weekly-merge-v1.0`, `weekly-writer-v1.0`, `weekly-topics-v1.0` | 응답의 `promptVersion`. 주간 결과를 저장하는 테이블은 없음 |
 
 반려는 재제출마다 모델이 JSON 전체를 다시 내므로 비용이 큽니다. 그래서 `runAgent`가 스트림의 반려(`tool-output-error`, 스키마 실패 포함)를 세다가 `MAX_REJECTIONS`(2)에 이르면 `handle.abort()`로 멈춥니다. 이 경우 generation이나 report는 `failed`가 됩니다.
 

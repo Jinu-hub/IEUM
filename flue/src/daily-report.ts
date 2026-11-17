@@ -4,13 +4,13 @@ import { type buildCoreJson, deriveEvidenceUrl, plainSlackText } from "./daily-c
 export type DailyCoreJson = ReturnType<typeof buildCoreJson>;
 type CoreItem = DailyCoreJson["highlights"][number];
 
-export const REPORT_FORMAT_VERSION = "daily-report-code-v3";
+// Recorded on report rows as format_version (markdown/html renderer shape).
+export const REPORT_FORMAT_VERSION = "daily-report-code-v1.0";
 
-// Entries with more evidence than this show the first links and a count of the rest.
+// Cap evidence links shown under an entry; the rest become "+N".
 const MAX_LINKS = 3;
 
-// Reading tier (1-6 P2): not a new item_type. Highlights stay as Core refined them.
-// Topic/progress main = importance ≥ 0.8 (Interpreter 4–5), capped per section; the rest fold as others.
+// Topic/progress "main" tier: importance ≥ 0.8 (Interpreter 4–5), capped; the rest fold as others.
 export const REPORT_MAIN_MIN_IMPORTANCE = 0.8;
 export const REPORT_MAX_MAIN_PROGRESS = 8;
 export const REPORT_MAX_MAIN_TOPICS = 5;
@@ -245,13 +245,13 @@ export function coverageProblems(before: ReportDraft, after: ReportDraft) {
   return dropped.length ? [`items dropped: ${dropped.join(", ")}; every item the draft covers stays in some entry`] : [];
 }
 
-// Quotes show only under highlights; a finalizer's quote_ids elsewhere are cleared instead of rejected.
+// Quotes render only under highlights; clear quote_ids elsewhere instead of rejecting the draft.
 export const withoutStrayQuotes = (draft: ReportDraft): ReportDraft => ({
   ...draft,
   entries: draft.entries.map((e) => (e.section === "highlights" || !e.quote_ids.length ? e : { ...e, quote_ids: [] })),
 });
 
-// Icons already show the status; a leading 【進行中】 or [Done] repeats it (finalizer run p1-4).
+// Status icons are added by code; reject leading labels like 【進行中】 or [Done].
 const LEADING_LABEL = /^\s*[【\[［(（]/;
 export function labelProblems(draft: ReportDraft) {
   const labeled = [...draft.points.map((p) => p.text), ...draft.entries.map((e) => e.headline)].filter((t) => LEADING_LABEL.test(t));

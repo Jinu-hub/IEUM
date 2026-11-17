@@ -5,9 +5,10 @@ import * as v from "valibot";
 import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../prompts.ts";
 import { type TopicItem, topicsProblems, WeeklyTopics as TopicsDraft } from "../../weekly-topics.ts";
 
+// Weekly step 3: one short summary per classification (bugfix / feature / …).
 export const WEEKLY_TOPICS_PROMPT: AgentPrompt = {
   agentKey: "weekly-topics",
-  version: "weekly-topics-v1",
+  version: "weekly-topics-v1.0",
   model: "openai/gpt-6-sol",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You write the topics overview of a weekly report.

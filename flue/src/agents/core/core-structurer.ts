@@ -12,17 +12,10 @@ import * as v from "valibot";
 import { restoreCoreIds, Structuring, structuringProblems } from "../../daily-core.ts";
 import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../prompts.ts";
 
-// v2: the Daily Core keeps every core item. v1 ("Unimportant ones may be left out", topics at most 8,
-// "Closely related core items may share one entry") dropped items such as 5-5 No342 and No.77 on 10-09,
-// left No.8 only in member_activity, and merged three people's daily work into one entry.
-// Items it still leaves out are placed by code (placeLeftovers).
-// v3: person names stay as in people and members. No transliteration into another script.
-// v4: member_activity is left empty. Code writes it (scopeMemberActivity). The model paragraph
-// attributed other people's items to a person who had only cited their own (11/11, Jinu / ローソン).
-// Same-name duplicates no longer reject (mergeMemberActivity in structuringProblems); this path wipes.
+// Call 2: place core items into highlights / topics / progress. member_activity is filled by code later.
 export const CORE_STRUCTURER_PROMPT: AgentPrompt = {
   agentKey: "core-structurer",
-  version: "core-structurer-v4",
+  version: "core-structurer-v1.0",
   model: "openai/gpt-6-luna",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You build a Daily Core: the structured record of one team's activity on one local day.
@@ -77,7 +70,7 @@ export function CoreStructurer() {
     description: "Submit the finished Daily Core. Call exactly once. Errors list what to fix.",
     input: Structuring,
     run({ data }) {
-      // Member text is rebuilt in assembleCore. A draft here can fail the run or ship someone else's work.
+      // Wipe model member_activity; assembleCore rewrites it from owned core items.
       const output = restoreCoreIds({ ...data, member_activity: [] }, Object.keys(evidence.coreRefs));
       const problems = structuringProblems(output, evidence);
       if (problems.length) throw new Error(problems.join("\n"));

@@ -7,9 +7,10 @@ import { WeeklyDraft, writerProblems } from "../../weekly-writer.ts";
 import type { WeeklyInput } from "../../weekly-input.ts";
 import type { MergeGroups } from "../../weekly-merge.ts";
 
+// Weekly step 2: opening, movement cards, closing from merge groups.
 export const WEEKLY_WRITER_PROMPT: AgentPrompt = {
   agentKey: "weekly-writer",
-  version: "weekly-writer-v6",
+  version: "weekly-writer-v1.0",
   model: "openai/gpt-6-sol",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You write the weekly report a teammate can skim. The input is already chosen.

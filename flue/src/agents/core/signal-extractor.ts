@@ -1,9 +1,5 @@
 "use agent";
 
-// Optional Call 0, as in 02-pipeline-architecture.md: SignalExtractor gathers every line about one piece of
-// work under one subject, in time order, so CoreInterpreter reads that instead of the raw lines. Runs for
-// targets whose pipeline_options has "signals": true.
-
 import {
   useAgentFinish,
   useDataWriter,
@@ -16,18 +12,10 @@ import {
 import * as v from "valibot";
 import { type AgentPrompt, ThinkingLevel } from "../../prompts.ts";
 
+// Optional Call 0 (pipeline_options.signals): group raw lines by work subject for the Interpreter.
 export const SIGNAL_EXTRACTOR_PROMPT: AgentPrompt = {
   agentKey: "signal-extractor",
-  // v3: the output is shaped for CoreInterpreter. v2 (e1) split one piece of work across subjects (commit,
-  // thread, daily report), scattered one assignment conversation over 4-6 subjects, named subjects
-  // differently per run, merged a plan and a report into one signal, and lost words like 「宋さんに聞いてみて」.
-  // A v4 (subjects listed before signals, code rejecting a signal that cites two lines by one person) was
-  // dropped: 2 of 4 runs failed after rejections, 1 came back with 3 signals, and subjects did not get steadier.
-  // v5: v3 plus a "Shared identifiers" list from code, so the model need not find the links across the day.
-  // v6: v5 (e5-r3) dropped the second matter of a line already cited (#23000 in S020), put an answer
-  // under another subject than its question (S052/S054), and wrote No.230 as "#230". The signal input
-  // also tells the interpreter that kind is a label: with it, importance 4-5 rose from 4-6 items to 9.
-  version: "signal-extractor-v6",
+  version: "signal-extractor-v1.0",
   model: "openai/gpt-6-luna",
   thinkingLevel: "low",
   instructions: `
@@ -193,8 +181,7 @@ export function SignalExtractor() {
 
 SignalExtractor.initialData = InitialData;
 
-// A "<name> daily work" signal goes under the person who wrote its lines (e5-r3 put Yuuki Imai's plan
-// under "Jinu Son daily work"). Renamed by code instead of rejected, as rejections failed v4 runs.
+// Rename "<name> daily work" to the writer of its lines when that name never wrote them.
 export function ownDailyWork(s: Signal, authors: Record<string, string>): Signal {
   const name = s.subject.trim().match(/^(.+?)\s*daily work$/i)?.[1];
   const writer = authors[s.refs[0]];

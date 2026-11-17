@@ -517,7 +517,7 @@ export function restoreCoreIds(output: Structuring, keys: string[]): Structuring
   return { ...output, ...Object.fromEntries(SECTIONS.map((section) => [section, fix(output[section])])) };
 }
 
-// Same person twice (10-13 Momoko/Keiichi): union ids and join summaries instead of rejecting the core.
+// One entry per person: union core_item_ids and join summaries (rejecting duplicates used to fail Core).
 export function mergeMemberActivity(output: Structuring): Structuring {
   const merged = new Map<string, Structuring["member_activity"][number]>();
   for (const item of output.member_activity) {
@@ -574,10 +574,8 @@ const memberKey = (name: string, used: Set<string>) => {
   return key;
 };
 
-// Member paragraphs are not the model's. A summary can name work the person never touched while still
-// citing items they did (11/11: ローソン・まなプレ on Jinu, whose lines were calendar, No.293, No.268).
-// One entry per person who wrote a cited line on an item they are a member of. The text is those items'
-// titles, highest importance first. Code replaces the draft instead of rejecting the whole core.
+// Rebuild member_activity in code: one entry per member who wrote a cited line on an item they own.
+// Summary = those items' titles (importance first). Model text is discarded so it cannot claim others' work.
 export function scopeMemberActivity(
   output: Structuring,
   { core_items }: Interpretation,

@@ -13,11 +13,10 @@ import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../p
 import { indexTagging, Tagging } from "../../tagging.ts";
 import { DEFAULT_TAXONOMY_VERSION } from "../../taxonomy.ts";
 
-// Parallel to CoreStructurer (B안). Classifies each Interpreter core item; code merges into
-// daily_core_items at projection. core_json stays without tags/entities.
+// Parallel to Call 2: classify/tag each core item. Written to daily_core_items only, not core_json.
 export const CORE_TAGGER_PROMPT: AgentPrompt = {
   agentKey: "core-tagger",
-  version: "core-tagger-v2",
+  version: "core-tagger-v1.0",
   model: "openai/gpt-6-luna",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You classify each core item of one team's day for search and weekly rollups.

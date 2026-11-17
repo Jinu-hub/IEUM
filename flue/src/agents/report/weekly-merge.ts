@@ -5,9 +5,10 @@ import * as v from "valibot";
 import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../prompts.ts";
 import { MergeGroups, mergeProblems } from "../../weekly-merge.ts";
 
+// Weekly step 1: group same-work highlights across days (ids only; no prose).
 export const WEEKLY_MERGE_PROMPT: AgentPrompt = {
   agentKey: "weekly-merge",
-  version: "weekly-merge-v1",
+  version: "weekly-merge-v1.0",
   model: "openai/gpt-6-sol",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You group one week's highlights that are the same work continuing across days.

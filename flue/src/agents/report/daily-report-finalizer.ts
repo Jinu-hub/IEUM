@@ -12,14 +12,10 @@ import * as v from "valibot";
 import { coverageProblems, draftProblems, labelProblems, ReportDraft, withoutStrayQuotes } from "../../daily-report.ts";
 import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../prompts.ts";
 
-// v2: v1 read "do not contradict the status icon" as "write the status" (【進行中】 on every
-// headline) and left texts as they were (run p1-4).
-// v3: v2 had to keep the draft's structure exactly and never heard of quote_ids; on 10-13 it put quotes on
-// two non-highlight entries and the whole report failed. Now it may merge, split and reorder for
-// readability; code checks only facts and coverage, and clears quotes outside highlights.
+// Edit the Writer draft for readability (merge/split/reorder). On failure the Writer draft is sent as-is.
 export const DAILY_REPORT_FINALIZER_PROMPT: AgentPrompt = {
   agentKey: "daily-report-finalizer",
-  version: "daily-report-finalizer-v3",
+  version: "daily-report-finalizer-v1.0",
   model: "openai/gpt-6-luna",
   thinkingLevel: DEFAULT_THINKING_LEVEL,
   instructions: `You are the editor of a daily team email report. A writer drafted it from that day's items, but the

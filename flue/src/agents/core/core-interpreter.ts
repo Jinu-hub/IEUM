@@ -21,30 +21,10 @@ import {
 } from "../../daily-core.ts";
 import { type AgentPrompt, ThinkingLevel } from "../../prompts.ts";
 
-// v6: asks for progress.next_step (v5 left it empty on every item; the report uses it).
-// v7: next_step is a required top-level field; v6 still left progress null on every item (run 22).
-// v8: null is the normal next_step. v7 said "set on every item" and got guesses such as
-// "continue if needed (owner not stated)" (run 23).
-// v9: written for usefulness to a reader. On gpt-6-luna, v8 (interpreter test v1) kept importance at 3 or
-// less with no highlight role, wrote an overview without names or tickets, split child tickets into their
-// own items, and still wrote "担当・時期の記載なし" in next_step.
-// v10: v9 (test v2) wrote "記載なし" notes 10 times per run (the quoted example primed it, and the summary
-// asked for what is left even when nothing was written), gave 8-9 highlights, and one run left out
-// matters such as a release request. Positive wording for missing details, highlight cap, coverage first.
-// v11: the schema drops tags, classifications, entities, confidence. v10 (test v3) left out the last input
-// section (#dev_lead) in both runs, split one person's untracked tasks into one item each, and after a
-// rejection resubmitted fewer items. Read to the end, one item per person, resend every item.
-// v12: rewritten around work threads instead of tickets (user; tests v11 and v12 ran it still named v11).
-// Test v12 split one assignment conversation into three items, retold one message's part in two items,
-// cited lines its summary left out, and inferred "continue event preparation" as a next step.
-// Not a prompt version: from test v6 a submission with uncited lines or duplicate candidates is answered with
-// them, and the model sends only changed items through revise_interpretation (instructions unchanged).
-// Also not a prompt version: revise before submit used to throw twice and abort the day (10-13 raw); upsert is
-// kept as the first submission, empty revise only nudges toward submit.
+// Call 1: turn the day's lines into core items (one per work thread) + overview.
 export const CORE_INTERPRETER_PROMPT: AgentPrompt = {
   agentKey: "core-interpreter",
-  // v13: importance 4 narrowed — routine finishes stay at 3 so scores do not pile on 0.8 (W44 1-6).
-  version: "core-interpreter-v13",
+  version: "core-interpreter-v1.0",
   model: "openai/gpt-6-sol",
   thinkingLevel: "low",
   instructions: `
@@ -205,8 +185,7 @@ const ReviewNote = v.object({
   overviewRewritten: v.optional(v.boolean()),
 });
 
-// Uncited lines come with their author and opening text: with ids alone the model skipped some of 16,
-// including a same-day release request (test v8-r2, S055).
+// Uncited lines include author + opening text (ids alone were easy to skip).
 const reviewRequest = (
   { uncited, pairs }: { uncited: string[]; pairs: string[] },
   { authors, texts }: { authors: Record<string, string>; texts: Record<string, string> },
@@ -282,7 +261,7 @@ export function CoreInterpreter() {
     description: `Change the items accepted by ${SUBMIT}: send only new or changed items. Call once.`,
     input: Revision,
     run({ data }) {
-      // 10-13 raw: revise before submit burned both rejection slots and dropped the day. Keep the payload.
+      // Called before submit: keep upsert as the first submission (empty → nudge only, no rejection).
       if (!draft) {
         if (!data.upsert.length) {
           return { output: `Call ${SUBMIT} first with the full interpretation. Then use ${REVISE} only for changes.` };

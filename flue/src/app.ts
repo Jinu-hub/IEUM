@@ -61,13 +61,11 @@ import { topicItems, topicsInput, type WeeklyTopics as TopicsDraft } from "./wee
 import { indexTagging, taggerInput, type Tagging } from "./tagging.ts";
 import { DEFAULT_TAXONOMY_VERSION } from "./taxonomy.ts";
 
-// v2: both calls at thinkingLevel "low" (v1 used the default "medium").
-// v3: Call 1 may revise once after code lists uncited lines and duplicate candidates.
-// v4: CoreTagger runs in parallel with CoreStructurer; tags land only in items projection.
-// "+signals" is appended when SignalExtractor ran before Call 1 (target pipeline_options).
-const PIPELINE_VERSION = "flue-two-call-v4";
+// Recorded on generation rows. Append "+signals" when Call 0 ran.
+const PIPELINE_VERSION = "flue-two-call-v1.0";
+// Stop the agent after this many tool-output errors (each retry resends the whole JSON).
 const MAX_REJECTIONS = 2;
-// Written on the generation row when the tagger call fails or is skipped; success uses DEFAULT_TAXONOMY_VERSION.
+// taxonomy_version when CoreTagger fails or is skipped; success uses DEFAULT_TAXONOMY_VERSION.
 const TAXONOMY_NONE = "none";
 
 type Env = {

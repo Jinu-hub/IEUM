@@ -6,16 +6,12 @@ W46_TODO.md의 남은 것을 옮겨 시작. 한 일은 `W47.md`.
 
 ## 1. 지금 우선
 
-주간 리포트(1-5)·생성 실패 막기(코드)는 끝. 지금 손대는 것은 **1-1 재생성, 1-4**.
-
-### 1-1. 생성 실패 막기
-
-- [ ] 11/11 코어 재생성. 멤버 문장 수정(2026-11-13)은 저장본에 안 들어 있음.
+주간 리포트(1-5)·생성 실패 막기(1-1)는 끝. 지금 손대는 것은 **1-4**.
 
 ### 1-4. 프롬프트 DB 연결 확인
 
 - [ ] **테스트 끝나면 반드시 원복**: `flue/.dev.vars`의 `PROMPTS_SUPABASE_URL` / `KEY` 주석 해제 + 로컬 Worker 재시작. 원복 전에 최종 지시문을 DB에 새 버전으로 넣을지 정함.
-- [ ] 프롬프트 DB 데이터 넣기(`services` ieum, `agents`에 core-tagger 포함, 코드 기본값 지시문을 v1로, `prompt_releases` default). DB의 `core-interpreter` 지시문은 입력 설명 문단(`RAW_INPUT`)이 코드와 글자 그대로여야 함.
+- [ ] 프롬프트 DB 데이터 넣기(`services` ieum, `agents`에 core-tagger 포함, 코드 기본값 지시문을 v1.0으로, `prompt_releases` default). DB의 `core-interpreter` 지시문은 입력 설명 문단(`RAW_INPUT`)이 코드와 글자 그대로여야 함.
 - [ ] 로컬에서 `/core/generate`, `/report/generate`로 `prompt_version` 확인 후 배포(`wrangler secret put`).
 
 ## 2. Daily Report 후속
