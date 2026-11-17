@@ -71,8 +71,8 @@ flowchart TD
 | 파일 | `src/agents/core/core-interpreter.ts` | `src/agents/core/core-structurer.ts` |
 | 입력 | 텍스트로 바꾼 하루 활동 + 오늘 글을 쓴 사람 목록 | Call 1 결과에서 추린 JSON(core item, members, people). evidence ref는 넣지 않음 |
 | 제출 Tool | `submit_interpretation` (스키마 `Interpretation`), 필요하면 이어서 `revise_interpretation` 한 번 (스키마 `Revision`) | `submit_daily_core` (스키마 `Structuring`) |
-| 반려하는 문제 | 없는 ref, 맥락 줄만 인용, 봇 줄만 인용, concept_key 중복 | 모르는 core item id, 한 core item을 여러 곳에 배치, 사람 목록에 없는 멤버, 본인 줄이 없는 멤버, 같은 사람 중복 |
-| 반려 대신 코드가 고치는 것 | 인용한 줄을 쓰지 않은 멤버 actor 제거(`dropUnwrittenActors`), concept_key를 kebab-case로(`normalizeConceptKeys`) | 없음 |
+| 반려하는 문제 | 없는 ref, 맥락 줄만 인용, 봇 줄만 인용, concept_key 중복 | 모르는 core item id, 한 core item을 여러 곳에 배치, 사람 목록에 없는 멤버, 본인 줄이 없는 멤버 |
+| 반려 대신 코드가 고치는 것 | 인용한 줄을 쓰지 않은 멤버 actor 제거(`dropUnwrittenActors`), concept_key를 kebab-case로(`normalizeConceptKeys`). `revise_interpretation`을 제출 전에 부르면 upsert를 첫 제출로 받음(빈 upsert는 안내만, 반려 아님) | 같은 사람 `member_activity`를 합침(`mergeMemberActivity`). 제출 시 배열은 비우고 `scopeMemberActivity`가 다시 씀 |
 | 제출 뒤 되묻는 것 | 인용 안 된 사람 줄, 중복 후보(두 item만 인용한 줄 2개 이상)(`interpretationReview`). 모델은 바뀐 item만 보내고 코드가 합침(`applyRevision`). 첫 제출도 저장해 두어 수정이 안 오면 그대로 씀 | 없음 |
 | 결과 | `useDataWriter("interpretation")` | `useDataWriter("structuring")` |
 
@@ -98,8 +98,8 @@ target별 선택은 `targets.pipeline_options`(jsonb, 기본 `{}`)입니다. UI�
 | 파일 | `src/agents/report/daily-report-writer.ts` | `src/agents/report/daily-report-finalizer.ts` |
 | 입력 | target, 날짜, overview, item(id, 섹션, 제목, 요약, 상태, 중요도, 담당자, 다음 단계, 인용 후보) | Writer와 같은 item + Writer 초안 |
 | 제출 Tool | `submit_report` (스키마 `ReportDraft`) | `submit_report` (스키마 `ReportDraft`) |
-| 반려하는 문제(`draftProblems`) | 모르는 item id, 자기 섹션 item을 인용하지 않은 entry, 인용 안 된 highlight, 입력에 없는 티켓 번호, highlights 밖의 인용, 그 entry의 item이 내놓지 않은 인용 id | 왼쪽 전부 + Writer 초안의 entry가 다룬 item이 빠짐(`coverageProblems`), 제목·포인트 앞의 상태 라벨(【進行中】 등, `labelProblems`). 합치기·나누기·순서 변경은 허용 |
-| 반려 대신 코드가 고치는 것 | 없음 | highlights 밖의 인용을 비움(`withoutStrayQuotes`) |
+| 반려하는 문제(`draftProblems`) | 모르는 item id, 자기 섹션 item을 인용하지 않은 entry, 인용 안 된 highlight, 입력에 없는 티켓 번호, 그 entry의 item이 내놓지 않은 인용 id | 왼쪽 전부 + Writer 초안의 entry가 다룬 item이 빠짐(`coverageProblems`), 제목·포인트 앞의 상태 라벨(【進行中】 등, `labelProblems`). 합치기·나누기·순서 변경은 허용 |
+| 반려 대신 코드가 고치는 것 | highlights 밖의 인용을 비움(`withoutStrayQuotes`) | 같음(`withoutStrayQuotes`) |
 | 결과 | `useDataWriter("draft")` | `useDataWriter("draft")` |
 
 ### 지시문·모델·추론 강도

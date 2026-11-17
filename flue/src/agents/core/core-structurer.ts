@@ -19,6 +19,7 @@ import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../p
 // v3: person names stay as in people and members. No transliteration into another script.
 // v4: member_activity is left empty. Code writes it (scopeMemberActivity). The model paragraph
 // attributed other people's items to a person who had only cited their own (11/11, Jinu / ローソン).
+// Same-name duplicates no longer reject (mergeMemberActivity in structuringProblems); this path wipes.
 export const CORE_STRUCTURER_PROMPT: AgentPrompt = {
   agentKey: "core-structurer",
   version: "core-structurer-v4",

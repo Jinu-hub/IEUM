@@ -39,6 +39,8 @@ import { type AgentPrompt, ThinkingLevel } from "../../prompts.ts";
 // cited lines its summary left out, and inferred "continue event preparation" as a next step.
 // Not a prompt version: from test v6 a submission with uncited lines or duplicate candidates is answered with
 // them, and the model sends only changed items through revise_interpretation (instructions unchanged).
+// Also not a prompt version: revise before submit used to throw twice and abort the day (10-13 raw); upsert is
+// kept as the first submission, empty revise only nudges toward submit.
 export const CORE_INTERPRETER_PROMPT: AgentPrompt = {
   agentKey: "core-interpreter",
   // v13: importance 4 narrowed — routine finishes stay at 3 so scores do not pile on 0.8 (W44 1-6).
@@ -280,7 +282,18 @@ export function CoreInterpreter() {
     description: `Change the items accepted by ${SUBMIT}: send only new or changed items. Call once.`,
     input: Revision,
     run({ data }) {
-      if (!draft) throw new Error(`Call ${SUBMIT} first.`);
+      // 10-13 raw: revise before submit burned both rejection slots and dropped the day. Keep the payload.
+      if (!draft) {
+        if (!data.upsert.length) {
+          return { output: `Call ${SUBMIT} first with the full interpretation. Then use ${REVISE} only for changes.` };
+        }
+        const output = accept({
+          overview_candidate: { summary: data.overview ?? "" },
+          core_items: data.upsert,
+        });
+        writeReview(interpretationReview(output, evidence));
+        return { output: "accepted", terminate: true };
+      }
       accept(applyRevision(draft, data));
       writeReview({
         ...interpretationReview(draft, evidence),

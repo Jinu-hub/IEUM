@@ -9,13 +9,15 @@ import {
   useTool,
 } from "@flue/runtime";
 import * as v from "valibot";
-import { draftProblems, ReportDraft } from "../../daily-report.ts";
+import { draftProblems, ReportDraft, withoutStrayQuotes } from "../../daily-report.ts";
 import { type AgentPrompt, DEFAULT_THINKING_LEVEL, ThinkingLevel } from "../../prompts.ts";
 
 // v2: flat paragraphs with headings (v1 nested paragraphs in sections; rejected twice, run p1-1).
 // v3: fixed sections; entries with a headline each, plus up to 3 key points.
 // v4: items carry owners, next steps and quote candidates; highlights pick quotes; meaning and a warmer
 // tone are allowed when the items or quotes support them.
+// Stray quote_ids outside highlights are cleared (withoutStrayQuotes), same as the finalizer: a 10-09
+// progress entry with quotes used to fail the whole report.
 export const DAILY_REPORT_WRITER_PROMPT: AgentPrompt = {
   agentKey: "daily-report-writer",
   version: "daily-report-writer-v4",
@@ -96,9 +98,10 @@ export function DailyReportWriter() {
     description: "Submit the finished report body. Call exactly once. Errors list what to fix.",
     input: ReportDraft,
     run({ data }) {
-      const problems = draftProblems(data, evidence);
+      const draft = withoutStrayQuotes(data);
+      const problems = draftProblems(draft, evidence);
       if (problems.length) throw new Error(problems.join("\n"));
-      write(data);
+      write(draft);
       return { output: "accepted", terminate: true };
     },
   });

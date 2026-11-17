@@ -329,6 +329,8 @@ assert.deepEqual(coverageProblems(written, { ...reworded, entries: reworded.entr
 const strayQuote = { ...reworded, entries: [reworded.entries[0], { ...reworded.entries[1], quote_ids: ["T1.1"] }] };
 assert.deepEqual(withoutStrayQuotes(strayQuote).entries[1].quote_ids, []);
 assert.deepEqual(withoutStrayQuotes({ ...reworded, entries: [{ ...reworded.entries[0], quote_ids: ["H1.1"] }] }).entries[0].quote_ids, ["H1.1"]);
+// Writer/Finalizer clear stray quotes before draftProblems, so outside-highlight quotes no longer reject.
+assert.ok(!draftProblems(withoutStrayQuotes(strayQuote), draftEvidence(withTicket)).some((p) => /quotes outside/.test(p)));
 assert.deepEqual(labelProblems(reworded), []);
 const labeled = { ...reworded, entries: [{ ...reworded.entries[0], headline: "【進行中】#23163 done" }, reworded.entries[1]] };
 assert.match(labelProblems(labeled)[0], /remove leading labels or brackets: "【進行中】#23163 done"/);

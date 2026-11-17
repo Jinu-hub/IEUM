@@ -517,11 +517,31 @@ export function restoreCoreIds(output: Structuring, keys: string[]): Structuring
   return { ...output, ...Object.fromEntries(SECTIONS.map((section) => [section, fix(output[section])])) };
 }
 
+// Same person twice (10-13 Momoko/Keiichi): union ids and join summaries instead of rejecting the core.
+export function mergeMemberActivity(output: Structuring): Structuring {
+  const merged = new Map<string, Structuring["member_activity"][number]>();
+  for (const item of output.member_activity) {
+    const prev = merged.get(item.title);
+    if (!prev) {
+      merged.set(item.title, item);
+      continue;
+    }
+    const summary = [prev.summary, item.summary].map((s) => s.trim()).filter(Boolean).join(" ");
+    merged.set(item.title, {
+      ...prev,
+      core_item_ids: [...new Set([...prev.core_item_ids, ...item.core_item_ids])],
+      summary,
+    });
+  }
+  return { ...output, member_activity: [...merged.values()] };
+}
+
 export function structuringProblems(output: Structuring, { coreRefs, authors, people }: StructuringEvidence) {
   const problems: string[] = [];
   const placements = new Map<string, string[]>();
+  const checked = mergeMemberActivity(output);
   for (const section of SECTIONS) {
-    for (const item of output[section]) {
+    for (const item of checked[section]) {
       const unknown = item.core_item_ids.filter((id) => !(id in coreRefs));
       if (unknown.length) problems.push(`${section}/${item.item_key}: unknown core_item_ids ${unknown.join(", ")}`);
       if (section !== "member_activity") {
@@ -541,10 +561,6 @@ export function structuringProblems(output: Structuring, { coreRefs, authors, pe
     if (sections.length > 1) {
       problems.push(`${id}: placed ${sections.length} times (${sections.join(", ")}); use each core item in at most one entry of highlights, topics, progress_roadmap`);
     }
-  }
-  const names = output.member_activity.map((item) => item.title);
-  for (const name of new Set(names.filter((name, i) => names.indexOf(name) !== i))) {
-    problems.push(`member_activity: ${name} has several entries; use one per person`);
   }
   return problems;
 }

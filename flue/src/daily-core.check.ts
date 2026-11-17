@@ -15,6 +15,7 @@ import {
   interpretationProblems,
   interpretationReview,
   interpretationStats,
+  mergeMemberActivity,
   normalizeConceptKeys,
   placeLeftovers,
   plainSlackText,
@@ -264,10 +265,16 @@ assert.match(sProblems(structuring({ highlights: [placed("A", ["a"])], topics: [
 assert.match(sProblems(structuring({ topics: [placed("Z", ["z"])] }))[0], /unknown core_item_ids z/);
 assert.match(sProblems(structuring({ member_activity: [placed("Bo", ["a"])] }))[0], /title must be exactly one name/);
 assert.match(sProblems(structuring({ member_activity: [placed("Jinu Son", ["c"])] }))[0], /Jinu Son is not a member/);
-assert.match(
-  sProblems(structuring({ member_activity: [placed("Aki", ["a"], "1"), placed("Aki", ["b"], "2")] }))[0],
-  /Aki has several entries/,
-);
+const dupMembers = structuring({
+  member_activity: [
+    { ...placed("Aki", ["a"], "1"), summary: "did a" },
+    { ...placed("Aki", ["b"], "2"), summary: "did b" },
+  ],
+});
+assert.deepEqual(sProblems(dupMembers), []);
+assert.deepEqual(mergeMemberActivity(dupMembers).member_activity, [
+  { item_key: "1", title: "Aki", summary: "did a did b", core_item_ids: ["a", "b"] },
+]);
 const restored = restoreCoreIds(
   structuring({
     topics: [placed("T", ["ticket-12-mail-fix", "ticket-12", "ticket-1", "ticket-9-x"])],
