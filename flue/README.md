@@ -28,7 +28,7 @@ flowchart TD
 | 1. 읽기 | `app.ts` | Supabase REST(service role 키)로 `daily_core_data`와 수집 행을 읽음 |
 | 2. 입력 만들기 | `buildAgentInput` (코드) | 스레드를 묶고, 날짜 창 이전의 부모는 `(context)`로 표시, 봇 알림은 뺌(답글이 있는 부모는 유지). 각 줄에 ref(`S001`…)를 붙이고, ref별 작성자 표와 사람 목록을 만듦 |
 | 3. generation 행 생성 | `app.ts` | `processing` 상태로 만들고 파이프라인·프롬프트 버전, 모델, 입력 행 id를 기록 |
-| (선택) Call 0 | `SignalExtractor` (모델) | target의 `pipeline_options`가 `{"signals": true}`일 때만. 한 일에 관한 모든 출처 줄을 한 subject 아래 시간순 signal(refs, kind, subject, fact, quote?)로 모으고, Call 1은 원문 대신 그 목록을 읽음(`signalsBody`, 지시문의 입력 설명 문단만 바꿈). quote는 인용한 줄에 실제로 있을 때만 넘김. `pipeline_version`에 `+signals` |
+| (선택) Call 0 | `SignalExtractor` (모델) | target의 `pipeline_options`가 `{"signals": true}`일 때만. 한 일에 관한 모든 출처 줄을 한 subject 아래 시간순 signal(refs, kind, subject, fact, quote?)로 모으고, Call 1은 원문 전체와 그 목록을 함께 읽음. 원문을 사실의 기준으로, signals를 오류·누락 가능한 참고 자료로 사용. quote는 인용한 줄에 실제로 있을 때만 넘김. `pipeline_version`에 `+signal-reference-v1.0` |
 | 4. Call 1 | `CoreInterpreter` (모델) | 하루를 사건 단위 core item으로 묶음. item마다 actor와 `next_step`(근거가 있을 때만, 없으면 null) |
 | 5. Call 2 | `CoreStructurer` (모델) | core item을 highlights / topics / progress_roadmap에 배치하고 overview를 씀. `member_activity`는 빈 배열(`core-structurer-v1.0`) |
 | 5b. Call 2와 동시에 | `CoreTagger` (모델) | core item마다 분류·태그·엔티티. `core_json`에는 넣지 않고 `daily_core_items`에만 씀. 실패해도 Core는 성공하고, 그때 `taxonomy_version`은 `none`. 성공하면 `work-kind-v1` |
@@ -76,7 +76,7 @@ flowchart TD
 | 제출 뒤 되묻는 것 | 인용 안 된 사람 줄, 중복 후보(두 item만 인용한 줄 2개 이상)(`interpretationReview`). 모델은 바뀐 item만 보내고 코드가 합침(`applyRevision`). 첫 제출도 저장해 두어 수정이 안 오면 그대로 씀 | 없음 |
 | 결과 | `useDataWriter("interpretation")` | `useDataWriter("structuring")` |
 
-`SignalExtractor`(`src/agents/core/signal-extractor.ts`, 선택 Call 0)는 `submit_signals`로 제출합니다. 입력은 원문 뒤에 코드가 모은 `## Shared identifiers`(여러 줄이 함께 언급한 `#123` / `ABC-123` / URL과 그 줄들, 묶음이 아닌 힌트)를 붙입니다. 없는 ref는 반려하고, 어느 signal에도 없는 사람 줄은 돌려줘서 `add_signals`로 그 줄만 받습니다. 결과는 `useDataWriter("signals")`, generation의 `agent_output_json.signals`. 프롬프트 DB에서 `core-interpreter` 지시문을 바꿀 때는 입력 설명 문단(`RAW_INPUT`)을 글자 그대로 두어야 합니다. 그 문단을 signal용으로 바꾸므로, 다르면 signals target의 생성이 실패합니다.
+`SignalExtractor`(`src/agents/core/signal-extractor.ts`, 선택 Call 0)는 `submit_signals`로 제출합니다. 입력은 원문 뒤에 코드가 모은 `## Shared identifiers`(여러 줄이 함께 언급한 `#123` / `ABC-123` / URL과 그 줄들, 묶음이 아닌 힌트)를 붙입니다. 없는 ref는 반려하고, 어느 signal에도 없는 사람 줄은 돌려줘서 `add_signals`로 그 줄만 받습니다. 결과는 `useDataWriter("signals")`, generation의 `agent_output_json.signals`. 기본 signals 경로는 `interpreter-input.ts`에서 원문과 참고 지시문을 추가하며 공통 Interpreter 지시문은 그대로 둡니다. 비교용 signals 전용 모드만 기존 `RAW_INPUT` 문단의 정확한 문자열을 요구합니다.
 
 `CoreTagger`(`src/agents/core/core-tagger.ts`)는 `submit_tagging`으로 제출합니다. 입력은 taxonomy(`work-kind-v1`)와 core item의 제목·요약입니다. 모르는 키와 허용 밖 값은 반려하지 않고 `indexTagging`이 버립니다. 사람 엔티티는 모델이 쓰지 않고 코드가 actor에서 넣습니다. 결과는 `useDataWriter("tagging")`.
 
@@ -170,7 +170,7 @@ Skill, Subagent, MCP, Sandbox, 데이터 조회 Tool, Workers AI 바인딩은 �
 | `GET /` | 헬스 체크 |
 | `POST /core/generate` | 본문 `{ dailyCoreId, model? }`. 다음 generation을 만들어 저장하고 current로 함. 응답에 stats, 토큰, 호출별 시간·반려 이유, `coreJson` |
 | `POST /report/generate` | 본문 `{ dailyCoreId, model?, finalize?, draft? }`. 현재 generation으로 리포트를 만들어 `daily_reports`에 다음 `report_no`로 저장하고 `reportId`, `draft`, `subject`, `markdown`, `html`, stats, 토큰을 응답. 기본으로 Finalizer까지 돌고(응답에 `writerDraft`, Finalizer가 실패해 Writer 초안을 썼으면 `finalizerError`), `finalize: false`면 Writer만. `draft`(저장된 Writer 초안)를 주면 Writer를 건너뜀. 현재 generation이 없으면 409(행 안 만듦) |
-| `POST /core/agent` | (시험용) 본문 `{ dailyCoreId, agent, model?, signals?, interpretation? }`. `agent`(`extractor` / `interpreter` / `structurer`) 하나만 돌려 출력·토큰·반려와 모델이 본 입력 원문을 응답. DB 기록 없음, target의 `pipeline_options`는 안 봄. `interpreter`는 `signals`를 주면 원문 대신 그것을 읽고, `structurer`는 `interpretation`이 필요(그날 ref와 안 맞으면 400). Structurer는 `structuring`과 함께 코드 변환 뒤 `coreJson`·stats도 응답. Tagger는 없음 |
+| `POST /core/agent` | (시험용) 본문 `{ dailyCoreId, agent, model?, signals?, signalsMode?, interpretation? }`. `agent`(`extractor` / `interpreter` / `structurer`) 하나만 돌려 출력·토큰·반려와 모델이 본 입력 원문을 응답. DB 기록 없음, target의 `pipeline_options`는 안 봄. `interpreter`는 `signals`를 주면 기본으로 원문과 함께 읽고(`signalsMode: "raw+signals"`), 비교용 `signalsMode: "signals"`일 때만 signals만 읽습니다. 응답에 `inputMode`, `inputVersion`, `interpreterInput`, `interpreterInstructions`를 포함합니다. `structurer`는 `interpretation`이 필요(그날 ref와 안 맞으면 400). Structurer는 `structuring`과 함께 코드 변환 뒤 `coreJson`·stats도 응답. Tagger는 없음 |
 | `POST /weekly/merge` | 본문 `{ targetId, from, to, model? }`. 그 주 highlight 묶음. DB 기록 없음 |
 | `POST /weekly/write` | 본문 `{ targetId, from, to, groups, model? }`. `groups`는 merge 응답. 오프닝·항목·마무리 |
 | `POST /weekly/topics` | 본문 `{ targetId, from, to, model? }`. 분류별 토픽. 항목이 없으면 `categories: []` |
@@ -183,7 +183,7 @@ npm run dev                            # 로컬 Worker, http://localhost:8787
 npx tsx src/daily-core.check.ts        # 규칙 테스트 (flue/ 에서)
 npx tsx src/daily-report.check.ts      # 리포트 규칙·렌더 테스트
 npx tsx src/daily-report.run.ts <core.json> <out> [report.json]   # 리포트 미리보기 파일
-npx tsx src/core-agent.run.ts --agent <extractor|interpreter|structurer> --label <name> [--runs 3] [--id <dailyCoreId>] [--from <이전 결과 .json>]   # Core Agent 하나 실행·저장 (로컬 Worker 필요)
+npx tsx src/core-agent.run.ts --agent <extractor|interpreter|structurer> --label <name> [--runs 3] [--id <dailyCoreId>] [--from <이전 결과 .json>] [--signals-mode raw+signals|signals]   # Core Agent 하나 실행·저장 (로컬 Worker 필요)
 npx tsx src/weekly-report.run.ts <targetId> <from> <to> <out>   # 머지 → Writer → 토픽 → md·html. 중간에 <out>.merge.json, <out>.writer.json
 npx tsx src/weekly-input.run.ts [targetId from to]
 npx tsx src/weekly-merge.run.ts <targetId> <from> <to> <out>

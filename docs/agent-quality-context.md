@@ -61,7 +61,7 @@ Agent 파일 경로는 `flue/src/agents/` 기준이다. 아래 평가 항목은 
 | Agent / 파일 | 입력 → 출력 | 의미 품질의 핵심 |
 |---|---|---|
 | SignalExtractor / `core/signal-extractor.ts` | 원문 + shared identifiers → refs/kind/subject/fact/quote | 한 줄의 여러 업무를 분리했는가, 같은 업무의 여러 소스를 연결했는가, 시간·조건·요청 대상을 보존했는가, 간접 호칭을 근거대로 해석했는가 |
-| CoreInterpreter / `core/core-interpreter.ts` | 원문 또는 signals → `Interpretation` | 업무 단위의 경계, 누락·중복, 최신 상태, 중요도, 실제 기여자, 명시된 next_step, 하루 overview |
+| CoreInterpreter / `core/core-interpreter.ts` | 원문(선택 signals 참고) → `Interpretation` | 업무 단위의 경계, 누락·중복, 최신 상태, 중요도, 실제 기여자, 명시된 next_step, 하루 overview |
 | CoreStructurer / `core/core-structurer.ts` | core items + people → `Structuring` | highlights/topics/progress 배치, 중요 내용 보존, 요약의 왜곡·반복, overview 우선순위 |
 | CoreTagger / `core/core-tagger.ts` | taxonomy + item 제목·요약 → `Tagging` | primary의 적합성, 유용한 tags/entities, 미분류 비율, 주간 토픽으로 전달되는 분류 품질 |
 | DailyReportWriter / `report/daily-report-writer.ts` | Core의 H/P/T item + owners/next_steps/quotes → `ReportDraft` | 핵심 요점, headline과 본문의 역할, 중요한 요청·다음 단계 보존, 중복, 근거 없는 의미 확장, 검색 가능한 식별자 |
@@ -92,9 +92,9 @@ Agent 파일 경로는 `flue/src/agents/` 기준이다. 아래 평가 항목은 
 2026-11-17 코드 기본값: Interpreter와 주간 3종은 `openai/gpt-6-sol`, Extractor/Structurer/Tagger/Daily Writer/Finalizer는 `openai/gpt-6-luna`. 모두 `low`. 이는 코드에 적힌 값이며 실제 배포 실행 모델의 확인 결과는 아니다.
 
 - Agent 지시문과 pipeline/report format 버전은 11월 17일 `*-v1.0`으로 정리됐다. 예전 산출물의 v1/v3/v12와 지금 버전명이 같거나 다르다는 이유만으로 내용을 추정하지 않는다. 커밋·실제 지시문도 기록한다.
-- signals 모드에서는 `splitInterpreterInstructions`가 Interpreter 본문의 `RAW_INPUT` 문단을 정확한 문자열로 치환한다. 코드나 DB 지시문의 해당 문단을 바꾸면 이 함수도 함께 검토한다.
+- signals 기본 경로는 원문 + 참고 signals다. `interpreter-input.ts`가 참고 지시문을 추가하고 원문 단독 경로는 그대로 유지한다. `/core/agent`의 `signalsMode: "signals"`는 과거 방식 비교용이며, 이 모드만 `splitInterpreterInstructions`의 정확한 `RAW_INPUT` 문단 치환에 의존한다.
 - `works/2026/W47_TODO.md`에는 실험 후 프롬프트 DB 연결 원복 과제가 있다. 현재 연결 여부는 미확인이다. 코드 지시문을 수정한 것만으로 적용되었다고 결론내리지 않는다.
-- `model`, `thinkingLevel`, 프롬프트 내용/버전, raw/signals 모드, 고정 입력, 코드 커밋, 생성 식별자를 실험 메타데이터로 남긴다. 저장된 버전 문자열만으로 모든 실행 설정을 재현할 수 있다고 가정하지 않는다.
+- `model`, `thinkingLevel`, 프롬프트 내용/버전, raw/raw+signals/signals 모드, 고정 입력, 코드 커밋, 생성 식별자를 실험 메타데이터로 남긴다. 저장된 버전 문자열만으로 모든 실행 설정을 재현할 수 있다고 가정하지 않는다.
 
 ## 5. 관찰 지점과 성공 판정의 한계
 
@@ -183,7 +183,7 @@ npx tsx src/daily-report.run.ts <core.json> <output-prefix> [report.json]
 실험명 / 날짜 / 코드 커밋:
 대상 Agent / 수정 가설:
 입력 파일·해시 / dailyCoreId / generation / 언어·시간대:
-실제 지시문·버전·출처(code 또는 DB 환경) / model / thinkingLevel / raw 또는 signals:
+실제 지시문·버전·출처(code 또는 DB 환경) / model / thinkingLevel / raw/raw+signals/signals:
 상위 단계 고정 출력 / 변경 전후 결과 경로:
 시도·성공·반려·fallback 횟수 / 시간 / 토큰·비용:
 문제별 근거 ref 또는 item id / 기대 사실 / 실제 문장 / 중대도:
@@ -195,6 +195,8 @@ npx tsx src/daily-report.run.ts <core.json> <output-prefix> [report.json]
 문서 작성 시 위의 규칙 검사 8개를 실행해 모두 통과했다. 타입 검사, 실제 모델 호출, DB/배포본 검증, 메일 발송은 실행하지 않았다.
 
 ## 8. 현재 기록된 후속 과제
+
+11월 17일 원문+signals 참고 실험: `interpreter-input.ts`로 공통 프롬프트와 원문 단독 경로를 유지한 채 참고 입력을 추가했다. 10/09 고정 입력, gpt-6-luna/low로 각 3회 실행했고 #23000은 raw 3/3회 포함, hybrid 0/3회였다(raw 1회는 다른 업무 혼합). 한 날짜 실험에서 품질 우위를 확인하지 못했다. 상세 결과는 로컬 `works/out/core-agents/2026-11-17-hybrid-v1-comparison.md`, 결정 기록은 `works/2026/W47.md`. 배포·target 설정은 바꾸지 않았다.
 
 `works/2026/W47_TODO.md` 기준: 프롬프트 DB 연결/버전 확인, Interpreter의 overview 누락·묶기·제목/key, Extractor 비교·간접 호칭, 입력의 빈 GitHub Slack 앱 본문, 일간 Writer의 생략·티켓 표기·섹션 겹침, Finalizer 편집 효과, 주간 문장 품질, 평가 세트 후 모델 비교가 남아 있다.
 

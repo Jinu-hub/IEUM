@@ -13,8 +13,8 @@ import {
   SIGNAL_EXTRACTOR_PROMPT,
   SignalExtractor,
   signalsBody,
-  splitInterpreterInstructions,
 } from "./agents/core/signal-extractor.ts";
+import { interpreterInput, SIGNAL_REFERENCE_VERSION, type SignalsMode } from "./interpreter-input.ts";
 import { DAILY_REPORT_FINALIZER_PROMPT, DailyReportFinalizer } from "./agents/report/daily-report-finalizer.ts";
 import { DAILY_REPORT_WRITER_PROMPT, DailyReportWriter } from "./agents/report/daily-report-writer.ts";
 import { WEEKLY_MERGE_PROMPT, WeeklyMerge } from "./agents/report/weekly-merge.ts";
@@ -61,7 +61,7 @@ import { topicItems, topicsInput, type WeeklyTopics as TopicsDraft } from "./wee
 import { indexTagging, taggerInput, type Tagging } from "./tagging.ts";
 import { DEFAULT_TAXONOMY_VERSION } from "./taxonomy.ts";
 
-// Recorded on generation rows. Append "+signals" when Call 0 ran.
+// Recorded on generation rows. Append the signal-reference version when Call 0 ran.
 const PIPELINE_VERSION = "flue-two-call-v1.0";
 // Stop the agent after this many tool-output errors (each retry resends the whole JSON).
 const MAX_REJECTIONS = 2;
@@ -221,19 +221,21 @@ const extractorMessage = ({ body }: Day) => {
 const runExtractor = (day: Day, extractor: PromptData, conversations: string[]) =>
   runAgent<Signal[]>(SignalExtractor, "signals", extractorMessage(day), { ...lineEvidence(day), ...extractor }, conversations);
 
-// Call 1 on the raw lines, or on signals when given (input description swapped in the instructions).
-const runInterpreter = (day: Day, interpreter: PromptData, conversations: string[], signals?: Signal[]) =>
-  runAgent<Interpretation>(
+// Signals supplement the complete raw source by default. Legacy signals-only is available for comparison.
+const runInterpreter = (day: Day, interpreter: PromptData, conversations: string[], signals?: Signal[], mode?: SignalsMode) => {
+  const prepared = interpreterInput(day.body, interpreter.instructions, signals && signalsMessage(day, signals), mode);
+  return runAgent<Interpretation>(
     CoreInterpreter,
     "interpretation",
-    signals ? signalsMessage(day, signals) : day.body,
+    prepared.body,
     {
       ...lineEvidence(day),
       ...interpreter,
-      ...(signals && { instructions: splitInterpreterInstructions(interpreter.instructions) }),
+      instructions: prepared.instructions,
     },
     conversations,
   );
+};
 
 // Call 2a: place core items into Daily Core arrays.
 const runStructurer = ({ core, input }: Day, interpretation: Interpretation, structurer: PromptData, conversations: string[]) =>
@@ -362,7 +364,7 @@ app.post("/core/generate", async (c) => {
     structurerPrompt.version,
     taggerPrompt.version,
   ].join("+");
-  const pipelineVersion = extractor ? `${PIPELINE_VERSION}+signals` : PIPELINE_VERSION;
+  const pipelineVersion = extractor ? `${PIPELINE_VERSION}+${SIGNAL_REFERENCE_VERSION}` : PIPELINE_VERSION;
   const models = [
     ...(extractor ? [extractor.model] : []),
     interpreter.model,
@@ -526,7 +528,7 @@ app.post("/core/generate", async (c) => {
 
 // Test only (flue/src/core-agent.run.ts): runs one Core agent on a saved day and returns its output with
 // the input it read. Writes nothing to the DB. A later agent takes an earlier agent's output from the body:
-// the interpreter reads `signals` instead of the raw lines when given, the structurer needs `interpretation`.
+// the interpreter reads raw lines plus optional signals, the structurer needs `interpretation`.
 const CORE_AGENTS = ["extractor", "interpreter", "structurer"] as const;
 
 app.post("/core/agent", async (c) => {
@@ -535,9 +537,13 @@ app.post("/core/agent", async (c) => {
     agent?: string;
     model?: string;
     signals?: unknown;
+    signalsMode?: SignalsMode;
     interpretation?: unknown;
   }>();
   const { dailyCoreId, agent, model } = body;
+  if (body.signalsMode !== undefined && body.signalsMode !== "signals" && body.signalsMode !== "raw+signals") {
+    return c.json({ error: "signalsMode must be signals or raw+signals" }, 400);
+  }
   if (!isUuid(dailyCoreId)) return c.json({ error: "dailyCoreId must be a uuid" }, 400);
   if (!CORE_AGENTS.includes(agent as never)) return c.json({ error: `agent must be one of ${CORE_AGENTS.join(", ")}` }, 400);
   const signals = body.signals === undefined ? undefined : v.safeParse(v.array(Signal), body.signals);
@@ -575,8 +581,13 @@ app.post("/core/agent", async (c) => {
       return result(call, { hints: sharedIdentifiers(day.body), signals: call.output, signalsBody: signalsMessage(day, call.output) });
     }
     if (agent === "interpreter") {
-      const call = await runInterpreter(day, data, [], signals?.output);
+      const prepared = interpreterInput(day.body, data.instructions, signals && signalsMessage(day, signals.output), body.signalsMode);
+      const call = await runInterpreter(day, data, [], signals?.output, body.signalsMode);
       return result(call, {
+        inputMode: prepared.mode,
+        inputVersion: prepared.mode === "raw+signals" ? SIGNAL_REFERENCE_VERSION : prepared.mode,
+        interpreterInput: prepared.body,
+        interpreterInstructions: prepared.instructions,
         ...(signals && { signals: signals.output, signalsBody: signalsMessage(day, signals.output) }),
         stats: interpretationStats(call.output, day.input),
         interpretation: call.output,

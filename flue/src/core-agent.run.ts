@@ -1,8 +1,8 @@
 // Runs one Core agent (/core/agent, no DB writes) and saves each run for side-by-side review.
 // Run (in flue/): npx tsx src/core-agent.run.ts --agent <extractor|interpreter|structurer> --label <name>
 //   [--runs 3] [--id <dailyCoreId>] [--model <provider/model>] [--from <earlier run .json>]
-// --from feeds an earlier agent's saved output to this one: the interpreter reads its `signals` instead of
-// the raw lines, the structurer its `interpretation` (required). The day comes from that file unless --id.
+// --from supplies signals as a reference alongside raw lines (legacy: --signals-mode signals),
+// or interpretation to the structurer. The day comes from that file unless --id.
 // Needs the local Worker (npm run dev). FLUE_BASE_URL overrides http://localhost:8787.
 // Writes works/out/core-agents/<date>-input.txt and <date>-<agent>-<label>-r<n>.json / .md;
 // run numbers continue after the files already there, so reruns never overwrite.
@@ -23,10 +23,12 @@ const { values: args } = parseArgs({
     id: { type: "string" },
     model: { type: "string" },
     from: { type: "string" },
+    "signals-mode": { type: "string", default: "raw+signals" },
   },
 });
 if (!args.agent || !AGENTS.includes(args.agent)) throw new Error(`--agent must be one of ${AGENTS.join(", ")}`);
 if (!args.label || !/^[\w.-]+$/.test(args.label)) throw new Error("--label <name> is required ([A-Za-z0-9_.-])");
+if (!["raw+signals", "signals"].includes(args["signals-mode"]!)) throw new Error("--signals-mode must be raw+signals or signals");
 process.loadEnvFile(fileURLToPath(new URL("../.dev.vars", import.meta.url)));
 const base = process.env.FLUE_BASE_URL ?? "http://localhost:8787";
 
@@ -68,6 +70,10 @@ type Result = {
   hints?: string[];
   signals?: Signal[];
   signalsBody?: string;
+  inputMode?: string;
+  inputVersion?: string;
+  interpreterInput?: string;
+  interpreterInstructions?: string;
   interpretation?: Interpretation;
   droppedActors?: string[];
   review?: { uncited: string[]; pairs: string[]; upserted?: string[]; removed?: string[]; overviewRewritten?: boolean } | null;
@@ -143,7 +149,8 @@ function interpreterBody(r: Result) {
     rv
       ? `first submission: uncited ${rv.uncited.length}, pairs ${rv.pairs.length}${rv.upserted ? ` -> revision upserted ${rv.upserted.length} (${rv.upserted.join(", ")}), removed ${rv.removed?.length ?? 0} (${rv.removed?.join(", ")}), overview ${rv.overviewRewritten ? "rewritten" : "kept"}` : rv.uncited.length || rv.pairs.length ? " -> no revision" : ""}`
       : "",
-    r.signals ? `input: ${r.signals.length} signals from ${args.from}` : "input: raw lines",
+    `input: ${r.inputMode ?? (r.signals ? "signals" : "raw")} (${r.inputVersion ?? "legacy"})`,
+    ...(r.signals ? [`${r.signals.length} signals from ${args.from}`] : []),
     ...(rv?.pairs ?? []).map((pair) => `- pair: ${pair}`),
     r.droppedActors?.length ? `dropped actors: ${r.droppedActors.join("; ")}` : "",
     "",
@@ -230,6 +237,7 @@ for (let i = 0; i < runs; i++) {
       agent: args.agent,
       model: args.model,
       ...(args.agent === "interpreter" && from && { signals: from.signals }),
+      ...(args.agent === "interpreter" && from && { signalsMode: args["signals-mode"] }),
       ...(args.agent === "structurer" && { interpretation: from!.interpretation }),
     }),
   });
